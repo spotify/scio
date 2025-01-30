@@ -53,7 +53,9 @@ final class ConverterProviderSpec
   }
   implicit val arbJson: Arbitrary[Json] = Arbitrary(
     for {
-      key <- Gen.alphaStr
+      // f is a key field from TableRow. It cannot be used as column name
+      // see https://github.com/apache/beam/issues/33531
+      key <- Gen.alphaStr.retryUntil(_ != "f")
       value <- Gen.alphaStr
     } yield Json(s"""{"$key":"$value"}""")
   )

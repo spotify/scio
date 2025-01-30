@@ -266,94 +266,61 @@ private[types] object ConverterProvider {
   private def fromTableRowInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
     import c.universe._
 
+    val ops = q"_root_.com.spotify.scio.bigquery.syntax.TableRowOps"
+    val bs = q"_root_.com.google.protobuf.ByteString"
+
     // =======================================================================
     // Converter helpers
     // =======================================================================
     def cast(tree: Tree, tpe: Type): Tree = {
-      val provider: OverrideTypeProvider =
-        OverrideTypeProviderFinder.getProvider
-      val s = q"$tree.toString"
+      val provider: OverrideTypeProvider = OverrideTypeProviderFinder.getProvider
       tpe match {
-        case t if provider.shouldOverrideType(c)(t) =>
-          provider.createInstance(c)(t, q"$tree")
-        case t if t =:= typeOf[Boolean] => q"$s.toBoolean"
-        case t if t =:= typeOf[Int]     => q"$s.toInt"
-        case t if t =:= typeOf[Long]    => q"$s.toLong"
-        case t if t =:= typeOf[Float]   => q"$s.toFloat"
-        case t if t =:= typeOf[Double]  => q"$s.toDouble"
-        case t if t =:= typeOf[String]  => q"$s"
-        case t if t =:= typeOf[BigDecimal] =>
-          q"_root_.com.spotify.scio.bigquery.Numeric($s)"
-
-        case t if t =:= typeOf[ByteString] =>
-          val b =
-            q"_root_.com.google.common.io.BaseEncoding.base64().decode($s)"
-          q"_root_.com.google.protobuf.ByteString.copyFrom($b)"
-        case t if t =:= typeOf[Array[Byte]] =>
-          q"_root_.com.google.common.io.BaseEncoding.base64().decode($s)"
-
-        case t if t =:= typeOf[Instant] =>
-          q"_root_.com.spotify.scio.bigquery.Timestamp.parse($s)"
-        case t if t =:= typeOf[LocalDate] =>
-          q"_root_.com.spotify.scio.bigquery.Date.parse($s)"
-        case t if t =:= typeOf[LocalTime] =>
-          q"_root_.com.spotify.scio.bigquery.Time.parse($s)"
-        case t if t =:= typeOf[LocalDateTime] =>
-          q"_root_.com.spotify.scio.bigquery.DateTime.parse($s)"
-
-        // different than nested record match below, even though those are case classes
-        case t if t =:= typeOf[Geography] =>
-          q"_root_.com.spotify.scio.bigquery.types.Geography($s)"
-        case t if t =:= typeOf[Json] =>
-          q"_root_.com.spotify.scio.bigquery.types.Json($s)"
-        case t if t =:= typeOf[BigNumeric] =>
-          q"_root_.com.spotify.scio.bigquery.types.BigNumeric($s)"
-
-        case t if isCaseClass(c)(t) => // nested records
-          val fn = TermName("r" + t.typeSymbol.name)
+        case t if provider.shouldOverrideType(c)(t) => provider.createInstance(c)(t, q"$tree")
+        case t if t =:= typeOf[Boolean]             => q"$ops.boolean($tree)"
+        case t if t =:= typeOf[Int]                 => q"$ops.int($tree)"
+        case t if t =:= typeOf[Long]                => q"$ops.long($tree)"
+        case t if t =:= typeOf[Float]               => q"$ops.float($tree)"
+        case t if t =:= typeOf[Double]              => q"$ops.double($tree)"
+        case t if t =:= typeOf[String]              => q"$ops.string($tree)"
+        case t if t =:= typeOf[BigDecimal]          => q"$ops.numeric($tree)"
+        case t if t =:= typeOf[Array[Byte]]         => q"$ops.bytes($tree)"
+        case t if t =:= typeOf[ByteString]          => q"$bs.copyFrom($ops.bytes($tree))"
+        case t if t =:= typeOf[Instant]             => q"$ops.timestamp($tree)"
+        case t if t =:= typeOf[LocalDate]           => q"$ops.date($tree)"
+        case t if t =:= typeOf[LocalTime]           => q"$ops.time($tree)"
+        case t if t =:= typeOf[LocalDateTime]       => q"$ops.datetime($tree)"
+        case t if t =:= typeOf[Geography]           => q"$ops.geography($tree)"
+        case t if t =:= typeOf[Json]                => q"$ops.json($tree)"
+        case t if t =:= typeOf[BigNumeric]          => q"$ops.bignumeric($tree)"
+        case t if isCaseClass(c)(t)                 =>
+          // nested records
+          val r = TermName("r" + t.typeSymbol.name)
           q"""{
-                val $fn = $tree.asInstanceOf[_root_.java.util.Map[String, AnyRef]]
-                ${constructor(t, fn)}
-              }
-          """
+            val $r = $ops.record($tree)
+            ${constructor(t, r)}
+          }"""
         case _ => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
     }
 
-    def option(tree: Tree, tpe: Type): Tree =
-      q"if ($tree == null) None else Some(${cast(tree, tpe)})"
-
-    def list(tree: Tree, tpe: Type): Tree = {
-      val jl = tq"_root_.java.util.List[AnyRef]"
-      q"asScala($tree.asInstanceOf[$jl].iterator).map(x => ${cast(q"x", tpe)}).toList"
-    }
-
-    def field(symbol: Symbol, fn: TermName): Tree = {
+    def field(symbol: Symbol, row: TermName): Tree = {
       val name = symbol.name.toString
       val tpe = symbol.asMethod.returnType
 
-      val tree = q"$fn.get($name)"
-      def nonNullTree(fType: String) =
-        q"""{
-          val v = $fn.get($name)
-          if (v == null) {
-            throw new NullPointerException($fType + " field \"" + $name + "\" is null")
-          }
-          v
-        }"""
-      if (tpe.erasure =:= typeOf[Option[_]].erasure) {
-        option(tree, tpe.typeArgs.head)
-      } else if (tpe.erasure =:= typeOf[List[_]].erasure) {
-        list(nonNullTree("REPEATED"), tpe.typeArgs.head)
-      } else {
-        cast(nonNullTree("REQUIRED"), tpe)
+      tpe match {
+        case t if t.erasure =:= typeOf[Option[_]].erasure =>
+          q"$ops.nullable($name)($row).map(x => ${cast(q"x", t.typeArgs.head)})"
+        case t if t.erasure =:= typeOf[List[_]].erasure =>
+          q"$ops.repeated($name)($row).map(x => ${cast(q"x", t.typeArgs.head)})"
+        case t =>
+          q"${cast(q"$ops.required($name)($row)", t)}"
       }
     }
 
-    def constructor(tpe: Type, fn: TermName): Tree = {
+    def constructor(tpe: Type, row: TermName): Tree = {
       val companion = tpe.typeSymbol.companion
       val gets = tpe.erasure match {
-        case t if isCaseClass(c)(t) => getFields(c)(t).map(s => field(s, fn))
+        case t if isCaseClass(c)(t) => getFields(c)(t).map(s => field(s, row))
         case _                      => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
       q"$companion(..$gets)"
@@ -362,13 +329,8 @@ private[types] object ConverterProvider {
     // =======================================================================
     // Entry point
     // =======================================================================
-
-    val tn = TermName("r")
-    q"""(r: _root_.java.util.Map[String, AnyRef]) => {
-          import _root_.scala.jdk.javaapi.CollectionConverters._
-          ${constructor(tpe, tn)}
-        }
-    """
+    val r = TermName("r")
+    q"($r: ${typeOf[TableRow]}) => ${constructor(tpe, r)}"
   }
 
   // =======================================================================
@@ -387,10 +349,10 @@ private[types] object ConverterProvider {
         case t if provider.shouldOverrideType(c)(t) => q"$tree.toString"
         case t if t =:= typeOf[Boolean]             => tree
         case t if t =:= typeOf[Int]                 => tree
-        case t if t =:= typeOf[Long]                => tree
-        case t if t =:= typeOf[Float]               => tree
-        case t if t =:= typeOf[Double]              => tree
-        case t if t =:= typeOf[String]              => tree
+        case t if t =:= typeOf[Long]   => q"$tree.toString" // json doesn't support long
+        case t if t =:= typeOf[Float]  => q"$tree.toDouble" // json doesn't support float
+        case t if t =:= typeOf[Double] => tree
+        case t if t =:= typeOf[String] => tree
 
         case t if t =:= typeOf[BigDecimal] =>
           q"_root_.com.spotify.scio.bigquery.Numeric($tree).toString"
@@ -412,7 +374,7 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Geography] =>
           q"$tree.wkt"
         case t if t =:= typeOf[Json] =>
-          // for TableRow/json, use JSON to prevent escaping
+          // for TableRow/json, use parsed JSON to prevent escaping
           q"_root_.com.spotify.scio.bigquery.types.Json.parse($tree)"
         case t if t =:= typeOf[BigNumeric] =>
           // for TableRow/json, use string to avoid precision loss (like numeric)

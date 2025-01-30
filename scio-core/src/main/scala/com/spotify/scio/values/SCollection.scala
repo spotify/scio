@@ -529,9 +529,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * into an SCollection of type `Seq[Int]`. Users provide three functions:
    *
    *   - `createCombiner`, which turns a `T` into a `C` (e.g., creates a one-element list)
-   *
    *   - `mergeValue`, to merge a `T` into a `C` (e.g., adds it to the end of a list)
-   *
    *   - `mergeCombiners`, to combine two `C`'s into a single one.
    *
    * Both `mergeValue` and `mergeCombiners` are allowed to modify and return their first argument
