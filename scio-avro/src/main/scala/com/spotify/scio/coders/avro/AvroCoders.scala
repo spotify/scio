@@ -39,7 +39,12 @@ final private class SlowGenericRecordCoder extends CustomCoder[GenericRecord] {
   // Use String for 1.8 compat
   private val sc = StringUtf8Coder.of()
 
-  // Reuse parsed schemas because avro uses caching
+  /**
+   * Reuse parsed schemas because GenericDatumReader caches decoders based on schema reference
+   * equality.
+   * @see
+   *   [[org.apache.avro.generic.GenericDatumReader.getResolver]].
+   */
   @transient private lazy val schemaCache = new TrieMap[String, Schema]()
 
   private val encoder = new EmptyOnDeserializationThreadLocal[BinaryEncoder]()
