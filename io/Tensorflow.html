@@ -219,7 +219,6 @@ spotify/scio
   <ul>
     <li><a href="../io/Tensorflow.html#reading" class="header">Reading</a></li>
     <li><a href="../io/Tensorflow.html#writing" class="header">Writing</a></li>
-    <li><a href="../io/Tensorflow.html#prediction-inference" class="header">Prediction/inference</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -228,7 +227,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.14.9-16-4e55ac7-20250113T174824Z*
+<i class="md-icon" title="Version">label_outline</i> 0.14.10-43-57dbbad-20250131T193552Z*
 </label>
 </li>
 </ul>
@@ -245,7 +244,6 @@ spotify/scio
   <ul>
     <li><a href="../io/Tensorflow.html#reading" class="header">Reading</a></li>
     <li><a href="../io/Tensorflow.html#writing" class="header">Writing</a></li>
-    <li><a href="../io/Tensorflow.html#prediction-inference" class="header">Prediction/inference</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -293,43 +291,6 @@ examples.saveAsTfRecordFile(&quot;gs://output-example-path&quot;)
 seqExamples.saveAsTfRecordFile(&quot;gs://output-seq-example-path&quot;)
 sequenceExamples.saveAsTfRecordFile(&quot;gs://output-sequence-example-path&quot;)
 </code></pre>
-<h1><a href="#prediction-inference" name="prediction-inference" class="anchor"><span class="anchor-link"></span></a>Prediction/inference</h1>
-<p>Scio supports preforming inference on a saved Tensorflow model.</p>
-<p>For an <code>SCollection</code> of an arbitrary user type, predictions can be made against the raw model via <a href="https://spotify.github.io/scio/api/com/spotify/scio/tensorflow/syntax/PredictSCollectionOps.html#predict[V,W](savedModelUri:String,fetchOps:Seq[String],options:com.spotify.zoltar.tf.TensorFlowModel.Options,signatureName:String)(inFn:T=%3EMap[String,org.tensorflow.Tensor])(outFn:(T,Map[String,org.tensorflow.Tensor])=%3EV)(implicitevidence$1:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[V]" title="com.spotify.scio.tensorflow.syntax.PredictSCollectionOps"><code>predict</code></a> or using the model&rsquo;s <a href="https://www.tensorflow.org/tfx/serving/signature_defs">SignatureDefs</a> with <a href="https://spotify.github.io/scio/api/com/spotify/scio/tensorflow/syntax/PredictSCollectionOps.html#predictWithSigDef[V,W](savedModelUri:String,options:com.spotify.zoltar.tf.TensorFlowModel.Options,fetchOps:Option[Seq[String]],signatureName:String)(inFn:T=%3EMap[String,org.tensorflow.Tensor])(outFn:(T,Map[String,org.tensorflow.Tensor])=%3EV)(implicitevidence$2:com.spotify.scio.coders.Coder[V]):com.spotify.scio.values.SCollection[V]" title="com.spotify.scio.tensorflow.syntax.PredictSCollectionOps"><code>predictWithSigDef</code></a>:</p>
-<pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
-import com.spotify.scio.tensorflow._
-import com.spotify.zoltar.tf.TensorFlowModel
-import org.tensorflow._
-import org.tensorflow.proto.example.Example
-
-case class A()
-case class B()
-
-def toTensors(a: A): Map[String, Tensor] = ???
-def fromTensors(a: A, tensors: Map[String, Tensor]): B = ???
-
-val elements: SCollection[A] = ???
-val options: TensorFlowModel.Options = ???
-val fetchOpts: Seq[String] = ???
-
-val result: SCollection[B] = elements.predict[B](&quot;gs://model-path&quot;, fetchOpts, options)(toTensors)(fromTensors)
-val b: SCollection[B] = elements.predictWithSigDef[B](&quot;gs://model-path&quot;, options)(toTensors)(fromTensors _)
-</code></pre>
-<p>For an <code>SCollection</code> of some subclass of <code>Example</code>, a prediction can be made via <a href="https://spotify.github.io/scio/api/com/spotify/scio/tensorflow/syntax/PredictSCollectionOps.html#predictTfExamples[V](savedModelUri:String,options:com.spotify.zoltar.tf.TensorFlowModel.Options,exampleInputOp:String,fetchOps:Option[Seq[String]],signatureName:String)(outFn:(T,Map[String,org.tensorflow.Tensor])=%3EV)(implicitevidence$3:com.spotify.scio.coders.Coder[V],implicitev:T%3C:%3Corg.tensorflow.proto.example.Example):com.spotify.scio.values.SCollection[V]" title="com.spotify.scio.tensorflow.syntax.PredictSCollectionOps"><code>predictTfExamples</code></a>:</p>
-<pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
-import com.spotify.scio.tensorflow._
-import com.spotify.zoltar.tf.TensorFlowModel
-import org.tensorflow._
-import org.tensorflow.proto.example.Example
-
-val exampleElements: SCollection[Example] = ???
-val options: TensorFlowModel.Options = ???
-def toExample(in: Example, tensors: Map[String, Tensor]): Example = ???
-
-val c: SCollection[Example] = exampleElements.predictTfExamples[Example](&quot;gs://model-path&quot;, options) {
-  case (a, tensors) =&gt; toExample(a, tensors)
-}
-</code></pre>
 </div>
 <div>
 <a href="https://github.com/spotify/scio/tree/master/site/src/main/paradox/io/Tensorflow.md" title="Edit this page" class="md-source-file md-edit">
@@ -338,7 +299,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.14.9-16-4e55ac7-20250113T174824Z*
+0.14.10-43-57dbbad-20250131T193552Z*
 </span>
 </div>
 </article>

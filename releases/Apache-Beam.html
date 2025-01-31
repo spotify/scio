@@ -228,7 +228,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.14.9-16-4e55ac7-20250113T174824Z*
+<i class="md-icon" title="Version">label_outline</i> 0.14.10-43-57dbbad-20250131T193552Z*
 </label>
 </li>
 </ul>
@@ -358,6 +358,11 @@ spotify/scio
   </thead>
   <tbody>
     <tr>
+      <td align="center">0.14.11 </td>
+      <td align="center">2.62.0 </td>
+      <td align="left">This version will be deprecated on January 21, 2026. </td>
+    </tr>
+    <tr>
       <td align="center">0.14.10 </td>
       <td align="center">2.61.0 </td>
       <td align="left">This version will be deprecated on November 25, 2025. </td>
@@ -410,12 +415,12 @@ spotify/scio
     <tr>
       <td align="center">0.14.0 </td>
       <td align="center">2.53.0 </td>
-      <td align="left">This version will be deprecated on January 4, 2025. </td>
+      <td align="left">Deprecated on January 4, 2025. </td>
     </tr>
     <tr>
       <td align="center">0.13.6 </td>
       <td align="center">2.52.0 </td>
-      <td align="left">This version will be deprecated on November 17, 2024. </td>
+      <td align="left">Deprecated on November 17, 2024. </td>
     </tr>
     <tr>
       <td align="center">0.13.5 </td>
@@ -496,7 +501,7 @@ spotify/scio
 </table>
 <h2><a href="#beam-dependencies" name="beam-dependencies" class="anchor"><span class="anchor-link"></span></a>Beam dependencies</h2>
 <p>Scio&rsquo;s other library dependencies are kept in sync with Beam&rsquo;s to avoid compatibility issues. Scio will typically <em>not</em> bump dependency versions beyond what is supported in Beam due to the large test surface and the potential for data loss.</p>
-<p>You can find Beam&rsquo;s dependency list in its <a href="https://github.com/apache/beam/blob/v2.35.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy">Groovy config</a> (substitute the version tag in the URL with the desired Beam version). Additionally, Beam keeps many of its Google dependencies in sync with a <a href="https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/24.0.0/artifact_details.html">central BOM</a> (substitute the version tag in the URL with the value of <code>google_cloud_platform_libraries_bom</code> from Beam). Scio users who suspect incompatibility issues in their pipelines (common issues are GRPC, Netty, or Guava) can run <code>sbt evicted</code> and <code>sbt dependencyTree</code> to ensure their direct and transitive dependencies don&rsquo;t conflict with Scio or Beam.</p>
+<p>You can find Beam&rsquo;s dependency list in its <a href="https://github.com/apache/beam/blob/v2.62.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy">Groovy config</a> (substitute the version tag in the URL with the desired Beam version). Additionally, Beam keeps many of its Google dependencies in sync with a <a href="https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/24.0.0/artifact_details.html">central BOM</a> (substitute the version tag in the URL with the value of <code>google_cloud_platform_libraries_bom</code> from Beam). Scio users who suspect incompatibility issues in their pipelines (common issues are GRPC, Netty, or Guava) can run <code>sbt evicted</code> and <code>sbt dependencyTree</code> to ensure their direct and transitive dependencies don&rsquo;t conflict with Scio or Beam.</p>
 <h2><a href="#release-cycle-and-backport-procedures" name="release-cycle-and-backport-procedures" class="anchor"><span class="anchor-link"></span></a>Release cycle and backport procedures</h2>
 <p>Scio has a frequent release cycle, roughly every 2-4 weeks, as compared to months for the upstream Apache Beam. We also aim to stay a step ahead by pulling changes from upstream and contributing new ones back.</p>
 <p>Let&rsquo;s call the Beam version that Scio depends on <code>current</code>, and upstream master <code>latest</code>. Here are the procedures for backporting changes:</p>
@@ -510,7 +515,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.14.9-16-4e55ac7-20250113T174824Z*
+0.14.10-43-57dbbad-20250131T193552Z*
 </span>
 </div>
 </article>
