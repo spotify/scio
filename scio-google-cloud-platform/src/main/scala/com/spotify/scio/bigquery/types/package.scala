@@ -72,8 +72,7 @@ package object types {
       .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
       .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 
-    def apply(row: TableRow): Json = Json(mapper.writeValueAsString(row))
-    def parse(json: Json): TableRow = mapper.readValue(json.wkt, classOf[TableRow])
+    def parse(json: Json): AnyRef = mapper.readValue(json.wkt, classOf[Object])
   }
 
   /**

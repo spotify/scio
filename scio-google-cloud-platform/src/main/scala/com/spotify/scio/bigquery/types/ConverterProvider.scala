@@ -377,8 +377,7 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Geography] =>
           q"$tree.wkt"
         case t if t =:= typeOf[Json] =>
-          // for TableRow/json, use parsed JSON to prevent escaping
-          q"_root_.com.spotify.scio.bigquery.types.Json.parse($tree)"
+          q"$tree.wkt"
         case t if t =:= typeOf[BigNumeric] =>
           // for TableRow/json, use string to avoid precision loss (like numeric)
           q"$tree.wkt.toString"
