@@ -598,12 +598,15 @@ val commonSettings = bomSettings ++ Def.settings(
   Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
   Test / javaOptions ++= JavaOptions.testDefaults(javaMajorVersion),
   Test / testOptions += Tests.Argument("-oD"),
-  coverageExcludedPackages := (Seq(
+  coverageExcludedPackages := Seq(
+    // skip modules
     "com\\.spotify\\.scio\\.examples\\..*",
     "com\\.spotify\\.scio\\.repl\\..*",
-    "com\\.spotify\\.scio\\.util\\.MultiJoin",
-    "com\\.spotify\\.scio\\.smb\\.util\\.SMBMultiJoin"
-  ) ++ (2 to 10).map(x => s"com\\.spotify\\.scio\\.sql\\.Query$x")).mkString(";"),
+    // generated API (22 params)
+    "com\\.spotify\\.scio\\.coders\\.instances\\.TupleCoders",
+    "com\\.spotify\\.scio\\.smb\\.util\\.SMBMultiJoin",
+    "com\\.spotify\\.scio\\.util\\.MultiJoin"
+  ).mkString(";"),
   coverageHighlighting := true
 )
 
