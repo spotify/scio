@@ -48,6 +48,7 @@ import scala.collection.mutable.{Buffer => MBuffer}
 import scala.concurrent.duration.Duration
 import scala.io.Source
 import scala.reflect.ClassTag
+import scala.util.chaining._
 import scala.util.control.NoStackTrace
 import scala.util.{Failure, Success, Try}
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
@@ -452,6 +453,88 @@ class ScioContext private[scio] (
     val o = optionsAs[ScioOptions]
     o.setScalaVersion(BuildInfo.scalaVersion)
     o.setScioVersion(BuildInfo.version)
+  }
+
+  {
+    import org.apache.hadoop.conf.Configuration
+    import com.google.cloud.hadoop.fs.gcs.{GoogleHadoopFileSystemConfiguration => GfsConfig}
+    import com.google.cloud.hadoop.gcsio.GoogleCloudStorageReadOptions
+
+    try {
+      // If Hadoop is on the classpath, try to parse default gcs-connector options
+      val config = new Configuration()
+      val o = optionsAs[GcsOptions]
+
+      // Todo replace with built-in parser from gcsio when GoogleCloudDataproc/hadoop-connectors#1294 is merged
+      o.setGoogleCloudStorageReadOptions(
+        GoogleCloudStorageReadOptions
+          .builder()
+          .pipe(o =>
+            Option(config.get(GfsConfig.GCS_INPUT_STREAM_FAST_FAIL_ON_NOT_FOUND_ENABLE.getKey))
+              .map(_.toBoolean)
+              .fold(o)(o.setFastFailOnNotFound)
+          )
+          .pipe(o =>
+            Option(config.get(GfsConfig.GCS_INPUT_STREAM_SUPPORT_GZIP_ENCODING_ENABLE.getKey))
+              .map(_.toBoolean)
+              .fold(o)(o.setSupportGzipEncoding)
+          )
+          .pipe(o =>
+            Option(config.get(GfsConfig.GCS_INPUT_STREAM_INPLACE_SEEK_LIMIT.getKey))
+              .map(_.toLong)
+              .fold(o)(o.setInplaceSeekLimit)
+          )
+          .pipe(o =>
+            Option(config.get(GfsConfig.GCS_INPUT_STREAM_FADVISE.getKey))
+              .map(GoogleCloudStorageReadOptions.Fadvise.valueOf)
+              .fold(o)(o.setFadvise)
+          )
+          .pipe(o =>
+            Option(config.get(GfsConfig.GCS_INPUT_STREAM_MIN_RANGE_REQUEST_SIZE.getKey))
+              .map(_.toInt)
+              .fold(o)(o.setMinRangeRequestSize)
+          )
+          .pipe(o =>
+            Option(config.get(GfsConfig.GCS_GRPC_CHECKSUMS_ENABLE.getKey))
+              .map(_.toBoolean)
+              .fold(o)(o.setGrpcChecksumsEnabled)
+          )
+          .pipe(o =>
+            Option(config.get(GfsConfig.GCS_GRPC_READ_TIMEOUT_MS.getKey))
+              .map(_.toLong)
+              .fold(o)(o.setGrpcReadTimeoutMillis)
+          )
+          .pipe(o =>
+            Option(config.get(GfsConfig.GCS_GRPC_READ_MESSAGE_TIMEOUT_MS.getKey))
+              .map(_.toLong)
+              .fold(o)(o.setGrpcReadMessageTimeoutMillis)
+          )
+          .pipe(o =>
+            Option(config.get(GfsConfig.GCS_GRPC_READ_METADATA_TIMEOUT_MS.getKey))
+              .map(_.toLong)
+              .fold(o)(o.setGrpcReadMetadataTimeoutMillis)
+          )
+          .pipe(o =>
+            Option(config.get(GfsConfig.GCS_GRPC_READ_ZEROCOPY_ENABLE.getKey))
+              .map(_.toBoolean)
+              .fold(o)(o.setGrpcReadZeroCopyEnabled)
+          )
+          .pipe(o =>
+            Option(config.get(GfsConfig.GCS_TRACE_LOG_ENABLE.getKey))
+              .map(_.toBoolean)
+              .fold(o)(o.setTraceLogEnabled)
+          )
+          .pipe(o =>
+            Option(config.get(GfsConfig.GCS_TRACE_LOG_TIME_THRESHOLD_MS.getKey))
+              .map(_.toLong)
+              .fold(o)(o.setTraceLogTimeThreshold)
+          )
+          .build()
+      )
+    } catch {
+      // Hadoop and/or gcs-connector is excluded from classpath, do not try to set options
+      case _: NoClassDefFoundError | _: NoSuchMethodException =>
+    }
   }
 
   private[scio] def labels: Map[String, String] =
