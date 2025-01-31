@@ -60,7 +60,7 @@ class BigQueryIOIT extends PipelineSpec {
     r.get("corpus").asInstanceOf[String]
 
   def extractCorpus(r: GenericRecord): String =
-    r.get("corpus").asInstanceOf[String]
+    r.get("corpus").asInstanceOf[CharSequence].toString
 
   def extractWordCount(r: TableRow): (String, Long) = {
     val word = r.get("word").asInstanceOf[String]
@@ -69,8 +69,8 @@ class BigQueryIOIT extends PipelineSpec {
   }
 
   def extractWordCount(r: GenericRecord): (String, Long) = {
-    val word = r.get("word").asInstanceOf[String]
-    val count = r.get("word_count").asInstanceOf[String].toLong
+    val word = r.get("word").asInstanceOf[CharSequence].toString
+    val count = r.get("word_count").asInstanceOf[Long]
     word -> count
   }
 
