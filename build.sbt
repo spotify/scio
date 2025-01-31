@@ -483,6 +483,13 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   // dropped custom BigQueryAvroUtilsWrapper
   ProblemFilters.exclude[MissingClassProblem](
     "org.apache.beam.sdk.io.gcp.bigquery.BigQueryAvroUtilsWrapper"
+  ),
+  // tablerow json fix
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.bigquery.types.package#Json.apply"
+  ),
+  ProblemFilters.exclude[IncompatibleResultTypeProblem](
+    "com.spotify.scio.bigquery.types.package#Json.parse"
   )
 )
 
