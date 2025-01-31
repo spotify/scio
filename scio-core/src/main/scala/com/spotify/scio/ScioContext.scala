@@ -465,6 +465,7 @@ class ScioContext private[scio] (
       val config = new Configuration()
       val o = optionsAs[GcsOptions]
 
+      // Todo replace with built-in parser from gcsio when GoogleCloudDataproc/hadoop-connectors#1294 is merged
       o.setGoogleCloudStorageReadOptions(
         GoogleCloudStorageReadOptions
           .builder()
