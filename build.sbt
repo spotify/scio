@@ -483,6 +483,10 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   // dropped custom BigQueryAvroUtilsWrapper
   ProblemFilters.exclude[MissingClassProblem](
     "org.apache.beam.sdk.io.gcp.bigquery.BigQueryAvroUtilsWrapper"
+  ),
+  // Changes in avro SlowGenericRecordCoder
+  ProblemFilters.exclude[Problem](
+    "com.spotify.scio.coders.avro.SlowGenericRecordCoder*"
   )
 )
 
