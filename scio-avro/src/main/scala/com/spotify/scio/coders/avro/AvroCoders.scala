@@ -22,35 +22,51 @@ import com.spotify.scio.coders.{Coder, CoderGrammar}
 import com.spotify.scio.util.ScioUtil
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericRecord, IndexedRecord}
+import org.apache.avro.io.{BinaryDecoder, BinaryEncoder, DecoderFactory, EncoderFactory}
 import org.apache.avro.specific.{SpecificData, SpecificFixed, SpecificRecord}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
-import org.apache.beam.sdk.coders.{AtomicCoder, Coder => BCoder, CustomCoder, StringUtf8Coder}
+import org.apache.beam.sdk.coders.{CustomCoder, StringUtf8Coder}
 import org.apache.beam.sdk.extensions.avro.coders.AvroCoder
 import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory
-import org.apache.beam.sdk.util.common.ElementByteSizeObserver
+import org.apache.beam.sdk.util.EmptyOnDeserializationThreadLocal
 
 import java.io.{InputStream, OutputStream}
+import scala.collection.concurrent.TrieMap
 import scala.reflect.ClassTag
 
-final private class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
-  // TODO: can we find something more efficient than String ?
+final private class SlowGenericRecordCoder extends CustomCoder[GenericRecord] {
+  // Schema is serializable on avro 1.9+
+  // Use String for 1.8 compat
   private val sc = StringUtf8Coder.of()
 
-  private def genericCoder(schema: Schema): BCoder[GenericRecord] =
-    AvroCoder.of(GenericRecordDatumFactory, schema)
+  /**
+   * Reuse parsed schemas because GenericDatumReader caches decoders based on schema reference
+   * equality.
+   * @see
+   *   [[org.apache.avro.generic.GenericDatumReader.getResolver]].
+   */
+  @transient private lazy val schemaCache = new TrieMap[String, Schema]()
+
+  private val encoder = new EmptyOnDeserializationThreadLocal[BinaryEncoder]()
+  private val decoder = new EmptyOnDeserializationThreadLocal[BinaryDecoder]()
 
   override def encode(value: GenericRecord, os: OutputStream): Unit = {
+    val enc = EncoderFactory.get().directBinaryEncoder(os, encoder.get())
+    encoder.set(enc)
     val schema = value.getSchema
-    val coder = genericCoder(schema)
-    sc.encode(schema.toString, os)
-    coder.encode(value, os)
+    val schemaString = schema.toString
+    sc.encode(schemaString, os)
+    val writer = AvroDatumFactory.generic()(schema)
+    writer.write(value, enc)
   }
 
   override def decode(is: InputStream): GenericRecord = {
-    val schemaStr = sc.decode(is)
-    val schema = new Schema.Parser().parse(schemaStr)
-    val coder = genericCoder(schema)
-    coder.decode(is)
+    val dec = DecoderFactory.get().directBinaryDecoder(is, decoder.get())
+    decoder.set(dec)
+    val schemaString = sc.decode(is)
+    val schema = schemaCache.getOrElseUpdate(schemaString, new Schema.Parser().parse(schemaString))
+    val reader = AvroDatumFactory.generic()(schema, schema)
+    reader.read(null, dec)
   }
 
   // delegate methods for determinism and equality checks
@@ -59,18 +75,6 @@ final private class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
       this,
       "Coder[GenericRecord] without schema is non-deterministic"
     )
-  override def consistentWithEquals(): Boolean = false
-  override def structuralValue(value: GenericRecord): AnyRef =
-    genericCoder(value.getSchema).structuralValue(value)
-
-  // delegate methods for byte size estimation
-  override def isRegisterByteSizeObserverCheap(value: GenericRecord): Boolean =
-    genericCoder(value.getSchema).isRegisterByteSizeObserverCheap(value)
-  override def registerByteSizeObserver(
-    value: GenericRecord,
-    observer: ElementByteSizeObserver
-  ): Unit =
-    genericCoder(value.getSchema).registerByteSizeObserver(value, observer)
 }
 
 /**
