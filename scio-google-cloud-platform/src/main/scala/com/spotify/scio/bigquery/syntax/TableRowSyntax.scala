@@ -121,10 +121,9 @@ object TableRowOps {
   }
 
   def json(value: AnyRef): Json = value match {
-    case x: Json     => x
-    case x: TableRow => Json(x)
-    case x: String   => Json(x)
-    case _           => throw new UnsupportedOperationException("Cannot convert to json: " + value)
+    case x: Json   => x
+    case x: String => Json(x)
+    case _         => throw new UnsupportedOperationException("Cannot convert to json: " + value)
   }
 
   def bignumeric(value: AnyRef): BigNumeric = value match {
