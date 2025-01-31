@@ -91,7 +91,7 @@ object TypedBigQueryIT {
         // json array
         alphaLowerStr.flatMap(str => arbInt.arbitrary.map(num => s"""["$str",$num]""")),
         // json literals
-        alphaLowerStr.map(str => s"\"$str\""),
+        alphaLowerStr.map(str => s""""$str""""),
         arbInt.arbitrary.map(_.toString),
         arbBool.arbitrary.map(_.toString),
         Gen.const("null")
@@ -161,7 +161,7 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
           // TO disambiguate from literal json string,
           // field MUST be converted to parsed JSON
           val jsonLoadRow = new TableRow()
-          jsonLoadRow.putAll(row)
+          jsonLoadRow.putAll(row.asInstanceOf[java.util.Map[String, _]]) // cast for 2.12
           jsonLoadRow.set("json", Json.parse(row.getJson("json")))
         }
         .saveAsBigQueryTable(

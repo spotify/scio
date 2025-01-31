@@ -69,7 +69,7 @@ final class ConverterProviderSpec
         // json array
         alphaLowerStr.flatMap(str => arbInt.arbitrary.map(num => s"""["$str",$num]""")),
         // json literals
-        alphaLowerStr.map(str => s"\"$str\""),
+        alphaLowerStr.map(str => s""""$str""""),
         arbInt.arbitrary.map(_.toString),
         arbBool.arbitrary.map(_.toString),
         Gen.const("null")
