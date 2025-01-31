@@ -248,11 +248,16 @@ private class SortedSetCoder[T: Ordering](bc: BCoder[T]) extends SeqLikeCoder[So
     decode(inStream, SortedSet.newBuilder[T])
 }
 
-private class MutablePriorityQueueCoder[T: Ordering](bc: BCoder[T])
+private[coders] class MutablePriorityQueueCoder[T: Ordering](bc: BCoder[T])
     extends SeqLikeCoder[m.PriorityQueue, T](bc) {
   override def consistentWithEquals(): Boolean = false // PriorityQueue does not define equality
   override def decode(inStream: InputStream): m.PriorityQueue[T] =
     decode(inStream, m.PriorityQueue.newBuilder[T])
+  override def verifyDeterministic(): Unit =
+    throw new NonDeterministicException(
+      this,
+      "Ordering of elements in a priority queue may be non-deterministic."
+    )
 }
 
 private[coders] class BitSetCoder extends AtomicCoder[BitSet] {
@@ -360,18 +365,8 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V])
 
 private[coders] class SortedMapCoder[K: Ordering, V](kc: BCoder[K], vc: BCoder[V])
     extends MapLikeCoder[K, V, SortedMap](kc, vc) {
-
-  override def encode(value: SortedMap[K, V], os: OutputStream): Unit = {
-    require(
-      value.ordering == Ordering[K],
-      "SortedMap ordering does not match SortedMapCoder ordering"
-    )
-    super.encode(value, os)
-  }
-
   override def decode(is: InputStream): SortedMap[K, V] =
     decode(is, SortedMap.newBuilder[K, V])
-
   override def verifyDeterministic(): Unit = {
     keyCoder.verifyDeterministic()
     valueCoder.verifyDeterministic()
