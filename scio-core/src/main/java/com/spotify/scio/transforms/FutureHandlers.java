@@ -42,7 +42,7 @@ public class FutureHandlers {
   public interface Base<F, V> {
 
     default Duration getTimeout() {
-      return Duration.ofMinutes(1);
+      return Duration.ofMinutes(10);
     }
 
     void waitForFutures(Iterable<F> futures)
