@@ -72,9 +72,6 @@ final private[coders] class JPriorityQueueCoder[T](
     pq
   }
 
-  override def encode(value: java.util.PriorityQueue[T], os: OutputStream): Unit =
-    super.encode(value, os)
-
   override def verifyDeterministic(): Unit =
     throw new NonDeterministicException(
       this,
