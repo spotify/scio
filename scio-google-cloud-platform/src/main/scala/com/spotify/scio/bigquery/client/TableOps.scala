@@ -31,7 +31,7 @@ import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
 import org.apache.avro.io.{BinaryDecoder, DecoderFactory}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
-import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryOptions, BigQueryUtils}
+import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryAvroUtilsWrapper, BigQueryOptions}
 import org.apache.beam.sdk.io.gcp.{bigquery => bq}
 import org.apache.beam.sdk.options.{ExecutorOptions, PipelineOptionsFactory}
 import org.joda.time.Instant
@@ -67,8 +67,11 @@ final private[client] class TableOps(client: Client) {
     storageAvroRows(table, TableReadOptions.getDefaultInstance)
 
   def storageRows(table: STable, readOptions: TableReadOptions): Iterator[TableRow] =
-    storageAvroRows(table, readOptions).map { gr =>
-      BigQueryUtils.convertGenericRecordToTableRow(gr)
+    withBigQueryService { bqServices =>
+      val tb = bqServices.getTable(table.ref, readOptions.getSelectedFieldsList)
+      storageAvroRows(table, readOptions).map { gr =>
+        BigQueryAvroUtilsWrapper.convertGenericRecordToTableRow(gr, tb.getSchema)
+      }
     }
 
   def storageAvroRows(table: STable, readOptions: TableReadOptions): Iterator[GenericRecord] = {

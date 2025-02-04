@@ -137,7 +137,6 @@ final class ConverterProviderSpec
       o.bigDecimalF.isDefined shouldBe r.containsKey("bigDecimalF")
       o.geographyF.isDefined shouldBe r.containsKey("geographyF")
       o.jsonF.isDefined shouldBe r.containsKey("jsonF")
-      o.bigNumericF.isDefined shouldBe r.containsKey("bigNumericF")
     }
   }
 

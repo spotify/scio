@@ -43,9 +43,6 @@ object SchemaUtil {
       case "DATE"              => "LocalDate"
       case "TIME"              => "LocalTime"
       case "DATETIME"          => "LocalDateTime"
-      case "GEOGRAPHY"         => "Geography"
-      case "JSON"              => "Json"
-      case "BIGNUMERIC"        => "BigNumeric"
       case "RECORD" | "STRUCT" => NameProvider.getUniqueName(tfs.getName)
       case t                   => throw new IllegalArgumentException(s"Type: $t not supported")
     }

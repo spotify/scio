@@ -480,10 +480,6 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ProblemFilters.exclude[DirectMissingMethodProblem](
     "com.spotify.scio.tensorflow.syntax.SCollectionSyntax.tensorFlowPredictSCollectionOps"
   ),
-  // dropped custom BigQueryAvroUtilsWrapper
-  ProblemFilters.exclude[MissingClassProblem](
-    "org.apache.beam.sdk.io.gcp.bigquery.BigQueryAvroUtilsWrapper"
-  ),
   // Changes in avro SlowGenericRecordCoder
   ProblemFilters.exclude[Problem](
     "com.spotify.scio.coders.avro.SlowGenericRecordCoder*"

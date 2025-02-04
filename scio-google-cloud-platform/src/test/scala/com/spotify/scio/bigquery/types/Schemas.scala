@@ -37,8 +37,7 @@ object Schemas {
     datetimeF: LocalDateTime,
     bigDecimalF: BigDecimal,
     geographyF: Geography,
-    jsonF: Json,
-    bigNumericF: BigNumeric
+    jsonF: Json
   )
   case class Optional(
     boolF: Option[Boolean],
@@ -55,8 +54,7 @@ object Schemas {
     datetimeF: Option[LocalDateTime],
     bigDecimalF: Option[BigDecimal],
     geographyF: Option[Geography],
-    jsonF: Option[Json],
-    bigNumericF: Option[BigNumeric]
+    jsonF: Option[Json]
   )
   case class Repeated(
     boolF: List[Boolean],
@@ -73,8 +71,7 @@ object Schemas {
     datetimeF: List[LocalDateTime],
     bigDecimalF: List[BigDecimal],
     geographyF: List[Geography],
-    jsonF: List[Json],
-    bigNumericF: List[BigNumeric]
+    jsonF: List[Json]
   )
 
   // records
