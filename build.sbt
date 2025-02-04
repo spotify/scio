@@ -490,6 +490,24 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ),
   ProblemFilters.exclude[IncompatibleResultTypeProblem](
     "com.spotify.scio.bigquery.types.package#Json.parse"
+  ),
+  // backing out bq-avro changes from 0.14.11
+  ProblemFilters.exclude[MissingClassProblem](
+    "com.spotify.scio.bigquery.BigQueryTypedTable$Format$AvroFormat"
+  ),
+  ProblemFilters.exclude[MissingTypesProblem](
+    "com.spotify.scio.bigquery.BigQueryTypedTable$Format$GenericRecord$"
+  ),
+  ProblemFilters.exclude[MissingClassProblem](
+    "com.spotify.scio.bigquery.BigQueryTypedTable$Format$GenericRecordWithLogicalTypes$"
+  ),
+  ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.bigquery.Date.days"),
+  ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.bigquery.DateTime.format"),
+  ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.bigquery.Numeric.bytes"),
+  ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.bigquery.Time.micros"),
+  ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.bigquery.Timestamp.micros"),
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.bigquery.types.package#BigNumeric.bytes"
   )
 )
 
