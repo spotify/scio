@@ -191,8 +191,7 @@ final class BigQueryIOTest extends ScioIOSpec {
         .testStream(testStreamOf[GenericRecord].advanceWatermarkToInfinity())
         .saveAsBigQueryTable(
           Table.Spec("project:dataset.dummy"),
-          createDisposition = CreateDisposition.CREATE_NEVER,
-          method = Method.STREAMING_INSERTS
+          createDisposition = CreateDisposition.CREATE_NEVER
         )
     }
   }
