@@ -63,19 +63,50 @@ class SchemaProviderTest extends AnyFlatSpec with Matchers {
     s"""
        |{
        |  "fields": [
-       |    {"mode": "$mode", "name": "required", "type": "RECORD", ${basicFields("REQUIRED")}},
-       |    {"mode": "$mode", "name": "optional", "type": "RECORD", ${basicFields("NULLABLE")}},
-       |    {"mode": "$mode", "name": "repeated", "type": "RECORD", ${basicFields("REPEATED")}}
+       |    {"mode": "$mode", "name": "requiredField", "type": "RECORD", ${basicFields(
+        "REQUIRED"
+      )}},
+       |    {"mode": "$mode", "name": "optionalField", "type": "RECORD", ${basicFields(
+        "NULLABLE"
+      )}},
+       |    {"mode": "$mode", "name": "repeatedField", "type": "RECORD", ${basicFields("REPEATED")}}
        |  ]
        |}
        |""".stripMargin
 
   it should "support required records" in {
     SchemaProvider.schemaOf[RequiredNested] shouldBe parseSchema(recordFields("REQUIRED"))
+
+    // Avro schema should retain type and field names
+    val avroSchema = SchemaProvider.avroSchemaOf[RequiredNested]
+    avroSchema.getField("requiredField").schema().getName shouldBe classOf[Required].getSimpleName
+    avroSchema.getField("optionalField").schema().getName shouldBe classOf[Optional].getSimpleName
+    avroSchema.getField("repeatedField").schema().getName shouldBe classOf[Repeated].getSimpleName
   }
 
   it should "support nullable records" in {
     SchemaProvider.schemaOf[OptionalNested] shouldBe parseSchema(recordFields("NULLABLE"))
+
+    // Avro schema should retain type and field names
+    val avroSchema = SchemaProvider.avroSchemaOf[OptionalNested]
+    avroSchema
+      .getField("requiredField")
+      .schema()
+      .getTypes
+      .get(1)
+      .getName shouldBe classOf[Required].getSimpleName
+    avroSchema
+      .getField("optionalField")
+      .schema()
+      .getTypes
+      .get(1)
+      .getName shouldBe classOf[Optional].getSimpleName
+    avroSchema
+      .getField("repeatedField")
+      .schema()
+      .getTypes
+      .get(1)
+      .getName shouldBe classOf[Repeated].getSimpleName
   }
 
   it should "support repeated records" in {

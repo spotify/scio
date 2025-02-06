@@ -191,9 +191,9 @@ final class ConverterProviderSpec
     forAll { o: OptionalNested =>
       val r = BigQueryType.toTableRow[OptionalNested](o)
       // TableRow object should only contain a key if the corresponding Option[T] is defined
-      o.required.isDefined shouldBe r.containsKey("required")
-      o.optional.isDefined shouldBe r.containsKey("optional")
-      o.repeated.isDefined shouldBe r.containsKey("repeated")
+      o.requiredField.isDefined shouldBe r.containsKey("required")
+      o.optionalField.isDefined shouldBe r.containsKey("optional")
+      o.repeatedField.isDefined shouldBe r.containsKey("repeated")
     }
   }
 

@@ -78,16 +78,20 @@ object Schemas {
   )
 
   // records
-  case class RequiredNested(required: Required, optional: Optional, repeated: Repeated)
+  case class RequiredNested(
+    requiredField: Required,
+    optionalField: Optional,
+    repeatedField: Repeated
+  )
   case class OptionalNested(
-    required: Option[Required],
-    optional: Option[Optional],
-    repeated: Option[Repeated]
+    requiredField: Option[Required],
+    optionalField: Option[Optional],
+    repeatedField: Option[Repeated]
   )
   case class RepeatedNested(
-    required: List[Required],
-    optional: List[Optional],
-    repeated: List[Repeated]
+    requiredField: List[Required],
+    optionalField: List[Optional],
+    repeatedField: List[Repeated]
   )
 
   case class User(@description("user name") name: String, @description("user age") age: Int)
