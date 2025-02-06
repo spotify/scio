@@ -30,7 +30,6 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, 
 import org.apache.beam.sdk.runners.TransformHierarchy
 import org.apache.beam.sdk.transforms.display.DisplayData
 import org.apache.beam.sdk.values.PValue
-import org.joda.time.Duration
 
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
@@ -172,27 +171,30 @@ final class BigQueryIOTest extends ScioIOSpec {
       .saveAsBigQueryTable(spec, createDisposition = CreateDisposition.CREATE_NEVER)
   }
 
-  it should "work with file loads for generic records in batch" in {
-    implicit val grCoder: Coder[GenericRecord] = avroGenericRecordCoder
-    ScioContext()
-      .empty[GenericRecord]()
-      .saveAsBigQueryTable(
-        Table.Spec("project:dataset.dummy"),
-        createDisposition = CreateDisposition.CREATE_NEVER,
-        method = Method.FILE_LOADS
-      )
+  it should "fail with streaming inserts for generic records in batch" in {
+    an[IllegalArgumentException] shouldBe thrownBy {
+      implicit val grCoder: Coder[GenericRecord] = avroGenericRecordCoder
+      ScioContext()
+        .empty[GenericRecord]()
+        .saveAsBigQueryTable(
+          Table.Spec("project:dataset.dummy"),
+          createDisposition = CreateDisposition.CREATE_NEVER,
+          method = Method.STREAMING_INSERTS
+        )
+    }
   }
 
-  it should "work with file loads for generic records in streaming" in {
-    implicit val grCoder: Coder[GenericRecord] = avroGenericRecordCoder
-    ScioContext()
-      .testStream(testStreamOf[GenericRecord].advanceWatermarkToInfinity())
-      .saveAsBigQueryTable(
-        Table.Spec("project:dataset.dummy"),
-        createDisposition = CreateDisposition.CREATE_NEVER,
-        method = Method.FILE_LOADS,
-        triggeringFrequency = Duration.standardHours(1)
-      )
+  it should "fail with streaming inserts for generic records in streaming" in {
+    an[IllegalArgumentException] shouldBe thrownBy {
+      implicit val grCoder: Coder[GenericRecord] = avroGenericRecordCoder
+      ScioContext()
+        .testStream(testStreamOf[GenericRecord].advanceWatermarkToInfinity())
+        .saveAsBigQueryTable(
+          Table.Spec("project:dataset.dummy"),
+          createDisposition = CreateDisposition.CREATE_NEVER,
+          method = Method.STREAMING_INSERTS
+        )
+    }
   }
 
   it should "read the same input table with different predicate and projections using bigQueryStorage" in {
