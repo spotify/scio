@@ -26,10 +26,11 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.Pipeline.PipelineVisitor
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.io.Read
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.CreateDisposition
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, Method}
 import org.apache.beam.sdk.runners.TransformHierarchy
 import org.apache.beam.sdk.transforms.display.DisplayData
 import org.apache.beam.sdk.values.PValue
+import org.joda.time.Duration
 
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
@@ -151,6 +152,47 @@ final class BigQueryIOTest extends ScioIOSpec {
     // We want to validate on the job graph, and we need not actually execute the pipeline.
 
     unconsumedReads(context) shouldBe empty
+  }
+
+  it should "work with streaming inserts for typed and tablerow elements in batch" in {
+    val sc = ScioContext()
+    val spec = Table.Spec("project:dataset.dummy")
+    sc.empty[BQRecord]().saveAsTypedBigQueryTable(spec)
+    sc.empty[TableRow]()
+      .saveAsBigQueryTable(spec, createDisposition = CreateDisposition.CREATE_NEVER)
+  }
+
+  it should "work with streaming inserts for typed and tablerow elements in streaming" in {
+    val sc = ScioContext()
+    val spec = Table.Spec("project:dataset.dummy")
+    val typedStream = testStreamOf[BQRecord].advanceWatermarkToInfinity()
+    val trStream = testStreamOf[TableRow].advanceWatermarkToInfinity()
+    sc.testStream(typedStream).saveAsTypedBigQueryTable(spec)
+    sc.testStream(trStream)
+      .saveAsBigQueryTable(spec, createDisposition = CreateDisposition.CREATE_NEVER)
+  }
+
+  it should "work with file loads for generic records in batch" in {
+    implicit val grCoder: Coder[GenericRecord] = avroGenericRecordCoder
+    ScioContext()
+      .empty[GenericRecord]()
+      .saveAsBigQueryTable(
+        Table.Spec("project:dataset.dummy"),
+        createDisposition = CreateDisposition.CREATE_NEVER,
+        method = Method.FILE_LOADS
+      )
+  }
+
+  it should "work with file loads for generic records in streaming" in {
+    implicit val grCoder: Coder[GenericRecord] = avroGenericRecordCoder
+    ScioContext()
+      .testStream(testStreamOf[GenericRecord].advanceWatermarkToInfinity())
+      .saveAsBigQueryTable(
+        Table.Spec("project:dataset.dummy"),
+        createDisposition = CreateDisposition.CREATE_NEVER,
+        method = Method.FILE_LOADS,
+        triggeringFrequency = Duration.standardHours(1)
+      )
   }
 
   it should "read the same input table with different predicate and projections using bigQueryStorage" in {
