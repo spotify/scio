@@ -497,7 +497,7 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ),
   ProblemFilters.exclude[DirectMissingMethodProblem](
     "com.spotify.scio.bigquery.types.package#BigNumeric.bytes"
-  ),
+  )
 )
 
 // headers
