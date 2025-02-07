@@ -180,22 +180,19 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[String]              => tree
 
         case t if t =:= typeOf[BigDecimal] =>
-          q"_root_.com.spotify.scio.bigquery.Numeric.bytes($tree)"
+          q"_root_.com.spotify.scio.bigquery.Numeric($tree).toString"
         case t if t =:= typeOf[ByteString] =>
           q"_root_.java.nio.ByteBuffer.wrap($tree.toByteArray)"
         case t if t =:= typeOf[Array[Byte]] =>
           q"_root_.java.nio.ByteBuffer.wrap($tree)"
 
-        case t if t =:= typeOf[Instant] =>
-          q"_root_.com.spotify.scio.bigquery.Timestamp.micros($tree)"
+        case t if t =:= typeOf[Instant] => q"$tree.getMillis * 1000"
         case t if t =:= typeOf[LocalDate] =>
-          q"_root_.com.spotify.scio.bigquery.Date.days($tree)"
+          q"_root_.com.spotify.scio.bigquery.Date($tree)"
         case t if t =:= typeOf[LocalTime] =>
-          q"_root_.com.spotify.scio.bigquery.Time.micros($tree)"
+          q"_root_.com.spotify.scio.bigquery.Time($tree)"
         case t if t =:= typeOf[LocalDateTime] =>
-          // LocalDateTime is read as avro string
-          // on write we should use `local-timestamp-micros`
-          q"_root_.com.spotify.scio.bigquery.DateTime.format($tree)"
+          q"_root_.com.spotify.scio.bigquery.DateTime($tree)"
 
         // different than nested record match below, even though thore are case classes
         case t if t =:= typeOf[Geography] =>
@@ -203,7 +200,7 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Json] =>
           q"$tree.wkt"
         case t if t =:= typeOf[BigNumeric] =>
-          q"_root_.com.spotify.scio.bigquery.types.BigNumeric.bytes($tree)"
+          q"_root_.com.spotify.scio.bigquery.types.BigNumeric($tree.wkt).toString"
 
         // nested records
         case t if isCaseClass(c)(t) =>
