@@ -37,7 +37,7 @@ private[types] object SchemaProvider {
   def avroSchemaOf[T: TypeTag]: Schema =
     AvroSchemaCache.get(
       typeTag[T].tpe.toString,
-      BigQueryUtils.toGenericAvroSchema(typeTag[T].tpe.toString, schemaOf[T].getFields, true)
+      BigQueryUtils.toGenericAvroSchema(typeTag[T].tpe.toString, schemaOf[T].getFields)
     )
 
   def schemaOf[T: TypeTag]: TableSchema =

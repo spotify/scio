@@ -72,7 +72,8 @@ package object types {
       .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
       .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 
-    def parse(json: Json): AnyRef = mapper.readValue(json.wkt, classOf[Object])
+    def apply(row: TableRow): Json = Json(mapper.writeValueAsString(row))
+    def parse(json: Json): TableRow = mapper.readValue(json.wkt, classOf[TableRow])
   }
 
   /**
@@ -116,8 +117,5 @@ package object types {
       case b: ByteBuffer => new BigNumeric(DecimalConverter.fromBytes(b, null, DecimalLogicalType))
       case _             => apply(value.toString)
     }
-
-    def bytes(value: BigNumeric): ByteBuffer =
-      DecimalConverter.toBytes(value.wkt.bigDecimal, null, DecimalLogicalType)
   }
 }
