@@ -17,13 +17,13 @@
 
 package com.spotify.scio.bigtable;
 
-import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.grpc.BigtableSession;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.google.api.core.ApiFuture;
+import com.google.cloud.bigtable.data.v2.BigtableDataClient;
+import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn;
-import com.spotify.scio.transforms.GuavaAsyncLookupDoFn;
+import com.spotify.scio.transforms.FutureHandlers;
 import java.io.IOException;
-import java.time.Duration;
+import java.util.function.Supplier;
 import org.apache.beam.sdk.transforms.DoFn;
 
 /**
@@ -32,53 +32,55 @@ import org.apache.beam.sdk.transforms.DoFn;
  * @param <A> input element type.
  * @param <B> Bigtable lookup value type.
  */
-public abstract class BigtableDoFn<A, B> extends GuavaAsyncLookupDoFn<A, B, BigtableSession> {
+public abstract class BigtableDoFn<A, B>
+    extends BaseAsyncLookupDoFn<A, B, BigtableDataClient, ApiFuture<B>, BaseAsyncLookupDoFn.Try<B>>
+    implements FutureHandlers.GoogleApi<B> {
 
-  private final BigtableOptions options;
+  private final Supplier<BigtableDataSettings> settingsSupplier;
 
   /** Perform asynchronous Bigtable lookup. */
-  public abstract ListenableFuture<B> asyncLookup(BigtableSession session, A input);
+  public abstract ApiFuture<B> asyncLookup(BigtableDataClient client, A input);
 
   /**
    * Create a {@link BigtableDoFn} instance.
    *
-   * @param options Bigtable options.
+   * @param settingsSupplier Bigtable data settings supplier.
    */
-  public BigtableDoFn(BigtableOptions options) {
-    this(options, 1000);
+  public BigtableDoFn(Supplier<BigtableDataSettings> settingsSupplier) {
+    this(settingsSupplier, 1000);
   }
 
   /**
    * Create a {@link BigtableDoFn} instance.
    *
-   * @param options Bigtable options.
+   * @param settingsSupplier Bigtable data settings supplier.
    * @param maxPendingRequests maximum number of pending requests on every cloned DoFn. This
    *     prevents runner from timing out and retrying bundles.
    */
-  public BigtableDoFn(BigtableOptions options, int maxPendingRequests) {
-    this(options, maxPendingRequests, new BaseAsyncLookupDoFn.NoOpCacheSupplier<>());
+  public BigtableDoFn(Supplier<BigtableDataSettings> settingsSupplier, int maxPendingRequests) {
+    this(settingsSupplier, maxPendingRequests, new BaseAsyncLookupDoFn.NoOpCacheSupplier<>());
   }
 
   /**
    * Create a {@link BigtableDoFn} instance.
    *
-   * @param options Bigtable options.
+   * @param settingsSupplier Bigtable data settings supplier.
    * @param maxPendingRequests maximum number of pending requests on every cloned DoFn. This
    *     prevents runner from timing out and retrying bundles.
    * @param cacheSupplier supplier for lookup cache.
    */
   public BigtableDoFn(
-      BigtableOptions options,
+      Supplier<BigtableDataSettings> settingsSupplier,
       int maxPendingRequests,
       BaseAsyncLookupDoFn.CacheSupplier<A, B> cacheSupplier) {
     super(maxPendingRequests, cacheSupplier);
-    this.options = options;
+    this.settingsSupplier = settingsSupplier;
   }
 
   /**
    * Create a {@link BigtableDoFn} instance.
    *
-   * @param options Bigtable options.
+   * @param settingsSupplier Bigtable data settings supplier.
    * @param maxPendingRequests maximum number of pending requests on every cloned DoFn. This
    *     prevents runner from timing out and retrying bundles.
    * @param deduplicate if an attempt should be made to de-duplicate simultaneous requests for the
@@ -86,12 +88,12 @@ public abstract class BigtableDoFn<A, B> extends GuavaAsyncLookupDoFn<A, B, Bigt
    * @param cacheSupplier supplier for lookup cache.
    */
   public BigtableDoFn(
-      BigtableOptions options,
+      Supplier<BigtableDataSettings> settingsSupplier,
       int maxPendingRequests,
       boolean deduplicate,
       BaseAsyncLookupDoFn.CacheSupplier<A, B> cacheSupplier) {
     super(maxPendingRequests, deduplicate, cacheSupplier);
-    this.options = options;
+    this.settingsSupplier = settingsSupplier;
   }
 
   @Override
@@ -100,16 +102,21 @@ public abstract class BigtableDoFn<A, B> extends GuavaAsyncLookupDoFn<A, B, Bigt
     return ResourceType.PER_INSTANCE;
   }
 
-  @Override
-  public Duration getTimeout() {
-    return Duration.ofMillis(options.getCallOptionsConfig().getMutateRpcTimeoutMs());
-  }
-
-  protected BigtableSession newClient() {
+  protected BigtableDataClient newClient() {
     try {
-      return new BigtableSession(options);
+      return BigtableDataClient.create(settingsSupplier.get());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @Override
+  public BaseAsyncLookupDoFn.Try<B> success(B output) {
+    return new Try<>(output);
+  }
+
+  @Override
+  public BaseAsyncLookupDoFn.Try<B> failure(Throwable throwable) {
+    return new Try<>(throwable);
   }
 }
