@@ -35,7 +35,7 @@ import java.io.ObjectInputStream
 import java.io.IOException
 import java.io.NotSerializableException
 import cats.kernel.Eq
-import com.twitter.chill.Externalizer
+import com.spotify.scio.vendor.chill.Externalizer
 import com.esotericsoftware.kryo.KryoSerializable
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{Input, Output}

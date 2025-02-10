@@ -30,7 +30,7 @@ import org.apache.beam.sdk.values.{PCollection, TupleTag, TupleTagList}
 import scala.jdk.CollectionConverters._
 import scala.collection.compat._
 import scala.util.Try
-import com.twitter.chill.ClosureCleaner
+import com.spotify.scio.vendor.chill.ClosureCleaner
 
 /**
  * An enhanced SCollection that provides access to one or more [[SideInput]] s for some transforms.

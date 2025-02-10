@@ -77,12 +77,12 @@ val perfmarkVersion = "0.27.0"
 val algebirdVersion = "0.13.10"
 val annoy4sVersion = "0.10.0"
 val annoyVersion = "0.2.6"
+val asmVersion = "4.16"
 val breezeVersion = "2.1.0"
 val caffeineVersion = "2.9.3"
 val cassandraDriverVersion = "3.11.5"
 val cassandraVersion = "3.11.17"
 val catsVersion = "2.13.0"
-val chillVersion = "0.10.0"
 val circeVersion = "0.14.10"
 val commonsTextVersion = "1.10.0"
 val elasticsearch7Version = "7.17.21"
@@ -753,11 +753,7 @@ lazy val `scio-core` = project
       "com.google.http-client" % "google-http-client-gson" % gcpBom.key.value,
       "com.google.protobuf" % "protobuf-java" % gcpBom.key.value,
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
-      "com.twitter" % "chill-java" % chillVersion,
-      "com.twitter" % "chill-protobuf" % chillVersion,
       "com.twitter" %% "algebird-core" % algebirdVersion,
-      "com.twitter" %% "chill" % chillVersion,
-      "com.twitter" %% "chill-algebird" % chillVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
       "io.grpc" % "grpc-api" % gcpBom.key.value,
       "joda-time" % "joda-time" % jodaTimeVersion,
@@ -767,6 +763,7 @@ lazy val `scio-core` = project
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
       "org.apache.commons" % "commons-lang3" % commonsLang3Version,
       "org.apache.commons" % "commons-math3" % commonsMath3Version,
+      "org.apache.xbean" % "xbean-asm7-shaded" % asmVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.typelevel" %% "algebra" % algebraVersion,
       // provided
@@ -782,7 +779,6 @@ lazy val `scio-core` = project
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion % Test,
       "com.spotify" % "annoy" % annoyVersion % Test,
       "com.spotify" %% "magnolify-guava" % magnolifyVersion % Test,
-      "com.twitter" %% "chill" % chillVersion % Test,
       "commons-io" % "commons-io" % commonsIoVersion % Test,
       "junit" % "junit" % junitVersion % Test,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Test,
@@ -828,7 +824,6 @@ lazy val `scio-test-core` = project
       "com.google.http-client" % "google-http-client-gson" % gcpBom.key.value, // TODO should we have this here ?
       "com.lihaoyi" %% "fansi" % fansiVersion,
       "com.lihaoyi" %% "pprint" % pprintVersion,
-      "com.twitter" %% "chill" % chillVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.avro" % "avro" % avroVersion, // TODO should we have this here ?
@@ -926,8 +921,6 @@ lazy val `scio-avro` = project
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
       "com.spotify" %% "magnolify-protobuf" % magnolifyVersion,
       "com.spotify" %% "magnolify-shared" % magnolifyVersion,
-      "com.twitter" %% "chill" % chillVersion,
-      "com.twitter" % "chill-java" % chillVersion,
       "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion,
@@ -999,8 +992,6 @@ lazy val `scio-google-cloud-platform` = project
       "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
       "com.spotify" %% "magnolify-shared" % magnolifyVersion,
-      "com.twitter" %% "chill" % chillVersion,
-      "com.twitter" % "chill-java" % chillVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
       "io.grpc" % "grpc-api" % gcpBom.key.value,
       "io.grpc" % "grpc-auth" % gcpBom.key.value,
@@ -1042,8 +1033,6 @@ lazy val `scio-cassandra3` = project
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.protobuf" % "protobuf-java" % gcpBom.key.value,
-      "com.twitter" % "chill-java" % chillVersion,
-      "com.twitter" %% "chill" % chillVersion,
       "org.apache.cassandra" % "cassandra-all" % cassandraVersion,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
       "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion,
@@ -1177,7 +1166,6 @@ lazy val `scio-grpc` = project
       // compile
       "com.google.guava" % "failureaccess" % failureAccessVersion,
       "com.google.guava" % "guava" % guavaVersion,
-      "com.twitter" %% "chill" % chillVersion,
       "io.grpc" % "grpc-api" % gcpBom.key.value,
       "io.grpc" % "grpc-stub" % gcpBom.key.value,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
@@ -1255,7 +1243,6 @@ lazy val `scio-parquet` = project
       "com.google.cloud.bigdataoss" % "util-hadoop" % s"hadoop2-$bigdataossVersion",
       "com.google.protobuf" % "protobuf-java" % gcpBom.key.value,
       "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
-      "com.twitter" %% "chill" % chillVersion,
       "me.lyh" %% "parquet-avro" % parquetExtraVersion,
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.avro" % "avro-compiler" % avroVersion,

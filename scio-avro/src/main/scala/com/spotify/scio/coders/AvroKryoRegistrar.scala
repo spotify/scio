@@ -17,7 +17,7 @@
 package com.spotify.scio.coders
 
 import com.spotify.scio.coders.instances.kryo.{GenericAvroSerializer, SpecificAvroSerializer}
-import com.twitter.chill._
+import com.spotify.scio.vendor.chill._
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
 

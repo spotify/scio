@@ -18,7 +18,7 @@
 package com.spotify.scio.coders
 
 import com.spotify.scio.MagnoliaMacros
-import com.twitter.chill.ClosureCleaner
+import com.spotify.scio.vendor.chill.ClosureCleaner
 import magnolia1._
 
 import scala.reflect.ClassTag

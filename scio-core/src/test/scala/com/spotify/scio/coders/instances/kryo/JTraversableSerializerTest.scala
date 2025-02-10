@@ -18,7 +18,7 @@
 package com.spotify.scio.coders.instances.kryo
 
 import com.esotericsoftware.kryo.io.{Input, Output}
-import com.twitter.chill.{Kryo, KryoSerializer}
+import com.spotify.scio.vendor.chill.{Kryo, KryoSerializer}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 

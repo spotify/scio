@@ -25,7 +25,7 @@ import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io.{Tap, Taps}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values._
-import com.twitter.chill.Externalizer
+import com.spotify.scio.vendor.chill.Externalizer
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.{SpecificData, SpecificRecord}

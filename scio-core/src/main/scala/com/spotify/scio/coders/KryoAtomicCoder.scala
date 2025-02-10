@@ -27,9 +27,9 @@ import com.spotify.scio.options.ScioOptions
 import java.io.{EOFException, InputStream, OutputStream}
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
-import com.twitter.chill._
-import com.twitter.chill.algebird.AlgebirdRegistrar
-import com.twitter.chill.protobuf.ProtobufSerializer
+import com.spotify.scio.vendor.chill._
+import com.spotify.scio.vendor.chill.algebird.AlgebirdRegistrar
+import com.spotify.scio.vendor.chill.protobuf.ProtobufSerializer
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{AtomicCoder, CoderException => BCoderException, InstantCoder}
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}

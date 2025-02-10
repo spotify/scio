@@ -25,7 +25,7 @@ import com.spotify.scio.coders._
 import com.spotify.scio.io._
 import com.spotify.scio.util.{FilenamePolicySupplier, Functions, ScioUtil}
 import com.spotify.scio.values.{SCollection, SideOutput, SideOutputCollections}
-import com.twitter.chill.ClosureCleaner
+import com.spotify.scio.vendor.chill.ClosureCleaner
 import magnolify.bigquery.TableRowType
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions

@@ -21,7 +21,7 @@ import java.lang.{Iterable => JIterable}
 import java.util.{Map => JMap}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.SCollection
-import com.twitter.chill.Externalizer
+import com.spotify.scio.vendor.chill.Externalizer
 import org.apache.beam.sdk.testing.PAssert
 import org.apache.beam.sdk.testing.PAssert.{IterableAssert, SingletonAssert}
 import org.apache.beam.sdk.transforms.SerializableFunction
@@ -33,7 +33,7 @@ import org.hamcrest.Matchers
 import org.hamcrest.MatcherAssert.assertThat
 
 import scala.jdk.CollectionConverters._
-import com.twitter.chill.ClosureCleaner
+import com.spotify.scio.vendor.chill.ClosureCleaner
 import cats.kernel.Eq
 import org.apache.beam.sdk.testing.SerializableMatchers
 import com.spotify.scio.coders.CoderMaterializer

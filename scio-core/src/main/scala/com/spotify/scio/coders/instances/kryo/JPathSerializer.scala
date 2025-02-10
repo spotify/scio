@@ -21,7 +21,7 @@ import java.nio.file.{Path, Paths}
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{Input, Output}
-import com.twitter.chill.KSerializer
+import com.spotify.scio.vendor.chill.KSerializer
 
 private[coders] class JPathSerializer extends KSerializer[Path] {
   override def read(kryo: Kryo, input: Input, tpe: Class[Path]): Path =
