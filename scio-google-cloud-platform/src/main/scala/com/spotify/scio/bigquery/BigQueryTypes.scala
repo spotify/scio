@@ -176,10 +176,13 @@ object Timestamp {
     case t: Long => new Instant(t / 1000)
     case _       => parse(timestamp.toString)
   }
+
+  def micros(timestamp: Instant): Long = timestamp.getMillis * 1000
 }
 
 /** Utility for BigQuery `DATE` type. */
 object Date {
+  private val EpochDate = new LocalDate(1970, 1, 1)
   // YYYY-[M]M-[D]D
   private[this] val Formatter =
     DateTimeFormat.forPattern("yyyy-MM-dd").withZoneUTC()
@@ -195,6 +198,8 @@ object Date {
     case d: Int => new LocalDate(0, DateTimeZone.UTC).plusDays(d)
     case _      => parse(date.toString)
   }
+
+  def days(date: LocalDate): Int = Days.daysBetween(EpochDate, date).getDays
 }
 
 /** Utility for BigQuery `TIME` type. */
@@ -219,6 +224,8 @@ object Time {
     case t: Long => new LocalTime(t / 1000, DateTimeZone.UTC)
     case _       => parse(time.toString)
   }
+
+  def micros(time: LocalTime): Long = time.millisOfDay().get().toLong * 1000
 }
 
 /** Utility for BigQuery `DATETIME` type. */
@@ -250,6 +257,9 @@ object DateTime {
   /** Convert BigQuery `DATETIME` string to `LocalDateTime`. */
   def parse(datetime: String): LocalDateTime =
     Parser.parseLocalDateTime(datetime)
+
+  //  For BigQueryType macros only, do not use directly
+  def format(datetime: LocalDateTime): String = apply(datetime)
 }
 
 /** Scala wrapper for [[com.google.api.services.bigquery.model.TimePartitioning]]. */
@@ -324,4 +334,7 @@ object Numeric {
     case b: ByteBuffer => DecimalConverter.fromBytes(b, null, DecimalLogicalType)
     case _             => apply(value.toString)
   }
+
+  def bytes(value: BigDecimal): ByteBuffer =
+    DecimalConverter.toBytes(value.bigDecimal, null, DecimalLogicalType)
 }

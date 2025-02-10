@@ -79,7 +79,8 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * Reading records as GenericRecord **should** offer better performance over TableRow records.
    *
    * Note: When using `Format.GenericRecord` Bigquery types DATE, TIME and DATETIME are read as
-   * STRING.
+   * STRING. Use `Format.GenericRecordWithLogicalTypes` for avro `date`, `timestamp-micros` and
+   * `local-timestamp-micros` (avro 1.10+)
    */
   def bigQueryTable[F: Coder](table: Table, format: Format[F]): SCollection[F] =
     self.read(BigQueryTypedTable(table, format))

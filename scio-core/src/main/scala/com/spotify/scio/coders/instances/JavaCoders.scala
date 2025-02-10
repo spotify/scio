@@ -20,13 +20,13 @@ package com.spotify.scio.coders.instances
 import java.io.{InputStream, OutputStream}
 import java.math.{BigDecimal, BigInteger}
 import java.time.{Duration, Instant, LocalDate, LocalDateTime, LocalTime, Period}
-import java.util.UUID
 import com.spotify.scio.IsJavaBean
 import com.spotify.scio.coders.{Coder, CoderGrammar}
 import com.spotify.scio.schemas.Schema
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn
 import com.spotify.scio.util.ScioUtil
-import org.apache.beam.sdk.coders.{Coder => _, _}
+import org.apache.beam.sdk.coders.Coder.NonDeterministicException
+import org.apache.beam.sdk.coders.{Coder => BCoder, _}
 import org.apache.beam.sdk.schemas.SchemaCoder
 import org.apache.beam.sdk.values.TypeDescriptor
 import org.apache.beam.sdk.{coders => bcoders}
@@ -42,15 +42,52 @@ private[coders] object VoidCoder extends AtomicCoder[Void] {
   override def structuralValue(value: Void): AnyRef = AnyRef
 }
 
+final private[coders] class JArrayListCoder[T](bc: BCoder[T])
+    extends IterableLikeCoder[T, java.util.ArrayList[T]](bc, "ArrayList") {
+
+  override def decodeToIterable(decodedElements: java.util.List[T]): java.util.ArrayList[T] =
+    decodedElements match {
+      case al: java.util.ArrayList[T] => al
+      case _                          => new java.util.ArrayList[T](decodedElements)
+    }
+
+  override def consistentWithEquals(): Boolean = getElemCoder.consistentWithEquals()
+
+  override def verifyDeterministic(): Unit =
+    BCoder.verifyDeterministic(
+      this,
+      "JArrayListCoder element coder must be deterministic",
+      getElemCoder
+    )
+}
+
+final private[coders] class JPriorityQueueCoder[T](
+  bc: BCoder[T],
+  ordering: Ordering[T] // use Ordering instead of Comparator for serialization
+) extends IterableLikeCoder[T, java.util.PriorityQueue[T]](bc, "PriorityQueue") {
+
+  override def decodeToIterable(decodedElements: java.util.List[T]): java.util.PriorityQueue[T] = {
+    val pq = new java.util.PriorityQueue[T](ordering)
+    pq.addAll(decodedElements)
+    pq
+  }
+
+  override def verifyDeterministic(): Unit =
+    throw new NonDeterministicException(
+      this,
+      "Ordering of elements in a priority queue may be non-deterministic."
+    )
+}
+
 //
 // Java Coders
 //
 trait JavaCoders extends CoderGrammar with JavaBeanCoders {
   implicit lazy val voidCoder: Coder[Void] = beam[Void](VoidCoder)
 
-  implicit lazy val uuidCoder: Coder[UUID] =
+  implicit lazy val uuidCoder: Coder[java.util.UUID] =
     xmap(Coder[(Long, Long)])(
-      { case (msb, lsb) => new UUID(msb, lsb) },
+      { case (msb, lsb) => new java.util.UUID(msb, lsb) },
       uuid => (uuid.getMostSignificantBits, uuid.getLeastSignificantBits)
     )
 
@@ -63,11 +100,26 @@ trait JavaCoders extends CoderGrammar with JavaBeanCoders {
   implicit def jIterableCoder[T](implicit c: Coder[T]): Coder[java.lang.Iterable[T]] =
     transform(c)(bc => beam(bcoders.IterableCoder.of(bc)))
 
+  implicit def jCollectionCoder[T](implicit c: Coder[T]): Coder[java.util.Collection[T]] =
+    transform(c)(bc => beam(bcoders.CollectionCoder.of(bc)))
+
   implicit def jListCoder[T](implicit c: Coder[T]): Coder[java.util.List[T]] =
     transform(c)(bc => beam(bcoders.ListCoder.of(bc)))
 
   implicit def jArrayListCoder[T](implicit c: Coder[T]): Coder[java.util.ArrayList[T]] =
-    xmap(jListCoder[T])(new java.util.ArrayList(_), identity)
+    transform(c)(bc => beam(new JArrayListCoder[T](bc)))
+
+  implicit def jSetCoder[T](implicit c: Coder[T]): Coder[java.util.Set[T]] =
+    transform(c)(bc => beam(bcoders.SetCoder.of(bc)))
+
+  implicit def jDequeCoder[T](implicit c: Coder[T]): Coder[java.util.Deque[T]] =
+    transform(c)(bc => beam(bcoders.DequeCoder.of(bc)))
+
+  implicit def jPriorityQueueCoder[T](implicit
+    c: Coder[T],
+    ord: Ordering[T]
+  ): Coder[java.util.PriorityQueue[T]] =
+    transform(c)(bc => beam(new JPriorityQueueCoder[T](bc, ord)))
 
   implicit def jMapCoder[K, V](implicit ck: Coder[K], cv: Coder[V]): Coder[java.util.Map[K, V]] =
     transform(ck)(bk => transform(cv)(bv => beam(bcoders.MapCoder.of(bk, bv))))

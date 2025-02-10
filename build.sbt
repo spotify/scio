@@ -86,7 +86,7 @@ val catsVersion = "2.13.0"
 val circeVersion = "0.14.10"
 val commonsTextVersion = "1.10.0"
 val elasticsearch7Version = "7.17.21"
-val elasticsearch8Version = "8.15.5"
+val elasticsearch8Version = "8.17.1"
 val fansiVersion = "0.5.0"
 val featranVersion = "0.8.0"
 val httpAsyncClientVersion = "4.1.5"
@@ -102,11 +102,11 @@ val kryoVersion = "4.0.3"
 val magnoliaVersion = "1.1.10"
 val magnolifyVersion = "0.7.4"
 val metricsVersion = "4.2.30"
-val munitVersion = "1.0.4"
+val munitVersion = "1.1.0"
 val neo4jDriverVersion = "4.4.19"
 val ndArrayVersion = "0.3.3"
 val parquetExtraVersion = "0.4.3"
-val parquetVersion = "1.14.4"
+val parquetVersion = "1.15.0"
 val pprintVersion = "0.9.0"
 val protobufGenericVersion = "0.2.9"
 val scalacheckVersion = "1.18.1"
@@ -417,6 +417,24 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ),
   ProblemFilters.exclude[DirectMissingMethodProblem](
     "com.spotify.scio.tensorflow.syntax.SCollectionSyntax.tensorFlowPredictSCollectionOps"
+  ),
+  // dropped custom BigQueryAvroUtilsWrapper
+  ProblemFilters.exclude[MissingClassProblem](
+    "org.apache.beam.sdk.io.gcp.bigquery.BigQueryAvroUtilsWrapper"
+  ),
+  // Changes in avro SlowGenericRecordCoder
+  ProblemFilters.exclude[Problem](
+    "com.spotify.scio.coders.avro.SlowGenericRecordCoder*"
+  ),
+  // tablerow json fix
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.bigquery.types.package#Json.apply"
+  ),
+  ProblemFilters.exclude[IncompatibleResultTypeProblem](
+    "com.spotify.scio.bigquery.types.package#Json.parse"
+  ),
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.bigquery.types.package#BigNumeric.bytes"
   )
 )
 
@@ -525,12 +543,15 @@ val commonSettings = bomSettings ++ Def.settings(
   Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
   Test / javaOptions ++= JavaOptions.testDefaults(javaMajorVersion),
   Test / testOptions += Tests.Argument("-oD"),
-  coverageExcludedPackages := (Seq(
+  coverageExcludedPackages := Seq(
+    // skip modules
     "com\\.spotify\\.scio\\.examples\\..*",
     "com\\.spotify\\.scio\\.repl\\..*",
-    "com\\.spotify\\.scio\\.util\\.MultiJoin",
-    "com\\.spotify\\.scio\\.smb\\.util\\.SMBMultiJoin"
-  ) ++ (2 to 10).map(x => s"com\\.spotify\\.scio\\.sql\\.Query$x")).mkString(";"),
+    // generated API (22 params)
+    "com\\.spotify\\.scio\\.coders\\.instances\\.TupleCoders",
+    "com\\.spotify\\.scio\\.smb\\.util\\.SMBMultiJoin",
+    "com\\.spotify\\.scio\\.util\\.MultiJoin"
+  ).mkString(";"),
   coverageHighlighting := true
 )
 
@@ -773,6 +794,10 @@ lazy val `scio-core` = project
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Provided,
       "org.apache.beam" % s"beam-runners-spark-$sparkMajorVersion" % beamVersion % Provided,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion % Provided,
+      "org.apache.hadoop" % "hadoop-common" % hadoopVersion % Provided,
+      "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Provided,
+      "com.google.cloud.bigdataoss" % "gcsio" % bigdataossVersion % Provided,
+      "com.google.cloud.bigdataoss" % "util-hadoop" % s"hadoop2-$bigdataossVersion" % Provided,
       // test
       "com.lihaoyi" %% "fansi" % fansiVersion % Test,
       "com.lihaoyi" %% "pprint" % pprintVersion % Test,
@@ -1447,7 +1472,7 @@ lazy val `scio-examples` = project
       "redis.clients" % "jedis" % jedisVersion,
       // runtime
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
-      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.21.2" % Runtime,
+      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.23.0" % Runtime,
       // test
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
     ),
@@ -1752,7 +1777,7 @@ lazy val integration = project
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // runtime
-      "com.google.cloud.sql" % "cloud-sql-connector-jdbc-sqlserver" % "1.21.2" % Runtime,
+      "com.google.cloud.sql" % "cloud-sql-connector-jdbc-sqlserver" % "1.23.0" % Runtime,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Runtime,
       // test
