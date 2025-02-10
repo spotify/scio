@@ -180,8 +180,8 @@ object CoderAssertions {
 
   /** Passes all checks on Beam coder */
   def beFullyCompliant[T <: Object: ClassTag](): CoderAssertion[T] = ctx => {
-    structuralValueConsistentWithEquals()(ctx)
     beSerializable()(ctx)
+    structuralValueConsistentWithEquals()(ctx)
     beConsistentWithEquals()(ctx)
     bytesCountTested[T]().apply(ctx)
     beDeterministic()(ctx)
@@ -189,8 +189,8 @@ object CoderAssertions {
 
   def beFullyCompliantNonDeterministic[T <: Object: ClassTag](): CoderAssertion[T] =
     ctx => {
-      structuralValueConsistentWithEquals()(ctx)
       beSerializable()(ctx)
+      structuralValueConsistentWithEquals()(ctx)
       beConsistentWithEquals()(ctx)
       bytesCountTested[T]().apply(ctx)
       beNonDeterministic()(ctx)
@@ -198,8 +198,8 @@ object CoderAssertions {
 
   def beFullyCompliantNotConsistentWithEquals[T <: Object: ClassTag](): CoderAssertion[T] =
     ctx => {
-      structuralValueConsistentWithEquals()(ctx)
       beSerializable()(ctx)
+      structuralValueConsistentWithEquals()(ctx)
       beNotConsistentWithEquals()(ctx)
       bytesCountTested[T]().apply(ctx)
       beDeterministic()(ctx)

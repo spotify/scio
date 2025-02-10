@@ -59,6 +59,7 @@ final class ConverterProviderSpec
       value <- Gen.alphaStr
     } yield Json(s"""{"$key":"$value"}""")
   )
+
   implicit val eqByteArrays: Eq[Array[Byte]] = Eq.instance[Array[Byte]](_.toList == _.toList)
   implicit val eqByteString: Eq[ByteString] = Eq.instance[ByteString](_ == _)
   implicit val eqInstant: Eq[Instant] = Eq.instance[Instant](_ == _)
