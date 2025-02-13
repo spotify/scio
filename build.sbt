@@ -981,7 +981,7 @@ lazy val `scio-test-parquet` = project
       "org.apache.parquet" % "parquet-column" % parquetVersion,
       "org.apache.parquet" % "parquet-common" % parquetVersion,
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
-      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided
+      "org.tensorflow" % "tensorflow-core-native" % tensorFlowVersion % Provided
     )
   )
 
@@ -1354,7 +1354,7 @@ lazy val `scio-parquet` = project
       "org.slf4j" % "log4j-over-slf4j" % slf4jVersion, // log4j is excluded from hadoop
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // provided
-      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided,
+      "org.tensorflow" % "tensorflow-core-native" % tensorFlowVersion % Provided,
       // runtime
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion % Runtime excludeAll (Exclude.metricsCore),
       "io.dropwizard.metrics" % "metrics-core" % metricsVersion % Runtime,
@@ -1404,7 +1404,7 @@ lazy val `scio-tensorflow` = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
-      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion,
+      "org.tensorflow" % "tensorflow-core-native" % tensorFlowVersion,
       // test
       "com.spotify" %% "featran-core" % featranVersion % Test,
       "com.spotify" %% "featran-scio" % featranVersion % Test,
@@ -1539,7 +1539,7 @@ lazy val `scio-examples` = project
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
       "org.neo4j.driver" % "neo4j-java-driver" % neo4jDriverVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion,
+      "org.tensorflow" % "tensorflow-core-native" % tensorFlowVersion,
       "redis.clients" % "jedis" % jedisVersion,
       // runtime
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
@@ -1766,7 +1766,7 @@ lazy val `scio-smb` = project
       "org.apache.parquet" % "parquet-column" % parquetVersion % Provided, // scio-parquet
       "org.apache.parquet" % "parquet-common" % parquetVersion % Provided, // scio-parquet
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion % Provided, // scio-parquet
-      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided, // scio-tensorflow
+      "org.tensorflow" % "tensorflow-core-native" % tensorFlowVersion % Provided, // scio-tensorflow
       // test
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % Test classifier "tests",
       "org.hamcrest" % "hamcrest" % hamcrestVersion % Test,
