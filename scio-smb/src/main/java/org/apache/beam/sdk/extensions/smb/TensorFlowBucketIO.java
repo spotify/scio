@@ -31,7 +31,7 @@ import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
-import org.tensorflow.proto.example.Example;
+import org.tensorflow.proto.Example;
 
 /**
  * API for reading and writing sorted-bucket TensorFlow TFRecord files with TensorFlow {@link
@@ -43,7 +43,7 @@ public class TensorFlowBucketIO {
   // make sure tensorflow is part of the classpath
   static {
     try {
-      Class.forName("org.tensorflow.proto.example.Example");
+      Class.forName("org.tensorflow.proto.Example");
     } catch (ClassNotFoundException e) {
       throw new MissingImplementationException("tensorflow", e);
     }
