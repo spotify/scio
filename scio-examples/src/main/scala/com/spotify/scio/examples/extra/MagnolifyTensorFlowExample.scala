@@ -35,8 +35,6 @@ object MagnolifyTensorFlowExample {
   // `Example` type doesn't support `String` natively, derive one from `ByteString`
   implicit val efString: ExampleField.Primitive[String] =
     ExampleField.from[ByteString](_.toStringUtf8)(ByteString.copyFromUtf8)
-  // `TensorFlowType` provides mapping between case classes and TensorFlow `Example`
-  val wordCountType: ExampleType[WordCount] = ExampleType[WordCount]
 }
 
 // ## Magnolify Tensorflow Write Example
@@ -56,8 +54,8 @@ object MagnolifyTensorFlowWriteExample {
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue
-      // Convert case class to `Example` and then serialize as `Array[Byte]`
-      .map(t => wordCountType(WordCount.tupled(t)).toByteArray)
+      .map { case (word, count) => WordCount(word, count) }
+      // converts WordCount to Example with the implicitly-derived ExampleType[WordCount]
       .saveAsTfRecordFile(args("output"))
     sc.run()
     ()
@@ -78,12 +76,8 @@ object MagnolifyTensorFlowReadExample {
     import MagnolifyTensorFlowExample._
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.tfRecordFile(args("input"))
-      .map { b =>
-        // Deserialize `Array[Byte]` as `Example` and then convert to case class
-        wordCountType(Example.parseFrom(b))
-      }
-      .map(wc => wc.word + ": " + wc.count)
+    // reads TF Examples and converts to WordCount via the implicitly-derived ExampleType[WordCount]
+    sc.typedTfRecordFile[WordCount](args("input"))
       .saveAsTextFile(args("output"))
     sc.run()
     ()

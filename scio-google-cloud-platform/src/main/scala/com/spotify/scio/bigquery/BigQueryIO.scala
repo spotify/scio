@@ -279,7 +279,7 @@ final case class BigQueryTypedSelect[T: Coder](
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] =
-    throw new UnsupportedOperationException("BigQuerySelect is read-only")
+    throw new UnsupportedOperationException("BigQueryTypedSelect is read-only")
 
   override def tap(params: ReadP): Tap[T] = {
     val tableReference = BigQuery
@@ -570,7 +570,7 @@ final case class BigQueryStorageSelect(sqlQuery: Query) extends BigQueryIO[Table
     sc.read(underlying)(BigQueryTypedSelect.ReadParam())
 
   override protected def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] =
-    throw new UnsupportedOperationException("BigQuerySelect is read-only")
+    throw new UnsupportedOperationException("BigQueryStorageSelect is read-only")
 
   override def tap(params: ReadP): Tap[TableRow] = underlying.tap(BigQueryTypedSelect.ReadParam())
 }
@@ -918,4 +918,127 @@ object BigQueryTyped {
         throw new IllegalArgumentException(s"Missing table or query field in companion object")
     }
   }
+}
+
+// SELECT
+
+object BigQueryMagnolifyTypedSelectIO {
+  type ReadParam = BigQueryTypedSelect.ReadParam
+  val ReadParam = BigQueryTypedSelect.ReadParam
+}
+
+final case class BigQueryMagnolifyTypedSelectIO[T: TableRowType: Coder](
+  query: Query
+) extends BigQueryIO[T] {
+  override type ReadP = BigQuerySelect.ReadParam
+  override type WriteP = Nothing // ReadOnly
+
+  private lazy val tableRowType: TableRowType[T] = implicitly
+  private[this] lazy val underlying =
+    BigQueryTypedSelect(beam.BigQueryIO.readTableRows(), query, identity)(coders.tableRowCoder)
+
+  override def testId: String = s"BigQueryIO(${query.underlying})"
+
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
+    sc.transform(_.read(underlying)(params).map(row => tableRowType(row)))
+
+  override protected def write(data: SCollection[T], params: WriteP): Tap[T] =
+    throw new UnsupportedOperationException("MagnolifyBigQuerySelect is read-only")
+
+  override def tap(params: ReadP): Tap[T] = underlying.tap(params).map(row => tableRowType(row))
+}
+
+// TABLE
+
+final case class BigQueryMagnolifyTypedTable[T: TableRowType: Coder](
+  table: Table
+) extends BigQueryIO[T]
+    with WriteResultIO[T] {
+  override type ReadP = Unit
+  override type WriteP = BigQueryTypedTable.WriteParam[T]
+
+  override def testId: String = s"BigQueryIO(${table.spec})"
+
+  private val tableRowType: TableRowType[T] = implicitly
+  private val readFn = Functions.serializableFn[SchemaAndRecord, T](sar =>
+    tableRowType(BigQueryUtils.convertGenericRecordToTableRow(sar.getRecord, sar.getTableSchema))
+  )
+  private val writeFn = Functions.serializableFn[T, TableRow](t => tableRowType(t))
+
+  private lazy val underlying = {
+    BigQueryTypedTable(
+      beam.BigQueryIO.read(readFn),
+      beam.BigQueryIO.write().withFormatFunction(writeFn),
+      table,
+      (gr, ts) => tableRowType(BigQueryUtils.convertGenericRecordToTableRow(gr, ts))
+    )
+  }
+
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
+    sc.read(underlying)
+
+  override protected def writeWithResult(
+    data: SCollection[T],
+    params: WriteP
+  ): (Tap[T], SideOutputCollections) = {
+    val outputs = data
+      .write(underlying)(params)
+      .outputs
+      .get
+
+    (tap(()), outputs)
+  }
+
+  override def tap(read: ReadP): Tap[T] =
+    BigQueryTableRowTypedTap[T](table, tableRowType.apply)
+}
+
+// STORAGE
+
+final case class BigQueryMagnolifyTypedStorage[T: TableRowType: Coder](
+  table: Table,
+  selectedFields: List[String],
+  rowRestriction: Option[String]
+) extends BigQueryIO[T] {
+  override type ReadP = Unit
+  override type WriteP = Nothing // ReadOnly
+
+  override def testId: String =
+    s"BigQueryIO(${table.spec}, List(${selectedFields.mkString(",")}), $rowRestriction)"
+
+  private lazy val tableRowType: TableRowType[T] = implicitly
+  private lazy val underlying = BigQueryStorage(table, selectedFields, rowRestriction)
+
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
+    sc.transform(_.read(underlying).map(tr => tableRowType(tr)))
+
+  override protected def write(data: SCollection[T], params: WriteP): Tap[T] =
+    throw new UnsupportedOperationException("MagnolifyBigQueryStorage is read-only")
+
+  override def tap(read: ReadP): Tap[T] =
+    underlying.tap(read).map(tr => tableRowType(tr))
+}
+
+object BigQueryMagnolifyTypedStorage {
+  val ReadParam = BigQueryStorage.ReadParam
+}
+
+final case class BigQueryMagnolifyTypedStorageSelect[T: TableRowType: Coder](sqlQuery: Query)
+    extends BigQueryIO[T] {
+  override type ReadP = Unit
+  override type WriteP = Nothing // ReadOnly
+
+  private[this] lazy val underlying = BigQueryStorageSelect(sqlQuery)
+  private lazy val tableRowType: TableRowType[T] = implicitly
+
+  override def testId: String = s"BigQueryIO(${sqlQuery.underlying})"
+
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
+    sc.transform(_.read(underlying).map(tr => tableRowType(tr)))
+
+  override protected def write(data: SCollection[T], params: WriteP): Tap[T] =
+    throw new UnsupportedOperationException("MagnolifyBigQueryStorageSelect is read-only")
+
+  override def tap(params: ReadP): Tap[T] =
+    underlying.tap(params).map(tr => tableRowType(tr))
 }

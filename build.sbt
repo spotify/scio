@@ -135,74 +135,12 @@ lazy val nettyBom = Bom("io.netty" % "netty-bom" % nettyVersion)
 val NothingFilter: explicitdeps.ModuleFilter = { _ => false }
 
 // project
-ThisBuild / tlBaseVersion := "0.14"
+ThisBuild / tlBaseVersion := "0.15"
 ThisBuild / organization := "com.spotify"
 ThisBuild / organizationName := "Spotify AB"
 ThisBuild / startYear := Some(2016)
 ThisBuild / licenses := Seq(License.Apache2)
 ThisBuild / sonatypeCredentialHost := Sonatype.sonatypeLegacy
-ThisBuild / developers := List(
-  Developer(
-    id = "sinisa_lyh",
-    name = "Neville Li",
-    email = "neville.lyh@gmail.com",
-    url = url("https://twitter.com/sinisa_lyh")
-  ),
-  Developer(
-    id = "ravwojdyla",
-    name = "Rafal Wojdyla",
-    email = "ravwojdyla@gmail.com",
-    url = url("https://twitter.com/ravwojdyla")
-  ),
-  Developer(
-    id = "andrewsmartin",
-    name = "Andrew Martin",
-    email = "andrewsmartin.mg@gmail.com",
-    url = url("https://twitter.com/andrew_martin92")
-  ),
-  Developer(
-    id = "fallonfofallon",
-    name = "Fallon Chen",
-    email = "fallon@spotify.com",
-    url = url("https://twitter.com/fallonfofallon")
-  ),
-  Developer(
-    id = "regadas",
-    name = "Filipe Regadas",
-    email = "filiperegadas@gmail.com",
-    url = url("https://twitter.com/regadas")
-  ),
-  Developer(
-    id = "jto",
-    name = "Julien Tournay",
-    email = "julient@spotify.com",
-    url = url("https://twitter.com/skaalf")
-  ),
-  Developer(
-    id = "clairemcginty",
-    name = "Claire McGinty",
-    email = "clairem@spotify.com",
-    url = url("http://github.com/clairemcginty")
-  ),
-  Developer(
-    id = "syodage",
-    name = "Shameera Rathnayaka",
-    email = "shameerayodage@gmail.com",
-    url = url("http://github.com/syodage")
-  ),
-  Developer(
-    id = "kellen",
-    name = "Kellen Dye",
-    email = "dye.kellen@gmail.com",
-    url = url("http://github.com/kellen")
-  ),
-  Developer(
-    id = "farzad-sedghi",
-    name = "farzad sedghi",
-    email = "farzadsedghi2@gmail.com",
-    url = url("http://github.com/farzad-sedghi")
-  )
-)
 
 // scala versions
 val scala213 = "2.13.16"
@@ -210,7 +148,7 @@ val scala212 = "2.12.20"
 val scalaDefault = scala213
 
 // compiler settings
-ThisBuild / tlJdkRelease := Some(8)
+ThisBuild / tlJdkRelease := Some(11)
 ThisBuild / tlFatalWarnings := false
 ThisBuild / scalaVersion := scalaDefault
 ThisBuild / crossScalaVersions := Seq(scalaDefault, scala212)
@@ -928,10 +866,7 @@ lazy val `scio-test-core` = project
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
       // test
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
-    ),
-    // only releases after 0.14.4
-    tlMimaPreviousVersions := tlMimaPreviousVersions.value
-      .filter(v => VersionNumber(v).numbers.last >= 4)
+    )
   )
 
 lazy val `scio-test-google-cloud-platform` = project
@@ -1012,6 +947,9 @@ lazy val `scio-avro` = project
       // compile
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "com.google.protobuf" % "protobuf-java" % gcpBom.key.value,
+      "com.spotify" %% "magnolify-avro" % magnolifyVersion,
+      "com.spotify" %% "magnolify-protobuf" % magnolifyVersion,
+      "com.spotify" %% "magnolify-shared" % magnolifyVersion,
       "com.twitter" %% "chill" % chillVersion,
       "com.twitter" % "chill-java" % chillVersion,
       "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
@@ -1081,6 +1019,10 @@ lazy val `scio-google-cloud-platform` = project
       "com.google.http-client" % "google-http-client" % gcpBom.key.value,
       "com.google.http-client" % "google-http-client-gson" % gcpBom.key.value,
       "com.google.protobuf" % "protobuf-java" % gcpBom.key.value,
+      "com.spotify" %% "magnolify-bigquery" % magnolifyVersion,
+      "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
+      "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
+      "com.spotify" %% "magnolify-shared" % magnolifyVersion,
       "com.twitter" %% "chill" % chillVersion,
       "com.twitter" % "chill-java" % chillVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
@@ -1378,8 +1320,7 @@ lazy val `scio-snowflake` = project
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-snowflake" % beamVersion
-    ),
-    tlMimaPreviousVersions := Set.empty // TODO: remove once released
+    )
   )
 
 val tensorFlowMetadataSourcesDir =
@@ -1401,6 +1342,7 @@ lazy val `scio-tensorflow` = project
     ).reduce(_ | _),
     libraryDependencies ++= Seq(
       // compile
+      "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
@@ -1409,7 +1351,6 @@ lazy val `scio-tensorflow` = project
       "com.spotify" %% "featran-core" % featranVersion % Test,
       "com.spotify" %% "featran-scio" % featranVersion % Test,
       "com.spotify" %% "featran-tensorflow" % featranVersion % Test,
-      "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     ),
     Compile / tensorFlowMetadataSourcesDir := target.value / s"metadata-$tensorFlowMetadataVersion",
@@ -1516,11 +1457,11 @@ lazy val `scio-examples` = project
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
       "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
+      "com.spotify" %% "magnolify-bigquery" % magnolifyVersion,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
       "com.spotify" %% "magnolify-guava" % magnolifyVersion,
       "com.spotify" %% "magnolify-neo4j" % magnolifyVersion,
       "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
-      "com.spotify" %% "magnolify-shared" % magnolifyVersion,
       "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
       "com.twitter" %% "algebird-core" % algebirdVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,

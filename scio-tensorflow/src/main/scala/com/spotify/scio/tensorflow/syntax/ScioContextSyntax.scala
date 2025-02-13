@@ -18,15 +18,29 @@
 package com.spotify.scio.tensorflow.syntax
 
 import java.nio.file.Files
-
 import com.spotify.scio.ScioContext
-import com.spotify.scio.tensorflow.{TFExampleIO, TFRecordIO, TFSequenceExampleIO}
+import com.spotify.scio.coders.Coder
+import com.spotify.scio.tensorflow.{TFExampleIO, TFExampleTypedIO, TFRecordIO, TFSequenceExampleIO}
 import com.spotify.scio.values.{DistCache, SCollection}
+import magnolify.tensorflow.ExampleType
 import org.apache.beam.sdk.io.Compression
 import org.tensorflow.proto.{Example, SequenceExample}
 import org.tensorflow.metadata.v0._
 
 final class ScioContextOps(private val self: ScioContext) extends AnyVal {
+
+  /**
+   * Get an SCollection for a TensorFlow TFRecord file. Input must be Records are read back as
+   * Tensorflow [[org.tensorflow.proto.example.Example]]s then mapped to the user type `T` with the
+   * implicit [[magnolify.tensorflow.ExampleType]]
+   *
+   * @group input
+   */
+  def typedTfRecordFile[T: ExampleType: Coder](
+    path: String,
+    compression: Compression = Compression.AUTO
+  ): SCollection[T] =
+    self.read(TFExampleTypedIO(path))(TFExampleTypedIO.ReadParam(compression))
 
   /**
    * Get an SCollection for a TensorFlow TFRecord file. Note that TFRecord files are not splittable.
