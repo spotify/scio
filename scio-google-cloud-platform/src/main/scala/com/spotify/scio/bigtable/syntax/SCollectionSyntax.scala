@@ -23,7 +23,7 @@ import com.google.protobuf.ByteString
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
 import org.joda.time.Duration
-import com.spotify.scio.bigtable.{BigtableTypedIO, BigtableWrite}
+import com.spotify.scio.bigtable.{BTOptions, BigtableTypedIO, BigtableWrite}
 import com.spotify.scio.coders.Coder
 import magnolify.bigtable.BigtableType
 
@@ -79,8 +79,6 @@ final class SCollectionMutationOps[T <: Mutation](
 final class BigtableTypedOps[K: Coder, T: BigtableType: Coder](
   private val self: SCollection[(K, T)]
 ) {
-  private def btOpts(projectId: String, instanceId: String): BigtableOptions =
-    BigtableOptions.builder().setProjectId(projectId).setInstanceId(instanceId).build
 
   def saveAsBigtable(
     projectId: String,
@@ -90,7 +88,7 @@ final class BigtableTypedOps[K: Coder, T: BigtableType: Coder](
     keyFn: K => ByteString
   ): ClosedTap[Nothing] = {
     val params = BigtableTypedIO.WriteParam[K](columnFamily, keyFn)
-    self.write(BigtableTypedIO[K, T](btOpts(projectId, instanceId), tableId))(params)
+    self.write(BigtableTypedIO[K, T](BTOptions(projectId, instanceId), tableId))(params)
   }
 
   def saveAsBigtable(
@@ -102,7 +100,7 @@ final class BigtableTypedOps[K: Coder, T: BigtableType: Coder](
     timestamp: Long
   ): ClosedTap[Nothing] = {
     val params = BigtableTypedIO.WriteParam[K](columnFamily, keyFn, timestamp)
-    self.write(BigtableTypedIO[K, T](btOpts(projectId, instanceId), tableId))(params)
+    self.write(BigtableTypedIO[K, T](BTOptions(projectId, instanceId), tableId))(params)
   }
 
   def saveAsBigtable(
