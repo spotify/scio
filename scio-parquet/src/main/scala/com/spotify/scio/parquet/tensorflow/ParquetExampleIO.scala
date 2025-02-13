@@ -46,7 +46,7 @@ import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.{ParquetInputFormat, ParquetReader}
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
-import org.tensorflow.proto.example.{Example, Features}
+import org.tensorflow.proto.{Example, Features}
 import org.tensorflow.metadata.v0.Schema
 
 import scala.jdk.CollectionConverters._

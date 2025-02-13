@@ -22,7 +22,7 @@ import com.spotify.scio.testing._
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import magnolify.tensorflow._
-import org.tensorflow.proto.example.Example
+import org.tensorflow.proto.Example
 
 object TFExampleIOTest {
   case class Record(i: Int, s: String)
