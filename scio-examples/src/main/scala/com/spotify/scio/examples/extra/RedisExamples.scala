@@ -70,7 +70,7 @@ object RedisReadStringsExample {
 // `sbt "runMain com.spotify.scio.examples.extra.RedisWriteBatchExample
 // --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --redisHost=[REDIS_HOST]
-// --redisPort=[REDIS_PORT]`
+// --redisPort=[REDIS_PORT]"`
 object RedisWriteBatchExample {
 
   def main(cmdlineArgs: Array[String]): Unit = {
@@ -102,7 +102,7 @@ object RedisWriteBatchExample {
 // --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --subscription=[PUBSUB_SUBSCRIPTION]
 // --redisHost=[REDIS_HOST]
-// --redisPort=[REDIS_PORT]`
+// --redisPort=[REDIS_PORT]"`
 object RedisWriteStreamingExample {
 
   def main(cmdlineArgs: Array[String]): Unit = {
@@ -139,7 +139,7 @@ object RedisWriteStreamingExample {
 // `sbt "runMain com.spotify.scio.examples.extra.RedisLookUpStringsExample
 // --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --redisHost=[REDIS_HOST]
-// --redisPort=[REDIS_PORT]`
+// --redisPort=[REDIS_PORT]"`
 object RedisLookUpStringsExample {
 
   def main(cmdlineArgs: Array[String]): Unit = {
