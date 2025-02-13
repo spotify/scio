@@ -34,7 +34,7 @@ object MagnolifyTensorFlowExample {
   case class WordCount(word: String, count: Long)
   // `Example` type doesn't support `String` natively, derive one from `ByteString`
   implicit val efString: ExampleField.Primitive[String] =
-    ExampleField.from[ByteString](_.toStringUtf8)((s: String) => ByteString.copyFromUtf8(s))
+    ExampleField.from[ByteString](_.toStringUtf8)(ByteString.copyFromUtf8)
   // `TensorFlowType` provides mapping between case classes and TensorFlow `Example`
   val wordCountType: ExampleType[WordCount] = ExampleType[WordCount]
 }
