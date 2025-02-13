@@ -20,11 +20,14 @@ package com.spotify.scio.parquet.types
 import java.{lang => jl}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec, ScioIOTest, TapSpec}
+import com.spotify.scio.parquet.{BeamInputFile, ParquetConfiguration}
 import com.spotify.scio.testing.ScioIOSpec
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import org.apache.commons.io.FileUtils
+import org.apache.parquet.HadoopReadOptions
 import org.apache.parquet.filter2.predicate.FilterApi
+import org.apache.parquet.hadoop.ParquetFileReader
 import org.scalatest.BeforeAndAfterAll
 
 import java.nio.file.Files
@@ -138,6 +141,26 @@ class ParquetTypeIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
       .map(t => HasNewDefaultReaderField(t.i, None))
     data should containInAnyOrder(expected)
     sc.run()
+  }
+
+  it should "write extra metadata" in withTempDir { dir =>
+    val sc = ScioContext()
+    val outDir = s"${dir.toPath.resolve("test-metadata").toFile.getAbsolutePath}"
+
+    sc
+      .parallelize(records)
+      .saveAsTypedParquetFile(outDir, metadata = Map("foo" -> "bar", "bar" -> "baz"), numShards = 1)
+    sc.run()
+
+    val options = HadoopReadOptions.builder(ParquetConfiguration.empty()).build
+    val r =
+      ParquetFileReader.open(BeamInputFile.of(s"$outDir/part-00000-of-00001.parquet"), options)
+    val metadata = r.getFileMetaData.getKeyValueMetaData
+
+    metadata.get("foo") shouldBe "bar"
+    metadata.get("bar") shouldBe "baz"
+
+    r.close()
   }
 }
 

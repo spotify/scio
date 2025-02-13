@@ -41,7 +41,8 @@ final class SCollectionOps(private val self: SCollection[Example]) extends AnyVa
     shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = WriteParam.DefaultTempDirectory,
     filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier,
-    prefix: String = WriteParam.DefaultPrefix
+    prefix: String = WriteParam.DefaultPrefix,
+    metadata: Map[String, String] = WriteParam.DefaultMetadata
   ): ClosedTap[Example] =
     self.write(ParquetExampleIO(path))(
       WriteParam(
@@ -53,7 +54,8 @@ final class SCollectionOps(private val self: SCollection[Example]) extends AnyVa
         filenamePolicySupplier,
         prefix,
         shardNameTemplate,
-        tempDirectory
+        tempDirectory,
+        metadata
       )
     )
 }

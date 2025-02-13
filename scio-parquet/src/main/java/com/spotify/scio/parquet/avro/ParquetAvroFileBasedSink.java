@@ -20,6 +20,7 @@ package com.spotify.scio.parquet.avro;
 import com.spotify.scio.parquet.BeamOutputFile;
 import com.spotify.scio.parquet.WriterUtils;
 import java.nio.channels.WritableByteChannel;
+import java.util.Map;
 import org.apache.avro.Schema;
 import org.apache.beam.sdk.io.FileBasedSink;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -36,22 +37,25 @@ public class ParquetAvroFileBasedSink<T> extends FileBasedSink<T, Void, T> {
   private final String schemaString;
   private final SerializableConfiguration conf;
   private final CompressionCodecName compression;
+  private final Map<String, String> extraMetadata;
 
   public ParquetAvroFileBasedSink(
       ValueProvider<ResourceId> baseOutputFileName,
       FileBasedSink.DynamicDestinations<T, Void, T> dynamicDestinations,
       Schema schema,
       Configuration conf,
-      CompressionCodecName compression) {
+      CompressionCodecName compression,
+      Map<String, String> extraMetadata) {
     super(baseOutputFileName, dynamicDestinations);
     this.schemaString = schema.toString();
     this.conf = new SerializableConfiguration(conf);
     this.compression = compression;
+    this.extraMetadata = extraMetadata;
   }
 
   @Override
   public FileBasedSink.WriteOperation<Void, T> createWriteOperation() {
-    return new ParquetAvroWriteOperation<T>(this, schemaString, conf, compression);
+    return new ParquetAvroWriteOperation<T>(this, schemaString, conf, compression, extraMetadata);
   }
 
   // =======================================================================
@@ -63,22 +67,25 @@ public class ParquetAvroFileBasedSink<T> extends FileBasedSink<T, Void, T> {
     private final String schemaString;
     private final SerializableConfiguration conf;
     private final CompressionCodecName compression;
+    private final Map<String, String> extraMetadata;
 
     public ParquetAvroWriteOperation(
         FileBasedSink<T, Void, T> sink,
         String schemaString,
         SerializableConfiguration conf,
-        CompressionCodecName compression) {
+        CompressionCodecName compression,
+        Map<String, String> extraMetadata) {
       super(sink);
       this.schemaString = schemaString;
       this.conf = conf;
       this.compression = compression;
+      this.extraMetadata = extraMetadata;
     }
 
     @Override
     public Writer<Void, T> createWriter() throws Exception {
       return new ParquetAvroWriter<>(
-          this, new Schema.Parser().parse(schemaString), conf, compression);
+          this, new Schema.Parser().parse(schemaString), conf, compression, extraMetadata);
     }
   }
 
@@ -91,17 +98,20 @@ public class ParquetAvroFileBasedSink<T> extends FileBasedSink<T, Void, T> {
     private final Schema schema;
     private final SerializableConfiguration conf;
     private final CompressionCodecName compression;
+    private final Map<String, String> extraMetadata;
     private ParquetWriter<T> writer;
 
     public ParquetAvroWriter(
         WriteOperation<Void, T> writeOperation,
         Schema schema,
         SerializableConfiguration conf,
-        CompressionCodecName compression) {
+        CompressionCodecName compression,
+        Map<String, String> extraMetadata) {
       super(writeOperation, MimeTypes.BINARY);
       this.schema = schema;
       this.conf = conf;
       this.compression = compression;
+      this.extraMetadata = extraMetadata;
     }
 
     @Override
@@ -109,8 +119,8 @@ public class ParquetAvroFileBasedSink<T> extends FileBasedSink<T, Void, T> {
       BeamOutputFile outputFile = BeamOutputFile.of(channel);
       Configuration configuration = conf.get();
       AvroParquetWriter.Builder<T> builder =
-          AvroParquetWriter.<T>builder(outputFile).withSchema(schema);
-      writer = WriterUtils.build(builder, configuration, compression);
+              AvroParquetWriter.<T>builder(outputFile).withSchema(schema);
+      writer = WriterUtils.build(builder, configuration, compression, extraMetadata);
     }
 
     @Override
