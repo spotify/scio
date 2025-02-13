@@ -110,7 +110,7 @@ class BigtableIT extends PipelineSpec {
         .build()
       runWithRealContext() { sc =>
         sc
-          .bigtable(projectId, instanceId, tableId, rowFilter = rowFilter)
+          .bigtable(BTOptions(projectId, instanceId), tableId, rowFilter = rowFilter)
           .map(fromRow) should containInAnyOrder(data)
       }.waitUntilDone()
     } catch {
@@ -151,7 +151,7 @@ class BigtableIT extends PipelineSpec {
         .build()
       runWithRealContext() { sc =>
         sc
-          .bigtable(projectId, instanceId, tableId, rowFilter = rowFilter)
+          .bigtable(BTOptions(projectId, instanceId), tableId, rowFilter = rowFilter)
           .map(fromRow) should containInAnyOrder(data)
       }.waitUntilDone()
     } catch {
