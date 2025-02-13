@@ -90,6 +90,7 @@ val elasticsearch8Version = "8.17.1"
 val fansiVersion = "0.5.0"
 val featranVersion = "0.8.0"
 val httpAsyncClientVersion = "4.1.5"
+val icebergVersion = "1.4.2"
 val jakartaJsonVersion = "2.1.3"
 val javaLshVersion = "0.12"
 val jedisVersion = "5.2.0"
@@ -725,6 +726,7 @@ lazy val `scio-bom` = project
       `scio-grpc`,
       `scio-jdbc`,
       `scio-macros`,
+      `scio-managed`,
       `scio-neo4j`,
       `scio-parquet`,
       `scio-redis`,
@@ -1211,6 +1213,23 @@ lazy val `scio-grpc` = project
     )
   )
 
+lazy val `scio-managed` = project
+  .in(file("scio-managed"))
+  .dependsOn(
+    `scio-core` % "compile;test->test"
+  )
+  .settings(commonSettings)
+  .settings(
+    description := "Scio add-on for Beam's managed transforms",
+    libraryDependencies ++= Seq(
+      // compile
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-managed" % beamVersion,
+      "com.spotify" %% "magnolify-beam" % magnolifyVersion
+      // test
+    )
+  )
+
 lazy val `scio-jdbc` = project
   .in(file("scio-jdbc"))
   .dependsOn(
@@ -1391,17 +1410,18 @@ lazy val `scio-examples` = project
   .enablePlugins(NoPublishPlugin)
   .disablePlugins(ScalafixPlugin)
   .dependsOn(
-    `scio-core` % "compile->test",
     `scio-avro` % "compile->test",
+    `scio-core` % "compile->test",
+    `scio-elasticsearch8`,
+    `scio-extra`,
     `scio-google-cloud-platform`,
     `scio-jdbc`,
-    `scio-extra`,
-    `scio-elasticsearch8`,
+    `scio-managed`,
     `scio-neo4j`,
-    `scio-tensorflow`,
-    `scio-smb`,
+    `scio-parquet`,
     `scio-redis`,
-    `scio-parquet`
+    `scio-smb`,
+    `scio-tensorflow`
   )
   .settings(commonSettings)
   .settings(soccoSettings)
@@ -1456,6 +1476,7 @@ lazy val `scio-examples` = project
       "com.mysql" % "mysql-connector-j" % "9.2.0",
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
+      "com.spotify" %% "magnolify-beam" % magnolifyVersion,
       "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
       "com.spotify" %% "magnolify-bigquery" % magnolifyVersion,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
@@ -1473,6 +1494,7 @@ lazy val `scio-examples` = project
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-managed" % beamVersion,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
       "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
       "org.apache.parquet" % "parquet-column" % parquetVersion,
@@ -1753,6 +1775,7 @@ lazy val integration = project
     `scio-extra` % "test->test",
     `scio-google-cloud-platform` % "compile;test->test",
     `scio-jdbc` % "compile;test->test",
+    `scio-managed` % "test->test",
     `scio-neo4j` % "test->test",
     `scio-smb` % "test->provided,test"
   )
@@ -1799,7 +1822,13 @@ lazy val integration = project
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion % Test,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion % Test,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion % Test,
-      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Test
+      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Test,
+      "org.apache.beam" % "beam-sdks-java-io-iceberg" % beamVersion % Test,
+      "org.apache.iceberg" % "iceberg-common" % icebergVersion % Test,
+      "org.apache.iceberg" % "iceberg-core" % icebergVersion % Test,
+      "org.apache.iceberg" % "iceberg-parquet" % icebergVersion % Test,
+      "org.apache.parquet" % "parquet-common" % parquetVersion % Test,
+      "org.apache.parquet" % "parquet-column" % parquetVersion % Test
     )
   )
 
@@ -1827,6 +1856,7 @@ lazy val site = project
     `scio-grpc` % "compile->test",
     `scio-jdbc`,
     `scio-macros`,
+    `scio-managed`,
     `scio-neo4j`,
     `scio-parquet`,
     `scio-redis`,
