@@ -30,7 +30,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.tensorflow.metadata.v0.Schema;
-import org.tensorflow.proto.example.Example;
+import org.tensorflow.proto.Example;
 
 public class ParquetExampleFileBasedSink extends FileBasedSink<Example, Void, Example> {
 
