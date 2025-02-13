@@ -98,8 +98,7 @@ public class TensorflowExampleWriteSupport extends WriteSupport<Example> {
   private void writeRecordFields(GroupType schema, Schema tfSchema, Example example) {
     List<Type> fields = schema.getFields();
     List<Feature> mdFeatures = tfSchema.getFeatureList();
-    Map<String, org.tensorflow.proto.Feature> features =
-        example.getFeatures().getFeatureMap();
+    Map<String, org.tensorflow.proto.Feature> features = example.getFeatures().getFeatureMap();
 
     for (int index = 0; index < mdFeatures.size(); index++) {
       Feature mdFeature = mdFeatures.get(index);

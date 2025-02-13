@@ -30,8 +30,8 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
 
   /**
    * Get an SCollection for a TensorFlow TFRecord file. Note that TFRecord files are not splittable.
-   * The recommended record encoding is [[org.tensorflow.proto.Example]] protocol buffers
-   * (which contain [[org.tensorflow.proto.Features]] as a field) serialized as bytes.
+   * The recommended record encoding is [[org.tensorflow.proto.Example]] protocol buffers (which
+   * contain [[org.tensorflow.proto.Features]] as a field) serialized as bytes.
    * @group input
    */
   def tfRecordFile(
@@ -41,8 +41,8 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(TFRecordIO(path))(TFRecordIO.ReadParam(compression))
 
   /**
-   * Get an SCollection of [[org.tensorflow.proto.Example]] from a TensorFlow TFRecord file
-   * encoded as serialized [[org.tensorflow.proto.Example]] protocol buffers.
+   * Get an SCollection of [[org.tensorflow.proto.Example]] from a TensorFlow TFRecord file encoded
+   * as serialized [[org.tensorflow.proto.Example]] protocol buffers.
    * @group input
    */
   def tfRecordExampleFile(
@@ -52,9 +52,8 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(TFExampleIO(path))(TFExampleIO.ReadParam(compression))
 
   /**
-   * Get an SCollection of [[org.tensorflow.proto.SequenceExample]] from a TensorFlow
-   * TFRecord file encoded as serialized [[org.tensorflow.proto.SequenceExample]] protocol
-   * buffers.
+   * Get an SCollection of [[org.tensorflow.proto.SequenceExample]] from a TensorFlow TFRecord file
+   * encoded as serialized [[org.tensorflow.proto.SequenceExample]] protocol buffers.
    * @group input
    */
   def tfRecordSequenceExampleFile(
@@ -64,9 +63,9 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(TFSequenceExampleIO(path))(TFExampleIO.ReadParam(compression))
 
   /**
-   * Get an SCollection of [[org.tensorflow.proto.Example]] from a TensorFlow TFRecord file
-   * encoded as serialized [[org.tensorflow.proto.Example]] protocol buffers, along with the
-   * remotely stored [[org.tensorflow.metadata.v0.Schema]] object available in a DistCache.
+   * Get an SCollection of [[org.tensorflow.proto.Example]] from a TensorFlow TFRecord file encoded
+   * as serialized [[org.tensorflow.proto.Example]] protocol buffers, along with the remotely stored
+   * [[org.tensorflow.metadata.v0.Schema]] object available in a DistCache.
    * @group input
    */
   def tfRecordExampleFileWithSchema(
@@ -82,9 +81,9 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   }
 
   /**
-   * Get an SCollection of [[org.tensorflow.proto.Example]] from a TensorFlow TFRecord file
-   * encoded as serialized [[org.tensorflow.proto.Example]] protocol buffers, along with the
-   * remotely stored [[org.tensorflow.metadata.v0.Schema]] object available in a DistCache.
+   * Get an SCollection of [[org.tensorflow.proto.Example]] from a TensorFlow TFRecord file encoded
+   * as serialized [[org.tensorflow.proto.Example]] protocol buffers, along with the remotely stored
+   * [[org.tensorflow.metadata.v0.Schema]] object available in a DistCache.
    * @group input
    */
   def tfRecordSequenceExampleFileWithSchema(
