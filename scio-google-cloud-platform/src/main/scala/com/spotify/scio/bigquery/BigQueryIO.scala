@@ -39,6 +39,7 @@ import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.values.{PCollection, PCollectionTuple}
 import org.joda.time.Duration
+import magnolify.bigquery._
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function
