@@ -20,7 +20,7 @@ import com.spotify.parquet.tensorflow.TensorflowExampleReadSupport
 import magnolify.parquet.ParquetType
 import org.apache.parquet.avro.AvroReadSupport
 import org.apache.parquet.hadoop.api.ReadSupport
-import org.tensorflow.proto.example.Example
+import org.tensorflow.proto.Example
 
 sealed trait ReadSupportFactory[T] extends Serializable {
   def readSupport: ReadSupport[T]
