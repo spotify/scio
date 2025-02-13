@@ -66,40 +66,37 @@ object JavaOptions {
         property("file.encoding", "UTF-8"),
         addOpens("java.base", "java.util", "ALL-UNNAMED"),
         addOpens("java.base", "java.lang.invoke", "ALL-UNNAMED"),
-        addOpens("java.base", "java.lang", "ALL-UNNAMED")
+        addOpens("java.base", "java.lang", "ALL-UNNAMED"),
+        addOpens("java.base", "java.nio", "ALL-UNNAMED")
       )
     )
+
+  private lazy val runJvmDefaults = Set(
+    minHeapSize("512m"),
+    maxHeapSize("2G"),
+    advanced("+UseParallelGC")
+  )
+
+  private lazy val runScioDefaults = Set(
+    property("scio.ignoreVersionWarning", "true"),
+    property("org.slf4j.simpleLogger.defaultLogLevel", "info")
+  ) ++ Set(
+    "bigquery.project",
+    "bigquery.secret",
+    "cloudsql.sqlserver.password"
+  ).flatMap(prop => sys.props.get(prop).map(value => property(prop, value)))
 
   def testDefaults(javaVersion: Int): Seq[String] =
     tokensForVersion(
       javaVersion,
-      Set(
-        minHeapSize("512m"),
-        maxHeapSize("2G"),
-        advanced("+UseParallelGC"),
-        property("scio.ignoreVersionWarning", "true"),
-        property("org.slf4j.simpleLogger.defaultLogLevel", "info"),
+      runJvmDefaults ++ runScioDefaults ++ Set(
         property("org.slf4j.simpleLogger.logFile", "scio.log")
-      ) ++ Set(
-        "bigquery.project",
-        "bigquery.secret",
-        "cloudsql.sqlserver.password"
-      ).flatMap(prop => sys.props.get(prop).map(value => property(prop, value)))
+      )
     )
 
   def runDefaults(javaVersion: Int): Seq[String] =
     tokensForVersion(
       javaVersion,
-      Set(
-        minHeapSize("512m"),
-        maxHeapSize("2G"),
-        advanced("+UseParallelGC"),
-        property("scio.ignoreVersionWarning", "true"),
-        property("org.slf4j.simpleLogger.defaultLogLevel", "info")
-      ) ++ Set(
-        "bigquery.project",
-        "bigquery.secret",
-        "cloudsql.sqlserver.password"
-      ).flatMap(prop => sys.props.get(prop).map(value => property(prop, value)))
+      runJvmDefaults ++ runScioDefaults
     )
 }

@@ -31,7 +31,8 @@ Scio is a Scala API for [Apache Beam](http://beam.incubator.apache.org/) and [Go
 
 # Quick Start
 
-Download and install the [Java Development Kit (JDK)](https://adoptopenjdk.net/index.html) version 8.
+Download and install the Java Development Kit (JDK) version 11 or higher,
+eg. [adoptium](https://adoptium.net/index.html) or [corretto](https://aws.amazon.com/corretto/).
 
 Install [sbt](https://www.scala-sbt.org/1.x/docs/Setup.html).
 
@@ -85,6 +86,7 @@ Scio includes the following artifacts:
 - `scio-redis`: add-on for Redis
 - `scio-repl`: extension of the Scala REPL with Scio specific operations
 - `scio-smb`: add-on for Sort Merge Bucket operations
+- `scio-snowflake`: add-on for Snowflake IO
 - `scio-tensorflow`: add-on for TensorFlow TFRecords IO and prediction
 - `scio-test`: all following test utilities. Add to your project as a "test" dependency
   - `scio-test-core`: test core utilities

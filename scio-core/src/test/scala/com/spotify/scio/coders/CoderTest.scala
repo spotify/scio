@@ -32,7 +32,9 @@ import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.beam.sdk.extensions.protobuf.ByteStringCoder
 import org.apache.beam.sdk.schemas.SchemaCoder
+import org.apache.commons.collections.IteratorUtils
 import org.apache.commons.io.output.NullOutputStream
+import org.scalactic.Equality
 import org.scalatest.Assertion
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.flatspec.AnyFlatSpec
@@ -43,9 +45,9 @@ import java.io.{ByteArrayInputStream, ObjectOutputStream, ObjectStreamClass}
 import java.nio.charset.Charset
 import java.time._
 import java.util.UUID
-
 import scala.collection.{mutable => mut}
 import scala.collection.compat._
+import scala.collection.compat.immutable.ArraySeq
 import scala.collection.immutable.SortedMap
 import scala.jdk.CollectionConverters._
 
@@ -154,6 +156,26 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       beOfType[CoderTransform[_, _]] and
       materializeTo[ArrayCoder[_]] and
       beFullyCompliantNotConsistentWithEquals()
+
+    {
+      implicit val pqOrd: Ordering[String] = Ordering.String.on(_.reverse)
+      val pq = new mut.PriorityQueue[String]()(pqOrd)
+      pq ++= s
+
+      implicit val pqEq: Equality[mut.PriorityQueue[String]] = {
+        case (a: mut.PriorityQueue[String], b: mut.PriorityQueue[_]) => a.toList == b.toList
+        case _                                                       => false
+      }
+
+      pq coderShould roundtrip() and
+        beOfType[CoderTransform[_, _]] and
+        materializeTo[MutablePriorityQueueCoder[_]] and
+        beSerializable() and
+        structuralValueConsistentWithEquals() and
+        beNotConsistentWithEquals() and
+        bytesCountTested() and
+        beNonDeterministic()
+    }
   }
 
   it should "support Scala enumerations" in {
@@ -321,29 +343,99 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support Java collections" in {
-    import java.util.{ArrayList => jArrayList, List => jList, Map => jMap}
-    val is = 1 to 10
-    val s: jList[String] = is.map(_.toString).asJava
-    val m: jMap[String, Int] = is
-      .map(v => v.toString -> v)
-      .toMap
-      .asJava
-    val arrayList = new jArrayList(s)
+    import java.lang.{Iterable => JIterable}
+    import java.util.{
+      ArrayList => JArrayList,
+      Collection => JCollection,
+      List => JList,
+      Set => JSet,
+      Map => JMap,
+      PriorityQueue => JPriorityQueue
+    }
 
-    s coderShould roundtrip() and
-      beOfType[CoderTransform[_, _]] and
-      materializeTo[beam.ListCoder[_]] and
-      beFullyCompliant()
+    val elems = (1 to 10).map(_.toString)
 
-    m coderShould roundtrip() and
-      beOfType[CoderTransform[_, _]] and
-      materializeTo[org.apache.beam.sdk.coders.MapCoder[_, _]] and
-      beFullyCompliantNonDeterministic()
+    {
+      val i: JIterable[String] = (elems: Iterable[String]).asJava
+      implicit val iEq: Equality[JIterable[String]] = {
+        case (xs: JIterable[String], ys: JIterable[String]) =>
+          IteratorUtils.toArray(xs.iterator()) sameElements IteratorUtils.toArray(ys.iterator())
+        case _ => false
+      }
 
-    arrayList coderShould roundtrip() and
-      beOfType[Transform[_, _]] and
-      materializeToTransformOf[beam.ListCoder[_]] and
-      beFullyCompliant()
+      i coderShould roundtrip() and
+        beOfType[CoderTransform[_, _]] and
+        materializeTo[beam.IterableCoder[_]] and
+        beNotConsistentWithEquals()
+    }
+
+    {
+      val c: JCollection[String] = elems.asJavaCollection
+      implicit val iEq: Equality[JCollection[String]] = {
+        case (xs: JCollection[String], ys: JCollection[String]) =>
+          IteratorUtils.toArray(xs.iterator()) sameElements IteratorUtils.toArray(ys.iterator())
+        case _ => false
+      }
+      c coderShould roundtrip() and
+        beOfType[CoderTransform[_, _]] and
+        materializeTo[beam.CollectionCoder[_]] and
+        beNotConsistentWithEquals()
+    }
+
+    {
+      val l: JList[String] = elems.asJava
+      l coderShould roundtrip() and
+        beOfType[CoderTransform[_, _]] and
+        materializeTo[beam.ListCoder[_]] and
+        beFullyCompliant()
+    }
+
+    {
+      val al: JArrayList[String] = new JArrayList(elems.asJava)
+      al coderShould roundtrip() and
+        beOfType[CoderTransform[_, _]] and
+        materializeTo[JArrayListCoder[_]] and
+        beFullyCompliant()
+    }
+
+    {
+      val s: JSet[String] = elems.toSet.asJava
+      s coderShould roundtrip() and
+        beOfType[CoderTransform[_, _]] and
+        materializeTo[beam.SetCoder[_]] and
+        structuralValueConsistentWithEquals() and
+        beSerializable()
+    }
+
+    {
+      val m: JMap[String, Int] = (1 to 10)
+        .map(v => v.toString -> v)
+        .toMap
+        .asJava
+      m coderShould roundtrip() and
+        beOfType[CoderTransform[_, _]] and
+        materializeTo[beam.MapCoder[_, _]] and
+        beFullyCompliantNonDeterministic()
+    }
+
+    {
+      implicit val pqOrd: Ordering[String] = Ordering.String.on(_.reverse)
+      val pq = new JPriorityQueue[String](pqOrd)
+      pq.addAll(elems.asJavaCollection)
+
+      implicit val pqEq: Equality[java.util.PriorityQueue[String]] = {
+        case (a: JPriorityQueue[String], b: JPriorityQueue[_]) =>
+          a.toArray sameElements b.toArray
+        case _ => false
+      }
+
+      pq coderShould roundtrip() and
+        beOfType[CoderTransform[_, _]] and
+        materializeTo[JPriorityQueueCoder[_]] and
+        beSerializable() and
+        structuralValueConsistentWithEquals() and
+        beNonDeterministic()
+    }
   }
 
   it should "Derive serializable coders" in {
@@ -904,15 +996,6 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       classOf[magnolia1.SealedTrait[Coder, _]].getName,
       classOf[magnolia1.Subtype[Coder, _]].getName
     )
-  }
-
-  it should "not accept SortedMap when ordering doesn't match with coder" in {
-    val sm = SortedMap(1 -> "1", 2 -> "2")(Ordering[Int].reverse)
-    // implicit SortedMapCoder will use implicit default Int ordering
-    val e = the[IllegalArgumentException] thrownBy {
-      sm coderShould roundtrip()
-    }
-    e.getMessage shouldBe "requirement failed: SortedMap ordering does not match SortedMapCoder ordering"
   }
 
   /*

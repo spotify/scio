@@ -79,7 +79,7 @@ object ObjectFileTap {
 }
 
 object ProtobufFileTap {
-  def apply[T <: Message: ClassTag](path: String, params: ProtobufIO.ReadParam): Tap[T] =
+  def apply[T <: Message: ClassTag](path: String, params: ProtobufObjectFileIO.ReadParam): Tap[T] =
     ObjectFileTap(path, params)(Coder.protoMessageCoder[T])
 }
 
@@ -99,7 +99,7 @@ final case class AvroTaps(self: Taps) {
   /** Get a `Future[Tap[T]]` of a Protobuf file. */
   def protobufFile[T <: Message: ClassTag](
     path: String,
-    params: ProtobufIO.ReadParam = ProtobufIO.ReadParam()
+    params: ProtobufObjectFileIO.ReadParam = ProtobufObjectFileIO.ReadParam()
   ): Future[Tap[T]] =
     self.mkTap(
       s"Protobuf: $path",
@@ -107,16 +107,12 @@ final case class AvroTaps(self: Taps) {
       () => ProtobufFileTap[T](path, params)
     )
 
-  /**
-   * Get a `Future[Tap[T]]` for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro file.
-   */
+  /** Get a `Future[Tap[T]]` for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro file. */
   def avroFile(path: String, schema: Schema): Future[Tap[GenericRecord]] =
     avroFile(path, schema, GenericRecordIO.ReadParam())
 
   // overloaded API. We can't use default params
-  /**
-   * Get a `Future[Tap[T]]` for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro file.
-   */
+  /** Get a `Future[Tap[T]]` for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro file. */
   def avroFile(
     path: String,
     schema: Schema,

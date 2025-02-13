@@ -21,11 +21,11 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.util.Functions
 import com.spotify.scio.coders.Coder
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
-import org.apache.beam.sdk.transforms.{Combine, Top}
+import org.apache.beam.sdk.transforms.{Combine, Mean, Top}
 import org.apache.beam.sdk.values.PCollection
+import org.joda.time.ReadableInstant
 
-import java.lang.{Iterable => JIterable}
-
+import java.lang.{Double => JDouble, Iterable => JIterable}
 import scala.jdk.CollectionConverters._
 
 /**
@@ -105,6 +105,24 @@ class SCollectionWithFanout[T] private[values] (coll: SCollection[T], fanout: In
       Combine.globally(Functions.reduceFn(context, op)).withoutDefaults().withFanout(fanout)
     )
 
+  /** [[SCollection.min]] with fan out. */
+  def min(implicit ord: Ordering[T]): SCollection[T] =
+    this.reduce(ord.min)
+
+  /** [[SCollection.max]] with fan out. */
+  def max(implicit ord: Ordering[T]): SCollection[T] =
+    this.reduce(ord.max)
+
+  /** [[SCollection.latest]] with fan out. */
+  def latest: SCollection[T] = {
+    coll.transform { in =>
+      // widen to ReadableInstant for scala 2.12 implicit ordering
+      new SCollectionWithFanout(in.withTimestamp, this.fanout)
+        .max(Ordering.by(_._2: ReadableInstant))
+        .keys
+    }
+  }
+
   /** [[SCollection.sum]] with fan out. */
   def sum(implicit sg: Semigroup[T]): SCollection[T] = {
     SCollection.logger.warn(
@@ -114,6 +132,16 @@ class SCollectionWithFanout[T] private[values] (coll: SCollection[T], fanout: In
     coll.pApply(
       Combine.globally(Functions.reduceFn(context, sg)).withoutDefaults().withFanout(fanout)
     )
+  }
+
+  /** [[SCollection.mean]] with fan out. */
+  def mean(implicit ev: Numeric[T]): SCollection[Double] = {
+    val e = ev // defeat closure
+    coll.transform { in =>
+      in.map[JDouble](e.toDouble)
+        .pApply(Mean.globally().withFanout(fanout))
+        .asInstanceOf[SCollection[Double]]
+    }
   }
 
   /** [[SCollection.top]] with fan out. */

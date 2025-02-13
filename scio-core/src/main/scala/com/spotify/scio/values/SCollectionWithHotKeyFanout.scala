@@ -24,7 +24,10 @@ import com.spotify.scio.util.TupleFunctions._
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.beam.sdk.transforms.Combine.PerKeyWithHotKeyFanout
 import org.apache.beam.sdk.transforms.Top.TopCombineFn
-import org.apache.beam.sdk.transforms.{Combine, SerializableFunction}
+import org.apache.beam.sdk.transforms.{Combine, Mean, SerializableFunction}
+import org.joda.time.ReadableInstant
+
+import java.lang.{Double => JDouble}
 
 /**
  * An enhanced SCollection that uses an intermediate node to combine "hot" keys partially before
@@ -132,6 +135,32 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
   /** [[PairSCollectionFunctions.reduceByKey]] with hot key fanout. */
   def reduceByKey(op: (V, V) => V): SCollection[(K, V)] =
     self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(context, op))))(kvToTuple)
+
+  /** [[SCollection.min]] with hot key fan out. */
+  def minByKey(implicit ord: Ordering[V]): SCollection[(K, V)] =
+    self.reduceByKey(ord.min)
+
+  /** [[SCollection.max]] with hot key fan out. */
+  def maxByKey(implicit ord: Ordering[V]): SCollection[(K, V)] =
+    self.reduceByKey(ord.max)
+
+  /** [[SCollection.latest]] with hot key fan out. */
+  def latestByKey: SCollection[(K, V)] = {
+    self.self.transform { in =>
+      new SCollectionWithHotKeyFanout(in.withTimestampedValues, this.hotKeyFanout)
+        // widen to ReadableInstant for scala 2.12 implicit ordering
+        .maxByKey(Ordering.by(_._2: ReadableInstant))
+        .mapValues(_._1)
+    }
+  }
+
+  /** [[SCollection.mean]] with hot key fan out. */
+  def meanByKey(implicit ev: Numeric[V]): SCollection[(K, Double)] = {
+    val e = ev // defeat closure
+    self.self.transform { in =>
+      in.mapValues[JDouble](e.toDouble).applyPerKey(Mean.perKey[K, JDouble]())(kdToTuple)
+    }
+  }
 
   /** [[PairSCollectionFunctions.sumByKey]] with hot key fanout. */
   def sumByKey(implicit sg: Semigroup[V]): SCollection[(K, V)] = {

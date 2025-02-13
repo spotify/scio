@@ -29,10 +29,13 @@ import com.spotify.scio.hash._
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
+import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement, Timestamp}
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values.{KV, PCollection}
-import org.joda.time.Duration
+import org.joda.time.{Duration, Instant}
 import org.slf4j.LoggerFactory
+
+import java.lang.{Double => JDouble}
 
 import scala.collection.compat._
 
@@ -627,9 +630,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * three functions:
    *
    *   - `createCombiner`, which turns a `V` into a `C` (e.g., creates a one-element list)
-   *
    *   - `mergeValue`, to merge a `V` into a `C` (e.g., adds it to the end of a list)
-   *
    *   - `mergeCombiners`, to combine two `C`'s into a single one.
    *
    * Both `mergeValue` and `mergeCombiners` are allowed to modify and return their first argument
@@ -717,6 +718,23 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def distinctByKey: SCollection[(K, V)] =
     self.distinctBy(_._1)
+
+  /**
+   * Convert values into pairs of (value, timestamp).
+   * @group transform
+   */
+  def withTimestampedValues: SCollection[(K, (V, Instant))] =
+    self.parDo(new DoFn[(K, V), (K, (V, Instant))] {
+      @ProcessElement
+      private[scio] def processElement(
+        @Element element: (K, V),
+        @Timestamp timestamp: Instant,
+        out: OutputReceiver[(K, (V, Instant))]
+      ): Unit = {
+        val (k, v) = element
+        out.output((k, (v, timestamp)))
+      }
+    })
 
   /**
    * Return a new SCollection of (key, value) pairs whose values satisfy the predicate.
@@ -993,6 +1011,16 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     self.map(kv => (kv._1, f(kv._2)))
 
   /**
+   * Return the min of values for each key as defined by the implicit `Ordering[T]`.
+   * @return
+   *   a new SCollection of (key, minimum value) pairs
+   * @group per_key
+   */
+  // Scala lambda is simpler and more powerful than transforms.Min
+  def minByKey(implicit ord: Ordering[V]): SCollection[(K, V)] =
+    this.reduceByKey(ord.min)
+
+  /**
    * Return the max of values for each key as defined by the implicit `Ordering[T]`.
    * @return
    *   a new SCollection of (key, maximum value) pairs
@@ -1003,14 +1031,38 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     this.reduceByKey(ord.max)
 
   /**
-   * Return the min of values for each key as defined by the implicit `Ordering[T]`.
+   * Return latest of values for each key according to its event time, or null if there are no
+   * elements.
    * @return
-   *   a new SCollection of (key, minimum value) pairs
+   *   a new SCollection of (key, latest value) pairs
    * @group per_key
    */
-  // Scala lambda is simpler and more powerful than transforms.Min
-  def minByKey(implicit ord: Ordering[V]): SCollection[(K, V)] =
-    this.reduceByKey(ord.min)
+  def latestByKey: SCollection[(K, V)] =
+    self.applyPerKey(Latest.perKey[K, V]())(kvToTuple)
+
+  /**
+   * Reduce by key with [[com.twitter.algebird.Semigroup Semigroup]]. This could be more powerful
+   * and better optimized than [[reduceByKey]] in some cases.
+   * @group per_key
+   */
+  def sumByKey(implicit sg: Semigroup[V]): SCollection[(K, V)] = {
+    PairSCollectionFunctions.logger.warn(
+      "combineByKey/sumByKey does not support default value and may fail in some streaming " +
+        "scenarios. Consider aggregateByKey/foldByKey instead."
+    )
+    this.applyPerKey(Combine.perKey(Functions.reduceFn(context, sg)))(kvToTuple)
+  }
+
+  /**
+   * Return the mean of values for each key as defined by the implicit `Numeric[T]`.
+   * @return
+   *   a new SCollection of (key, mean value) pairs
+   * @group per_key
+   */
+  def meanByKey(implicit ev: Numeric[V]): SCollection[(K, Double)] =
+    self.transform { in =>
+      in.mapValues[JDouble](ev.toDouble).applyPerKey(Mean.perKey[K, JDouble]())(kdToTuple)
+    }
 
   /**
    * Merge the values for each key using an associative reduce function. This will also perform the
@@ -1065,19 +1117,6 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       if (t._2._1.nonEmpty && t._2._2.isEmpty) t._2._1.map((t._1, _))
       else Seq.empty
     }
-  }
-
-  /**
-   * Reduce by key with [[com.twitter.algebird.Semigroup Semigroup]]. This could be more powerful
-   * and better optimized than [[reduceByKey]] in some cases.
-   * @group per_key
-   */
-  def sumByKey(implicit sg: Semigroup[V]): SCollection[(K, V)] = {
-    PairSCollectionFunctions.logger.warn(
-      "combineByKey/sumByKey does not support default value and may fail in some streaming " +
-        "scenarios. Consider aggregateByKey/foldByKey instead."
-    )
-    this.applyPerKey(Combine.perKey(Functions.reduceFn(context, sg)))(kvToTuple)
   }
 
   /**

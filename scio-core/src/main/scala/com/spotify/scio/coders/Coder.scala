@@ -143,7 +143,6 @@ final case class AggregateCoder[T] private (coder: Coder[T]) extends Coder[java.
  *     {{{
  *     def c: Coder[MyType] = Coder[MyType]
  *     }}}
- *
  *   - To generate an implicit instance to be in scope for type T, use [[Coder.gen]]
  *     {{{
  *     implicit def coderT: Coder[T] = Coder.gen[T]
@@ -154,7 +153,6 @@ final case class AggregateCoder[T] private (coder: Coder[T]) extends Coder[java.
  *
  *   - To define a Coder of custom type, where the type can be mapped to some other type for which a
  *     Coder is known, use [[Coder.xmap]]
- *
  *   - To explicitly use kryo Coder use [[Coder.kryo]]
  */
 private[coders] trait CoderGrammar {

@@ -25,9 +25,7 @@ import scala.reflect.runtime.universe._
 /** Interface for all custom type providers. */
 trait OverrideTypeProvider {
 
-  /**
-   * Returns true if we should override default mapping. Uses schema directly from BigQuery loading.
-   */
+  /** Returns true if we should override default mapping. Uses schema directly from BigQuery loading. */
   def shouldOverrideType(tfs: TableFieldSchema): Boolean
 
   /** Returns true if we should override default mapping. Uses compile time types. */
@@ -36,9 +34,7 @@ trait OverrideTypeProvider {
   /** Returns true if we should override default mapping. Uses runtime types. */
   def shouldOverrideType(tpe: Type): Boolean
 
-  /**
-   * Returns a `context.Tree` representing the Scala type. This is called at macro expansion time.
-   */
+  /** Returns a `context.Tree` representing the Scala type. This is called at macro expansion time. */
   def getScalaType(c: blackbox.Context)(tfs: TableFieldSchema): c.Tree
 
   /**

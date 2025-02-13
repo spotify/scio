@@ -19,9 +19,11 @@ package com.spotify.scio.bigquery.client
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model._
-import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
-import com.google.cloud.bigquery.storage.v1beta1.Storage._
-import com.google.cloud.bigquery.storage.v1beta1.TableReferenceProto
+import com.google.cloud.bigquery.storage.v1.CreateReadSessionRequest
+import com.google.cloud.bigquery.storage.v1.DataFormat
+import com.google.cloud.bigquery.storage.v1.ReadRowsRequest
+import com.google.cloud.bigquery.storage.v1.ReadSession
+import com.google.cloud.bigquery.storage.v1.ReadSession.TableReadOptions
 import com.google.cloud.hadoop.util.ApiErrorExtractor
 import com.spotify.scio.bigquery.client.BigQuery.Client
 import com.spotify.scio.bigquery.{BigQuerySysProps, StorageUtil, Table => STable, TableRow}
@@ -29,7 +31,7 @@ import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
 import org.apache.avro.io.{BinaryDecoder, DecoderFactory}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
-import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryAvroUtilsWrapper, BigQueryOptions}
+import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryOptions, BigQueryUtils}
 import org.apache.beam.sdk.io.gcp.{bigquery => bq}
 import org.apache.beam.sdk.options.{ExecutorOptions, PipelineOptionsFactory}
 import org.joda.time.Instant
@@ -37,6 +39,7 @@ import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 import scala.util.Random
 import scala.util.control.NonFatal
@@ -64,37 +67,32 @@ final private[client] class TableOps(client: Client) {
     storageAvroRows(table, TableReadOptions.getDefaultInstance)
 
   def storageRows(table: STable, readOptions: TableReadOptions): Iterator[TableRow] =
-    withBigQueryService { bqServices =>
-      val tb = bqServices.getTable(table.ref, readOptions.getSelectedFieldsList)
-      storageAvroRows(table, readOptions).map { gr =>
-        BigQueryAvroUtilsWrapper.convertGenericRecordToTableRow(gr, tb.getSchema)
-      }
+    storageAvroRows(table, readOptions).map { gr =>
+      BigQueryUtils.convertGenericRecordToTableRow(gr)
     }
 
   def storageAvroRows(table: STable, readOptions: TableReadOptions): Iterator[GenericRecord] = {
-    val tableRefProto = TableReferenceProto.TableReference
+    val tableProjectId = Option(table.ref.getProjectId).getOrElse(client.project)
+    val tableUrn =
+      s"projects/${tableProjectId}/datasets/${table.ref.getDatasetId}/tables/${table.ref.getTableId}"
+
+    val readSessionProto = ReadSession
       .newBuilder()
-      .setDatasetId(table.ref.getDatasetId)
-      .setTableId(table.ref.getTableId)
-      .setProjectId(Option(table.ref.getProjectId).getOrElse(client.project))
+      .setTable(tableUrn)
+      .setReadOptions(readOptions)
+      .setDataFormat(DataFormat.AVRO)
 
     val request = CreateReadSessionRequest
       .newBuilder()
-      .setTableReference(tableRefProto)
-      .setReadOptions(readOptions)
       .setParent(s"projects/${client.project}")
-      .setRequestedStreams(1)
-      .setFormat(DataFormat.AVRO)
+      .setReadSession(readSessionProto)
+      .setMaxStreamCount(1)
       .build()
 
     val session = client.storage.createReadSession(request)
     val readRowsRequest = ReadRowsRequest
       .newBuilder()
-      .setReadPosition(
-        StreamPosition
-          .newBuilder()
-          .setStream(session.getStreams(0))
-      )
+      .setReadStream(session.getStreams(0).getName)
       .build()
 
     val schema = new Schema.Parser().parse(session.getAvroSchema.getSchema)
@@ -137,18 +135,22 @@ final private[client] class TableOps(client: Client) {
       Cache.SchemaCache
     ) {
       val tableRef = bq.BigQueryHelpers.parseTableSpec(tableSpec)
-      val tableRefProto = TableReferenceProto.TableReference
+      val tableProjectId = Option(tableRef.getProjectId).getOrElse(client.project)
+      val tableUrn =
+        s"projects/${tableProjectId}/datasets/${tableRef.getDatasetId}/tables/${tableRef.getTableId}"
+
+      val readSessionProto = ReadSession
         .newBuilder()
-        .setProjectId(Option(tableRef.getProjectId).getOrElse(client.project))
-        .setDatasetId(tableRef.getDatasetId)
-        .setTableId(tableRef.getTableId)
+        .setTable(tableUrn)
+        .setReadOptions(StorageUtil.tableReadOptions(selectedFields, rowRestriction))
+        .setDataFormat(DataFormat.AVRO)
 
       val request = CreateReadSessionRequest
         .newBuilder()
-        .setTableReference(tableRefProto)
-        .setReadOptions(StorageUtil.tableReadOptions(selectedFields, rowRestriction))
         .setParent(s"projects/${client.project}")
+        .setReadSession(readSessionProto)
         .build()
+
       val session = client.storage.createReadSession(request)
       new Schema.Parser().parse(session.getAvroSchema.getSchema)
     }
@@ -226,6 +228,57 @@ final private[client] class TableOps(client: Client) {
   def exists(tableSpec: String): Boolean =
     exists(bq.BigQueryHelpers.parseTableSpec(tableSpec))
 
+  /**
+   * This is annoying but the GCP BQ client v2 does not accept BQ json rows in the same format as BQ
+   * load. JSON column are expected as string instead of parsed json
+   */
+  private def normalizeRows(schema: TableSchema)(tableRow: TableRow): TableRow =
+    normalizeRows(schema.getFields.asScala.toList)(tableRow)
+
+  private def normalizeRows(fields: List[TableFieldSchema])(tableRow: TableRow): TableRow = {
+    import com.spotify.scio.bigquery._
+
+    fields.foldLeft(tableRow) { (row, f) =>
+      f.getType match {
+        case "JSON" =>
+          val name = f.getName
+          f.getMode match {
+            case "REQUIRED" =>
+              row.set(name, row.getJson(name).wkt)
+            case "NULLABLE" =>
+              row.getJsonOpt(name).fold(row) { json =>
+                row.set(name, json.wkt)
+              }
+            case "REPEATED" =>
+              row.set(name, row.getJsonList(name).map(_.wkt).asJava)
+          }
+        case "RECORD" | "STRUCT" =>
+          val name = f.getName
+          val netedFields = f.getFields.asScala.toList
+          f.getMode match {
+            case "REQUIRED" =>
+              row.set(name, normalizeRows(netedFields)(row.getRecord(name)))
+            case "NULLABLE" =>
+              row.getRecordOpt(name).fold(row) { nestedRow =>
+                row.set(name, normalizeRows(netedFields)(nestedRow))
+              }
+            case "REPEATED" =>
+              row.set(
+                name,
+                row
+                  .getRecordList(name)
+                  .map { nestedRow =>
+                    normalizeRows(netedFields)(nestedRow)
+                  }
+                  .asJava
+              )
+          }
+        case _ =>
+          row
+      }
+    }
+  }
+
   /** Write rows to a table. */
   def writeRows(
     tableReference: TableReference,
@@ -235,20 +288,32 @@ final private[client] class TableOps(client: Client) {
     createDisposition: CreateDisposition
   ): Long = withBigQueryService { service =>
     val table = new Table().setTableReference(tableReference).setSchema(schema)
-    if (createDisposition == CreateDisposition.CREATE_IF_NEEDED) {
+    if (
+      createDisposition == CreateDisposition.CREATE_IF_NEEDED &&
+      service.getTable(tableReference) == null
+    ) {
       service.createTable(table)
+      // wait creation to be effective before inserting
+      Thread.sleep(10.seconds.toMillis)
     }
 
     writeDisposition match {
       case WriteDisposition.WRITE_TRUNCATE =>
-        delete(tableReference)
-        service.createTable(table)
+        if (!service.isTableEmpty(tableReference)) {
+          delete(tableReference)
+          // wait deletion to be effective before re-creating
+          Thread.sleep(10.seconds.toMillis)
+
+          service.createTable(table)
+          // wait creation to be effective before inserting
+          Thread.sleep(10.seconds.toMillis)
+        }
       case WriteDisposition.WRITE_EMPTY =>
         require(service.isTableEmpty(tableReference))
       case WriteDisposition.WRITE_APPEND =>
     }
 
-    service.insertAll(tableReference, rows.asJava)
+    service.insertAll(tableReference, rows.map(normalizeRows(schema)).asJava)
   }
 
   /** Write rows to a table. */

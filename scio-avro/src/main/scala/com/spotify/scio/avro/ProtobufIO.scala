@@ -18,17 +18,35 @@ package com.spotify.scio.avro
 
 import com.google.protobuf.Message
 import com.spotify.scio.ScioContext
-import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
+import com.spotify.scio.coders.Coder
+import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT, TestIO}
 import com.spotify.scio.protobuf.util.ProtobufUtil
 import com.spotify.scio.values.SCollection
+import magnolify.protobuf.ProtobufType
 
 import scala.reflect.ClassTag
 
-final case class ProtobufIO[T <: Message: ClassTag](path: String) extends ScioIO[T] {
-  override type ReadP = ProtobufIO.ReadParam
-  override type WriteP = ProtobufIO.WriteParam
-  override val tapT: TapT.Aux[T, T] = TapOf[T]
+sealed trait ProtobufIO[T] extends ScioIO[T] {
+  final override val tapT: TapT.Aux[T, T] = TapOf[T]
+}
 
+object ProtobufIO {
+  final def apply[T](path: String): ProtobufIO[T] =
+    new ProtobufIO[T] with TestIO[T] {
+      override def testId: String = s"ProtobufIO($path)"
+    }
+}
+
+object ProtobufObjectFileIO {
+  type ReadParam = GenericRecordIO.ReadParam
+  val ReadParam = GenericRecordIO.ReadParam
+  type WriteParam = GenericRecordIO.WriteParam
+  val WriteParam = GenericRecordIO.WriteParam
+}
+
+final case class ProtobufObjectFileIO[T <: Message: ClassTag](path: String) extends ProtobufIO[T] {
+  override type ReadP = ProtobufObjectFileIO.ReadParam
+  override type WriteP = ProtobufObjectFileIO.WriteParam
   override def testId: String = s"ProtobufIO($path)"
 
   private lazy val underlying: ObjectFileIO[T] = ObjectFileIO(path)
@@ -53,13 +71,51 @@ final case class ProtobufIO[T <: Message: ClassTag](path: String) extends ScioIO
     data.write(underlying)(params.copy(metadata = metadata)).underlying
   }
 
-  override def tap(read: ReadP): Tap[T] =
-    ProtobufFileTap(path, read)
+  override def tap(read: ReadP): Tap[T] = ProtobufFileTap(path, read)
 }
 
-object ProtobufIO {
-  type ReadParam = GenericRecordIO.ReadParam
-  val ReadParam = GenericRecordIO.ReadParam
-  type WriteParam = GenericRecordIO.WriteParam
-  val WriteParam = GenericRecordIO.WriteParam
+final case class ProtobufTypedObjectFileIO[T: Coder, U <: Message: ClassTag](
+  path: String
+)(implicit pt: ProtobufType[T, U])
+    extends ProtobufIO[T] {
+  override type ReadP = ProtobufTypedObjectFileIO.ReadParam
+  override type WriteP = ProtobufTypedObjectFileIO.WriteParam
+  override def testId: String = s"ProtobufIO($path)"
+
+  private lazy val underlying: ObjectFileIO[U] = ObjectFileIO(path)
+
+  /**
+   * Get an SCollection for a Protobuf file.
+   *
+   * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage Avro's
+   * block file format.
+   */
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
+    sc.transform(_.read(underlying)(params).map(pt.from))
+
+  /**
+   * Save this SCollection as a Protobuf file.
+   *
+   * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage Avro's
+   * block file format.
+   */
+  override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
+    val metadata = params.metadata ++ ProtobufUtil.schemaMetadataOf[U]
+    underlying
+      .writeWithContext(
+        data.transform(_.map(pt.to)),
+        params.copy(metadata = metadata)
+      )
+      .underlying
+      .map(pt.from)
+  }
+
+  override def tap(read: ReadP): Tap[T] = ProtobufFileTap[U](path, read).map(pt.from)
+}
+
+object ProtobufTypedObjectFileIO {
+  type ReadParam = ProtobufObjectFileIO.ReadParam
+  val ReadParam = ProtobufObjectFileIO.ReadParam
+  type WriteParam = ProtobufObjectFileIO.WriteParam
+  val WriteParam = ProtobufObjectFileIO.WriteParam
 }

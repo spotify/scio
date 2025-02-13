@@ -17,7 +17,7 @@
 
 package com.spotify.scio.bigquery
 
-import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
+import com.google.cloud.bigquery.storage.v1.ReadSession.TableReadOptions
 import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.avro._
@@ -40,6 +40,16 @@ final case class TableRowJsonTap(path: String, params: TableRowJsonIO.ReadParam)
     FileStorage(path, params.suffix).tableRowJsonFile
   override def open(sc: ScioContext): SCollection[TableRow] =
     sc.read(TableRowJsonIO(path))(params)
+}
+
+final case class BigQueryTableRowTypedTap[T: Coder](table: Table, fn: TableRow => T)
+    extends Tap[T] {
+  lazy val client: BigQuery = BigQuery.defaultInstance()
+
+  override def value: Iterator[T] = client.tables.rows(table).map(fn)
+
+  override def open(sc: ScioContext): SCollection[T] =
+    sc.read(BigQueryTypedTable(table, Format.TableRow)(tableRowCoder)).map(fn)
 }
 
 final case class BigQueryTypedTap[T: Coder](table: Table, fn: (GenericRecord, TableSchema) => T)

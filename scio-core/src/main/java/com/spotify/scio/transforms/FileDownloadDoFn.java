@@ -20,14 +20,15 @@ package com.spotify.scio.transforms;
 import com.spotify.scio.util.RemoteFileUtil;
 import java.net.URI;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
+import org.apache.beam.sdk.transforms.windowing.PaneInfo;
+import org.apache.beam.sdk.values.ValueInSingleWindow;
 import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +38,7 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
 
   private static final Logger LOG = LoggerFactory.getLogger(FileDownloadDoFn.class);
 
-  private final List<Element> batch;
+  private final List<ValueInSingleWindow<URI>> batch;
   private final RemoteFileUtil remoteFileUtil;
   private final SerializableFunction<Path, OutputT> fn;
   private final int batchSize;
@@ -82,17 +83,25 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
   public void processElement(
       @DoFn.Element URI element,
       @Timestamp Instant timestamp,
-      OutputReceiver<OutputT> out,
-      BoundedWindow window) {
-    batch.add(new Element(element, timestamp, window));
+      BoundedWindow window,
+      PaneInfo pane,
+      OutputReceiver<OutputT> out) {
+    batch.add(ValueInSingleWindow.of(element, timestamp, window, pane));
     if (batch.size() >= batchSize) {
-      processBatch(out);
+      flush(
+          r -> {
+            final OutputT o = r.getValue();
+            final Instant ts = r.getTimestamp();
+            final Collection<BoundedWindow> ws = Collections.singleton(r.getWindow());
+            final PaneInfo p = r.getPane();
+            out.outputWindowedValue(o, ts, ws, p);
+          });
     }
   }
 
   @FinishBundle
   public void finishBundle(FinishBundleContext context) {
-    processBatch(context);
+    flush(p -> context.output(p.getValue(), p.getTimestamp(), p.getWindow()));
   }
 
   @Override
@@ -103,51 +112,31 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
         .add(DisplayData.item("Keep Downloaded Files", keep));
   }
 
-  private void processBatch(OutputReceiver<OutputT> outputReceiver) {
+  private void flush(Consumer<ValueInSingleWindow<OutputT>> outputFn) {
     if (batch.isEmpty()) {
       return;
     }
     LOG.info("Processing batch of {}", batch.size());
-    List<URI> uris = batch.stream().map(e -> e.uri).collect(Collectors.toList());
-    remoteFileUtil.download(uris).stream().map(fn::apply).forEach(outputReceiver::output);
+    List<URI> uris = batch.stream().map(ValueInSingleWindow::getValue).collect(Collectors.toList());
+    List<Path> paths = remoteFileUtil.download(uris);
+
+    Iterator<ValueInSingleWindow<URI>> inputIt = batch.iterator();
+    Iterator<Path> pathIt = paths.iterator();
+    while (inputIt.hasNext() && pathIt.hasNext()) {
+      final ValueInSingleWindow<URI> r = inputIt.next();
+      final Path path = pathIt.next();
+
+      final OutputT o = fn.apply(path);
+      final Instant ts = r.getTimestamp();
+      final BoundedWindow w = r.getWindow();
+      final PaneInfo p = r.getPane();
+      outputFn.accept(ValueInSingleWindow.of(o, ts, w, p));
+    }
+
     if (!keep) {
       LOG.info("Deleting batch of {}", batch.size());
       remoteFileUtil.delete(uris);
     }
     batch.clear();
-  }
-
-  private void processBatch(FinishBundleContext c) {
-    if (batch.isEmpty()) {
-      return;
-    }
-    LOG.info("Processing batch of {}", batch.size());
-    List<URI> uris = batch.stream().map(e -> e.uri).collect(Collectors.toList());
-    List<OutputT> outputs =
-        remoteFileUtil.download(uris).stream().map(fn::apply).collect(Collectors.toList());
-    // .forEach(c::output);
-    Iterator<OutputT> i1 = outputs.iterator();
-    Iterator<Element> i2 = batch.iterator();
-    while (i1.hasNext() && i2.hasNext()) {
-      Element e = i2.next();
-      c.output(i1.next(), e.timestamp, e.window);
-    }
-    if (!keep) {
-      LOG.info("Deleting batch of {}", batch.size());
-      remoteFileUtil.delete(uris);
-    }
-    batch.clear();
-  }
-
-  private class Element {
-    private URI uri;
-    private Instant timestamp;
-    private BoundedWindow window;
-
-    Element(URI uri, Instant timestamp, BoundedWindow window) {
-      this.uri = uri;
-      this.timestamp = timestamp;
-      this.window = window;
-    }
   }
 }

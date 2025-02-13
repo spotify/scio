@@ -28,6 +28,7 @@ project/plugins/project/
 .metals/
 metals.sbt
 .vscode/
+*.iml
 
 # scio
 .bigquery/

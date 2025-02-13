@@ -26,7 +26,7 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.Pipeline.PipelineVisitor
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.io.Read
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.CreateDisposition
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, Method}
 import org.apache.beam.sdk.runners.TransformHierarchy
 import org.apache.beam.sdk.transforms.display.DisplayData
 import org.apache.beam.sdk.values.PValue
@@ -37,6 +37,8 @@ import scala.jdk.CollectionConverters._
 object BigQueryIOTest {
   @BigQueryType.toTable
   case class BQRecord(i: Int, s: String, r: List[String])
+
+  case class MagnolifyRecord(i: Int, s: String)
 
   // BQ Write transform display id data for tableDescription
   private val TableDescriptionId = DisplayData.Identifier.of(
@@ -153,6 +155,49 @@ final class BigQueryIOTest extends ScioIOSpec {
     unconsumedReads(context) shouldBe empty
   }
 
+  it should "work with streaming inserts for typed and tablerow elements in batch" in {
+    val sc = ScioContext()
+    val spec = Table.Spec("project:dataset.dummy")
+    sc.empty[BQRecord]().saveAsTypedBigQueryTable(spec)
+    sc.empty[TableRow]()
+      .saveAsBigQueryTable(spec, createDisposition = CreateDisposition.CREATE_NEVER)
+  }
+
+  it should "work with streaming inserts for typed and tablerow elements in streaming" in {
+    val sc = ScioContext()
+    val spec = Table.Spec("project:dataset.dummy")
+    val typedStream = testStreamOf[BQRecord].advanceWatermarkToInfinity()
+    val trStream = testStreamOf[TableRow].advanceWatermarkToInfinity()
+    sc.testStream(typedStream).saveAsTypedBigQueryTable(spec)
+    sc.testStream(trStream)
+      .saveAsBigQueryTable(spec, createDisposition = CreateDisposition.CREATE_NEVER)
+  }
+
+  it should "fail with streaming inserts for generic records in batch" in {
+    an[IllegalArgumentException] shouldBe thrownBy {
+      implicit val grCoder: Coder[GenericRecord] = avroGenericRecordCoder
+      ScioContext()
+        .empty[GenericRecord]()
+        .saveAsBigQueryTable(
+          Table.Spec("project:dataset.dummy"),
+          createDisposition = CreateDisposition.CREATE_NEVER,
+          method = Method.STREAMING_INSERTS
+        )
+    }
+  }
+
+  it should "fail with streaming inserts for generic records in streaming" in {
+    an[IllegalArgumentException] shouldBe thrownBy {
+      implicit val grCoder: Coder[GenericRecord] = avroGenericRecordCoder
+      ScioContext()
+        .testStream(testStreamOf[GenericRecord].advanceWatermarkToInfinity())
+        .saveAsBigQueryTable(
+          Table.Spec("project:dataset.dummy"),
+          createDisposition = CreateDisposition.CREATE_NEVER
+        )
+    }
+  }
+
   it should "read the same input table with different predicate and projections using bigQueryStorage" in {
 
     JobTest[JobWithDuplicateInput.type]
@@ -191,6 +236,58 @@ final class BigQueryIOTest extends ScioIOSpec {
     testJobTest(xs)(TableRowJsonIO(_))(_.tableRowJsonFile(_))(_.saveAsTableRowJsonFile(_))
   }
 
+  "MagnolifyBigQuerySelect" should "work" in {
+    // unsafe implicits must be explicitly imported for TableRowType[MagnolifyRecord] to be derived
+    import magnolify.bigquery.unsafe._
+    val xs = (1 to 100).map(x => MagnolifyRecord(x, x.toString))
+    testJobTest(xs, in = "select * from x", out = "project:dataset.out_table") {
+      BigQueryIO(_)
+    } { (coll, s) =>
+      coll.typedBigQuerySelect[MagnolifyRecord](Query(s))
+    } { (coll, s) =>
+      coll.saveAsBigQueryTable(Table.Spec(s))
+    }
+  }
+
+  "MagnolifyBigQueryTable" should "work" in {
+    // unsafe implicits must be explicitly imported for TableRowType[MagnolifyRecord] to be derived
+    import magnolify.bigquery.unsafe._
+    val xs = (1 to 100).map(x => MagnolifyRecord(x, x.toString))
+    testJobTest(xs, in = "project:dataset.in_table", out = "project:dataset.out_table") {
+      BigQueryIO(_)
+    } { (coll, s) =>
+      coll.typedBigQueryTable[MagnolifyRecord](Table.Spec(s))
+    } { (coll, s) =>
+      coll.saveAsBigQueryTable(Table.Spec(s))
+    }
+  }
+
+  "MagnolifyBigQueryStorage" should "work with Table" in {
+    // unsafe implicits must be explicitly imported for TableRowType[MagnolifyRecord] to be derived
+    import magnolify.bigquery.unsafe._
+    val xs = (1 to 100).map(x => MagnolifyRecord(x, x.toString))
+    testJobTest(xs, in = "project:dataset.in_table", out = "project:dataset.out_table")(
+      BigQueryIO(_, List(), None),
+      Some(BigQueryIO(_))
+    ) { (coll, s) =>
+      coll.typedBigQueryStorageMagnolify[MagnolifyRecord](Table.Spec(s))
+    } { (coll, s) =>
+      coll.saveAsBigQueryTable(Table.Spec(s))
+    }
+  }
+
+  it should "work with Query" in {
+    // unsafe implicits must be explicitly imported for TableRowType[MagnolifyRecord] to be derived
+    import magnolify.bigquery.unsafe._
+    val xs = (1 to 100).map(x => MagnolifyRecord(x, x.toString))
+    testJobTest(xs, in = "select x, y from z", out = "project:dataset.out_table") {
+      BigQueryIO(_)
+    } { (coll, s) =>
+      coll.typedBigQueryStorageMagnolify[MagnolifyRecord](Query(s))
+    } { (coll, s) =>
+      coll.saveAsBigQueryTable(Table.Spec(s))
+    }
+  }
 }
 
 object JobWithDuplicateInput {

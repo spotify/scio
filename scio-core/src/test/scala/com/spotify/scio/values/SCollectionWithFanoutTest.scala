@@ -19,6 +19,7 @@ package com.spotify.scio.values
 
 import com.twitter.algebird.{Aggregator, Semigroup}
 import com.spotify.scio.coders.Coder
+import org.joda.time.Instant
 
 class SCollectionWithFanoutTest extends NamedTransformSpec {
   "SCollectionWithFanout" should "support aggregate()" in {
@@ -60,7 +61,40 @@ class SCollectionWithFanoutTest extends NamedTransformSpec {
     }
   }
 
-  it should "support sum()" in {
+  it should "support min" in {
+    runWithContext { sc =>
+      def min[T: Coder: Ordering](elems: T*): SCollection[T] =
+        sc.parallelize(elems).withFanout(10).min
+      min(1, 2, 3) should containSingleValue(1)
+      min(1L, 2L, 3L) should containSingleValue(1L)
+      min(1f, 2f, 3f) should containSingleValue(1f)
+      min(1.0, 2.0, 3.0) should containSingleValue(1.0)
+      min(1 to 100: _*) should containSingleValue(1)
+    }
+  }
+
+  it should "support max" in {
+    runWithContext { sc =>
+      def max[T: Coder: Ordering](elems: T*): SCollection[T] =
+        sc.parallelize(elems).withFanout(10).max
+      max(1, 2, 3) should containSingleValue(3)
+      max(1L, 2L, 3L) should containSingleValue(3L)
+      max(1f, 2f, 3f) should containSingleValue(3f)
+      max(1.0, 2.0, 3.0) should containSingleValue(3.0)
+      max(1 to 100: _*) should containSingleValue(100)
+    }
+  }
+
+  it should "support latest" in {
+    runWithContext { sc =>
+      def latest(elems: Long*): SCollection[Long] =
+        sc.parallelize(elems).timestampBy(Instant.ofEpochMilli).withFanout(10).latest
+      latest(1L, 2L, 3L) should containSingleValue(3L)
+      latest(1L to 100L: _*) should containSingleValue(100L)
+    }
+  }
+
+  it should "support sum" in {
     runWithContext { sc =>
       def sum[T: Coder: Semigroup](elems: T*): SCollection[T] =
         sc.parallelize(elems).withFanout(10).sum
@@ -69,6 +103,18 @@ class SCollectionWithFanoutTest extends NamedTransformSpec {
       sum(1f, 2f, 3f) should containSingleValue(6f)
       sum(1.0, 2.0, 3.0) should containSingleValue(6.0)
       sum(1 to 100: _*) should containSingleValue(5050)
+    }
+  }
+
+  it should "support mean" in {
+    runWithContext { sc =>
+      def mean[T: Coder: Numeric](elems: T*): SCollection[Double] =
+        sc.parallelize(elems).withFanout(10).mean
+      mean(1, 2, 3) should containSingleValue(2.0)
+      mean(1L, 2L, 3L) should containSingleValue(2.0)
+      mean(1f, 2f, 3f) should containSingleValue(2.0)
+      mean(1.0, 2.0, 3.0) should containSingleValue(2.0)
+      mean(0 to 100: _*) should containSingleValue(50.0)
     }
   }
 
