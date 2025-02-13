@@ -29,7 +29,7 @@ import org.apache.commons.io.FileUtils
 import org.apache.parquet.filter2.predicate.FilterApi
 import org.scalatest.BeforeAndAfterAll
 import org.tensorflow.metadata.{v0 => tfmd}
-import org.tensorflow.proto.example._
+import org.tensorflow.proto._
 
 import java.nio.file.Files
 import scala.jdk.CollectionConverters._

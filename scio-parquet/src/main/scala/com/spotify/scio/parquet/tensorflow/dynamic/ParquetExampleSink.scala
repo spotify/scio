@@ -22,7 +22,7 @@ import org.apache.beam.sdk.io.FileIO
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import org.apache.parquet.hadoop.ParquetWriter
-import org.tensorflow.proto.example.Example
+import org.tensorflow.proto.Example
 import org.tensorflow.metadata.v0.Schema
 
 import java.nio.channels.WritableByteChannel

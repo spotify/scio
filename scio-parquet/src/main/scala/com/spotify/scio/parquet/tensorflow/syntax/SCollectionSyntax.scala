@@ -24,7 +24,7 @@ import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
-import org.tensorflow.proto.example.Example
+import org.tensorflow.proto.Example
 import org.tensorflow.metadata.v0.Schema
 
 /** Enhanced version of [[SCollection]] with Parquet [[Example]] methods. */

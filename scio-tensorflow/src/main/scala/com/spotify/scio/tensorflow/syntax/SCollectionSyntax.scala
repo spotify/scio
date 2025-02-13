@@ -18,7 +18,7 @@
 package com.spotify.scio.tensorflow.syntax
 
 import org.apache.beam.sdk.io.Compression
-import org.tensorflow.proto.example.{Example, SequenceExample}
+import org.tensorflow.proto.{Example, SequenceExample}
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.tensorflow.{TFExampleIO, TFRecordIO, TFSequenceExampleIO}
 import com.spotify.scio.util.FilenamePolicySupplier
@@ -27,7 +27,7 @@ import com.spotify.scio.values.SCollection
 final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]) extends AnyVal {
 
   /**
-   * Saves this SCollection of `org.tensorflow.proto.example.Example` as a TensorFlow TFRecord file.
+   * Saves this SCollection of `org.tensorflow.proto.Example` as a TensorFlow TFRecord file.
    *
    * @return
    */
@@ -97,8 +97,8 @@ final class TFRecordSCollectionOps[T <: Array[Byte]](private val self: SCollecti
 
   /**
    * Save this SCollection as a TensorFlow TFRecord file. Note that elements must be of type
-   * `Array[Byte]`. The recommended record encoding is `org.tensorflow.proto.example.Example`
-   * protocol buffers (which contain `org.tensorflow.proto.example.Features` as a field) serialized
+   * `Array[Byte]`. The recommended record encoding is `org.tensorflow.proto.Example`
+   * protocol buffers (which contain `org.tensorflow.proto.Features` as a field) serialized
    * as bytes.
    *
    * @group output
@@ -131,7 +131,7 @@ final class SequenceExampleSCollectionOps[T <: SequenceExample](private val self
     extends AnyVal {
 
   /**
-   * Saves this SCollection of `org.tensorflow.proto.example.SequenceExample` as a TensorFlow
+   * Saves this SCollection of `org.tensorflow.proto.SequenceExample` as a TensorFlow
    * TFRecord file.
    *
    * @return

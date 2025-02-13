@@ -26,7 +26,7 @@ import com.google.protobuf.ByteString
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.tensorflow._
-import org.tensorflow.proto.example.Example
+import org.tensorflow.proto.Example
 import magnolify.tensorflow._
 
 object MagnolifyTensorFlowExample {
@@ -34,7 +34,7 @@ object MagnolifyTensorFlowExample {
   case class WordCount(word: String, count: Long)
   // `Example` type doesn't support `String` natively, derive one from `ByteString`
   implicit val efString: ExampleField.Primitive[String] =
-    ExampleField.from[ByteString](_.toStringUtf8)(ByteString.copyFromUtf8)
+    ExampleField.from[ByteString](_.toStringUtf8)((s: String) => ByteString.copyFromUtf8(s))
   // `TensorFlowType` provides mapping between case classes and TensorFlow `Example`
   val wordCountType: ExampleType[WordCount] = ExampleType[WordCount]
 }
