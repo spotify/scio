@@ -19,7 +19,7 @@ package com.spotify.scio.coders.instances.kryo
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{Input, Output}
-import com.twitter.chill.KSerializer
+import com.spotify.scio.vendor.chill.KSerializer
 import io.grpc.Status
 
 private[coders] class StatusSerializer extends KSerializer[Status] {

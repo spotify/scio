@@ -24,7 +24,7 @@ import com.spotify.scio.avro.AvroUtils._
 import com.spotify.scio.avro.TestRecord
 import com.spotify.scio.testing.CoderAssertions._
 import com.spotify.scio.testing.PipelineSpec
-import com.twitter.chill.{java => _, _}
+import com.spotify.scio.vendor.chill.{java => _, _}
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.coders.{Coder => BCoder}

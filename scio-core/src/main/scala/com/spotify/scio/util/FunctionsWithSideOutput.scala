@@ -20,7 +20,7 @@ package com.spotify.scio.util
 import org.apache.beam.sdk.transforms.DoFn
 import com.spotify.scio.values.SideOutputContext
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
-import com.twitter.chill.ClosureCleaner
+import com.spotify.scio.vendor.chill.ClosureCleaner
 
 import scala.collection.compat._
 

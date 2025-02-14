@@ -16,7 +16,7 @@
 
 package com.spotify.scio.util
 
-import com.twitter.chill.ClosureCleaner
+import com.spotify.scio.vendor.chill.ClosureCleaner
 import org.apache.beam.sdk.io.FileBasedSink
 import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions

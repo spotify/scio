@@ -21,7 +21,7 @@ import com.spotify.scio.values.WindowedValue
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement, Timestamp}
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
-import com.twitter.chill.ClosureCleaner
+import com.spotify.scio.vendor.chill.ClosureCleaner
 import org.joda.time.Instant
 
 import scala.collection.compat._

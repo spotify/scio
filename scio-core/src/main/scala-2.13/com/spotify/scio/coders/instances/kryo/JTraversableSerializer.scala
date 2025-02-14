@@ -19,7 +19,7 @@ package com.spotify.scio.coders.instances.kryo
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{Input, InputChunked, Output, OutputChunked}
-import com.twitter.chill.KSerializer
+import com.spotify.scio.vendor.chill.KSerializer
 
 import scala.jdk.CollectionConverters._
 import scala.collection.mutable

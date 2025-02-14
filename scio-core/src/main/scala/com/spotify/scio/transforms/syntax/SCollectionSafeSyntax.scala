@@ -19,7 +19,7 @@ package com.spotify.scio.transforms.syntax
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.util.NamedDoFn
-import com.twitter.chill.ClosureCleaner
+import com.spotify.scio.vendor.chill.ClosureCleaner
 import org.apache.beam.sdk.transforms.DoFn.{Element, MultiOutputReceiver, ProcessElement}
 import org.apache.beam.sdk.transforms.ParDo
 import org.apache.beam.sdk.values.{TupleTag, TupleTagList}

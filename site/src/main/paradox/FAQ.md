@@ -409,7 +409,7 @@ Define a registrar class that extends `IKryoRegistrar` and annotate it with `@Kr
 ```scala mdoc:reset:invisible
 trait UserRecord
 trait AccountRecord
-import com.twitter.chill.KSerializer
+import com.spotify.scio.vendor.chill.KSerializer
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{Input, Output}
 
@@ -424,10 +424,10 @@ class AccountRecordSerializer extends KSerializer[AccountRecord] {
 ```
 
 ```scala mdoc:silent
-import com.twitter.chill._
+import com.spotify.scio.vendor.chill._
 import com.esotericsoftware.kryo.Kryo
 import com.spotify.scio.coders.KryoRegistrar
-import com.twitter.chill.IKryoRegistrar
+import com.spotify.scio.vendor.chill.IKryoRegistrar
 
 @KryoRegistrar
 class MyKryoRegistrar extends IKryoRegistrar {
@@ -449,10 +449,10 @@ trait MyRecord2
 ```
 
 ```scala mdoc:silent
-import com.twitter.chill._
+import com.spotify.scio.vendor.chill._
 import com.esotericsoftware.kryo.Kryo
 import com.spotify.scio.coders.KryoRegistrar
-import com.twitter.chill.IKryoRegistrar
+import com.spotify.scio.vendor.chill.IKryoRegistrar
 
 @KryoRegistrar
 class MyKryoRegistrar extends IKryoRegistrar {

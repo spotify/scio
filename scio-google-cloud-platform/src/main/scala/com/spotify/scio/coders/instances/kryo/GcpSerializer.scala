@@ -18,7 +18,7 @@ package com.spotify.scio.coders.instances.kryo
 
 import com.google.api.gax.rpc.{ApiException, StatusCode}
 import com.google.cloud.bigtable.data.v2.models.MutateRowsException
-import com.twitter.chill._
+import com.spotify.scio.vendor.chill._
 
 private[coders] class MutateRowsExceptionSerializer extends KSerializer[MutateRowsException] {
   override def write(kryo: Kryo, output: Output, e: MutateRowsException): Unit = {

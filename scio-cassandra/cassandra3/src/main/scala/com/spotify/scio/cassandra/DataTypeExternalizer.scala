@@ -22,7 +22,7 @@ import java.util.{ArrayList => JArrayList, Collection => JCollection}
 
 import com.datastax.driver.core.DataType
 import com.google.common.collect.{ImmutableList, ImmutableSet}
-import com.twitter.chill._
+import com.spotify.scio.vendor.chill._
 
 import scala.jdk.CollectionConverters._
 
