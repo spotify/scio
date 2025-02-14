@@ -26,6 +26,7 @@ import com.spotify.scio.bigquery.types.{BigNumeric, Geography, Json}
 import com.spotify.scio.testing._
 import magnolify.scalacheck.auto._
 import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{Method => WriteMethod}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import org.joda.time.format.DateTimeFormat
@@ -100,7 +101,8 @@ object TypedBigQueryIT {
       s"data-integration-test:bigquery_avro_it.$name${now}_${Random.nextInt(Int.MaxValue)}"
     Table.Spec(spec)
   }
-  private val typedTable = table("records")
+  private val typedTableFileLoads = table("records_fileloads")
+  private val typedTableStorage = table("records_storage")
   private val tableRowTable = table("records_tablerow")
   private val avroTable = table("records_avro")
 
@@ -119,19 +121,36 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
   override protected def afterAll(): Unit = {
     val bq = BigQuery.defaultInstance()
     // best effort cleanup
-    Try(bq.tables.delete(typedTable.ref))
+    Try(bq.tables.delete(typedTableFileLoads.ref))
+    Try(bq.tables.delete(typedTableStorage.ref))
     Try(bq.tables.delete(tableRowTable.ref))
     Try(bq.tables.delete(avroTable.ref))
   }
 
-  "TypedBigQuery" should "handle records as TableRow" in {
+  "TypedBigQuery" should "handle records as TableRow using FileLoads API" in {
     runWithRealContext(options) { sc =>
       sc.parallelize(records)
-        .saveAsTypedBigQueryTable(typedTable, createDisposition = CREATE_IF_NEEDED)
+        .saveAsTypedBigQueryTable(typedTableFileLoads, createDisposition = CREATE_IF_NEEDED, method = WriteMethod.FILE_LOADS)
     }.waitUntilFinish()
 
     runWithRealContext(options) { sc =>
-      val data = sc.typedBigQuery[Record](typedTable)
+      val data = sc.typedBigQuery[Record](typedTableFileLoads)
+      data should containInAnyOrder(records)
+    }
+  }
+
+  it should "handle records as TableRow using Storage API" in {
+    runWithRealContext(options) { sc =>
+      val resultTap = sc.parallelize(records)
+        .saveAsTypedBigQueryTable(typedTableStorage, createDisposition = CREATE_IF_NEEDED, method = WriteMethod.STORAGE_WRITE_API)
+
+      resultTap
+        .output(BigQueryIO.FailedStorageApiInserts)
+        .debug(prefix = "Failed inserts: ") should haveSize(0)
+    }.waitUntilFinish()
+
+    runWithRealContext(options) { sc =>
+      val data = sc.typedBigQuery[Record](typedTableStorage)
       data should containInAnyOrder(records)
     }
   }
