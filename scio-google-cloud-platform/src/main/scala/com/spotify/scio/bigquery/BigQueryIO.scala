@@ -741,12 +741,31 @@ object BigQueryTyped {
     override type ReadP = Unit
     override type WriteP = Table.WriteParam[T]
 
-    private val underlying = BigQueryTypedTable[T](
-      (i: SchemaAndRecord) => BigQueryType[T].fromAvro(i.getRecord),
-      BigQueryType[T].toTableRow,
-      BigQueryType[T].fromTableRow,
-      table
-    )
+    private val underlying = {
+      val readFn = Functions.serializableFn[SchemaAndRecord, T] { x =>
+        BigQueryType[T].fromAvro(x.getRecord)
+      }
+      val writeFn = Functions.serializableFn[AvroWriteRequest[T], GenericRecord] { x =>
+        BigQueryType[T].toAvro(x.getElement)
+      }
+      val schemaFactory = Functions.serializableFn[TableSchema, org.apache.avro.Schema] { _ =>
+        BigQueryType[T].avroSchema
+      }
+      val parseFn = (r: GenericRecord, _: TableSchema) => BigQueryType[T].fromAvro(r)
+
+      BigQueryTypedTable[T](
+        beam.BigQueryIO
+          .read(readFn)
+          .useAvroLogicalTypes(),
+        beam.BigQueryIO
+          .write[T]()
+          .withAvroFormatFunction(writeFn)
+          .withAvroSchemaFactory(schemaFactory)
+          .useAvroLogicalTypes(),
+        table,
+        parseFn
+      )
+    }
 
     override def testId: String = s"BigQueryIO(${table.spec})"
 
