@@ -21,11 +21,14 @@ import com.google.protobuf.ByteString
 import com.spotify.scio.avro._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.bigquery.BigQueryTypedTable.Format
+import com.spotify.scio.bigquery.BigQueryTypedTable.Format.GenericRecordWithLogicalTypes
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.{BigNumeric, Geography, Json}
 import com.spotify.scio.testing._
 import magnolify.scalacheck.auto._
+import org.apache.avro.UnresolvedUnionException
 import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{Method => WriteMethod}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import org.joda.time.format.DateTimeFormat
@@ -35,6 +38,8 @@ import org.scalatest.BeforeAndAfterAll
 import scala.util.{Random, Try}
 
 object TypedBigQueryIT {
+  case class Nested(int: Int)
+
   @BigQueryType.toTable
   case class Record(
     bool: Boolean,
@@ -53,6 +58,27 @@ object TypedBigQueryIT {
     // - BQ load uses 'long(local-timestamp-micros)'
     // BigQueryType avroSchema favors read with string type
     // datetime: LocalDateTime,
+    geography: Geography,
+    json: Json,
+    bigNumeric: BigNumeric,
+    nestedRequired: Nested,
+    nestedOptional: Option[Nested]
+  )
+
+  // A record with no nested record types
+  @BigQueryType.toTable
+  case class FlatRecord(
+    bool: Boolean,
+    int: Int,
+    long: Long,
+    float: Float,
+    double: Double,
+    numeric: BigDecimal,
+    string: String,
+    byteString: ByteString,
+    timestamp: Instant,
+    date: LocalDate,
+    time: LocalTime,
     geography: Geography,
     json: Json,
     bigNumeric: BigNumeric
@@ -115,9 +141,11 @@ object TypedBigQueryIT {
       s"data-integration-test:bigquery_avro_it.$name${now}_${Random.nextInt(Int.MaxValue)}"
     Table.Spec(spec)
   }
-  private val typedTable = table("records")
+  private val typedTableFileLoads = table("records_fileloads")
+  private val typedTableStorage = table("records_storage")
   private val tableRowTable = table("records_tablerow")
   private val avroTable = table("records_avro")
+  private val avroFlatTable = table("records_avro_flat")
 
   private val records = Gen.listOfN(5, recordGen).sample.get
   private val options = PipelineOptionsFactory
@@ -135,24 +163,30 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
 
   override protected def afterAll(): Unit = {
     // best effort cleanup
-    Try(bq.tables.delete(typedTable.ref))
+    Try(bq.tables.delete(typedTableFileLoads.ref))
+    Try(bq.tables.delete(typedTableStorage.ref))
     Try(bq.tables.delete(tableRowTable.ref))
     Try(bq.tables.delete(avroTable.ref))
+    Try(bq.tables.delete(avroFlatTable.ref))
   }
 
-  "TypedBigQuery" should "handle records as TableRow" in {
+  "TypedBigQuery" should "write case classes using FileLoads API" in {
     runWithRealContext(options) { sc =>
       sc.parallelize(records)
-        .saveAsTypedBigQueryTable(typedTable, createDisposition = CREATE_IF_NEEDED)
+        .saveAsTypedBigQueryTable(
+          typedTableFileLoads,
+          createDisposition = CREATE_IF_NEEDED,
+          method = WriteMethod.FILE_LOADS
+        )
     }.waitUntilFinish()
 
     runWithRealContext(options) { sc =>
-      val data = sc.typedBigQuery[Record](typedTable)
+      val data = sc.typedBigQuery[Record](typedTableFileLoads)
       data should containInAnyOrder(records)
     }
   }
 
-  "BigQueryTypedTable" should "handle records as TableRow format" in {
+  it should "write case classes manually converted to TableRows using FileLoads API" in {
     runWithRealContext(options) { sc =>
       sc.parallelize(records)
         .map(Record.toTableRow)
@@ -177,7 +211,7 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
     }
   }
 
-  it should "handle records as avro format" in {
+  it should "write case classes manually converted to GenericRecords using FileLoads API" in {
     implicit val coder: Coder[GenericRecord] = avroGenericRecordCoder(Record.avroSchema)
 
     runWithRealContext(options) { sc =>
@@ -191,9 +225,41 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
     }.waitUntilFinish()
 
     runWithRealContext(options) { sc =>
+      sc.typedBigQuery[Record](avroTable) should containInAnyOrder(records)
+    }
+
+    // Due to Beam bug with automatic schema detection, can't parse nested record types as GenericRecords yet
+    // Todo remove assertThrows after fixing in Beam
+    assertThrows[UnresolvedUnionException] {
+      runWithRealContext(options) { sc =>
+        val data =
+          sc.bigQueryTable(avroTable, format = GenericRecordWithLogicalTypes)
+            .map(Record.fromAvro)
+        data should containInAnyOrder(records)
+      }
+    }
+  }
+
+  it should "read BigQuery rows into GenericRecords and convert them to case classes for records without nested types" in {
+    implicit val coder: Coder[GenericRecord] = avroGenericRecordCoder(FlatRecord.avroSchema)
+
+    val flatRecords = Gen.listOfN(5, implicitly[Arbitrary[FlatRecord]].arbitrary).sample.get
+
+    runWithRealContext(options) { sc =>
+      sc.parallelize(flatRecords)
+        .map(FlatRecord.toAvro)
+        .saveAsBigQueryTable(
+          avroFlatTable,
+          schema = FlatRecord.schema,
+          createDisposition = CREATE_IF_NEEDED
+        )
+    }.waitUntilFinish()
+
+    runWithRealContext(options) { sc =>
       val data =
-        sc.bigQueryTable(avroTable, Format.GenericRecordWithLogicalTypes).map(Record.fromAvro)
-      data should containInAnyOrder(records)
+        sc.bigQueryTable(avroFlatTable, Format.GenericRecordWithLogicalTypes)
+          .map(FlatRecord.fromAvro)
+      data should containInAnyOrder(flatRecords)
     }
   }
 }

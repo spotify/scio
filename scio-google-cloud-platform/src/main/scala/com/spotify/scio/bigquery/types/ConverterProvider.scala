@@ -167,7 +167,7 @@ private[types] object ConverterProvider {
     // Converter helpers
     // =======================================================================
 
-    def cast(tree: Tree, tpe: Type): Tree = {
+    def cast(fieldName: String, tree: Tree, tpe: Type): Tree = {
       val provider: OverrideTypeProvider =
         OverrideTypeProviderFinder.getProvider
       tpe match {
@@ -207,21 +207,21 @@ private[types] object ConverterProvider {
 
         // nested records
         case t if isCaseClass(c)(t) =>
-          val fn = TermName("r" + t.typeSymbol.name)
+          val fn = TermName("r" + fieldName)
           q"""{
                 val $fn = $tree
-                ${constructor(t, fn)}
+                ${constructor(fieldName, t, fn)}
               }
           """
         case _ => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
     }
 
-    def option(tree: Tree, tpe: Type): Tree =
-      q"if ($tree.isDefined) ${cast(q"$tree.get", tpe)} else null"
+    def option(fieldName: String, tree: Tree, tpe: Type): Tree =
+      q"if ($tree.isDefined) ${cast(fieldName, q"$tree.get", tpe)} else null"
 
-    def list(tree: Tree, tpe: Type): Tree =
-      q"asJava($tree.map(x => ${cast(q"x", tpe)}))"
+    def list(fieldName: String, tree: Tree, tpe: Type): Tree =
+      q"asJava($tree.map(x => ${cast(fieldName, q"x", tpe)}))"
 
     def field(symbol: Symbol, fn: TermName): (String, Tree) = {
       val name = symbol.name.toString
@@ -229,22 +229,38 @@ private[types] object ConverterProvider {
 
       val tree = q"$fn.${TermName(name)}"
       if (tpe.erasure =:= typeOf[Option[_]].erasure) {
-        (name, option(tree, tpe.typeArgs.head))
+        (name, option(name, tree, tpe.typeArgs.head))
       } else if (tpe.erasure =:= typeOf[List[_]].erasure) {
-        (name, list(tree, tpe.typeArgs.head))
+        (name, list(name, tree, tpe.typeArgs.head))
       } else {
-        (name, cast(tree, tpe))
+        (name, cast(name, tree, tpe))
       }
     }
 
-    def constructor(tpe: Type, fn: TermName): Tree = {
+    def constructor(fieldName: String, tpe: Type, fn: TermName): Tree = {
       val sets = tpe.erasure match {
         case t if isCaseClass(c)(t) => getFields(c)(t).map(s => field(s, fn))
         case _                      => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
 
-      val header =
-        q"val result = new _root_.org.apache.avro.generic.GenericRecordBuilder(${p(c, SType)}.avroSchemaOf[$tpe])"
+      val header = {
+        q"""
+            // Schema name must match fieldName, rather than nested case class name
+            val result = {
+              import _root_.scala.jdk.CollectionConverters._
+              val recordSchema = ${p(c, SType)}.avroSchemaOf[$tpe]
+              new _root_.org.apache.avro.generic.GenericRecordBuilder(
+                _root_.org.apache.avro.Schema.createRecord(
+                  $fieldName,
+                  recordSchema.getDoc,
+                  recordSchema.getNamespace,
+                  recordSchema.isError,
+                  recordSchema.getFields.asScala.map(f => new _root_.org.apache.avro.Schema.Field(f.name(), f.schema())).toList.asJava
+                )
+              )
+            }
+        """
+      }
       val body = sets.map { case (name, value) =>
         q"result.set($name, $value)"
       }
@@ -259,7 +275,7 @@ private[types] object ConverterProvider {
     val tn = TermName("r")
     q"""(r: $tpe) => {
           import _root_.scala.jdk.javaapi.CollectionConverters._
-          ${constructor(tpe, tn)}
+          ${constructor(tpe.typeSymbol.name.toString, tpe, tn)}
         }
     """
   }

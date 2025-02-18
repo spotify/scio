@@ -36,8 +36,18 @@ private[types] object SchemaProvider {
 
   def avroSchemaOf[T: TypeTag]: Schema =
     AvroSchemaCache.get(
-      typeTag[T].tpe.toString,
-      BigQueryUtils.toGenericAvroSchema(typeTag[T].tpe.toString, schemaOf[T].getFields, true)
+      typeTag[T].tpe.toString, {
+        // BigQueryUtils converts nested record namespaces, but not top-level namespace
+        val converted =
+          BigQueryUtils.toGenericAvroSchema(typeTag[T].tpe.toString, schemaOf[T].getFields, true)
+        Schema.createRecord(
+          converted.getName,
+          converted.getDoc,
+          BeamAvroConverterNamespace,
+          converted.isError,
+          converted.getFields.asScala.map(f => new Schema.Field(f.name(), f.schema())).asJava
+        )
+      }
     )
 
   def schemaOf[T: TypeTag]: TableSchema =

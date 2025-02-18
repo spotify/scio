@@ -19,9 +19,12 @@ package com.spotify.scio.bigquery.types
 
 import com.google.protobuf.ByteString
 import com.spotify.scio.bigquery._
+import org.apache.avro.generic.GenericRecordBuilder
+import org.apache.avro.Schema
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
+import scala.jdk.CollectionConverters._
 
 class ConverterProviderTest extends AnyFlatSpec with Matchers {
   import ConverterProviderTest._
@@ -77,6 +80,76 @@ class ConverterProviderTest extends AnyFlatSpec with Matchers {
     // make sure the target TableRow format chosen by the BigQueryType conversion is stable
     AllTypes.toTableRow(AllTypes()) coderShould roundtrip()
   }
+
+  it should "convert nested case classes to and from Avro" in {
+    val bqt = BigQueryType[CaseClassWithNested]
+
+    val expectedSchema = new Schema.Parser().parse(s"""{
+         |  "type":"record",
+         |  "name":"CaseClassWithNested",
+         |  "namespace":"org.apache.beam.sdk.io.gcp.bigquery",
+         |  "doc":"Translated Avro Schema for com.spotify.scio.bigquery.types.ConverterProviderTest.CaseClassWithNested",
+         |  "fields":[
+         |    {
+         |      "name": "requiredField",
+         |      "type": {
+         |        "type": "record",
+         |        "name": "requiredField",
+         |        "doc": "Translated Avro Schema for requiredField",
+         |        "fields": [{"name": "a" , "type": "string"}]}
+         |      },
+         |      {
+         |        "name": "optionalField",
+         |        "type":[
+         |          "null",
+         |          {
+         |            "type": "record",
+         |            "name": "optionalField",
+         |            "doc": "Translated Avro Schema for optionalField",
+         |            "fields": [{"name": "a", "type": "string"}]
+         |          }]
+         |      },
+         |      {
+         |        "name": "repeatedField",
+         |        "type": {
+         |          "type": "array",
+         |          "items":{
+         |            "type": "record",
+         |            "name": "repeatedField",
+         |            "doc": "Translated Avro Schema for repeatedField",
+         |            "fields": [{"name": "a", "type": "string"}]
+         |          }}}]}
+         |""".stripMargin)
+
+    SchemaProvider.avroSchemaOf[CaseClassWithNested] shouldBe expectedSchema
+
+    val cc1 = CaseClassWithNested(Required("foo"), Some(Required("bar")), List(Required("baz")))
+    val avro1 = new GenericRecordBuilder(expectedSchema)
+      .set(
+        "requiredField",
+        new GenericRecordBuilder(expectedSchema.getField("requiredField").schema())
+          .set("a", "foo")
+          .build()
+      )
+      .set(
+        "optionalField",
+        new GenericRecordBuilder(expectedSchema.getField("optionalField").schema().getTypes.get(1))
+          .set("a", "bar")
+          .build()
+      )
+      .set(
+        "repeatedField",
+        List(
+          new GenericRecordBuilder(expectedSchema.getField("repeatedField").schema().getElementType)
+            .set("a", "baz")
+            .build()
+        ).asJava
+      )
+      .build()
+
+    bqt.toAvro(cc1) shouldBe avro1
+    bqt.fromAvro(avro1) shouldBe cc1
+  }
 }
 
 object ConverterProviderTest {
@@ -123,5 +196,12 @@ object ConverterProviderTest {
     geography: Geography = Geography("POINT (8 8)"),
     json: Json = Json("""{"key": 9,"value": 10}"""),
     bigNumeric: BigNumeric = BigNumeric(BigDecimal(11))
+  )
+
+  @BigQueryType.toTable()
+  case class CaseClassWithNested(
+    requiredField: Required,
+    optionalField: Option[Required],
+    repeatedField: List[Required]
   )
 }
