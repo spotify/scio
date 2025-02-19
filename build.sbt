@@ -1050,6 +1050,7 @@ lazy val `scio-google-cloud-platform` = project
       moduleFilter("org.apache.arrow", "arrow-vector"),
       moduleFilter("com.fasterxml.jackson.datatype", "jackson-datatype-jsr310")
     ).reduce(_ | _),
+    Test / javaOptions += "-Doverride.type.provider=com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider",
     libraryDependencies ++= Seq(
       // compile
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,

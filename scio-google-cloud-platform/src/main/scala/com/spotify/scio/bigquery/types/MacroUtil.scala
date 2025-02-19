@@ -74,6 +74,7 @@ private[types] object MacroUtil {
   // Namespace helpers
 
   val SBQ = "_root_.com.spotify.scio.bigquery"
+  val BeamAvroConverterNamespace = "org.apache.beam.sdk.io.gcp.bigquery"
   val GModel = "_root_.com.google.api.services.bigquery.model"
   val GBQIO = "_root_.org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO"
   val SType: String = s"$SBQ.types.BigQueryType"
