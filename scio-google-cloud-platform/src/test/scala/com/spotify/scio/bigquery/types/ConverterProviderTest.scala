@@ -50,12 +50,9 @@ class ConverterProviderTest extends AnyFlatSpec with Matchers {
 
   it should "handle required json type" in {
     val wkt = """{"name":"Alice","age":30}"""
-    val parsed = new TableRow()
-      .set("name", "Alice")
-      .set("age", 30)
 
-    RequiredJson.fromTableRow(TableRow("a" -> parsed)) shouldBe RequiredJson(Json(wkt))
-    BigQueryType.toTableRow[RequiredJson](RequiredJson(Json(wkt))) shouldBe TableRow("a" -> parsed)
+    RequiredJson.fromTableRow(TableRow("a" -> wkt)) shouldBe RequiredJson(Json(wkt))
+    BigQueryType.toTableRow[RequiredJson](RequiredJson(Json(wkt))) shouldBe TableRow("a" -> wkt)
   }
 
   it should "handle required big numeric type" in {

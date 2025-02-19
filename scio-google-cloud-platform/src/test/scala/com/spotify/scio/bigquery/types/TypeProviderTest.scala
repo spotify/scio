@@ -36,26 +36,26 @@ object TypeProviderTest {
   @BigQueryType.toTable
   case class ToTable(f1: Long, f2: Double, f3: Boolean, f4: String, f5: Instant)
 
-  @BigQueryType.fromSchema("""
-      |{"fields": [{"mode": "REQUIRED", "name": "f1", "type": "INTEGER"}]}
-      |""".stripMargin)
-  class S1
+  @BigQueryType.fromSchema(
+    """{"fields": [{"mode": "REQUIRED", "name": "f1", "type": "INTEGER"}]}"""
+  )
+  class SingleLineSchema
 
-  @BigQueryType.fromSchema("""
-       |{"fields": [{"mode": "REQUIRED", "name": "f1", "type": "INTEGER"}]}
-       |""".stripMargin)
-  class S2
-
-  @BigQueryType.fromSchema("""
-      |{"fields": [{"mode": "REQUIRED", "name": "f1", "type": "INTEGER"}]}
-      |""".stripMargin)
-  class S3
+  @BigQueryType.fromSchema("""{
+    "fields": [{"mode": "REQUIRED", "name": "f1", "type": "INTEGER"}]
+  }""")
+  class MultiLineSchema
 
   @BigQueryType.fromSchema("""
       |{"fields": [{"mode": "REQUIRED", "name": "f1", "type": "INTEGER"}]}
       |""".stripMargin)
+  class StripMarginSchema
+
+  @BigQueryType.fromSchema(
+    """{"fields": [{"mode": "REQUIRED", "name": "f1", "type": "INTEGER"}]}"""
+  )
   @description("Table S4")
-  class S4
+  class DescriptionSchema
 
   @BigQueryType.fromSchema(
     """
@@ -92,26 +92,26 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   import TypeProviderTest._
 
   "BigQueryType.fromSchema" should "support string literal" in {
-    val r = S1(1L)
+    val r = SingleLineSchema(1L)
     r.f1 shouldBe 1L
   }
 
   it should "support multi-line string literal" in {
-    val r = S2(1L)
+    val r = MultiLineSchema(1L)
     r.f1 shouldBe 1L
   }
 
   it should "support multi-line string literal with stripMargin" in {
-    val r = S3(1L)
+    val r = StripMarginSchema(1L)
     r.f1 shouldBe 1L
   }
 
   it should "support table description" in {
-    S4.tableDescription shouldBe "Table S4"
+    DescriptionSchema.tableDescription shouldBe "Table S4"
   }
 
   it should "be serializable" in {
-    SerializableUtils.ensureSerializable(S1(1))
+    SerializableUtils.ensureSerializable(SingleLineSchema(1L))
   }
 
   it should "infer the same schema" in {
