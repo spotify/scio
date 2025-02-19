@@ -145,6 +145,7 @@ object TypedBigQueryIT {
   private val typedTableStorage = table("records_storage")
   private val tableRowTable = table("records_tablerow")
   private val avroTable = table("records_avro")
+  private val avroTableStorage = table("records_avro_storage")
   private val avroFlatTable = table("records_avro_flat")
 
   private val records = Gen.listOfN(5, recordGen).sample.get
@@ -167,6 +168,7 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
     Try(bq.tables.delete(typedTableStorage.ref))
     Try(bq.tables.delete(tableRowTable.ref))
     Try(bq.tables.delete(avroTable.ref))
+    Try(bq.tables.delete(avroTableStorage.ref))
     Try(bq.tables.delete(avroFlatTable.ref))
   }
 
@@ -182,6 +184,22 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
 
     runWithRealContext(options) { sc =>
       val data = sc.typedBigQuery[Record](typedTableFileLoads)
+      data should containInAnyOrder(records)
+    }
+  }
+
+  it should "write case classes using Storage Write API" in {
+    runWithRealContext(options) { sc =>
+      sc.parallelize(records)
+        .saveAsTypedBigQueryTable(
+          typedTableStorage,
+          createDisposition = CREATE_IF_NEEDED,
+          method = WriteMethod.STORAGE_WRITE_API
+        )
+    }.waitUntilFinish()
+
+    runWithRealContext(options) { sc =>
+      val data = sc.typedBigQuery[Record](typedTableStorage)
       data should containInAnyOrder(records)
     }
   }
@@ -237,6 +255,25 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
             .map(Record.fromAvro)
         data should containInAnyOrder(records)
       }
+    }
+  }
+
+  ignore should "write case classes manually converted to GenericRecords using Storage Write API" in {
+    implicit val coder: Coder[GenericRecord] = avroGenericRecordCoder(Record.avroSchema)
+
+    runWithRealContext(options) { sc =>
+      sc.parallelize(records)
+        .map(Record.toAvro)
+        .saveAsBigQueryTable(
+          avroTableStorage,
+          schema = Record.schema,
+          createDisposition = CREATE_IF_NEEDED,
+          method = WriteMethod.STORAGE_WRITE_API
+        )
+    }.waitUntilFinish()
+
+    runWithRealContext(options) { sc =>
+      sc.typedBigQuery[Record](avroTableStorage) should containInAnyOrder(records)
     }
   }
 
