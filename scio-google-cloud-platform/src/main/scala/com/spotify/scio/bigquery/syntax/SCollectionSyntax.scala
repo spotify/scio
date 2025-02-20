@@ -200,6 +200,15 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
       extendedErrorInfo,
       configOverride
     )
+    if (
+      method == Method.STORAGE_WRITE_API && Option(schema).exists(BigQueryUtil.containsTimeType)
+    ) {
+      throw new IllegalArgumentException(
+        "Beam 2.63.0 doesn't support TIME schema schemas with the Storage Write API. " +
+          "Please use Write method FILE_LOADS instead."
+      )
+    }
+
     self
       .covary[GenericRecord]
       .write(
@@ -285,6 +294,16 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
       extendedErrorInfo,
       configOverride
     )
+
+    if (
+      method == Method.STORAGE_WRITE_API && BigQueryUtil.containsTimeType(BigQueryType[T].schema)
+    ) {
+      throw new IllegalArgumentException(
+        "Beam 2.63.0 doesn't support TIME schema schemas with the Storage Write API. " +
+          "Please use Write method FILE_LOADS instead."
+      )
+    }
+
     self.write(BigQueryTyped.Table[T](table))(param)
   }
 }

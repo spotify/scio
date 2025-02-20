@@ -21,7 +21,8 @@ import java.io.StringReader
 import java.util.UUID
 import com.google.api.client.json.JsonObjectParser
 import com.google.api.client.json.gson.GsonFactory
-import com.google.api.services.bigquery.model.TableSchema
+import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
+import scala.jdk.CollectionConverters._
 
 /** Utility for BigQuery data types. */
 object BigQueryUtil {
@@ -35,4 +36,17 @@ object BigQueryUtil {
   /* Generates job ID */
   def generateJobId(projectId: String): String =
     projectId + "-" + UUID.randomUUID().toString
+
+  private[bigquery] def containsTimeType(schema: TableSchema): Boolean =
+    containsTimeType(schema.getFields.asScala)
+
+  private[bigquery] def containsTimeType(fields: Iterable[TableFieldSchema]): Boolean = {
+    fields.exists(field =>
+      field.getType match {
+        case "TIME"              => true
+        case "RECORD" | "STRUCT" => containsTimeType(field.getFields.asScala)
+        case _                   => false
+      }
+    )
+  }
 }
