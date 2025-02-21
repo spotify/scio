@@ -205,7 +205,7 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
         val data = sc.typedBigQuery[Record](typedTableStorage)
         data should containInAnyOrder(records)
       }
-    } should have message "Beam 2.63.0 doesn't support TIME schema schemas with the Storage Write API. Please use Write method FILE_LOADS instead."
+    } should have message "TIME schemas are not currently supported for Typed Storage Write API writes. Please use Write method FILE_LOADS instead, or map case classes using BigQueryType.toTableRow and use saveAsBigQueryTable directly."
   }
 
   it should "write case classes manually converted to TableRows using FileLoads API" in {

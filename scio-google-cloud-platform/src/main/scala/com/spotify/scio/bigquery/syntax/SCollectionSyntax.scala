@@ -203,9 +203,9 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
     if (
       method == Method.STORAGE_WRITE_API && Option(schema).exists(BigQueryUtil.containsTimeType)
     ) {
+      // Todo remove once https://github.com/apache/beam/issues/34038 is fixed
       throw new IllegalArgumentException(
-        "Beam 2.63.0 doesn't support TIME schema schemas with the Storage Write API. " +
-          "Please use Write method FILE_LOADS instead."
+        "TIME schemas are not currently supported for GenericRecord Storage Write API writes. Please use Write method FILE_LOADS instead, or write TableRows directly."
       )
     }
 
@@ -298,9 +298,9 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
     if (
       method == Method.STORAGE_WRITE_API && BigQueryUtil.containsTimeType(BigQueryType[T].schema)
     ) {
+      // Todo remove once https://github.com/apache/beam/issues/34038 is fixed
       throw new IllegalArgumentException(
-        "Beam 2.63.0 doesn't support TIME schema schemas with the Storage Write API. " +
-          "Please use Write method FILE_LOADS instead."
+        "TIME schemas are not currently supported for Typed Storage Write API writes. Please use Write method FILE_LOADS instead, or map case classes using BigQueryType.toTableRow and use saveAsBigQueryTable directly."
       )
     }
 
