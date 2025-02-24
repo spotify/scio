@@ -145,6 +145,7 @@ object TypedBigQueryIT {
   private val typedTableStorage = table("records_storage")
   private val tableRowTable = table("records_tablerow")
   private val avroTable = table("records_avro")
+  private val tableRowStorage = table("records_tablerow_storage")
   private val avroFlatTable = table("records_avro_flat")
 
   private val records = Gen.listOfN(5, recordGen).sample.get
@@ -167,6 +168,7 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
     Try(bq.tables.delete(typedTableStorage.ref))
     Try(bq.tables.delete(tableRowTable.ref))
     Try(bq.tables.delete(avroTable.ref))
+    Try(bq.tables.delete(tableRowStorage.ref))
     Try(bq.tables.delete(avroFlatTable.ref))
   }
 
@@ -184,6 +186,26 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
       val data = sc.typedBigQuery[Record](typedTableFileLoads)
       data should containInAnyOrder(records)
     }
+  }
+
+  it should "write case classes using Storage Write API" in {
+    // Storage write API has a bug impacting TIME field writes: https://github.com/apache/beam/issues/34038
+    // Todo remove when fixed
+    the[IllegalArgumentException] thrownBy {
+      runWithRealContext(options) { sc =>
+        sc.parallelize(records)
+          .saveAsTypedBigQueryTable(
+            typedTableStorage,
+            createDisposition = CREATE_IF_NEEDED,
+            method = WriteMethod.STORAGE_WRITE_API
+          )
+      }.waitUntilFinish()
+
+      runWithRealContext(options) { sc =>
+        val data = sc.typedBigQuery[Record](typedTableStorage)
+        data should containInAnyOrder(records)
+      }
+    } should have message "TIME schemas are not currently supported for Typed Storage Write API writes. Please use Write method FILE_LOADS instead, or map case classes using BigQueryType.toTableRow and use saveAsBigQueryTable directly."
   }
 
   it should "write case classes manually converted to TableRows using FileLoads API" in {
@@ -237,6 +259,23 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
             .map(Record.fromAvro)
         data should containInAnyOrder(records)
       }
+    }
+  }
+
+  it should "write case classes manually converted to TableRows using Storage Write API" in {
+    runWithRealContext(options) { sc =>
+      sc.parallelize(records)
+        .map(Record.toTableRow)
+        .saveAsBigQueryTable(
+          tableRowStorage,
+          schema = Record.schema,
+          createDisposition = CREATE_IF_NEEDED,
+          method = WriteMethod.STORAGE_WRITE_API
+        )
+    }.waitUntilFinish()
+
+    runWithRealContext(options) { sc =>
+      sc.typedBigQuery[Record](tableRowStorage) should containInAnyOrder(records)
     }
   }
 

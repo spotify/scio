@@ -29,10 +29,10 @@ import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 // To test release candidates, find the beam repo and add it as a resolver
 // ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.62.0"
+val beamVersion = "2.63.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.62.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.63.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = sys.props.getOrElse("avro.version", "1.11.4")
@@ -55,10 +55,10 @@ val nettyVersion = "4.1.110.Final"
 val slf4jVersion = "1.7.30"
 val zstdJniVersion = "1.5.6-3"
 // dependent versions
-val googleApiServicesBigQueryVersion = s"v2-rev20240919-$googleClientsVersion"
-val googleApiServicesDataflowVersion = s"v1b3-rev20240817-$googleClientsVersion"
+val googleApiServicesBigQueryVersion = s"v2-rev20241222-$googleClientsVersion"
+val googleApiServicesDataflowVersion = s"v1b3-rev20250106-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
-val googleApiServicesStorageVersion = s"v1-rev20240924-$googleClientsVersion"
+val googleApiServicesStorageVersion = s"v1-rev20241206-$googleClientsVersion"
 // beam tested versions
 val zetasketchVersion = "0.1.0" // sdks/java/extensions/zetasketch/build.gradle
 val flinkVersion = "1.19.0" // runners/flink/1.19/build.gradle
@@ -68,9 +68,9 @@ val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
 val sparkMajorVersion = VersionNumber(sparkVersion).numbers.take(1).mkString(".")
 
 // check recommended versions from libraries-bom
-// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.49.0/index.html
+// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.53.0/index.html
 val failureAccessVersion = "1.0.2"
-val checkerQualVersion = "3.47.0"
+val checkerQualVersion = "3.48.3"
 val jsr305Version = "3.0.2"
 val perfmarkVersion = "0.27.0"
 
