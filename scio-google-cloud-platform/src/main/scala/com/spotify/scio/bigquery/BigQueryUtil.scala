@@ -22,6 +22,8 @@ import java.util.UUID
 import com.google.api.client.json.JsonObjectParser
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.Method
+
 import scala.jdk.CollectionConverters._
 
 /** Utility for BigQuery data types. */
@@ -36,6 +38,9 @@ object BigQueryUtil {
   /* Generates job ID */
   def generateJobId(projectId: String): String =
     projectId + "-" + UUID.randomUUID().toString
+
+  private[bigquery] def isStorageApiWrite(method: Method): Boolean =
+    method == Method.STORAGE_WRITE_API || method == Method.STORAGE_API_AT_LEAST_ONCE
 
   private[bigquery] def containsTimeType(schema: TableSchema): Boolean =
     containsTimeType(schema.getFields.asScala)

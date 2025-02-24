@@ -201,7 +201,7 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
       configOverride
     )
     if (
-      method == Method.STORAGE_WRITE_API && Option(schema).exists(BigQueryUtil.containsTimeType)
+      BigQueryUtil.isStorageApiWrite(method) && Option(schema).exists(BigQueryUtil.containsTimeType)
     ) {
       // Todo remove once https://github.com/apache/beam/issues/34038 is fixed
       throw new IllegalArgumentException(
@@ -296,7 +296,8 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
     )
 
     if (
-      method == Method.STORAGE_WRITE_API && BigQueryUtil.containsTimeType(BigQueryType[T].schema)
+      BigQueryUtil
+        .isStorageApiWrite(method) && BigQueryUtil.containsTimeType(BigQueryType[T].schema)
     ) {
       // Todo remove once https://github.com/apache/beam/issues/34038 is fixed
       throw new IllegalArgumentException(
