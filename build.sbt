@@ -1668,6 +1668,9 @@ lazy val `scio-repl` = project
         case PathList("commonMain", _*) =>
           // drop conflicting squareup linkdata
           MergeStrategy.discard
+        case PathList("mozilla", "public-suffix-list.txt") =>
+          // drop conflicting suffix lists from beam-vendor-grpc, httpclient
+          MergeStrategy.discard
         case PathList("META-INF", "io.netty.versions.properties") =>
           // merge conflicting netty property files
           MergeStrategy.filterDistinctLines
