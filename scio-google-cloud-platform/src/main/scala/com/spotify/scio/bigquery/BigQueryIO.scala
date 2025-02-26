@@ -25,7 +25,6 @@ import com.spotify.scio.coders._
 import com.spotify.scio.io._
 import com.spotify.scio.util.{FilenamePolicySupplier, Functions, ScioUtil}
 import com.spotify.scio.values.{SCollection, SideOutput, SideOutputCollections}
-import com.twitter.chill.ClosureCleaner
 import magnolify.bigquery.TableRowType
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
@@ -41,7 +40,6 @@ import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.values.{PCollection, PCollectionTuple}
 import org.joda.time.Duration
-import magnolify.bigquery._
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function
