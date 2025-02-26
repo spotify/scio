@@ -21,7 +21,7 @@ import org.apache.beam.sdk.io.Compression
 import org.tensorflow.proto.{Example, SequenceExample}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
-import com.spotify.scio.tensorflow.{TFExampleIO, TFRecordIO, TFSequenceExampleIO}
+import com.spotify.scio.tensorflow.{TFExampleIO, TFExampleTypedIO, TFRecordIO, TFSequenceExampleIO}
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import magnolify.tensorflow.ExampleType
