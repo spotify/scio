@@ -793,7 +793,7 @@ lazy val `scio-test-google-cloud-platform` = project
       "org.typelevel" %% "cats-kernel" % catsVersion,
       // test
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
-    ),
+    )
   )
 
 lazy val `scio-test-parquet` = project
@@ -1266,7 +1266,6 @@ lazy val `scio-tensorflow` = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.tensorflow" % "tensorflow-core-native" % tensorFlowVersion,
       // test
       "com.spotify" %% "featran-core" % featranVersion % Test,
