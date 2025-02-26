@@ -52,6 +52,7 @@ val httpCoreVersion = "4.4.14"
 val jacksonVersion = "2.15.4"
 val jodaTimeVersion = "2.10.14"
 val nettyVersion = "4.1.110.Final"
+val protobufVersion = "3.25.5"
 val slf4jVersion = "1.7.30"
 val zstdJniVersion = "1.5.6-3"
 // dependent versions
@@ -583,7 +584,11 @@ val commonSettings = bomSettings ++ Def.settings(
     "joda-time" % "joda-time" % jodaTimeVersion,
     "org.apache.httpcomponents" % "httpclient" % httpClientVersion,
     "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
-    "org.slf4j" % "slf4j-api" % slf4jVersion // slf4j-bom only available for v2
+    "org.slf4j" % "slf4j-api" % slf4jVersion, // slf4j-bom only available for v2
+    // remove and let BOM override version after Beam upgrades to 4.x
+    // see: https://github.com/spotify/scio/issues/5617
+    "com.google.protobuf" % "protobuf-java" % protobufVersion,
+    "com.google.protobuf" % "protobuf-java-util" % protobufVersion
   ),
   // libs to help with cross-build
   libraryDependencies ++= Seq(
