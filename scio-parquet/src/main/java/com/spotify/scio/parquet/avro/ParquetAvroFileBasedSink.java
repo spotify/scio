@@ -119,7 +119,7 @@ public class ParquetAvroFileBasedSink<T> extends FileBasedSink<T, Void, T> {
       BeamOutputFile outputFile = BeamOutputFile.of(channel);
       Configuration configuration = conf.get();
       AvroParquetWriter.Builder<T> builder =
-              AvroParquetWriter.<T>builder(outputFile).withSchema(schema);
+          AvroParquetWriter.<T>builder(outputFile).withSchema(schema);
       writer = WriterUtils.build(builder, configuration, compression, extraMetadata);
     }
 
