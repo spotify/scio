@@ -22,7 +22,13 @@ import com.google.bigtable.v2._
 import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.protobuf.ByteString
 import com.spotify.scio.ScioContext
-import com.spotify.scio.bigtable.{BTOptions, BigtableRead, BigtableTypedIO, BigtableUtil, TableAdmin}
+import com.spotify.scio.bigtable.{
+  BTOptions,
+  BigtableRead,
+  BigtableTypedIO,
+  BigtableUtil,
+  TableAdmin
+}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.SCollection
 import magnolify.bigtable.BigtableType
@@ -68,7 +74,14 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     keyRanges: Seq[ByteKeyRange],
     rowFilter: RowFilter
   ): SCollection[(K, T)] =
-    typedBigtable(BTOptions(projectId, instanceId), tableId, columnFamily, keyFn, keyRanges, rowFilter)
+    typedBigtable(
+      BTOptions(projectId, instanceId),
+      tableId,
+      columnFamily,
+      keyFn,
+      keyRanges,
+      rowFilter
+    )
 
   def typedBigtable[K: Coder, T: BigtableType: Coder](
     projectId: String,
