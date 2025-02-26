@@ -584,7 +584,7 @@ val commonSettings = bomSettings ++ Def.settings(
     "joda-time" % "joda-time" % jodaTimeVersion,
     "org.apache.httpcomponents" % "httpclient" % httpClientVersion,
     "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
-    "org.slf4j" % "slf4j-api" % slf4jVersion, // slf4j-bom only available for v2,
+    "org.slf4j" % "slf4j-api" % slf4jVersion, // slf4j-bom only available for v2
     // remove and let BOM override version after Beam upgrades to 4.x
     // see: https://github.com/spotify/scio/issues/5617
     "com.google.protobuf" % "protobuf-java" % protobufVersion,
