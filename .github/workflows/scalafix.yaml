@@ -17,7 +17,7 @@ env:
 jobs:
   scalafix:
     name: Test
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       - name: Checkout current branch (full)

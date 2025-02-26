@@ -27,7 +27,7 @@ jobs:
     name: Test
     strategy:
       matrix:
-        os: [ubuntu-22.04]
+        os: [ubuntu-24.04]
         scala: [2.13, 2.12]
         java: [corretto@11, corretto@17, corretto@21]
         exclude:
@@ -100,18 +100,18 @@ jobs:
         run: sbt githubWorkflowCheck
 
       - name: Check headers and formatting
-        if: matrix.java == 'corretto@11' && matrix.os == 'ubuntu-22.04'
+        if: matrix.java == 'corretto@11' && matrix.os == 'ubuntu-24.04'
         run: sbt '++ ${{ matrix.scala }}' headerCheckAll javafmtCheckAll scalafmtCheckAll 'project /' scalafmtSbtCheck
 
       - name: Test
         run: sbt '++ ${{ matrix.scala }}' test
 
       - name: Check binary compatibility
-        if: matrix.java == 'corretto@11' && matrix.os == 'ubuntu-22.04'
+        if: matrix.java == 'corretto@11' && matrix.os == 'ubuntu-24.04'
         run: sbt '++ ${{ matrix.scala }}' mimaReportBinaryIssues
 
       - name: Generate API documentation
-        if: matrix.java == 'corretto@11' && matrix.os == 'ubuntu-22.04'
+        if: matrix.java == 'corretto@11' && matrix.os == 'ubuntu-24.04'
         run: sbt '++ ${{ matrix.scala }}' doc
 
       - name: Check dependencies
@@ -138,7 +138,7 @@ jobs:
     if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main')
     strategy:
       matrix:
-        os: [ubuntu-22.04]
+        os: [ubuntu-24.04]
         java: [corretto@11]
     runs-on: ${{ matrix.os }}
     steps:
@@ -247,7 +247,7 @@ jobs:
     if: github.event.repository.fork == false && github.event_name != 'pull_request'
     strategy:
       matrix:
-        os: [ubuntu-22.04]
+        os: [ubuntu-24.04]
         java: [corretto@11]
     runs-on: ${{ matrix.os }}
     steps:
@@ -308,7 +308,7 @@ jobs:
     name: Validate Steward Config
     strategy:
       matrix:
-        os: [ubuntu-22.04]
+        os: [ubuntu-24.04]
         java: [temurin@11]
     runs-on: ${{ matrix.os }}
     steps:
@@ -333,7 +333,7 @@ jobs:
     name: Test Coverage
     strategy:
       matrix:
-        os: [ubuntu-22.04]
+        os: [ubuntu-24.04]
         scala: [2.13]
         java: [corretto@11]
     runs-on: ${{ matrix.os }}
@@ -372,7 +372,7 @@ jobs:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     strategy:
       matrix:
-        os: [ubuntu-22.04]
+        os: [ubuntu-24.04]
         scala: [2.13]
         java: [corretto@11]
     runs-on: ${{ matrix.os }}
@@ -405,7 +405,7 @@ jobs:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     strategy:
       matrix:
-        os: [ubuntu-22.04]
+        os: [ubuntu-24.04]
         scala: [2.13]
         java: [corretto@11]
     runs-on: ${{ matrix.os }}
@@ -453,7 +453,7 @@ jobs:
     if: (github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork)
     strategy:
       matrix:
-        os: [ubuntu-22.04]
+        os: [ubuntu-24.04]
         scala: [2.13]
         java: [corretto@11]
     runs-on: ${{ matrix.os }}
