@@ -255,7 +255,7 @@ private[types] object ConverterProvider {
                   recordSchema.getDoc,
                   recordSchema.getNamespace,
                   recordSchema.isError,
-                  recordSchema.getFields.asScala.map(f => new _root_.org.apache.avro.Schema.Field(f.name(), f.schema())).toList.asJava
+                  recordSchema.getFields.asScala.map(f => new _root_.org.apache.avro.Schema.Field(f.name(), f.schema(), f.doc(), f.defaultVal())).asJava
                 )
               )
             }

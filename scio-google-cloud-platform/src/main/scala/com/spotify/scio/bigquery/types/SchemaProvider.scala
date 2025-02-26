@@ -45,7 +45,9 @@ private[types] object SchemaProvider {
           converted.getDoc,
           BeamAvroConverterNamespace,
           converted.isError,
-          converted.getFields.asScala.map(f => new Schema.Field(f.name(), f.schema())).asJava
+          converted.getFields.asScala
+            .map(f => new Schema.Field(f.name(), f.schema(), f.doc(), f.defaultVal()))
+            .asJava
         )
       }
     )
