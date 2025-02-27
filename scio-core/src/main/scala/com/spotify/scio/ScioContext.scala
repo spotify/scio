@@ -538,6 +538,17 @@ class ScioContext private[scio] (
       // Hadoop and/or gcs-connector is excluded from classpath, do not try to set options
       case _: NoClassDefFoundError | _: NoSuchMethodException =>
     }
+
+    try {
+      import com.google.cloud.hadoop.util.AsyncWriteChannelOptions
+      val o = optionsAs[GcsOptions]
+
+      // Option was renamed in gcs-connector 3.x; Beam IO attempts to resolve older name as default
+      o.setGcsUploadBufferSizeBytes(AsyncWriteChannelOptions.DEFAULT_UPLOAD_CHUNK_SIZE)
+    } catch {
+      // Hadoop and/or gcs-connector is excluded from classpath, do not try to set options
+      case _: NoClassDefFoundError | _: NoSuchMethodException =>
+    }
   }
 
   private[scio] def labels: Map[String, String] =
