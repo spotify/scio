@@ -26,6 +26,7 @@ import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
 
 import java.io.File
+import java.time.Instant
 import java.util.Locale
 import scala.util.{Success, Try}
 
@@ -106,7 +107,7 @@ class ApplicationDefaultTokenProvider() extends AccessTokenProvider {
 
   override def getAccessToken: AccessTokenProvider.AccessToken = {
     val gToken = Option(adc.getAccessToken).getOrElse { adc.refresh(); adc.getAccessToken }
-    new AccessTokenProvider.AccessToken(gToken.getTokenValue, gToken.getExpirationTime.getTime)
+    new AccessTokenProvider.AccessToken(gToken.getTokenValue, Instant.ofEpochMilli(gToken.getExpirationTime.getTime))
   }
   override def refresh(): Unit = adc.refresh()
   override def setConf(c: Configuration): Unit = conf = Some(c)
