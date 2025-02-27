@@ -18,7 +18,7 @@ package com.spotify.scio.coders.instances.kryo
 
 import com.esotericsoftware.kryo.KryoException
 import com.google.api.gax.rpc.{ApiException, ApiExceptionFactory, StatusCode}
-import com.twitter.chill.{Input, KSerializer, Kryo, Output}
+import com.spotify.scio.vendor.chill.{Input, KSerializer, Kryo, Output}
 import io.grpc.{Status, StatusException, StatusRuntimeException}
 
 import java.io.{InputStream, ObjectInputStream, ObjectOutputStream, OutputStream}

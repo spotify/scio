@@ -9,7 +9,7 @@ Add the following class. You can rename it, but its name has to end in `KryoRegi
 
 ```scala
 import com.spotify.scio.coders.KryoRegistrar
-import com.twitter.chill._
+import com.spotify.scio.vendor.chill._
 
 @KryoRegistrar
 class MyKryoRegistrar extends IKryoRegistrar {
@@ -46,7 +46,7 @@ You can add the following class to your test folder; it will enforce registratio
 ```scala
 import com.esotericsoftware.kryo.Kryo
 import com.spotify.scio.coders.KryoRegistrar
-import com.twitter.chill.IKryoRegistrar
+import com.spotify.scio.vendor.chill.IKryoRegistrar
 
 /** Makes sure we don't forget to register encoders, enabled only in tests not to crash production. */
 @KryoRegistrar

@@ -1,0 +1,16 @@
+syntax = "proto3";
+package com.spotify.scio.vendor.chill.protobuf;
+
+message FatigueCount {
+  int64 target_id = 1;
+  int64 suggested_id = 2;
+  int32 serve_count = 3;
+  repeated int64 recent_clicks = 4;
+  Gender gender = 5;
+}
+
+enum Gender {
+  MALE = 0;
+  FEMALE = 1;
+  NONBINARY = 2;
+}

@@ -17,7 +17,7 @@
 package com.spotify.scio.transforms
 
 import com.spotify.scio.util.ParallelLimitedFn
-import com.twitter.chill.ClosureCleaner
+import com.spotify.scio.vendor.chill.ClosureCleaner
 import org.apache.beam.sdk.transforms.DoFn
 
 import scala.collection.compat._

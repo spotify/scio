@@ -24,7 +24,7 @@ import com.esotericsoftware.kryo.io.{Input, Output}
 import com.esotericsoftware.kryo.{Kryo, Serializer}
 import com.spotify.scio.coders._
 import com.spotify.scio.schemas._
-import com.twitter.chill.IKryoRegistrar
+import com.spotify.scio.vendor.chill.IKryoRegistrar
 import org.apache.beam.sdk.coders.{
   AtomicCoder,
   ByteArrayCoder,

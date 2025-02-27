@@ -31,7 +31,7 @@ import scala.jdk.CollectionConverters._
 import scala.concurrent.Future
 import scala.reflect.runtime.universe._
 import com.spotify.scio.bigquery.BigQueryTypedTable.Format
-import com.twitter.chill.Externalizer
+import com.spotify.scio.vendor.chill.Externalizer
 
 /** Tap for BigQuery TableRow JSON files. */
 final case class TableRowJsonTap(path: String, params: TableRowJsonIO.ReadParam)

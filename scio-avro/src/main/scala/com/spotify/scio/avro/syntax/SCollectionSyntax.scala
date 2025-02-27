@@ -354,6 +354,14 @@ trait SCollectionSyntax {
     c: SCollection[T]
   ): ProtobufSCollectionOps[T] = new ProtobufSCollectionOps[T](c)
 
+  implicit def typedAvroProtobufSCollectionOps[T](
+    c: SCollection[T]
+  ): TypedMagnolifyProtobufSCollectionOps[T] = new TypedMagnolifyProtobufSCollectionOps[T](c)
+
+  implicit def typedMagnolifyAvroSCollectionOps[T](
+    c: SCollection[T]
+  ): TypedMagnolifyAvroSCollectionOps[T] = new TypedMagnolifyAvroSCollectionOps(c)
+
   implicit def avroFilesSCollectionOps[T](
     c: SCollection[T]
   )(implicit ev: T <:< String): FilesSCollectionOps =

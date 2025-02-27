@@ -24,7 +24,7 @@ import com.spotify.scio.transforms.JavaAsyncConverters._
 import com.spotify.scio.util.Functions
 import com.spotify.scio.util.TupleFunctions.kvToTuple
 import com.spotify.scio.values.SCollection
-import com.twitter.chill.ClosureCleaner
+import com.spotify.scio.vendor.chill.ClosureCleaner
 import io.grpc.Channel
 import io.grpc.stub.{AbstractFutureStub, AbstractStub, StreamObserver}
 import org.apache.commons.lang3.tuple.Pair

@@ -20,7 +20,7 @@ package com.spotify.scio.coders.instances.kryo
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.google.protobuf.ByteString
-import com.twitter.chill.KSerializer
+import com.spotify.scio.vendor.chill.KSerializer
 
 private[coders] class ByteStringSerializer extends KSerializer[ByteString] {
   override def read(kryo: Kryo, input: Input, tpe: Class[ByteString]): ByteString = {

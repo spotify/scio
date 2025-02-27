@@ -19,7 +19,7 @@ package com.spotify.scio.coders
 import com.google.cloud.bigtable.data.v2.models.MutateRowsException
 import com.spotify.scio.bigquery.TableRow
 import com.spotify.scio.coders.instances.kryo.{CoderSerializer, MutateRowsExceptionSerializer}
-import com.twitter.chill._
+import com.spotify.scio.vendor.chill._
 import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
 
 @KryoRegistrar

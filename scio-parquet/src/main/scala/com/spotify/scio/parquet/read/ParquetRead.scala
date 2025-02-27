@@ -18,7 +18,7 @@ package com.spotify.scio.parquet.read
 
 import com.spotify.scio.parquet.ParquetConfiguration
 import com.spotify.scio.util.{Functions, ScioUtil}
-import com.twitter.chill.ClosureCleaner
+import com.spotify.scio.vendor.chill.ClosureCleaner
 import magnolify.parquet.ParquetType
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
