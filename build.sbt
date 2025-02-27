@@ -1382,6 +1382,7 @@ lazy val `scio-examples` = project
       "redis.clients" % "jedis" % jedisVersion,
       // runtime
       "com.google.cloud.bigdataoss" % "gcs-connector" % bigdataossVersion % Runtime,
+      "com.google.cloud.bigdataoss" % "gcsio" % bigdataossVersion % Runtime,
       "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.23.0" % Runtime,
       // test
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
