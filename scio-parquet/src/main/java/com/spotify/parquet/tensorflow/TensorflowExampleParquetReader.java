@@ -23,7 +23,7 @@ import org.apache.parquet.filter.UnboundRecordFilter;
 import org.apache.parquet.hadoop.ParquetReader;
 import org.apache.parquet.hadoop.api.ReadSupport;
 import org.apache.parquet.io.InputFile;
-import org.tensorflow.proto.example.Example;
+import org.tensorflow.proto.Example;
 
 public class TensorflowExampleParquetReader extends ParquetReader<Example> {
 

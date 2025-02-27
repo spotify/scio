@@ -29,10 +29,10 @@ import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 // To test release candidates, find the beam repo and add it as a resolver
 // ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.62.0"
+val beamVersion = "2.63.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.62.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.63.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = sys.props.getOrElse("avro.version", "1.11.4")
@@ -55,10 +55,10 @@ val nettyVersion = "4.1.110.Final"
 val slf4jVersion = "1.7.30"
 val zstdJniVersion = "1.5.6-3"
 // dependent versions
-val googleApiServicesBigQueryVersion = s"v2-rev20240919-$googleClientsVersion"
-val googleApiServicesDataflowVersion = s"v1b3-rev20240817-$googleClientsVersion"
+val googleApiServicesBigQueryVersion = s"v2-rev20241222-$googleClientsVersion"
+val googleApiServicesDataflowVersion = s"v1b3-rev20250106-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
-val googleApiServicesStorageVersion = s"v1-rev20240924-$googleClientsVersion"
+val googleApiServicesStorageVersion = s"v1-rev20241206-$googleClientsVersion"
 // beam tested versions
 val zetasketchVersion = "0.1.0" // sdks/java/extensions/zetasketch/build.gradle
 val flinkVersion = "1.19.0" // runners/flink/1.19/build.gradle
@@ -68,9 +68,9 @@ val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
 val sparkMajorVersion = VersionNumber(sparkVersion).numbers.take(1).mkString(".")
 
 // check recommended versions from libraries-bom
-// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.49.0/index.html
+// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.53.0/index.html
 val failureAccessVersion = "1.0.2"
-val checkerQualVersion = "3.47.0"
+val checkerQualVersion = "3.48.3"
 val jsr305Version = "3.0.2"
 val perfmarkVersion = "0.27.0"
 
@@ -79,7 +79,7 @@ val annoy4sVersion = "0.10.0"
 val annoyVersion = "0.2.6"
 val asmVersion = "4.16"
 val breezeVersion = "2.1.0"
-val caffeineVersion = "2.9.3"
+val caffeineVersion = "3.2.0"
 val cassandraDriverVersion = "3.11.5"
 val cassandraVersion = "3.11.17"
 val catsVersion = "2.13.0"
@@ -90,6 +90,7 @@ val elasticsearch8Version = "8.17.1"
 val fansiVersion = "0.5.0"
 val featranVersion = "0.8.0"
 val httpAsyncClientVersion = "4.1.5"
+val icebergVersion = "1.4.2"
 val jakartaJsonVersion = "2.1.3"
 val javaLshVersion = "0.12"
 val jedisVersion = "5.2.0"
@@ -100,11 +101,10 @@ val kantanCodecsVersion = "0.5.3"
 val kantanCsvVersion = "0.7.0"
 val kryoVersion = "4.0.3"
 val magnoliaVersion = "1.1.10"
-val magnolifyVersion = "0.7.4"
+val magnolifyVersion = "0.8.0"
 val metricsVersion = "4.2.30"
 val munitVersion = "1.1.0"
 val neo4jDriverVersion = "4.4.19"
-val ndArrayVersion = "0.3.3"
 val parquetExtraVersion = "0.4.3"
 val parquetVersion = "1.15.0"
 val pprintVersion = "0.9.0"
@@ -115,7 +115,7 @@ val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.2.19"
 val shapelessVersion = "2.3.12"
 val sparkeyVersion = "3.2.5"
-val tensorFlowVersion = "0.4.2"
+val tensorFlowVersion = "1.0.0"
 val tensorFlowMetadataVersion = "1.16.1"
 val testContainersVersion = "0.41.8"
 val voyagerVersion = "2.1.0"
@@ -320,123 +320,7 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
 )
 
 // mima
-ThisBuild / mimaBinaryIssueFilters ++= Seq(
-  ProblemFilters.exclude[DirectMissingMethodProblem](
-    "com.spotify.scio.testing.TransformOverride.ofSource"
-  ),
-  ProblemFilters.exclude[ReversedMissingMethodProblem](
-    "com.spotify.scio.options.ScioOptions.setZstdDictionary"
-  ),
-  ProblemFilters.exclude[ReversedMissingMethodProblem](
-    "com.spotify.scio.options.ScioOptions.getZstdDictionary"
-  ),
-  // removal of private classes
-  ProblemFilters.exclude[MissingClassProblem](
-    "com.spotify.scio.coders.instances.kryo.GaxApiExceptionSerializer"
-  ),
-  ProblemFilters.exclude[MissingClassProblem](
-    "com.spotify.scio.coders.instances.kryo.StatusRuntimeExceptionSerializer"
-  ),
-  ProblemFilters.exclude[MissingClassProblem](
-    "com.spotify.scio.coders.instances.kryo.BigtableRetriesExhaustedExceptionSerializer"
-  ),
-  // added new Cache.get method
-  ProblemFilters.exclude[ReversedMissingMethodProblem](
-    "com.spotify.scio.util.Cache.get"
-  ),
-  // added SortedMapCoder
-  ProblemFilters.exclude[DirectMissingMethodProblem](
-    "com.spotify.scio.coders.instances.MutableMapCoder.*"
-  ),
-  ProblemFilters.exclude[DirectAbstractMethodProblem](
-    "org.apache.beam.sdk.coders.Coder.verifyDeterministic"
-  ),
-  ProblemFilters.exclude[DirectAbstractMethodProblem](
-    "org.apache.beam.sdk.coders.Coder.getCoderArguments"
-  ),
-  // added BQ Json object
-  ProblemFilters.exclude[MissingTypesProblem](
-    "com.spotify.scio.bigquery.types.package$Json$"
-  ),
-  // tf-metadata upgrade
-  ProblemFilters.exclude[Problem](
-    "org.tensorflow.metadata.v0.*"
-  ),
-  // relax type hierarchy for batch stream
-  ProblemFilters.exclude[IncompatibleMethTypeProblem](
-    "com.spotify.scio.grpc.GrpcBatchDoFn.asyncLookup"
-  ),
-  // added TableRow syntax
-  ProblemFilters.exclude[DirectMissingMethodProblem](
-    "com.spotify.scio.bigquery.syntax.TableRowOps.*"
-  ),
-  // narrow return type from Map to TableRow
-  ProblemFilters.exclude[IncompatibleResultTypeProblem](
-    "com.spotify.scio.bigquery.syntax.TableRowOps.getRecord$extension"
-  ),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem](
-    "com.spotify.scio.bigquery.syntax.TableRowOps.getRecord"
-  ),
-  // narrow return type from Seq to List
-  ProblemFilters.exclude[IncompatibleResultTypeProblem](
-    "com.spotify.scio.bigquery.syntax.TableRowOps.getRepeated$extension"
-  ),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem](
-    "com.spotify.scio.bigquery.syntax.TableRowOps.getRepeated"
-  ),
-  // BQ api v1 update
-  ProblemFilters.exclude[IncompatibleResultTypeProblem](
-    "com.spotify.scio.bigquery.BigQueryStorageTap.*"
-  ),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem](
-    "com.spotify.scio.bigquery.BigQueryStorageTap.*"
-  ),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem](
-    "com.spotify.scio.bigquery.BigQueryTaps.*"
-  ),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem](
-    "com.spotify.scio.bigquery.StorageUtil.tableReadOptions"
-  ),
-  ProblemFilters.exclude[MissingClassProblem]("com.spotify.scio.tensorflow.PredictDoFn"),
-  ProblemFilters.exclude[MissingClassProblem]("com.spotify.scio.tensorflow.PredictDoFn$"),
-  ProblemFilters.exclude[MissingClassProblem]("com.spotify.scio.tensorflow.SavedBundlePredictDoFn"),
-  ProblemFilters.exclude[MissingClassProblem](
-    "com.spotify.scio.tensorflow.SavedBundlePredictDoFn$"
-  ),
-  ProblemFilters.exclude[DirectMissingMethodProblem](
-    "com.spotify.scio.tensorflow.package.tensorFlowPredictSCollectionOps"
-  ),
-  ProblemFilters.exclude[DirectMissingMethodProblem](
-    "com.spotify.scio.tensorflow.package.tensorFlowPredictSCollectionOps"
-  ),
-  ProblemFilters.exclude[MissingClassProblem](
-    "com.spotify.scio.tensorflow.syntax.PredictSCollectionOps"
-  ),
-  ProblemFilters.exclude[MissingClassProblem](
-    "com.spotify.scio.tensorflow.syntax.PredictSCollectionOps$"
-  ),
-  ProblemFilters.exclude[DirectMissingMethodProblem](
-    "com.spotify.scio.tensorflow.syntax.SCollectionSyntax.tensorFlowPredictSCollectionOps"
-  ),
-  // dropped custom BigQueryAvroUtilsWrapper
-  ProblemFilters.exclude[MissingClassProblem](
-    "org.apache.beam.sdk.io.gcp.bigquery.BigQueryAvroUtilsWrapper"
-  ),
-  // Changes in avro SlowGenericRecordCoder
-  ProblemFilters.exclude[Problem](
-    "com.spotify.scio.coders.avro.SlowGenericRecordCoder*"
-  ),
-  // tablerow json fix
-  ProblemFilters.exclude[DirectMissingMethodProblem](
-    "com.spotify.scio.bigquery.types.package#Json.apply"
-  ),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem](
-    "com.spotify.scio.bigquery.types.package#Json.parse"
-  ),
-  ProblemFilters.exclude[DirectMissingMethodProblem](
-    "com.spotify.scio.bigquery.types.package#BigNumeric.bytes"
-  )
-)
+ThisBuild / mimaBinaryIssueFilters ++= Seq()
 
 // headers
 lazy val currentYear = java.time.LocalDate.now().getYear
@@ -726,6 +610,7 @@ lazy val `scio-bom` = project
       `scio-grpc`,
       `scio-jdbc`,
       `scio-macros`,
+      `scio-managed`,
       `scio-neo4j`,
       `scio-parquet`,
       `scio-redis`,
@@ -829,10 +714,7 @@ lazy val `scio-test` = project
   )
   .settings(commonSettings)
   .settings(
-    description := "Scio helpers for ScalaTest",
-    // only releases after 0.14.4
-    tlMimaPreviousVersions := tlMimaPreviousVersions.value
-      .filter(v => VersionNumber(v).numbers.last >= 4)
+    description := "Scio helpers for ScalaTest"
   )
 
 lazy val `scio-test-core` = project
@@ -883,10 +765,7 @@ lazy val `scio-test-google-cloud-platform` = project
       "org.typelevel" %% "cats-kernel" % catsVersion,
       // test
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
-    ),
-    // only releases after 0.14.4
-    tlMimaPreviousVersions := tlMimaPreviousVersions.value
-      .filter(v => VersionNumber(v).numbers.last >= 4)
+    )
   )
 
 lazy val `scio-test-parquet` = project
@@ -901,9 +780,6 @@ lazy val `scio-test-parquet` = project
   .settings(commonSettings)
   .settings(
     description := "Scio helpers for ScalaTest",
-    // only releases after 0.14.4
-    tlMimaPreviousVersions := tlMimaPreviousVersions.value
-      .filter(v => VersionNumber(v).numbers.last >= 4),
     libraryDependencies ++= Seq(
       "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
       "org.apache.avro" % "avro" % avroVersion,
@@ -912,7 +788,7 @@ lazy val `scio-test-parquet` = project
       "org.apache.parquet" % "parquet-column" % parquetVersion,
       "org.apache.parquet" % "parquet-common" % parquetVersion,
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
-      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided
+      "org.tensorflow" % "tensorflow-core-native" % tensorFlowVersion % Provided
     )
   )
 
@@ -984,6 +860,7 @@ lazy val `scio-google-cloud-platform` = project
       moduleFilter("org.apache.arrow", "arrow-vector"),
       moduleFilter("com.fasterxml.jackson.datatype", "jackson-datatype-jsr310")
     ).reduce(_ | _),
+    Test / javaOptions += "-Doverride.type.provider=com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider",
     libraryDependencies ++= Seq(
       // compile
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
@@ -1200,6 +1077,23 @@ lazy val `scio-grpc` = project
     )
   )
 
+lazy val `scio-managed` = project
+  .in(file("scio-managed"))
+  .dependsOn(
+    `scio-core` % "compile;test->test"
+  )
+  .settings(commonSettings)
+  .settings(
+    description := "Scio add-on for Beam's managed transforms",
+    libraryDependencies ++= Seq(
+      // compile
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-managed" % beamVersion,
+      "com.spotify" %% "magnolify-beam" % magnolifyVersion
+      // test
+    )
+  )
+
 lazy val `scio-jdbc` = project
   .in(file("scio-jdbc"))
   .dependsOn(
@@ -1284,7 +1178,7 @@ lazy val `scio-parquet` = project
       "org.slf4j" % "log4j-over-slf4j" % slf4jVersion, // log4j is excluded from hadoop
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // provided
-      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided,
+      "org.tensorflow" % "tensorflow-core-native" % tensorFlowVersion % Provided,
       // runtime
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion % Runtime excludeAll (Exclude.metricsCore),
       "io.dropwizard.metrics" % "metrics-core" % metricsVersion % Runtime,
@@ -1334,7 +1228,7 @@ lazy val `scio-tensorflow` = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
-      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion,
+      "org.tensorflow" % "tensorflow-core-native" % tensorFlowVersion,
       // test
       "com.spotify" %% "featran-core" % featranVersion % Test,
       "com.spotify" %% "featran-scio" % featranVersion % Test,
@@ -1379,17 +1273,18 @@ lazy val `scio-examples` = project
   .enablePlugins(NoPublishPlugin)
   .disablePlugins(ScalafixPlugin)
   .dependsOn(
-    `scio-core` % "compile->test",
     `scio-avro` % "compile->test",
+    `scio-core` % "compile->test",
+    `scio-elasticsearch8`,
+    `scio-extra`,
     `scio-google-cloud-platform`,
     `scio-jdbc`,
-    `scio-extra`,
-    `scio-elasticsearch8`,
+    `scio-managed`,
     `scio-neo4j`,
-    `scio-tensorflow`,
-    `scio-smb`,
+    `scio-parquet`,
     `scio-redis`,
-    `scio-parquet`
+    `scio-smb`,
+    `scio-tensorflow`
   )
   .settings(commonSettings)
   .settings(soccoSettings)
@@ -1444,6 +1339,7 @@ lazy val `scio-examples` = project
       "com.mysql" % "mysql-connector-j" % "9.2.0",
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
+      "com.spotify" %% "magnolify-beam" % magnolifyVersion,
       "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
       "com.spotify" %% "magnolify-bigquery" % magnolifyVersion,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
@@ -1461,6 +1357,7 @@ lazy val `scio-examples` = project
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-managed" % beamVersion,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
       "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
       "org.apache.parquet" % "parquet-column" % parquetVersion,
@@ -1468,7 +1365,7 @@ lazy val `scio-examples` = project
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
       "org.neo4j.driver" % "neo4j-java-driver" % neo4jDriverVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion,
+      "org.tensorflow" % "tensorflow-core-native" % tensorFlowVersion,
       "redis.clients" % "jedis" % jedisVersion,
       // runtime
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
@@ -1598,6 +1495,9 @@ lazy val `scio-repl` = project
         case PathList("commonMain", _*) =>
           // drop conflicting squareup linkdata
           MergeStrategy.discard
+        case PathList("mozilla", "public-suffix-list.txt") =>
+          // drop conflicting suffix lists from beam-vendor-grpc, httpclient
+          MergeStrategy.discard
         case PathList("META-INF", "io.netty.versions.properties") =>
           // merge conflicting netty property files
           MergeStrategy.filterDistinctLines
@@ -1695,7 +1595,7 @@ lazy val `scio-smb` = project
       "org.apache.parquet" % "parquet-column" % parquetVersion % Provided, // scio-parquet
       "org.apache.parquet" % "parquet-common" % parquetVersion % Provided, // scio-parquet
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion % Provided, // scio-parquet
-      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided, // scio-tensorflow
+      "org.tensorflow" % "tensorflow-core-native" % tensorFlowVersion % Provided, // scio-tensorflow
       // test
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % Test classifier "tests",
       "org.hamcrest" % "hamcrest" % hamcrestVersion % Test,
@@ -1741,6 +1641,7 @@ lazy val integration = project
     `scio-extra` % "test->test",
     `scio-google-cloud-platform` % "compile;test->test",
     `scio-jdbc` % "compile;test->test",
+    `scio-managed` % "test->test",
     `scio-neo4j` % "test->test",
     `scio-smb` % "test->provided,test"
   )
@@ -1787,7 +1688,13 @@ lazy val integration = project
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion % Test,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion % Test,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion % Test,
-      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Test
+      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Test,
+      "org.apache.beam" % "beam-sdks-java-io-iceberg" % beamVersion % Test,
+      "org.apache.iceberg" % "iceberg-common" % icebergVersion % Test,
+      "org.apache.iceberg" % "iceberg-core" % icebergVersion % Test,
+      "org.apache.iceberg" % "iceberg-parquet" % icebergVersion % Test,
+      "org.apache.parquet" % "parquet-common" % parquetVersion % Test,
+      "org.apache.parquet" % "parquet-column" % parquetVersion % Test
     )
   )
 
@@ -1815,6 +1722,7 @@ lazy val site = project
     `scio-grpc` % "compile->test",
     `scio-jdbc`,
     `scio-macros`,
+    `scio-managed`,
     `scio-neo4j`,
     `scio-parquet`,
     `scio-redis`,

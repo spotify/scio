@@ -29,7 +29,7 @@ import org.apache.beam.sdk.io.{
   WriteFiles
 }
 import org.apache.beam.sdk.{io => beam}
-import org.tensorflow.proto.example.{Example, SequenceExample}
+import org.tensorflow.proto.{Example, SequenceExample}
 import com.spotify.scio.io.TapT
 import com.spotify.scio.tensorflow.TFExampleIO.ReadParam
 import com.spotify.scio.util.FilenamePolicySupplier

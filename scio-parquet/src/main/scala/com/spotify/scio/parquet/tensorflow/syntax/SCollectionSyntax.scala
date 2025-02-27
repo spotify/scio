@@ -24,7 +24,7 @@ import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
-import org.tensorflow.proto.example.Example
+import org.tensorflow.proto.Example
 import org.tensorflow.metadata.v0.Schema
 
 /** Enhanced version of [[SCollection]] with Parquet [[Example]] methods. */
@@ -41,7 +41,8 @@ final class SCollectionOps(private val self: SCollection[Example]) extends AnyVa
     shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = WriteParam.DefaultTempDirectory,
     filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier,
-    prefix: String = WriteParam.DefaultPrefix
+    prefix: String = WriteParam.DefaultPrefix,
+    metadata: Map[String, String] = WriteParam.DefaultMetadata
   ): ClosedTap[Example] =
     self.write(ParquetExampleIO(path))(
       WriteParam(
@@ -53,7 +54,8 @@ final class SCollectionOps(private val self: SCollection[Example]) extends AnyVa
         filenamePolicySupplier,
         prefix,
         shardNameTemplate,
-        tempDirectory
+        tempDirectory,
+        metadata
       )
     )
 }

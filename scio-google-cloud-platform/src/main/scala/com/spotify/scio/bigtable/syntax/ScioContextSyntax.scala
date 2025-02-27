@@ -22,7 +22,13 @@ import com.google.bigtable.v2._
 import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.protobuf.ByteString
 import com.spotify.scio.ScioContext
-import com.spotify.scio.bigtable.{BigtableRead, BigtableTypedIO, BigtableUtil, TableAdmin}
+import com.spotify.scio.bigtable.{
+  BTOptions,
+  BigtableRead,
+  BigtableTypedIO,
+  BigtableUtil,
+  TableAdmin
+}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.SCollection
 import magnolify.bigtable.BigtableType
@@ -40,9 +46,6 @@ object ScioContextOps {
 final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   import ScioContextOps._
 
-  private def btOpts(projectId: String, instanceId: String): BigtableOptions =
-    BigtableOptions.builder().setProjectId(projectId).setInstanceId(instanceId).build
-
   def typedBigtable[K: Coder, T: BigtableType: Coder](
     projectId: String,
     instanceId: String,
@@ -50,7 +53,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     columnFamily: String,
     keyFn: ByteString => K
   ): SCollection[(K, T)] =
-    typedBigtable(btOpts(projectId, instanceId), tableId, columnFamily, keyFn)
+    typedBigtable(BTOptions(projectId, instanceId), tableId, columnFamily, keyFn)
 
   def typedBigtable[K: Coder, T: BigtableType: Coder](
     projectId: String,
@@ -60,7 +63,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     keyFn: ByteString => K,
     keyRanges: Seq[ByteKeyRange]
   ): SCollection[(K, T)] =
-    typedBigtable(btOpts(projectId, instanceId), tableId, columnFamily, keyFn, keyRanges)
+    typedBigtable(BTOptions(projectId, instanceId), tableId, columnFamily, keyFn, keyRanges)
 
   def typedBigtable[K: Coder, T: BigtableType: Coder](
     projectId: String,
@@ -71,7 +74,14 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     keyRanges: Seq[ByteKeyRange],
     rowFilter: RowFilter
   ): SCollection[(K, T)] =
-    typedBigtable(btOpts(projectId, instanceId), tableId, columnFamily, keyFn, keyRanges, rowFilter)
+    typedBigtable(
+      BTOptions(projectId, instanceId),
+      tableId,
+      columnFamily,
+      keyFn,
+      keyRanges,
+      rowFilter
+    )
 
   def typedBigtable[K: Coder, T: BigtableType: Coder](
     projectId: String,
@@ -84,7 +94,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     maxBufferElementCount: Option[Int]
   ): SCollection[(K, T)] =
     typedBigtable(
-      btOpts(projectId, instanceId),
+      BTOptions(projectId, instanceId),
       tableId,
       columnFamily,
       keyFn,
@@ -115,7 +125,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     keyRange: ByteKeyRange,
     rowFilter: RowFilter
   ): SCollection[Row] =
-    bigtable(btOpts(projectId, instanceId), tableId, Seq(keyRange), rowFilter)
+    bigtable(BTOptions(projectId, instanceId), tableId, Seq(keyRange), rowFilter)
 
   /** Get an SCollection for a Bigtable table. */
   def bigtable(
@@ -127,7 +137,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     maxBufferElementCount: Option[Int]
   ): SCollection[Row] =
     bigtable(
-      btOpts(projectId, instanceId),
+      BTOptions(projectId, instanceId),
       tableId,
       Seq(keyRange),
       rowFilter,
@@ -140,7 +150,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     instanceId: String,
     tableId: String
   ): SCollection[Row] =
-    bigtable(btOpts(projectId, instanceId), tableId)
+    bigtable(BTOptions(projectId, instanceId), tableId)
 
   /** Get an SCollection for a Bigtable table. */
   def bigtable(
@@ -151,7 +161,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     rowFilter: RowFilter,
     maxBufferElementCount: Option[Int]
   ): SCollection[Row] =
-    bigtable(btOpts(projectId, instanceId), tableId, keyRanges, rowFilter, maxBufferElementCount)
+    bigtable(BTOptions(projectId, instanceId), tableId, keyRanges, rowFilter, maxBufferElementCount)
 
   /** Get an SCollection for a Bigtable table. */
   def bigtable(

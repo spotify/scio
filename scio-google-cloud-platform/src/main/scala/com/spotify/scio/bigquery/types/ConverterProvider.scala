@@ -167,7 +167,7 @@ private[types] object ConverterProvider {
     // Converter helpers
     // =======================================================================
 
-    def cast(tree: Tree, tpe: Type): Tree = {
+    def cast(fieldName: String, tree: Tree, tpe: Type): Tree = {
       val provider: OverrideTypeProvider =
         OverrideTypeProviderFinder.getProvider
       tpe match {
@@ -180,19 +180,22 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[String]              => tree
 
         case t if t =:= typeOf[BigDecimal] =>
-          q"_root_.com.spotify.scio.bigquery.Numeric($tree).toString"
+          q"_root_.com.spotify.scio.bigquery.Numeric.bytes($tree)"
         case t if t =:= typeOf[ByteString] =>
           q"_root_.java.nio.ByteBuffer.wrap($tree.toByteArray)"
         case t if t =:= typeOf[Array[Byte]] =>
           q"_root_.java.nio.ByteBuffer.wrap($tree)"
 
-        case t if t =:= typeOf[Instant] => q"$tree.getMillis * 1000"
+        case t if t =:= typeOf[Instant] =>
+          q"_root_.com.spotify.scio.bigquery.Timestamp.micros($tree)"
         case t if t =:= typeOf[LocalDate] =>
-          q"_root_.com.spotify.scio.bigquery.Date($tree)"
+          q"_root_.com.spotify.scio.bigquery.Date.days($tree)"
         case t if t =:= typeOf[LocalTime] =>
-          q"_root_.com.spotify.scio.bigquery.Time($tree)"
+          q"_root_.com.spotify.scio.bigquery.Time.micros($tree)"
         case t if t =:= typeOf[LocalDateTime] =>
-          q"_root_.com.spotify.scio.bigquery.DateTime($tree)"
+          // LocalDateTime is read as avro string
+          // on write we should use `local-timestamp-micros`
+          q"_root_.com.spotify.scio.bigquery.DateTime.format($tree)"
 
         // different than nested record match below, even though thore are case classes
         case t if t =:= typeOf[Geography] =>
@@ -200,25 +203,25 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Json] =>
           q"$tree.wkt"
         case t if t =:= typeOf[BigNumeric] =>
-          q"_root_.com.spotify.scio.bigquery.types.BigNumeric($tree.wkt).toString"
+          q"_root_.com.spotify.scio.bigquery.types.BigNumeric.bytes($tree)"
 
         // nested records
         case t if isCaseClass(c)(t) =>
-          val fn = TermName("r" + t.typeSymbol.name)
+          val fn = TermName("r" + fieldName)
           q"""{
                 val $fn = $tree
-                ${constructor(t, fn)}
+                ${constructor(fieldName, t, fn)}
               }
           """
         case _ => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
     }
 
-    def option(tree: Tree, tpe: Type): Tree =
-      q"if ($tree.isDefined) ${cast(q"$tree.get", tpe)} else null"
+    def option(fieldName: String, tree: Tree, tpe: Type): Tree =
+      q"if ($tree.isDefined) ${cast(fieldName, q"$tree.get", tpe)} else null"
 
-    def list(tree: Tree, tpe: Type): Tree =
-      q"asJava($tree.map(x => ${cast(q"x", tpe)}))"
+    def list(fieldName: String, tree: Tree, tpe: Type): Tree =
+      q"asJava($tree.map(x => ${cast(fieldName, q"x", tpe)}))"
 
     def field(symbol: Symbol, fn: TermName): (String, Tree) = {
       val name = symbol.name.toString
@@ -226,22 +229,38 @@ private[types] object ConverterProvider {
 
       val tree = q"$fn.${TermName(name)}"
       if (tpe.erasure =:= typeOf[Option[_]].erasure) {
-        (name, option(tree, tpe.typeArgs.head))
+        (name, option(name, tree, tpe.typeArgs.head))
       } else if (tpe.erasure =:= typeOf[List[_]].erasure) {
-        (name, list(tree, tpe.typeArgs.head))
+        (name, list(name, tree, tpe.typeArgs.head))
       } else {
-        (name, cast(tree, tpe))
+        (name, cast(name, tree, tpe))
       }
     }
 
-    def constructor(tpe: Type, fn: TermName): Tree = {
+    def constructor(fieldName: String, tpe: Type, fn: TermName): Tree = {
       val sets = tpe.erasure match {
         case t if isCaseClass(c)(t) => getFields(c)(t).map(s => field(s, fn))
         case _                      => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
 
-      val header =
-        q"val result = new _root_.org.apache.avro.generic.GenericRecordBuilder(${p(c, SType)}.avroSchemaOf[$tpe])"
+      val header = {
+        q"""
+            // Schema name must match fieldName, rather than nested case class name
+            val result = {
+              import _root_.scala.jdk.CollectionConverters._
+              val recordSchema = ${p(c, SType)}.avroSchemaOf[$tpe]
+              new _root_.org.apache.avro.generic.GenericRecordBuilder(
+                _root_.org.apache.avro.Schema.createRecord(
+                  $fieldName,
+                  recordSchema.getDoc,
+                  recordSchema.getNamespace,
+                  recordSchema.isError,
+                  recordSchema.getFields.asScala.map(f => new _root_.org.apache.avro.Schema.Field(f.name(), f.schema(), f.doc(), f.defaultVal())).asJava
+                )
+              )
+            }
+        """
+      }
       val body = sets.map { case (name, value) =>
         q"result.set($name, $value)"
       }
@@ -256,7 +275,7 @@ private[types] object ConverterProvider {
     val tn = TermName("r")
     q"""(r: $tpe) => {
           import _root_.scala.jdk.javaapi.CollectionConverters._
-          ${constructor(tpe, tn)}
+          ${constructor(tpe.typeSymbol.name.toString, tpe, tn)}
         }
     """
   }
@@ -374,8 +393,7 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Geography] =>
           q"$tree.wkt"
         case t if t =:= typeOf[Json] =>
-          // for TableRow/json, use parsed JSON to prevent escaping
-          q"_root_.com.spotify.scio.bigquery.types.Json.parse($tree)"
+          q"$tree.wkt"
         case t if t =:= typeOf[BigNumeric] =>
           // for TableRow/json, use string to avoid precision loss (like numeric)
           q"$tree.wkt.toString"
