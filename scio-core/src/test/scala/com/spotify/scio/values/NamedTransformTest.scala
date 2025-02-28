@@ -38,7 +38,7 @@ object SimpleJob {
   }
 }
 
-trait NamedTransformSpec extends PipelineSpec {
+private[values] trait NamedTransformSpec extends PipelineSpec {
   def assertTransformNameStartsWith(p: PCollectionWrapper[_], tfName: String): Assertion = {
     val visitor = new AssertTransformNameVisitor(p.internal, tfName)
     p.context.pipeline.traverseTopologically(visitor)

@@ -1,7 +1,7 @@
 # Managed IO
 
 Beam's Managed transforms move responsibility for the creation of transform classes from user code to the runner, allowing runner-specific optimizations like hot-swapping an instance of a transform with an updated one.
-Beam currently supports Iceberg and Kafka managed transforms.
+Beam currently supports Iceberg, Kafka, and BigQuery managed transforms.
 See also [Dataflow's supported transforms](https://cloud.google.com/dataflow/docs/guides/managed-io).
 
 A Scio @ref:[Coder](../internals/Coders.md) must be defined for the Beam @javadoc[Row](org.apache.beam.sdk.values.Row), derived from the Beam @javadoc[Schema](org.apache.beam.sdk.schemas.Schema) expected from the datasource.

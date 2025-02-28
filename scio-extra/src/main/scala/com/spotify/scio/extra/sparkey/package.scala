@@ -467,8 +467,8 @@ package object sparkey extends SparkeyReaderInstances with SparkeyCoders {
   }
 
   /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods. */
-  @deprecated(since = "0.14.0")
-  implicit class SparkeySCollection(private val self: SCollection[SparkeyUri]) extends AnyVal {
+  implicit private[scio] class SparkeySCollection(private val self: SCollection[SparkeyUri])
+      extends AnyVal {
 
     /**
      * Convert this SCollection to a SideInput of `SparkeyReader`, to be used with

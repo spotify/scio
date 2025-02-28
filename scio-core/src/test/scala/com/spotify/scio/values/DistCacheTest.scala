@@ -17,7 +17,6 @@
 
 package com.spotify.scio.values
 
-import com.spotify.annoy.{ANNIndex, AnnoyIndex}
 import com.spotify.scio._
 import com.spotify.scio.io._
 import com.spotify.scio.testing._
@@ -25,7 +24,6 @@ import com.spotify.sparkey.SparkeyReader.Entry
 import com.spotify.sparkey.{IndexHeader, LogHeader, Sparkey, SparkeyReader}
 import org.typelevel.scalaccompat.annotation.unused
 
-import scala.jdk.CollectionConverters._
 import scala.io.Source
 
 // =======================================================================
@@ -62,23 +60,6 @@ object NonSerializableDistCacheJob {
   }
 }
 
-object AnnoyDistCacheJob {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-    val dc = sc.distCache[AnnoyIndex](args("annoy"))(f => new ANNIndex(5, f.getAbsolutePath))
-    sc.textFile(args("input"))
-      .map { x =>
-        val id = x.toInt
-        val ann = dc()
-        ann.getNearest(ann.getItemVector(id), 5).asScala
-      }
-      .map(_.mkString(","))
-      .saveAsTextFile(args("output"))
-    sc.run()
-    ()
-  }
-}
-
 object SparkeyDistCacheJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
@@ -98,13 +79,6 @@ object SparkeyDistCacheJob {
 object DistCacheTest {
   def simpleTransform(in: SCollection[String], dc: DistCache[Seq[String]]): SCollection[String] =
     in.flatMap(x => dc().map(x + _))
-
-  def annoyTransform(in: SCollection[String], dc: DistCache[AnnoyIndex]): SCollection[Seq[Int]] =
-    in.map { x =>
-      val id = x.toInt
-      val ann = dc()
-      ann.getNearest(ann.getItemVector(id), 5).iterator().asScala.map(_.toInt).toSeq
-    }
 
   def sparkeyTransform(in: SCollection[String], dc: DistCache[SparkeyReader]): SCollection[String] =
     in.map(dc().getAsString)
@@ -164,52 +138,6 @@ class DistCacheTest extends PipelineSpec {
   }
 
   // =======================================================================
-  // Annoy
-  // =======================================================================
-
-  val annoy: AnnoyIndex = {
-    val v1 = Array.fill(5)(0.5f)
-    val v2 = Array.fill(5)(1.5f)
-    new MockAnnoy(
-      Map(0 -> v1, 1 -> v2, 2 -> v1, 3 -> v2),
-      Map(v1.toSeq -> List(10, 20), v2.toSeq -> List(15, 25))
-    )
-  }
-
-  "AnnoyIndex" should "work with JobTest" in {
-    val expected = Seq("10,20", "15,25")
-    JobTest[AnnoyDistCacheJob.type]
-      .args("--input=in.txt", "--output=out.txt", "--annoy=data.ann")
-      .input(TextIO("in.txt"), Seq("0", "1"))
-      .distCache(DistCacheIO("data.ann"), annoy)
-      .output(TextIO("out.txt")) { coll =>
-        coll should containInAnyOrder(expected)
-      }
-      .run()
-  }
-
-  it should "work with runWithContext" in {
-    val dc = MockDistCache(annoy)
-    val expected = Seq(Seq(10, 20), Seq(15, 25))
-    runWithContext { sc =>
-      val in = sc.parallelize(Seq("0", "1"))
-      annoyTransform(in, dc) should containInAnyOrder(expected)
-    }
-  }
-
-  it should "work with runWithData" in {
-    val dc = MockDistCache(annoy)
-    val expected = Seq(Seq(10, 20), Seq(15, 25))
-    runWithData(Seq("0", "1")) {
-      _.map { x =>
-        val id = x.toInt
-        val ann = dc()
-        ann.getNearest(ann.getItemVector(id), 5).iterator().asScala.map(_.toInt).toSeq
-      }
-    } should contain theSameElementsAs expected
-  }
-
-  // =======================================================================
   // Sparkey
   // =======================================================================
 
@@ -244,21 +172,6 @@ class DistCacheTest extends PipelineSpec {
 // =======================================================================
 // Mocks
 // =======================================================================
-
-// Mock Annoy with fake data and serializable
-class MockAnnoy(
-  private val itemVectors: Map[Int, Array[Float]],
-  private val nearest: Map[Seq[Float], List[Int]]
-) extends AnnoyIndex
-    with Serializable {
-  override def getNodeVector(nodeOffset: Long, v: Array[Float]): Unit = ???
-  override def getItemVector(itemIndex: Int, v: Array[Float]): Unit = ???
-  override def getItemVector(itemIndex: Int): Array[Float] =
-    itemVectors(itemIndex)
-  override def getNearest(queryVector: Array[Float], nResults: Int): java.util.List[Integer] =
-    nearest(queryVector.toSeq).asJava.asInstanceOf[java.util.List[Integer]]
-  override def close(): Unit = ()
-}
 
 // Mock SparkeyReader with fake data and serializable
 class MockSparkeyReader(private val data: Map[String, String])

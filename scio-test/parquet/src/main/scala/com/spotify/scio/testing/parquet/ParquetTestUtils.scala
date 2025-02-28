@@ -76,11 +76,11 @@ private[parquet] object ParquetTestUtils {
   }
 
   private class InMemoryInputFile(bytes: Array[Byte]) extends InputFile {
-    override def getLength: Long = bytes.length
+    override def getLength: Long = bytes.length.toLong
 
     override def newStream(): SeekableInputStream =
       new DelegatingSeekableInputStream(new ByteArrayInputStream(bytes)) {
-        override def getPos: Long = bytes.length - getStream.available()
+        override def getPos: Long = bytes.length.toLong - getStream.available()
 
         override def mark(readlimit: Int): Unit = {
           if (readlimit != 0) {
