@@ -54,15 +54,22 @@ object ScalacOptions {
   )
 
   val warnConfOption = warnOption(
-    // silence all scala library deprecation warnings in 2.13
-    // since we still support 2.12
-    "conf:cat=deprecation&origin=scala\\..*&since>2.12.99:s" +
+    List(
+      // silence all scala library deprecation warnings in 2.13
+      // since we still support 2.12
+      "cat=deprecation&origin=scala\\..*&since>2.12.99:s",
       // until we can set fatalWarningOptions, handle those as errors
-      ",cat=unused:e" +
+      "cat=unused:e",
       // silence unused-imports compat
-      ",cat=unused-imports&origin=scala\\.collection\\.compat\\..*:s" +
-      ",cat=unused-imports&origin=kantan\\.codecs\\.compat\\..*:s" +
-      ",cat=unused-imports&origin=com\\.spotify\\.scio\\.repl\\.compat\\..*:s",
+      "cat=unused-imports&origin=scala\\.collection\\.compat\\..*:s",
+      "cat=unused-imports&origin=kantan\\.codecs\\.compat\\..*:s",
+      "cat=unused-imports&origin=com\\.spotify\\.scio\\.repl\\.compat\\..*:s",
+      // silence magnolify-api related deprecations
+      "cat=deprecation&origin=com\\.spotify\\.scio\\.avro\\.types\\.AvroType:s",
+      "cat=deprecation&origin=com\\.spotify\\.scio\\.avro\\.types\\.AvroType..*:s",
+      "cat=deprecation&origin=com\\.spotify\\.scio\\.bigquery\\.types\\.BigQueryType:s",
+      "cat=deprecation&origin=com\\.spotify\\.scio\\.bigquery\\.types\\.BigQueryType..*:s"
+    ).mkString("conf:", ",", ""),
     _.isBetween(V2_13_2, V3_0_0)
   )
 
@@ -71,14 +78,40 @@ object ScalacOptions {
   val warnValueDiscard = org.typelevel.scalacoptions.ScalacOptions.warnValueDiscard
   val privateWarnUnused = privateWarnOption("_,-nowarn,-privates", _.isBetween(V2_12_0, V2_13_0))
   val warnUnused = warnOption("unused", _.isBetween(V2_13_0, V3_0_0))
+  val lintPackageObjectClasses = org.typelevel.scalacoptions.ScalacOptions.lintPackageObjectClasses
+
+  def scalaVersionFromString(scalaVersion: String): ScalaVersion = {
+    val Seq(major, minor, patch) = VersionNumber(scalaVersion).numbers
+    ScalaVersion(major, minor, patch)
+  }
 
   def tokensForVersion(
     scalaVersion: String,
     proposedScalacOptions: Set[ScalacOption]
-  ): Seq[String] = {
-    val Seq(major, minor, patch) = VersionNumber(scalaVersion).numbers
+  ): Seq[String] =
     org.typelevel.scalacoptions.ScalacOptions
-      .tokensForVersion(ScalaVersion(major, minor, patch), proposedScalacOptions)
+      .tokensForVersion(scalaVersionFromString(scalaVersion), proposedScalacOptions)
+
+  private val LintPrefix: String = "-Xlint:"
+  def applyExclusions(
+    scalacOptions: Seq[String],
+    scalaVersion: String,
+    exclude: Set[ScalacOption]
+  ): Seq[String] = {
+    val (lintExclude, optExclude) = exclude.partition(_.option.startsWith(LintPrefix))
+
+    scalacOptions
+      .filterNot(ScalacOptions.tokensForVersion(scalaVersion, optExclude).contains)
+      .map {
+        case opt if opt.startsWith(LintPrefix) =>
+          val lintExclusions = lintExclude
+            .filter(_.isSupported(scalaVersionFromString(scalaVersion)))
+            // lint prefix is added on every lint option
+            .map(opt => "-" + opt.option.stripPrefix(LintPrefix))
+            .mkString(",", ",", "")
+          opt + lintExclusions
+        case opt => opt
+      }
   }
 
   def defaults(scalaVersion: String): Seq[String] = tokensForVersion(

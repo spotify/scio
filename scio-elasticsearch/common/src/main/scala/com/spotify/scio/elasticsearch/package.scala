@@ -47,7 +47,7 @@ package object elasticsearch extends CoderInstances {
   final case class ElasticsearchOptions(
     nodes: Seq[HttpHost],
     usernameAndPassword: Option[(String, String)] = None,
-    mapperFactory: () => JsonpMapper = defaultMapper
+    mapperFactory: () => JsonpMapper = defaultMapper _
   )
 
   implicit class ElasticsearchSCollection[T](@transient private val self: SCollection[T])

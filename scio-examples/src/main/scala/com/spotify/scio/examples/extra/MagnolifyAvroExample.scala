@@ -23,16 +23,9 @@ package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
 import com.spotify.scio.avro._
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.examples.common.ExampleData
-import com.spotify.scio.examples.extra.MagnolifyAvroExample.wordCountType
-import org.apache.avro.generic.GenericRecord
 
 object MagnolifyAvroExample {
-  // limit import scope to avoid polluting namespace
-  import magnolify.avro._
-
-  val wordCountType: AvroType[WordCount] = AvroType[WordCount]
   case class WordCount(word: String, count: Long)
 }
 
@@ -47,9 +40,6 @@ object MagnolifyAvroExample {
 // --output=gs://[BUCKET]/[PATH]/wordcount-avro"`
 object MagnolifyAvroWriteExample {
 
-  implicit val genericCoder: Coder[GenericRecord] =
-    avroGenericRecordCoder(wordCountType.schema)
-
   def main(cmdlineArgs: Array[String]): Unit = {
     import MagnolifyAvroExample._
 
@@ -57,8 +47,9 @@ object MagnolifyAvroWriteExample {
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue
-      .map(t => wordCountType(WordCount.tupled(t)))
-      .saveAsAvroFile(args("output"), schema = wordCountType.schema)
+      .map { case (word, count) => WordCount(word, count) }
+      // uses implicitly-derived magnolify.avro.AvroType[WordCount] to save to avro
+      .saveAsAvroFile(args("output"))
     sc.run()
     ()
   }
@@ -78,8 +69,8 @@ object MagnolifyAvroReadExample {
     import MagnolifyAvroExample._
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.avroFile(args("input"), wordCountType.schema)
-      .map(e => wordCountType(e))
+    // uses implicitly-derived magnolify.avro.AvroType[WordCount] to read from avro
+    sc.typedAvroFileMagnolify[WordCount](args("input"))
       .map(wc => wc.word + ": " + wc.count)
       .saveAsTextFile(args("output"))
     sc.run()

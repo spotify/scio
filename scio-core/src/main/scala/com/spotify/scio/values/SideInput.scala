@@ -49,10 +49,6 @@ trait SideInput[T] extends Serializable {
     cache
   }
 
-  /** Create a new [[SideInput]] by applying a function on the elements wrapped in this SideInput. */
-  @deprecated(since = "0.14.0")
-  def map[B](f: T => B): SideInput[B] = new DelegatingSideInput[T, B](this, f)
-
   private[scio] val view: PCollectionView[_]
 }
 
@@ -124,18 +120,6 @@ private[values] class MultiMapSideInput[K, V](val view: PCollectionView[JMap[K, 
     extends SideInput[Map[K, Iterable[V]]] {
   override def get[I, O](context: DoFn[I, O]#ProcessContext): Map[K, Iterable[V]] =
     JMapWrapper.ofMultiMap(context.sideInput(view))
-}
-
-@deprecated(since = "0.14.0")
-private[values] class DelegatingSideInput[A, B](val si: SideInput[A], val mapper: A => B)
-    extends SideInput[B] {
-
-  // Only update the cached value (and re-run the mapper) if the underlying SI does the same.
-  override protected[values] def updateCacheOnGlobalWindow: Boolean = si.updateCacheOnGlobalWindow
-
-  override def get[I, O](context: DoFn[I, O]#ProcessContext): B = mapper(si.get(context))
-
-  private[scio] val view: PCollectionView[_] = si.view
 }
 
 /** Encapsulate context of one or more [[SideInput]]s in an [[SCollectionWithSideInput]]. */

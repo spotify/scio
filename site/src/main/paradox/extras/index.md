@@ -5,7 +5,6 @@
 @@@ index
 
 * @ref:[Algebird](Algebird.md)
-* @ref:[Annoy](Annoy.md)
 * @ref:[AsyncDoFn](AsyncDoFn.md)
 * @ref:[BigQuery Avro Converters](BigQueryAvro.md)
 * @ref:[DistCache](DistCache.md)
