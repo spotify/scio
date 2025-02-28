@@ -87,8 +87,8 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3)))
       val p2 = sc
         .parallelize(Seq(("a", "11"), ("b", "12"), ("b", "13")))
+        .map { case (k, vs) => k -> vs.toInt }
         .asMultiMapSideInput
-        .map(_.map { case (k, vs) => k -> vs.map(_.toInt) })
 
       val p = p1.hashJoin(p2)
       p should

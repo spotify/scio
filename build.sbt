@@ -75,8 +75,6 @@ val jsr305Version = "3.0.2"
 val perfmarkVersion = "0.27.0"
 
 val algebirdVersion = "0.13.10"
-val annoy4sVersion = "0.10.0"
-val annoyVersion = "0.2.6"
 val breezeVersion = "2.1.0"
 val caffeineVersion = "3.2.0"
 val cassandraDriverVersion = "3.11.5"
@@ -369,21 +367,20 @@ val commonSettings = bomSettings ++ Def.settings(
   ),
   scalacOptions ++= ScalacOptions.defaults(scalaVersion.value),
   scalacOptions := {
-    val exclude = ScalacOptions
-      .tokensForVersion(
-        scalaVersion.value,
-        Set(
-          // too many false positives
-          ScalacOptions.privateWarnDeadCode,
-          ScalacOptions.warnDeadCode,
-          // too many warnings
-          ScalacOptions.warnValueDiscard,
-          // not ready for scala 3 yet
-          ScalacOptions.source3
-        )
+    ScalacOptions.applyExclusions(
+      scalacOptions.value,
+      scalaVersion.value,
+      Set(
+        // too many false positives
+        ScalacOptions.privateWarnDeadCode,
+        ScalacOptions.warnDeadCode,
+        // too many warnings
+        ScalacOptions.warnValueDiscard,
+        ScalacOptions.lintPackageObjectClasses,
+        // not ready for scala 3 yet
+        ScalacOptions.source3
       )
-      .toSet
-    scalacOptions.value.filterNot(exclude.contains)
+    )
   },
   javacOptions := {
     val exclude = Set(
@@ -690,7 +687,6 @@ lazy val `scio-core` = project
       "com.lihaoyi" %% "fansi" % fansiVersion % Test,
       "com.lihaoyi" %% "pprint" % pprintVersion % Test,
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion % Test,
-      "com.spotify" % "annoy" % annoyVersion % Test,
       "com.spotify" %% "magnolify-guava" % magnolifyVersion % Test,
       "com.twitter" %% "chill" % chillVersion % Test,
       "commons-io" % "commons-io" % commonsIoVersion % Test,
@@ -1036,7 +1032,6 @@ lazy val `scio-extra` = project
       "com.nrinaudo" %% "kantan.codecs" % kantanCodecsVersion,
       "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion,
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
-      "com.spotify" % "annoy" % annoyVersion,
       "com.spotify" % "voyager" % voyagerVersion,
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion,
       "com.twitter" %% "algebird-core" % algebirdVersion,
@@ -1044,8 +1039,6 @@ lazy val `scio-extra` = project
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
-      "net.java.dev.jna" % "jna" % jnaVersion, // used by annoy4s
-      "net.pishen" %% "annoy4s" % annoy4sVersion,
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sketching" % beamVersion,

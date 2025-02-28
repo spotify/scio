@@ -48,8 +48,8 @@ final class AvroCoderTest extends AnyFlatSpec with Matchers {
     @tailrec
     def rootCause(e: Throwable): Throwable =
       Option(e.getCause) match {
-        case Some(cause) => rootCause(cause)
-        case None        => e
+        case Some(c) => rootCause(c)
+        case None    => e
       }
 
     val caught = intercept[RuntimeException] {

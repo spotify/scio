@@ -197,9 +197,9 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   def typedProtobufFile[T: Coder, U <: Message: ClassTag](
     path: String,
-    suffix: String = ProtobufObjectFileIO.ReadParam.DefaultSuffix
+    suffix: String = ProtobufTypedObjectFileIO.ReadParam.DefaultSuffix
   )(implicit pt: ProtobufType[T, U]): SCollection[T] =
-    self.read(ProtobufTypedObjectFileIO[T, U](path))(ProtobufObjectFileIO.ReadParam(suffix))
+    self.read(ProtobufTypedObjectFileIO[T, U](path))(ProtobufTypedObjectFileIO.ReadParam(suffix))
 }
 
 /** Enhanced with Avro methods. */
