@@ -171,4 +171,7 @@ final case class ClosedTap[T] private (
    */
   def get(result: ScioResult): Tap[T] = result.tap(this)
   def output[U](sideOutput: SideOutput[U]): SCollection[U] = outputs.get(sideOutput)
+
+  private[scio] def map[U: Coder](fn: T => U): ClosedTap[U] =
+    new ClosedTap[U](underlying.map(fn), outputs)
 }

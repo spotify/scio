@@ -42,14 +42,17 @@ object BigQueryUtil {
   private[bigquery] def isStorageApiWrite(method: Method): Boolean =
     method == Method.STORAGE_WRITE_API || method == Method.STORAGE_API_AT_LEAST_ONCE
 
-  private[bigquery] def containsTimeType(schema: TableSchema): Boolean =
-    containsTimeType(schema.getFields.asScala)
+  private[bigquery] def containsType(schema: TableSchema, typeName: String): Boolean =
+    containsType(schema.getFields.asScala, typeName)
 
-  private[bigquery] def containsTimeType(fields: Iterable[TableFieldSchema]): Boolean = {
+  private[bigquery] def containsType(
+    fields: Iterable[TableFieldSchema],
+    typeName: String
+  ): Boolean = {
     fields.exists(field =>
       field.getType match {
-        case "TIME"              => true
-        case "RECORD" | "STRUCT" => containsTimeType(field.getFields.asScala)
+        case t if t == typeName  => true
+        case "RECORD" | "STRUCT" => containsType(field.getFields.asScala, typeName)
         case _                   => false
       }
     )

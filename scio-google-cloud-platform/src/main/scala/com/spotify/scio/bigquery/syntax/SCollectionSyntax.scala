@@ -37,6 +37,7 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{
 }
 import org.apache.beam.sdk.io.gcp.bigquery.InsertRetryPolicy
 import org.joda.time.Duration
+import org.slf4j.LoggerFactory
 
 import scala.reflect.runtime.universe._
 
@@ -201,7 +202,8 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
       configOverride
     )
     if (
-      BigQueryUtil.isStorageApiWrite(method) && Option(schema).exists(BigQueryUtil.containsTimeType)
+      BigQueryUtil
+        .isStorageApiWrite(method) && Option(schema).exists(BigQueryUtil.containsType(_, "TIME"))
     ) {
       // Todo remove once https://github.com/apache/beam/issues/34038 is fixed
       throw new IllegalArgumentException(
@@ -294,10 +296,11 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
       extendedErrorInfo,
       configOverride
     )
+    val bqt = BigQueryType[T]
 
     if (
       BigQueryUtil
-        .isStorageApiWrite(method) && BigQueryUtil.containsTimeType(BigQueryType[T].schema)
+        .isStorageApiWrite(method) && BigQueryUtil.containsType(bqt.schema, "TIME")
     ) {
       // Todo remove once https://github.com/apache/beam/issues/34038 is fixed
       throw new IllegalArgumentException(
@@ -305,7 +308,45 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
       )
     }
 
-    self.write(BigQueryTyped.Table[T](table))(param)
+    // Beam's GenericRecord translator writes DATETIME fields as Strings, which is compatible for Storage API writes,
+    // but not FILE_LOADS writes. Fall back by switching to TableRow representation
+    if (
+      BigQueryUtil.containsType(bqt.schema, "DATETIME") &&
+        !BigQueryUtil.containsType(
+          bqt.schema,
+          "JSON"
+        ) && // TableRow representation doesn't properly support JSON
+        !BigQueryUtil.isStorageApiWrite(method) &&
+    ) {
+      LoggerFactory
+        .getLogger(this.getClass)
+        .warn(
+          "DATETIME types are not supported for typed FILE_LOADS writes. Defaulting to STORAGE_API write method."
+        )
+      val tap = self
+        .map(bqt.toTableRow)
+        .write(BigQueryTypedTable(table, Format.TableRow)(coders.tableRowCoder))(
+          TypedTableWriteParam(
+            method,
+            bqt.schema,
+            writeDisposition,
+            createDisposition,
+            bqt.tableDescription.orNull,
+            timePartitioning,
+            clustering,
+            triggeringFrequency,
+            sharding,
+            failedInsertRetryPolicy,
+            successfulInsertsPropagation,
+            extendedErrorInfo,
+            configOverride.asInstanceOf[TableWriteParam.ConfigOverride[TableRow]]
+          )
+        )
+
+      tap.map(bqt.fromTableRow)
+    } else {
+      self.write(BigQueryTyped.Table[T](table))(param)
+    }
   }
 }
 
