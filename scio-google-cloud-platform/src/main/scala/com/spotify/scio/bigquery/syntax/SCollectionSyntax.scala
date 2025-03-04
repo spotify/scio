@@ -312,16 +312,17 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
     // but not FILE_LOADS writes. Fall back by switching to TableRow representation
     if (
       BigQueryUtil.containsType(bqt.schema, "DATETIME") &&
-        !BigQueryUtil.containsType(
-          bqt.schema,
-          "JSON"
-        ) && // TableRow representation doesn't properly support JSON
-        !BigQueryUtil.isStorageApiWrite(method) &&
+      !BigQueryUtil.containsType(
+        bqt.schema,
+        "JSON" // TableRow representation doesn't properly support JSON
+      ) &&
+      !BigQueryUtil.isStorageApiWrite(method)
     ) {
       LoggerFactory
         .getLogger(this.getClass)
         .warn(
-          "DATETIME types are not supported for typed FILE_LOADS writes. Defaulting to STORAGE_API write method."
+          "DATETIME types are not supported for typed FILE_LOADS writes using BigQueryIO's GenericRecord interface." +
+            " Falling back to TableRow interface."
         )
       val tap = self
         .map(bqt.toTableRow)
