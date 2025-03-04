@@ -875,7 +875,7 @@ lazy val `scio-core` = project
       "commons-io" % "commons-io" % commonsIoVersion % Test,
       "junit" % "junit" % junitVersion % Test,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Test,
-      "org.codehaus.jackson" % "jackson-mapper-asl" % "1.9.13" % Test,
+      "org.codehaus.jackson" % "jackson-mapper-asl" % "1.9.14-atlassian-6" % Test,
       "org.hamcrest" % "hamcrest" % hamcrestVersion % Test,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test,
       "org.scalactic" %% "scalactic" % scalatestVersion % Test,
