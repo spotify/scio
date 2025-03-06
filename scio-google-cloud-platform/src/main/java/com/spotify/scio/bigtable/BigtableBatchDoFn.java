@@ -17,13 +17,14 @@
 
 package com.spotify.scio.bigtable;
 
-import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.grpc.BigtableSession;
+import com.google.cloud.bigtable.data.v2.BigtableDataClient;
+import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn;
 import com.spotify.scio.transforms.GuavaAsyncBatchLookupDoFn;
 import java.io.IOException;
 import java.util.List;
+import java.util.function.Supplier;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.commons.lang3.tuple.Pair;
@@ -38,44 +39,45 @@ import org.apache.commons.lang3.tuple.Pair;
  * @param <Result> Bigtable lookup value type.
  */
 public abstract class BigtableBatchDoFn<Input, BatchRequest, BatchResponse, Result>
-    extends GuavaAsyncBatchLookupDoFn<Input, BatchRequest, BatchResponse, Result, BigtableSession> {
+    extends GuavaAsyncBatchLookupDoFn<
+        Input, BatchRequest, BatchResponse, Result, BigtableDataClient> {
 
-  private final BigtableOptions options;
+  private final Supplier<BigtableDataSettings> settingsSupplier;
 
   /** Perform asynchronous Bigtable lookup. */
   public abstract ListenableFuture<BatchResponse> asyncLookup(
-      BigtableSession session, BatchRequest batchRequest);
+      BigtableDataClient client, BatchRequest batchRequest);
 
   /**
    * Create a {@link BigtableBatchDoFn} instance.
    *
-   * @param options Bigtable options.
+   * @param settingsSupplier Bigtable data settings supplier.
    */
   public BigtableBatchDoFn(
-      BigtableOptions options,
+      Supplier<BigtableDataSettings> settingsSupplier,
       int batchSize,
       SerializableFunction<List<Input>, BatchRequest> batchRequestFn,
       SerializableFunction<BatchResponse, List<Pair<String, Result>>> batchResponseFn,
       SerializableFunction<Input, String> idExtractorFn) {
-    this(options, batchSize, batchRequestFn, batchResponseFn, idExtractorFn, 1000);
+    this(settingsSupplier, batchSize, batchRequestFn, batchResponseFn, idExtractorFn, 1000);
   }
 
   /**
    * Create a {@link BigtableBatchDoFn} instance.
    *
-   * @param options Bigtable options.
+   * @param settingsSupplier Bigtable data settings supplier.
    * @param maxPendingRequests maximum number of pending requests on every cloned DoFn. This
    *     prevents runner from timing out and retrying bundles.
    */
   public BigtableBatchDoFn(
-      BigtableOptions options,
+      Supplier<BigtableDataSettings> settingsSupplier,
       int batchSize,
       SerializableFunction<List<Input>, BatchRequest> batchRequestFn,
       SerializableFunction<BatchResponse, List<Pair<String, Result>>> batchResponseFn,
       SerializableFunction<Input, String> idExtractorFn,
       int maxPendingRequests) {
     this(
-        options,
+        settingsSupplier,
         batchSize,
         batchRequestFn,
         batchResponseFn,
@@ -87,13 +89,13 @@ public abstract class BigtableBatchDoFn<Input, BatchRequest, BatchResponse, Resu
   /**
    * Create a {@link BigtableBatchDoFn} instance.
    *
-   * @param options Bigtable options.
+   * @param settingsSupplier Bigtable data settings supplier.
    * @param maxPendingRequests maximum number of pending requests on every cloned DoFn. This
    *     prevents runner from timing out and retrying bundles.
    * @param cacheSupplier supplier for lookup cache.
    */
   public BigtableBatchDoFn(
-      BigtableOptions options,
+      Supplier<BigtableDataSettings> settingsSupplier,
       int batchSize,
       SerializableFunction<List<Input>, BatchRequest> batchRequestFn,
       SerializableFunction<BatchResponse, List<Pair<String, Result>>> batchResponseFn,
@@ -107,7 +109,7 @@ public abstract class BigtableBatchDoFn<Input, BatchRequest, BatchResponse, Resu
         idExtractorFn,
         maxPendingRequests,
         cacheSupplier);
-    this.options = options;
+    this.settingsSupplier = settingsSupplier;
   }
 
   @Override
@@ -116,9 +118,9 @@ public abstract class BigtableBatchDoFn<Input, BatchRequest, BatchResponse, Resu
     return ResourceType.PER_INSTANCE;
   }
 
-  protected BigtableSession newClient() {
+  protected BigtableDataClient newClient() {
     try {
-      return new BigtableSession(options);
+      return BigtableDataClient.create(settingsSupplier.get());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
