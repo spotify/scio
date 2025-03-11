@@ -35,7 +35,7 @@ Using `JobTest`, you can test the entire pipeline. Specify the type of the class
 
 The `input` function injects your input test data. Note that the `TestIO[T]` should match the input source used in the pipeline e.g. TextIO for sc.textFile, AvroIO for sc.avro. The TextIO id (“in.txt”) should match the one specified in the args.
 
-The output function evaluates the output of the pipeline using the provided assertion from the `SCollectionMatchers`. More info on `SCollectionMatchers` can be found @scaladoc[here](com.spotify.scio.testing.SCollectionMatchers$). In this example, we are asserting that the output of the pipeline should contain an `SCollection` with elements that in the expected variable in any order.
+The output function evaluates the output of the pipeline using the provided assertion from the `SCollectionMatchers`. More info on `SCollectionMatchers` can be found @scaladoc[here](com.spotify.scio.testing.SCollectionMatchers). In this example, we are asserting that the output of the pipeline should contain an `SCollection` with elements that in the expected variable in any order.
 Also, note that the `TestIO[T]` should match the output used in the pipeline e.g. TextIO for sc.saveAsTextFile
 
 The run function will run the pipeline.
