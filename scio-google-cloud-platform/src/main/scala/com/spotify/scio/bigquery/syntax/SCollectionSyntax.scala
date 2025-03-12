@@ -21,9 +21,8 @@ import com.google.api.services.bigquery.model.TableSchema
 import com.spotify.scio.bigquery.BigQueryTyped.Table.{WriteParam => TableWriteParam}
 import com.spotify.scio.bigquery.BigQueryTypedTable.{Format, WriteParam => TypedTableWriteParam}
 import com.spotify.scio.bigquery.TableRowJsonIO.{WriteParam => TableRowJsonWriteParam}
-import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
-import com.spotify.scio.bigquery.coders
 import com.spotify.scio.bigquery._
+import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io._
 import com.spotify.scio.util.FilenamePolicySupplier
@@ -35,7 +34,7 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{
   Method,
   WriteDisposition
 }
-import org.apache.beam.sdk.io.gcp.bigquery.{InsertRetryPolicy, SchemaAndRecord}
+import org.apache.beam.sdk.io.gcp.bigquery.InsertRetryPolicy
 import org.joda.time.Duration
 
 import scala.reflect.runtime.universe._
@@ -307,50 +306,21 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
       )
     }
 
-    format match {
-      case Format.TableRow =>
-        self
-          .write(
-            BigQueryTypedTable[T](
-              (sr: SchemaAndRecord) => bqt.fromAvro(sr.getRecord),
-              bqt.toTableRow,
-              bqt.fromTableRow,
-              table
-            )
-          )(
-            TypedTableWriteParam(
-              method,
-              bqt.schema,
-              writeDisposition,
-              createDisposition,
-              bqt.tableDescription.orNull,
-              timePartitioning,
-              clustering,
-              triggeringFrequency,
-              sharding,
-              failedInsertRetryPolicy,
-              successfulInsertsPropagation,
-              extendedErrorInfo,
-              configOverride
-            )
-          )
-      case _: Format.AvroFormat =>
-        self.write(BigQueryTyped.Table[T](table))(
-          TableWriteParam(
-            method,
-            writeDisposition,
-            createDisposition,
-            timePartitioning,
-            clustering,
-            triggeringFrequency,
-            sharding,
-            failedInsertRetryPolicy,
-            successfulInsertsPropagation,
-            extendedErrorInfo,
-            configOverride
-          )
-        )
-    }
+    self.write(BigQueryTyped.Table[T](table, format))(
+      TableWriteParam(
+        method,
+        writeDisposition,
+        createDisposition,
+        timePartitioning,
+        clustering,
+        triggeringFrequency,
+        sharding,
+        failedInsertRetryPolicy,
+        successfulInsertsPropagation,
+        extendedErrorInfo,
+        configOverride
+      )
+    )
   }
 }
 
