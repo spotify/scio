@@ -283,20 +283,6 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
     extendedErrorInfo: Boolean = TableWriteParam.DefaultExtendedErrorInfo,
     configOverride: TableWriteParam.ConfigOverride[T] = TableWriteParam.DefaultConfigOverride
   )(implicit tt: TypeTag[T], coder: Coder[T]): ClosedTap[T] = {
-    val param = TableWriteParam[T](
-      method,
-      writeDisposition,
-      createDisposition,
-      timePartitioning,
-      clustering,
-      triggeringFrequency,
-      sharding,
-      failedInsertRetryPolicy,
-      successfulInsertsPropagation,
-      extendedErrorInfo,
-      configOverride
-    )
-
     val bqt = BigQueryType[T]
 
     if (
@@ -345,7 +331,21 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
 
         tap.map(bqt.fromTableRow)
       case _: Format.AvroFormat =>
-        self.write(BigQueryTyped.Table[T](table))(param)
+        self.write(BigQueryTyped.Table[T](table))(
+          TableWriteParam[T](
+            method,
+            writeDisposition,
+            createDisposition,
+            timePartitioning,
+            clustering,
+            triggeringFrequency,
+            sharding,
+            failedInsertRetryPolicy,
+            successfulInsertsPropagation,
+            extendedErrorInfo,
+            configOverride
+          )
+        )
     }
   }
 }

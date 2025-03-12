@@ -22,6 +22,7 @@ import java.util.UUID
 import com.google.api.client.json.JsonObjectParser
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
+import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.Method
 
 import scala.jdk.CollectionConverters._
@@ -38,6 +39,9 @@ object BigQueryUtil {
   /* Generates job ID */
   def generateJobId(projectId: String): String =
     projectId + "-" + UUID.randomUUID().toString
+
+  private[bigquery] def isAvroFormat(format: Format[_]): Boolean =
+    format == Format.GenericRecord || format == Format.GenericRecordWithLogicalTypes
 
   private[bigquery] def isStorageApiWrite(method: Method): Boolean =
     method == Method.STORAGE_WRITE_API || method == Method.STORAGE_API_AT_LEAST_ONCE
