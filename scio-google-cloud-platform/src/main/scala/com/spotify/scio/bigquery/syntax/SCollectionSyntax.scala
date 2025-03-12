@@ -35,7 +35,7 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{
   Method,
   WriteDisposition
 }
-import org.apache.beam.sdk.io.gcp.bigquery.InsertRetryPolicy
+import org.apache.beam.sdk.io.gcp.bigquery.{InsertRetryPolicy, SchemaAndRecord}
 import org.joda.time.Duration
 
 import scala.reflect.runtime.universe._
@@ -309,9 +309,15 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
 
     format match {
       case Format.TableRow =>
-        val tap = self
-          .map(bqt.toTableRow)
-          .write(BigQueryTypedTable(table, Format.TableRow)(coders.tableRowCoder))(
+        self
+          .write(
+            BigQueryTypedTable[T](
+              (sr: SchemaAndRecord) => bqt.fromAvro(sr.getRecord),
+              bqt.toTableRow,
+              bqt.fromTableRow,
+              table
+            )
+          )(
             TypedTableWriteParam(
               method,
               bqt.schema,
@@ -325,14 +331,12 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
               failedInsertRetryPolicy,
               successfulInsertsPropagation,
               extendedErrorInfo,
-              configOverride.asInstanceOf[TableWriteParam.ConfigOverride[TableRow]]
+              configOverride
             )
           )
-
-        tap.map(bqt.fromTableRow)
       case _: Format.AvroFormat =>
         self.write(BigQueryTyped.Table[T](table))(
-          TableWriteParam[T](
+          TableWriteParam(
             method,
             writeDisposition,
             createDisposition,
