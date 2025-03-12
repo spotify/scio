@@ -58,30 +58,14 @@ object TypedBigQueryIT {
     time: LocalTime,
     datetime: LocalDateTime,
     geography: Geography,
-    json: Json,
     bigNumeric: BigNumeric,
     nestedRequired: Nested,
     nestedOptional: Option[Nested]
   )
 
   @BigQueryType.toTable
-  case class RecordNoJson(
-    bool: Boolean,
-    int: Int,
-    long: Long,
-    float: Float,
-    double: Double,
-    numeric: BigDecimal,
-    string: String,
-    byteString: ByteString,
-    timestamp: Instant,
-    date: LocalDate,
-    time: LocalTime,
-    datetime: LocalDateTime,
-    geography: Geography,
-    bigNumeric: BigNumeric,
-    nestedRequired: Nested,
-    nestedOptional: Option[Nested]
+  case class JsonRecord(
+    json: Json
   )
 
   @BigQueryType.toTable
@@ -97,7 +81,6 @@ object TypedBigQueryIT {
     timestamp: Instant,
     date: LocalDate,
     geography: Geography,
-    json: Json,
     bigNumeric: BigNumeric,
     nestedRequired: Nested,
     nestedOptional: Option[Nested]
@@ -119,7 +102,6 @@ object TypedBigQueryIT {
     date: LocalDate,
     time: LocalTime,
     geography: Geography,
-    json: Json,
     bigNumeric: BigNumeric
   )
 
@@ -214,38 +196,14 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
     implicit val grCoder: Coder[GenericRecord] = avroGenericRecordCoder(bqt.avroSchema)
 
     runWithRealContext(options) { sc =>
-      writeFormat match {
-        case Format.TableRow =>
-          sc
-            .parallelize(rows)
-            .map(bqt.toTableRow)
-            .map { row =>
-              if (BigQueryUtil.isStorageApiWrite(writeMethod) || !row.containsKey("json")) {
-                row
-              } else {
-                // TableRow BQ save API uses json
-                // TO disambiguate from literal json string,
-                // field MUST be converted to parsed JSON
-                val jsonLoadRow = new TableRow()
-                jsonLoadRow.putAll(row.asInstanceOf[java.util.Map[String, _]]) // cast for 2.12
-                jsonLoadRow.set("json", Json.parse(row.getJson("json")))
-              }
-            }
-            .saveAsBigQueryTable(
-              tableRef,
-              schema = bqt.schema,
-              createDisposition = CREATE_IF_NEEDED,
-              method = writeMethod
-            )
-        case Format.GenericRecordWithLogicalTypes | Format.GenericRecord =>
-          // GenericRecord is the default repr
-          sc.parallelize(rows)
-            .saveAsTypedBigQueryTable(
-              tableRef,
-              createDisposition = CREATE_IF_NEEDED,
-              method = writeMethod
-            )
-      }
+      sc
+        .parallelize(rows)
+        .saveAsTypedBigQueryTable(
+          tableRef,
+          format = writeFormat,
+          createDisposition = CREATE_IF_NEEDED,
+          method = writeMethod
+        )
     }.waitUntilFinish()
 
     runWithRealContext(options) { sc =>
@@ -270,25 +228,15 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
     testRoundtrip(Format.TableRow, WriteMethod.FILE_LOADS)(records)
   }
 
-  // Beam's bq-to-Avro conversion format works for StorageWrites API, but not FileLoads API;
-  // Scio attempts to provide a workaround for most schema types
-  it should "write case classes with a LocalDateTime field using GenericRecord representation and FileLoads API" in {
-    testRoundtrip(Format.GenericRecordWithLogicalTypes, WriteMethod.FILE_LOADS)(
-      sample(implicitly[Arbitrary[RecordNoJson]].arbitrary)
+  it should "fail to write case classes with a LocalDateTime field using GenericRecord representation and FileLoads API" in {
+    val error = intercept[PipelineExecutionException] {
+      testRoundtrip(Format.GenericRecordWithLogicalTypes, WriteMethod.FILE_LOADS)(records)
+    }
+
+    error.getMessage should include(
+      "Field datetime has incompatible types. Configured schema: datetime; Avro file: string."
     )
   }
-
-  // Workaround fails if record contains a JSON field; see: https://github.com/spotify/scio/pull/5623
-  it should "fail to write case classes with a LocalDateTime field using GenericRecord representation and FileLoads API " +
-    "if the record also contains a json fieled" in {
-      val error = intercept[PipelineExecutionException] {
-        testRoundtrip(Format.GenericRecordWithLogicalTypes, WriteMethod.FILE_LOADS)(records)
-      }
-
-      error.getMessage should include(
-        "Field datetime has incompatible types. Configured schema: datetime; Avro file: string."
-      )
-    }
 
   it should "write case classes using TableRow representation and Storage API" in {
     testRoundtrip(Format.TableRow, WriteMethod.STORAGE_WRITE_API)(records)
@@ -306,7 +254,7 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
   it should "fail when writing case classes with LocalTime fields using GenericRecord representation and Storage API" in {
     the[IllegalArgumentException] thrownBy {
       testRoundtrip(Format.GenericRecordWithLogicalTypes, WriteMethod.STORAGE_WRITE_API)(records)
-    } should have message "TIME schemas are not currently supported for Typed Storage Write API writes. Please use Write method FILE_LOADS instead, or map case classes using BigQueryType.toTableRow and use saveAsBigQueryTable directly."
+    } should have message "TIME schemas are not currently supported for Typed Storage Write API writes for Avro format. Please use Write method FILE_LOADS instead, or use TableRow Format."
   }
 
   it should "read rows in TableRow format and manually convert to case classes" in {
@@ -323,6 +271,36 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
       WriteMethod.STORAGE_WRITE_API,
       Some(Format.GenericRecordWithLogicalTypes)
     )(sample(implicitly[Arbitrary[FlatRecord]].arbitrary))
+  }
+
+  it should "fail on Json types for TableRow representation and FILE_LOADS write API" in {
+    the[IllegalArgumentException] thrownBy {
+      testRoundtrip(
+        Format.TableRow,
+        WriteMethod.FILE_LOADS
+      )(sample(implicitly[Arbitrary[JsonRecord]].arbitrary))
+    } should have message "JSON schemas are supported for typed BigQuery writes using the FILE_LOADS API and TableRow representation. Please either use the STORAGE_WRITE_API method or GenericRecord Format."
+  }
+
+  it should "support Json types for GenericRecord representation and FILE_LOADS write API" in {
+    testRoundtrip(
+      Format.GenericRecord,
+      WriteMethod.FILE_LOADS
+    )(sample(implicitly[Arbitrary[JsonRecord]].arbitrary))
+  }
+
+  it should "support Json types for TableRow representation and STORAGE_WRITE_API API" in {
+    testRoundtrip(
+      Format.TableRow,
+      WriteMethod.STORAGE_WRITE_API
+    )(sample(implicitly[Arbitrary[JsonRecord]].arbitrary))
+  }
+
+  it should "support Json types for GenericRecord representation and STORAGE_WRITE_API API" in {
+    testRoundtrip(
+      Format.GenericRecord,
+      WriteMethod.STORAGE_WRITE_API
+    )(sample(implicitly[Arbitrary[JsonRecord]].arbitrary))
   }
 
   it should "fail to read rows with nested record fields in GenericRecord format" in {

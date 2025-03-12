@@ -19,6 +19,7 @@ package com.spotify.scio.bigquery
 
 import com.google.api.services.bigquery.model.TableSchema
 import com.spotify.scio.ScioContext
+import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders._
@@ -193,6 +194,7 @@ private[bigquery] object Writes {
     type ConfigOverride[T] = beam.BigQueryIO.Write[T] => beam.BigQueryIO.Write[T]
 
     val DefaultMethod: WriteMethod = WriteMethod.DEFAULT
+    val DefaultFormat: Format[_] = Format.TableRow
     val DefaultSchema: TableSchema = null
     val DefaultWriteDisposition: WriteDisposition = null
     val DefaultCreateDisposition: CreateDisposition = null

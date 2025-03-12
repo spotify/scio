@@ -37,7 +37,6 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{
 }
 import org.apache.beam.sdk.io.gcp.bigquery.InsertRetryPolicy
 import org.joda.time.Duration
-import org.slf4j.LoggerFactory
 
 import scala.reflect.runtime.universe._
 
@@ -276,6 +275,7 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
     createDisposition: CreateDisposition = TableWriteParam.DefaultCreateDisposition,
     clustering: Clustering = TableWriteParam.DefaultClustering,
     method: Method = TableWriteParam.DefaultMethod,
+    format: Format[_] = TableWriteParam.DefaultFormat,
     triggeringFrequency: Duration = TableWriteParam.DefaultTriggeringFrequency,
     sharding: Sharding = TableWriteParam.DefaultSharding,
     failedInsertRetryPolicy: InsertRetryPolicy = TableWriteParam.DefaultFailedInsertRetryPolicy,
@@ -296,57 +296,56 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
       extendedErrorInfo,
       configOverride
     )
+
     val bqt = BigQueryType[T]
 
     if (
-      BigQueryUtil
-        .isStorageApiWrite(method) && BigQueryUtil.containsType(bqt.schema, "TIME")
+      BigQueryUtil.isAvroFormat(format) &&
+      BigQueryUtil.isStorageApiWrite(method) &&
+      BigQueryUtil.containsType(bqt.schema, "TIME")
     ) {
       // Todo remove once https://github.com/apache/beam/issues/34038 is fixed
       throw new IllegalArgumentException(
-        "TIME schemas are not currently supported for Typed Storage Write API writes. Please use Write method FILE_LOADS instead, or map case classes using BigQueryType.toTableRow and use saveAsBigQueryTable directly."
+        "TIME schemas are not currently supported for Typed Storage Write API writes for Avro format. Please use Write method FILE_LOADS instead, or use TableRow Format."
       )
     }
 
-    // Beam's GenericRecord translator writes DATETIME fields as Strings, which is compatible for Storage API writes,
-    // but not FILE_LOADS writes. Fall back by switching to TableRow representation
     if (
-      BigQueryUtil.containsType(bqt.schema, "DATETIME") &&
-      !BigQueryUtil.containsType(
+      format == Format.TableRow && method == Method.FILE_LOADS && BigQueryUtil.containsType(
         bqt.schema,
-        "JSON" // TableRow representation doesn't properly support JSON
-      ) &&
-      !BigQueryUtil.isStorageApiWrite(method)
+        "JSON"
+      )
     ) {
-      LoggerFactory
-        .getLogger(this.getClass)
-        .warn(
-          "DATETIME types are not supported for typed FILE_LOADS writes using BigQueryIO's GenericRecord interface." +
-            " Falling back to TableRow interface."
-        )
-      val tap = self
-        .map(bqt.toTableRow)
-        .write(BigQueryTypedTable(table, Format.TableRow)(coders.tableRowCoder))(
-          TypedTableWriteParam(
-            method,
-            bqt.schema,
-            writeDisposition,
-            createDisposition,
-            bqt.tableDescription.orNull,
-            timePartitioning,
-            clustering,
-            triggeringFrequency,
-            sharding,
-            failedInsertRetryPolicy,
-            successfulInsertsPropagation,
-            extendedErrorInfo,
-            configOverride.asInstanceOf[TableWriteParam.ConfigOverride[TableRow]]
-          )
-        )
+      throw new IllegalArgumentException(
+        "JSON schemas are supported for typed BigQuery writes using the FILE_LOADS API and TableRow representation. Please either use the STORAGE_WRITE_API method or GenericRecord Format."
+      )
+    }
 
-      tap.map(bqt.fromTableRow)
-    } else {
-      self.write(BigQueryTyped.Table[T](table))(param)
+    format match {
+      case Format.TableRow =>
+        val tap = self
+          .map(bqt.toTableRow)
+          .write(BigQueryTypedTable(table, Format.TableRow)(coders.tableRowCoder))(
+            TypedTableWriteParam(
+              method,
+              bqt.schema,
+              writeDisposition,
+              createDisposition,
+              bqt.tableDescription.orNull,
+              timePartitioning,
+              clustering,
+              triggeringFrequency,
+              sharding,
+              failedInsertRetryPolicy,
+              successfulInsertsPropagation,
+              extendedErrorInfo,
+              configOverride.asInstanceOf[TableWriteParam.ConfigOverride[TableRow]]
+            )
+          )
+
+        tap.map(bqt.fromTableRow)
+      case _: Format.AvroFormat =>
+        self.write(BigQueryTyped.Table[T](table))(param)
     }
   }
 }
