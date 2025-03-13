@@ -302,7 +302,7 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
       )
     ) {
       throw new IllegalArgumentException(
-        "JSON schemas are supported for typed BigQuery writes using the FILE_LOADS API and TableRow representation. Please either use the STORAGE_WRITE_API method or GenericRecord Format."
+        "JSON schemas are not supported for typed BigQuery writes using the FILE_LOADS API and TableRow representation. Please either use the STORAGE_WRITE_API method or GenericRecord Format."
       )
     }
 

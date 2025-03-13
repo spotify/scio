@@ -279,7 +279,7 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
         Format.TableRow,
         WriteMethod.FILE_LOADS
       )(sample(implicitly[Arbitrary[JsonRecord]].arbitrary))
-    } should have message "JSON schemas are supported for typed BigQuery writes using the FILE_LOADS API and TableRow representation. Please either use the STORAGE_WRITE_API method or GenericRecord Format."
+    } should have message "JSON schemas are not supported for typed BigQuery writes using the FILE_LOADS API and TableRow representation. Please either use the STORAGE_WRITE_API method or GenericRecord Format."
   }
 
   it should "support Json types for GenericRecord representation and FILE_LOADS write API" in {
