@@ -1862,6 +1862,7 @@ lazy val integration = project
       }
       testSkipped.value
     },
+    Test / javaOptions += "-Doverride.type.provider=com.spotify.scio.bigquery.validation.SampleOverrideTypeProvider",
     undeclaredCompileDependenciesTest := undeclaredCompileDependenciesTestSkipped.value,
     unusedCompileDependenciesTest := unusedCompileDependenciesTestSkipped.value,
     libraryDependencies ++= Seq(

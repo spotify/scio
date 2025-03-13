@@ -17,6 +17,7 @@
 
 package com.spotify.scio.bigquery
 
+import com.google.api.services.bigquery.model.TableFieldSchema
 import com.google.protobuf.ByteString
 import com.spotify.scio.avro._
 import com.spotify.scio.coders.Coder
@@ -25,6 +26,7 @@ import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.bigquery.types.{BigNumeric, Geography, Json}
+import com.spotify.scio.bigquery.validation._
 import com.spotify.scio.testing._
 import magnolify.scalacheck.auto._
 import org.apache.avro.UnresolvedUnionException
@@ -105,6 +107,9 @@ object TypedBigQueryIT {
     bigNumeric: BigNumeric
   )
 
+  @BigQueryType.toTable
+  case class RecordWithOverriddenType(country: Country)
+
   def arbBigDecimal(precision: Int, scale: Int): Arbitrary[BigDecimal] = Arbitrary {
     val max = BigInt(10).pow(precision) - 1
     Gen.choose(-max, max).map(BigDecimal(_, scale))
@@ -115,6 +120,9 @@ object TypedBigQueryIT {
   implicit val arbString: Arbitrary[String] = Arbitrary(Gen.alphaStr)
   implicit val arbByteString: Arbitrary[ByteString] = Arbitrary(
     Gen.alphaStr.map(ByteString.copyFromUtf8)
+  )
+  implicit val arbCountry: Arbitrary[Country] = Arbitrary(
+    Gen.listOfN(2, Gen.alphaChar).map(_.mkString).map(Country(_))
   )
   // Workaround for millis rounding error
   val epochGen: Gen[Long] = Gen.chooseNum[Long](0L, 1000000000000L).map(x => x / 1000 * 1000)
@@ -211,6 +219,7 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
         case Some(Format.TableRow) =>
           sc
             .bigQueryTable(tableRef, Format.TableRow)
+            .tap(r => println(s"Read record $r, ${r.get("country")}"))
             .map(bqt.fromTableRow)
         case Some(Format.GenericRecord) | Some(Format.GenericRecordWithLogicalTypes) =>
           sc
@@ -313,5 +322,26 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
         Some(Format.GenericRecordWithLogicalTypes)
       )(records)
     }
+  }
+
+  it should "support types overridden with OverrideTypeProvider using TableRow representation and FileLoads API" in {
+    // First assert that conversion is as expected
+    val bqt = BigQueryType[RecordWithOverriddenType]
+    val country = RecordWithOverriddenType(Country("SE"))
+
+    // passes
+    bqt.schema.getFields.get(0) shouldEqual new TableFieldSchema()
+      .setName("country")
+      .setMode("REQUIRED")
+      .setType("STRING")
+
+    // fails, returns {country=com.spotify.scio.bigquery.validation.Country@a52}} as if Country is getting .toString'ed
+    bqt.toTableRow(country) shouldEqual Seq(TableRow("country" -> "SE"))
+
+    testRoundtrip(
+      Format.TableRow,
+      WriteMethod.FILE_LOADS,
+      Some(Format.TableRow)
+    )(sample(implicitly[Arbitrary[RecordWithOverriddenType]].arbitrary))
   }
 }
