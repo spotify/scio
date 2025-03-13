@@ -25,6 +25,7 @@ import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.bigquery.types.{BigNumeric, Geography, Json}
+import com.spotify.scio.bigquery.validation._
 import com.spotify.scio.testing._
 import magnolify.scalacheck.auto._
 import org.apache.avro.UnresolvedUnionException
@@ -37,6 +38,7 @@ import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.scalacheck._
 import org.scalatest.BeforeAndAfterAll
 
+import scala.jdk.CollectionConverters._
 import scala.util.Random
 import scala.reflect.runtime.universe._
 
@@ -60,7 +62,8 @@ object TypedBigQueryIT {
     geography: Geography,
     bigNumeric: BigNumeric,
     nestedRequired: Nested,
-    nestedOptional: Option[Nested]
+    nestedOptional: Option[Nested],
+    @description("COUNTRY") country: Country
   )
 
   @BigQueryType.toTable
@@ -83,7 +86,8 @@ object TypedBigQueryIT {
     geography: Geography,
     bigNumeric: BigNumeric,
     nestedRequired: Nested,
-    nestedOptional: Option[Nested]
+    nestedOptional: Option[Nested],
+    @description("COUNTRY") country: Country
   )
 
   // A record with no nested record types
@@ -102,7 +106,13 @@ object TypedBigQueryIT {
     date: LocalDate,
     time: LocalTime,
     geography: Geography,
-    bigNumeric: BigNumeric
+    bigNumeric: BigNumeric,
+    @description("COUNTRY") country: Country
+  )
+
+  @BigQueryType.toTable
+  case class RecordWithNonStringOverriddenType(
+    @description("NONNEGATIVEINT") nonNegativeInt: NonNegativeInt
   )
 
   def arbBigDecimal(precision: Int, scale: Int): Arbitrary[BigDecimal] = Arbitrary {
@@ -115,6 +125,12 @@ object TypedBigQueryIT {
   implicit val arbString: Arbitrary[String] = Arbitrary(Gen.alphaStr)
   implicit val arbByteString: Arbitrary[ByteString] = Arbitrary(
     Gen.alphaStr.map(ByteString.copyFromUtf8)
+  )
+  implicit val arbCountry: Arbitrary[Country] = Arbitrary(
+    Gen.listOfN(2, Gen.alphaChar).map(_.mkString).map(Country(_))
+  )
+  implicit val arbNonNegativeInt: Arbitrary[NonNegativeInt] = Arbitrary(
+    Gen.posNum[Int].map(new NonNegativeInt(_))
   )
   // Workaround for millis rounding error
   val epochGen: Gen[Long] = Gen.chooseNum[Long](0L, 1000000000000L).map(x => x / 1000 * 1000)
@@ -205,6 +221,20 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
           method = writeMethod
         )
     }.waitUntilFinish()
+
+    // Assert that table schema matches type
+    val writtenSchema = bq.tables.table(tableRef.ref).getSchema
+    writtenSchema shouldEqual bqt.schema
+
+    // Assert that typed BQ successfully converted the overridden case class type to its primitive representation,
+    // not wrapped in a case class
+    writtenSchema.getFields.asScala.filter(_.getDescription == "COUNTRY").foreach { fieldSchema =>
+      fieldSchema.getType shouldEqual "STRING"
+    }
+    writtenSchema.getFields.asScala.filter(_.getDescription == "NONNEGATIVEINT").foreach {
+      fieldSchema =>
+        fieldSchema.getType shouldEqual "INTEGER"
+    }
 
     runWithRealContext(options) { sc =>
       val data = readFormat match {
@@ -313,5 +343,28 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
         Some(Format.GenericRecordWithLogicalTypes)
       )(records)
     }
+  }
+
+  it should "support records that use OverrideTypeProvider for non-string fields using TableRow representation" in {
+    testRoundtrip(
+      Format.TableRow,
+      WriteMethod.FILE_LOADS,
+      Some(Format.TableRow)
+    )(sample(implicitly[Arbitrary[RecordWithNonStringOverriddenType]].arbitrary))
+  }
+
+  // See https://github.com/spotify/scio/issues/5644
+  it should "fail on records that use OverrideTypeProvider for non-string fields using GenericRecord representation" in {
+    val error = intercept[PipelineExecutionException] {
+      testRoundtrip(
+        Format.GenericRecord,
+        WriteMethod.FILE_LOADS,
+        Some(Format.TableRow)
+      )(sample(implicitly[Arbitrary[RecordWithNonStringOverriddenType]].arbitrary))
+    }
+
+    error.getMessage should include(
+      "org.apache.avro.file.DataFileWriter$AppendWriteException: java.lang.ClassCastException"
+    )
   }
 }
