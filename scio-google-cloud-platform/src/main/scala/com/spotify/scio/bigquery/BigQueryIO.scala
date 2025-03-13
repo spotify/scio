@@ -19,6 +19,7 @@ package com.spotify.scio.bigquery
 
 import com.google.api.services.bigquery.model.TableSchema
 import com.spotify.scio.ScioContext
+import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders._
@@ -193,6 +194,7 @@ private[bigquery] object Writes {
     type ConfigOverride[T] = beam.BigQueryIO.Write[T] => beam.BigQueryIO.Write[T]
 
     val DefaultMethod: WriteMethod = WriteMethod.DEFAULT
+    val DefaultFormat: Format[_] = Format.TableRow
     val DefaultSchema: TableSchema = null
     val DefaultWriteDisposition: WriteDisposition = null
     val DefaultCreateDisposition: CreateDisposition = null
@@ -735,36 +737,46 @@ object BigQueryTyped {
   }
 
   /** Get a typed SCollection for a BigQuery table. */
-  final case class Table[T <: HasAnnotation: TypeTag: Coder](table: STable)
-      extends BigQueryIO[T]
+  final case class Table[T <: HasAnnotation: TypeTag: Coder](
+    table: STable,
+    format: Format[_]
+  ) extends BigQueryIO[T]
       with WriteResultIO[T] {
     override type ReadP = Unit
     override type WriteP = Table.WriteParam[T]
 
-    private val underlying = {
-      val readFn = Functions.serializableFn[SchemaAndRecord, T] { x =>
-        BigQueryType[T].fromAvro(x.getRecord)
-      }
-      val writeFn = Functions.serializableFn[AvroWriteRequest[T], GenericRecord] { x =>
-        BigQueryType[T].toAvro(x.getElement)
-      }
-      val schemaFactory = Functions.serializableFn[TableSchema, org.apache.avro.Schema] { _ =>
-        BigQueryType[T].avroSchema
-      }
-      val parseFn = (r: GenericRecord, _: TableSchema) => BigQueryType[T].fromAvro(r)
+    private val underlying: BigQueryTypedTable[T] = format match {
+      case Format.TableRow =>
+        BigQueryTypedTable[T](
+          (sr: SchemaAndRecord) => BigQueryType[T].fromAvro(sr.getRecord),
+          BigQueryType[T].toTableRow,
+          BigQueryType[T].fromTableRow,
+          table
+        )
+      case _: Format.AvroFormat =>
+        val readFn = Functions.serializableFn[SchemaAndRecord, T] { x =>
+          BigQueryType[T].fromAvro(x.getRecord)
+        }
+        val writeFn = Functions.serializableFn[AvroWriteRequest[T], GenericRecord] { x =>
+          BigQueryType[T].toAvro(x.getElement)
+        }
+        val schemaFactory = Functions.serializableFn[TableSchema, org.apache.avro.Schema] { _ =>
+          BigQueryType[T].avroSchema
+        }
+        val parseFn = (r: GenericRecord, _: TableSchema) => BigQueryType[T].fromAvro(r)
 
-      BigQueryTypedTable[T](
-        beam.BigQueryIO
-          .read(readFn)
-          .useAvroLogicalTypes(),
-        beam.BigQueryIO
-          .write[T]()
-          .withAvroFormatFunction(writeFn)
-          .withAvroSchemaFactory(schemaFactory)
-          .useAvroLogicalTypes(),
-        table,
-        parseFn
-      )
+        BigQueryTypedTable[T](
+          beam.BigQueryIO
+            .read(readFn)
+            .useAvroLogicalTypes(),
+          beam.BigQueryIO
+            .write[T]()
+            .withAvroFormatFunction(writeFn)
+            .withAvroSchemaFactory(schemaFactory)
+            .useAvroLogicalTypes(),
+          table,
+          parseFn
+        )
     }
 
     override def testId: String = s"BigQueryIO(${table.spec})"
@@ -790,6 +802,9 @@ object BigQueryTyped {
   }
 
   object Table {
+    def apply[T <: HasAnnotation: TypeTag: Coder](table: STable): Table[T] =
+      Table[T](table, Format.TableRow)
+
     final case class WriteParam[T] private (
       method: WriteMethod,
       writeDisposition: WriteDisposition,
