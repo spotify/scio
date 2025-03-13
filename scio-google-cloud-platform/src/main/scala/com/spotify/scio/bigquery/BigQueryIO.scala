@@ -739,7 +739,7 @@ object BigQueryTyped {
   /** Get a typed SCollection for a BigQuery table. */
   final case class Table[T <: HasAnnotation: TypeTag: Coder](
     table: STable,
-    format: Format[_] = Format.TableRow
+    format: Format[_]
   ) extends BigQueryIO[T]
       with WriteResultIO[T] {
     override type ReadP = Unit
@@ -802,6 +802,9 @@ object BigQueryTyped {
   }
 
   object Table {
+    def apply[T <: HasAnnotation: TypeTag: Coder](table: STable): Table[T] =
+      Table[T](table, Format.TableRow)
+
     final case class WriteParam[T] private (
       method: WriteMethod,
       writeDisposition: WriteDisposition,

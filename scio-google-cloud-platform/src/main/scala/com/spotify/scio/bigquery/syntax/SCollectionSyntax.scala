@@ -274,13 +274,13 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
     createDisposition: CreateDisposition = TableWriteParam.DefaultCreateDisposition,
     clustering: Clustering = TableWriteParam.DefaultClustering,
     method: Method = TableWriteParam.DefaultMethod,
-    format: Format[_] = TableWriteParam.DefaultFormat,
     triggeringFrequency: Duration = TableWriteParam.DefaultTriggeringFrequency,
     sharding: Sharding = TableWriteParam.DefaultSharding,
     failedInsertRetryPolicy: InsertRetryPolicy = TableWriteParam.DefaultFailedInsertRetryPolicy,
     successfulInsertsPropagation: Boolean = TableWriteParam.DefaultSuccessfulInsertsPropagation,
     extendedErrorInfo: Boolean = TableWriteParam.DefaultExtendedErrorInfo,
-    configOverride: TableWriteParam.ConfigOverride[T] = TableWriteParam.DefaultConfigOverride
+    configOverride: TableWriteParam.ConfigOverride[T] = TableWriteParam.DefaultConfigOverride,
+    format: Format[_] = TableWriteParam.DefaultFormat
   )(implicit tt: TypeTag[T], coder: Coder[T]): ClosedTap[T] = {
     val bqt = BigQueryType[T]
 

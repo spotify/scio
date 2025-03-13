@@ -495,7 +495,15 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ),
   ProblemFilters.exclude[IncompatibleResultTypeProblem](
     "com.spotify.scio.bigquery.types.package#Json.parse"
-  )
+  ),
+  // Adding BigQuery Format API in 0.14 patch
+  ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.bigquery.BigQueryTyped#Table.copy"),
+  ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.bigquery.BigQueryTyped#Table.this"),
+  ProblemFilters.exclude[ReversedMissingMethodProblem]("com.spotify.scio.bigquery.Writes#WriteParamDefaults.com$spotify$scio$bigquery$Writes$WriteParamDefaults$_setter_$DefaultFormat_="),
+  ProblemFilters.exclude[ReversedMissingMethodProblem]("com.spotify.scio.bigquery.Writes#WriteParamDefaults.DefaultFormat"),
+  ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.bigquery.syntax.SCollectionTypedOps.saveAsTypedBigQueryTable$extension"),
+  ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.bigquery.syntax.SCollectionTypedOps.saveAsTypedBigQueryTable"),
+  ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.bigquery.syntax.SCollectionTypedOps.saveAsTypedBigQueryTable$extension")
 )
 
 // headers
