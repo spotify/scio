@@ -17,6 +17,10 @@
 
 package com.spotify.scio.transforms;
 
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutureCallback;
+import com.google.api.core.ApiFutures;
+import com.google.api.core.SettableApiFuture;
 import com.google.common.util.concurrent.*;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
@@ -160,6 +164,80 @@ public class FutureHandlers {
               onFailure.apply(t);
             }
           });
+    }
+  }
+
+  /**
+   * A {@link Base} implementation for Google API {@link ApiFuture}. Similar to Guava's
+   * ListenableFuture, but redeclared so that Guava could be shaded.
+   */
+  public interface GoogleApi<V> extends Base<ApiFuture<V>, V> {
+    /**
+     * Executor used for callbacks. Default is {@link ForkJoinPool#commonPool()}. Consider
+     * overriding this method if callbacks are blocking.
+     *
+     * @return Executor for callbacks.
+     */
+    default Executor getCallbackExecutor() {
+      return ForkJoinPool.commonPool();
+    }
+
+    @Override
+    default void waitForFutures(Iterable<ApiFuture<V>> futures)
+        throws InterruptedException, ExecutionException {
+      // use Future#successfulAsList instead of Futures#allAsList which only works if all
+      // futures succeed
+      ApiFutures.successfulAsList(futures).get();
+    }
+
+    @Override
+    default ApiFuture<V> addCallback(
+        ApiFuture<V> future, Function<V, Void> onSuccess, Function<Throwable, Void> onFailure) {
+      // Futures#transform doesn't allow onFailure callback while Futures#addCallback doesn't
+      // guarantee that callbacks are called before ListenableFuture#get() unblocks
+      SettableApiFuture<V> f = SettableApiFuture.create();
+      // if executor rejects the callback, we have to fail the future
+      Executor rejectPropagationExecutor =
+          command -> {
+            try {
+              getCallbackExecutor().execute(command);
+            } catch (RejectedExecutionException e) {
+              f.setException(e);
+            }
+          };
+      ApiFutures.addCallback(
+          future,
+          new ApiFutureCallback<V>() {
+            @Override
+            public void onSuccess(@Nullable V result) {
+              try {
+                onSuccess.apply(result);
+                f.set(result);
+              } catch (Throwable e) {
+                f.setException(e);
+              }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+              Throwable callbackException = null;
+              try {
+                onFailure.apply(t);
+              } catch (Throwable e) {
+                // do not fail executing thread if callback fails
+                // record exception and propagate as suppressed
+                callbackException = e;
+              } finally {
+                if (callbackException != null) {
+                  t.addSuppressed(callbackException);
+                }
+                f.setException(t);
+              }
+            }
+          },
+          rejectPropagationExecutor);
+
+      return f;
     }
   }
 }

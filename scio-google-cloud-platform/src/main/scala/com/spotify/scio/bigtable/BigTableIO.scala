@@ -18,54 +18,50 @@
 package com.spotify.scio.bigtable
 
 import com.google.bigtable.v2._
-import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.protobuf.ByteString
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
-import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TapT, TestIO}
-import com.spotify.scio.util.Functions
-import com.spotify.scio.values.SCollection
+import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TapT, TestIO, WriteResultIO}
+import com.spotify.scio.values.{SCollection, SideOutput, SideOutputCollections}
+import org.apache.beam.sdk.io.gcp.bigtable.{BigtableWriteResult, BigtableWriteResultCoder}
 import org.apache.beam.sdk.io.gcp.{bigtable => beam}
 import org.apache.beam.sdk.io.range.ByteKeyRange
-import org.apache.beam.sdk.values.KV
+import org.apache.beam.sdk.transforms.errorhandling.{BadRecord, ErrorHandler}
+import org.apache.beam.sdk.values.{KV, PCollectionTuple}
 import org.joda.time.Duration
-import org.typelevel.scalaccompat.annotation.nowarn
 
 import scala.jdk.CollectionConverters._
 import scala.util.chaining._
 
-sealed trait BigtableIO[T] extends ScioIO[T] {
+sealed abstract class BigtableIO[T](projectId: String, instanceId: String, tableId: String)
+    extends ScioIO[T] {
   final override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
+  override def testId: String = s"BigtableIO($projectId:$instanceId:$tableId)"
 }
 
 object BigtableIO {
   final def apply[T](projectId: String, instanceId: String, tableId: String): BigtableIO[T] =
-    new BigtableIO[T] with TestIO[T] {
-      override def testId: String =
-        s"BigtableIO($projectId\t$instanceId\t$tableId)"
-    }
+    new BigtableIO[T](projectId, instanceId, tableId) with TestIO[T]
 }
 
-final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
-    extends BigtableIO[Row] {
+final case class BigtableRead(projectId: String, instanceId: String, tableId: String)
+    extends BigtableIO[Row](projectId, instanceId, tableId) {
   override type ReadP = BigtableRead.ReadParam
   override type WriteP = Nothing
 
-  override def testId: String =
-    s"BigtableIO(${bigtableOptions.getProjectId}\t${bigtableOptions.getInstanceId}\t$tableId)"
-
   override protected def read(sc: ScioContext, params: ReadP): SCollection[Row] = {
     val coder = CoderMaterializer.beam(sc, Coder.protoMessageCoder[Row])
-    val opts = bigtableOptions // defeat closure
     val read = beam.BigtableIO
       .read()
-      .withProjectId(bigtableOptions.getProjectId)
-      .withInstanceId(bigtableOptions.getInstanceId)
+      .withProjectId(projectId)
+      .withInstanceId(instanceId)
       .withTableId(tableId)
-      .withBigtableOptionsConfigurator(Functions.serializableFn(_ => opts.toBuilder))
-      .withMaxBufferElementCount(params.maxBufferElementCount.map(Int.box).orNull)
-      .pipe(r => if (params.keyRanges.isEmpty) r else r.withKeyRanges(params.keyRanges.asJava))
-      .pipe(r => Option(params.rowFilter).fold(r)(r.withRowFilter)): @nowarn("cat=deprecation")
+      .withKeyRanges(params.keyRanges.asJava)
+      .pipe(r => Option(params.rowFilter).fold(r)(r.withRowFilter))
+      .pipe(r => params.maxBufferElementCount.fold(r)(r.withMaxBufferElementCount(_)))
+      .pipe(r => Option(params.appProfileId).fold(r)(r.withAppProfileId))
+      .pipe(r => Option(params.attemptTimeout).fold(r)(r.withAttemptTimeout))
+      .pipe(r => Option(params.operationTimeout).fold(r)(r.withOperationTimeout))
 
     sc.applyTransform(read).setCoder(coder)
   }
@@ -81,39 +77,32 @@ final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
 
 object BigtableRead {
   object ReadParam {
-    val DefaultKeyRanges: Seq[ByteKeyRange] = Seq.empty[ByteKeyRange]
+    val DefaultKeyRanges: Seq[ByteKeyRange] = Seq(ByteKeyRange.ALL_KEYS)
     val DefaultRowFilter: RowFilter = null
     val DefaultMaxBufferElementCount: Option[Int] = None
-
-    def apply(keyRange: ByteKeyRange) = new ReadParam(Seq(keyRange))
-
-    def apply(keyRange: ByteKeyRange, rowFilter: RowFilter): ReadParam =
-      new ReadParam(Seq(keyRange), rowFilter)
+    val DefaultAppProfileId: String = null
+    val DefaultAttemptTimeout: Duration = null
+    val DefaultOperationTimeout: Duration = null
   }
 
   final case class ReadParam private (
     keyRanges: Seq[ByteKeyRange] = ReadParam.DefaultKeyRanges,
     rowFilter: RowFilter = ReadParam.DefaultRowFilter,
-    maxBufferElementCount: Option[Int] = ReadParam.DefaultMaxBufferElementCount
+    maxBufferElementCount: Option[Int] = ReadParam.DefaultMaxBufferElementCount,
+    appProfileId: String = ReadParam.DefaultAppProfileId,
+    attemptTimeout: Duration = ReadParam.DefaultAttemptTimeout,
+    operationTimeout: Duration = ReadParam.DefaultOperationTimeout
   )
-
-  final def apply(projectId: String, instanceId: String, tableId: String): BigtableRead = {
-    val bigtableOptions = BigtableOptions
-      .builder()
-      .setProjectId(projectId)
-      .setInstanceId(instanceId)
-      .build
-    BigtableRead(bigtableOptions, tableId)
-  }
 }
 
-final case class BigtableWrite[T <: Mutation](bigtableOptions: BigtableOptions, tableId: String)
-    extends BigtableIO[(ByteString, Iterable[T])] {
-  override type ReadP = Nothing
+final case class BigtableWrite[T <: Mutation](
+  projectId: String,
+  instanceId: String,
+  tableId: String
+) extends BigtableIO[(ByteString, Iterable[T])](projectId, instanceId, tableId)
+    with WriteResultIO[(ByteString, Iterable[T])] {
+  override type ReadP = Unit
   override type WriteP = BigtableWrite.WriteParam
-
-  override def testId: String =
-    s"BigtableIO(${bigtableOptions.getProjectId}\t${bigtableOptions.getInstanceId}\t$tableId)"
 
   override protected def read(
     sc: ScioContext,
@@ -123,33 +112,33 @@ final case class BigtableWrite[T <: Mutation](bigtableOptions: BigtableOptions, 
       "BigtableWrite is write-only, use Row to read from Bigtable"
     )
 
-  override protected def write(
+  override protected def writeWithResult(
     data: SCollection[(ByteString, Iterable[T])],
     params: WriteP
-  ): Tap[Nothing] = {
-    val sink =
-      params match {
-        case BigtableWrite.Default =>
-          val opts = bigtableOptions // defeat closure
-          beam.BigtableIO
-            .write()
-            .withProjectId(bigtableOptions.getProjectId)
-            .withInstanceId(bigtableOptions.getInstanceId)
-            .withTableId(tableId)
-            .withBigtableOptionsConfigurator(
-              Functions.serializableFn(_ => opts.toBuilder)
-            ): @nowarn("cat=deprecation")
-        case BigtableWrite.Bulk(numOfShards, flushInterval) =>
-          new BigtableBulkWriter(tableId, bigtableOptions, numOfShards, flushInterval)
-      }
-    data.transform_("Bigtable write") { coll =>
+  ): (Tap[Nothing], SideOutputCollections) = {
+    val t = beam.BigtableIO
+      .write()
+      .withProjectId(projectId)
+      .withInstanceId(instanceId)
+      .withTableId(tableId)
+      .withFlowControl(params.flowControl)
+      .pipe(w => Option(params.errorHandler).fold(w)(w.withErrorHandler))
+      .pipe(w => Option(params.appProfileId).fold(w)(w.withAppProfileId))
+      .pipe(w => Option(params.attemptTimeout).fold(w)(w.withAttemptTimeout))
+      .pipe(w => Option(params.operationTimeout).fold(w)(w.withOperationTimeout))
+      .pipe(w => params.maxBytesPerBatch.fold(w)(w.withMaxBytesPerBatch))
+      .pipe(w => params.maxElementsPerBatch.fold(w)(w.withMaxElementsPerBatch))
+      .pipe(w => params.maxOutstandingBytes.fold(w)(w.withMaxOutstandingBytes))
+      .pipe(w => params.maxOutstandingElements.fold(w)(w.withMaxOutstandingElements))
+      .withWriteResults()
+
+    val result = data.transform_("Bigtable write") { coll =>
       coll
-        .map { case (key, value) =>
-          KV.of(key, value.asJava.asInstanceOf[java.lang.Iterable[Mutation]])
-        }
-        .applyInternal(sink)
+        .map { case (key, mutations) => KV.of(key, (mutations: Iterable[Mutation]).asJava) }
+        .applyInternal(t)
     }
-    EmptyTap
+    val sideOutput = PCollectionTuple.of(BigtableWrite.BigtableWriteResult.tupleTag, result)
+    (tap(()), SideOutputCollections(sideOutput, data.context))
   }
 
   override def tap(params: ReadP): Tap[Nothing] =
@@ -157,28 +146,34 @@ final case class BigtableWrite[T <: Mutation](bigtableOptions: BigtableOptions, 
 }
 
 object BigtableWrite {
-  sealed trait WriteParam
-  object Default extends WriteParam
 
-  object Bulk {
-    private[bigtable] val DefaultFlushInterval = Duration.standardSeconds(1)
+  // TODO should this be here ?
+  implicit val bigtableWriteResultCoder: Coder[BigtableWriteResult] =
+    Coder.beam(new BigtableWriteResultCoder)
+
+  lazy val BigtableWriteResult: SideOutput[BigtableWriteResult] = SideOutput()
+
+  object WriteParam {
+    val DefaultFlowControl: Boolean = false
+    val DefaultErrorHandler: ErrorHandler[BadRecord, _] = null
+    val DefaultAppProfileId: String = null
+    val DefaultAttemptTimeout: Duration = null
+    val DefaultOperationTimeout: Duration = null
+    val DefaultMaxBytesPerBatch: Option[Long] = None
+    val DefaultMaxElementsPerBatch: Option[Long] = None
+    val DefaultMaxOutstandingBytes: Option[Long] = None
+    val DefaultMaxOutstandingElements: Option[Long] = None
   }
 
-  final case class Bulk private (
-    numOfShards: Int,
-    flushInterval: Duration = Bulk.DefaultFlushInterval
-  ) extends WriteParam
-
-  final def apply[T <: Mutation](
-    projectId: String,
-    instanceId: String,
-    tableId: String
-  ): BigtableWrite[T] = {
-    val bigtableOptions = BigtableOptions
-      .builder()
-      .setProjectId(projectId)
-      .setInstanceId(instanceId)
-      .build
-    BigtableWrite[T](bigtableOptions, tableId)
-  }
+  final case class WriteParam private (
+    flowControl: Boolean = WriteParam.DefaultFlowControl,
+    errorHandler: ErrorHandler[BadRecord, _] = WriteParam.DefaultErrorHandler,
+    appProfileId: String = WriteParam.DefaultAppProfileId,
+    attemptTimeout: Duration = WriteParam.DefaultAttemptTimeout,
+    operationTimeout: Duration = WriteParam.DefaultOperationTimeout,
+    maxBytesPerBatch: Option[Long] = WriteParam.DefaultMaxBytesPerBatch,
+    maxElementsPerBatch: Option[Long] = WriteParam.DefaultMaxElementsPerBatch,
+    maxOutstandingBytes: Option[Long] = WriteParam.DefaultMaxOutstandingBytes,
+    maxOutstandingElements: Option[Long] = WriteParam.DefaultMaxOutstandingElements
+  )
 }

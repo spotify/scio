@@ -17,48 +17,22 @@
 
 package com.spotify.scio.bigtable.syntax
 
-import com.google.bigtable.admin.v2.GcRule
-import com.google.bigtable.v2._
-import com.google.cloud.bigtable.config.BigtableOptions
+import com.google.bigtable.v2.{Row, RowFilter}
+import com.google.cloud.bigtable.admin.v2.models.GCRules.GCRule
 import com.spotify.scio.ScioContext
-import com.spotify.scio.bigtable.BigtableRead
-import com.spotify.scio.bigtable.BigtableUtil
-import com.spotify.scio.bigtable.TableAdmin
+import com.spotify.scio.bigtable.{Admin, BigtableRead}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.range.ByteKeyRange
 import org.joda.time.Duration
 
-import scala.jdk.CollectionConverters._
-
 object ScioContextOps {
-  private val DefaultSleepDuration = Duration.standardMinutes(20)
-  private val DefaultClusterNames: Set[String] = Set.empty
+  private val DefaultSleepDuration: Duration = Duration.standardMinutes(20)
+  private val DefaultClusterIds: Set[String] = Set.empty
 }
 
 /** Enhanced version of [[ScioContext]] with Bigtable methods. */
 final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   import ScioContextOps._
-
-  /** Get an SCollection for a Bigtable table. */
-  def bigtable(
-    projectId: String,
-    instanceId: String,
-    tableId: String,
-    keyRange: ByteKeyRange,
-    rowFilter: RowFilter
-  ): SCollection[Row] =
-    bigtable(projectId, instanceId, tableId, Seq(keyRange), rowFilter)
-
-  /** Get an SCollection for a Bigtable table. */
-  def bigtable(
-    projectId: String,
-    instanceId: String,
-    tableId: String,
-    keyRange: ByteKeyRange,
-    rowFilter: RowFilter,
-    maxBufferElementCount: Option[Int]
-  ): SCollection[Row] =
-    bigtable(projectId, instanceId, tableId, Seq(keyRange), rowFilter, maxBufferElementCount)
 
   /** Get an SCollection for a Bigtable table. */
   def bigtable(
@@ -73,69 +47,25 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(BigtableRead(projectId, instanceId, tableId))(parameters)
   }
 
-  /** Get an SCollection for a Bigtable table. */
-  def bigtable(
-    bigtableOptions: BigtableOptions,
-    tableId: String,
-    keyRange: ByteKeyRange,
-    rowFilter: RowFilter
-  ): SCollection[Row] =
-    bigtable(bigtableOptions, tableId, Seq(keyRange), rowFilter)
-
-  /** Get an SCollection for a Bigtable table. */
-  def bigtable(
-    bigtableOptions: BigtableOptions,
-    tableId: String,
-    keyRange: ByteKeyRange,
-    rowFilter: RowFilter,
-    maxBufferElementCount: Option[Int]
-  ): SCollection[Row] =
-    bigtable(bigtableOptions, tableId, Seq(keyRange), rowFilter, maxBufferElementCount)
-
-  /** Get an SCollection for a Bigtable table. */
-  def bigtable(
-    bigtableOptions: BigtableOptions,
-    tableId: String,
-    keyRanges: Seq[ByteKeyRange],
-    rowFilter: RowFilter
-  ): SCollection[Row] = {
-    val parameters = BigtableRead.ReadParam(keyRanges, rowFilter)
-    self.read(BigtableRead(bigtableOptions, tableId))(parameters)
-  }
-
-  /** Get an SCollection for a Bigtable table. */
-  def bigtable(
-    bigtableOptions: BigtableOptions,
-    tableId: String,
-    keyRanges: Seq[ByteKeyRange],
-    rowFilter: RowFilter,
-    maxBufferElementCount: Option[Int]
-  ): SCollection[Row] = {
-    val parameters = BigtableRead.ReadParam(keyRanges, rowFilter, maxBufferElementCount)
-    self.read(BigtableRead(bigtableOptions, tableId))(parameters)
-  }
-
   /**
-   * Updates all clusters within the specified Bigtable instance to a specified number of nodes.
+   * Updates given clusters within the specified Bigtable instance to a specified number of nodes.
    * Useful for increasing the number of nodes at the beginning of a job and decreasing it at the
    * end to lower costs yet still get high throughput during bulk ingests/dumps.
    *
-   * @param sleepDuration
-   *   How long to sleep after updating the number of nodes. Google recommends at least 20 minutes
-   *   before the new nodes are fully functional
+   * @param numberOfNodes
+   *   desired number of nodes for the clusters
    */
   def updateNumberOfBigtableNodes(
     projectId: String,
     instanceId: String,
-    numberOfNodes: Int,
-    sleepDuration: Duration = DefaultSleepDuration
+    numberOfNodes: Int
   ): Unit =
     updateNumberOfBigtableNodes(
       projectId,
       instanceId,
+      DefaultClusterIds,
       numberOfNodes,
-      DefaultClusterNames,
-      sleepDuration
+      DefaultSleepDuration
     )
 
   /**
@@ -143,45 +73,23 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * Useful for increasing the number of nodes at the beginning of a job and decreasing it at the
    * end to lower costs yet still get high throughput during bulk ingests/dumps.
    *
+   * @param numberOfNodes
+   *   desired number of nodes for the clusters
    * @param sleepDuration
    *   How long to sleep after updating the number of nodes. Google recommends at least 20 minutes
    *   before the new nodes are fully functional
-   * @param clusterNames
-   *   Names of clusters to be updated, all if empty
    */
   def updateNumberOfBigtableNodes(
     projectId: String,
     instanceId: String,
     numberOfNodes: Int,
-    clusterNames: Set[String],
-    sleepDuration: Duration
-  ): Unit = {
-    val bigtableOptions = BigtableOptions
-      .builder()
-      .setProjectId(projectId)
-      .setInstanceId(instanceId)
-      .build
-    updateNumberOfBigtableNodes(bigtableOptions, numberOfNodes, clusterNames, sleepDuration)
-  }
-
-  /**
-   * Updates all clusters within the specified Bigtable instance to a specified number of nodes.
-   * Useful for increasing the number of nodes at the beginning of a job and decreasing it at the
-   * end to lower costs yet still get high throughput during bulk ingests/dumps.
-   *
-   * @param sleepDuration
-   *   How long to sleep after updating the number of nodes. Google recommends at least 20 minutes
-   *   before the new nodes are fully functional
-   */
-  def updateNumberOfBigtableNodes(
-    bigtableOptions: BigtableOptions,
-    numberOfNodes: Int,
     sleepDuration: Duration
   ): Unit =
     updateNumberOfBigtableNodes(
-      bigtableOptions,
+      projectId,
+      instanceId,
+      DefaultClusterIds,
       numberOfNodes,
-      DefaultClusterNames,
       sleepDuration
     )
 
@@ -190,25 +98,29 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * Useful for increasing the number of nodes at the beginning of a job and decreasing it at the
    * end to lower costs yet still get high throughput during bulk ingests/dumps.
    *
-   * @param clusterNames
-   *   Names of clusters to be updated, all if empty
+   * @param numberOfNodes
+   *   desired number of nodes for the clusters
+   * @param clusterIds
+   *   clusters ids to be updated, all if empty
    * @param sleepDuration
    *   How long to sleep after updating the number of nodes. Google recommends at least 20 minutes
    *   before the new nodes are fully functional
    */
   def updateNumberOfBigtableNodes(
-    bigtableOptions: BigtableOptions,
+    projectId: String,
+    instanceId: String,
+    clusterIds: Set[String],
     numberOfNodes: Int,
-    clusterNames: Set[String],
-    sleepDuration: Duration
+    sleepDuration: Duration = DefaultSleepDuration
   ): Unit =
     if (!self.isTest) {
       // No need to update the number of nodes in a test
-      BigtableUtil.updateNumberOfBigtableNodes(
-        bigtableOptions,
+      Admin.Instance.updateNumberOfBigtableNodes(
+        projectId,
+        instanceId,
+        clusterIds,
         numberOfNodes,
-        sleepDuration,
-        clusterNames.asJava
+        sleepDuration
       )
     }
 
@@ -220,12 +132,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   def getBigtableClusterSizes(projectId: String, instanceId: String): Map[String, Int] =
     if (!self.isTest) {
-      BigtableUtil
-        .getClusterSizes(projectId, instanceId)
-        .asScala
-        .iterator
-        .map { case (k, v) => k -> v.toInt }
-        .toMap
+      Admin.Instance.getClusterSizes(projectId, instanceId)
     } else {
       Map.empty
     }
@@ -239,62 +146,23 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    *   A map of tables and column families. Keys are table names. Values are a list of column family
    *   names.
    */
-  def ensureTables(
+  def ensureTable(
     projectId: String,
     instanceId: String,
-    tablesAndColumnFamilies: Map[String, Iterable[String]],
-    createDisposition: TableAdmin.CreateDisposition
+    tableId: String,
+    columnFamilies: Iterable[String],
+    createDisposition: Admin.Table.CreateDisposition = Admin.Table.CreateDisposition.Default
   ): Unit =
     if (!self.isTest) {
-      val bigtableOptions = BigtableOptions
-        .builder()
-        .setProjectId(projectId)
-        .setInstanceId(instanceId)
-        .build
-      TableAdmin.ensureTables(bigtableOptions, tablesAndColumnFamilies, createDisposition)
+      Admin.Table.ensureTable(projectId, instanceId, tableId, columnFamilies, createDisposition)
     }
-
-  def ensureTables(
-    projectId: String,
-    instanceId: String,
-    tablesAndColumnFamilies: Map[String, Iterable[String]]
-  ): Unit = ensureTables(
-    projectId,
-    instanceId,
-    tablesAndColumnFamilies,
-    TableAdmin.CreateDisposition.default
-  )
 
   /**
    * Ensure that tables and column families exist. Checks for existence of tables or creates them if
    * they do not exist. Also checks for existence of column families within each table and creates
    * them if they do not exist.
    *
-   * @param tablesAndColumnFamilies
-   *   A map of tables and column families. Keys are table names. Values are a list of column family
-   *   names.
-   */
-  def ensureTables(
-    bigtableOptions: BigtableOptions,
-    tablesAndColumnFamilies: Map[String, Iterable[String]],
-    createDisposition: TableAdmin.CreateDisposition
-  ): Unit =
-    if (!self.isTest) {
-      TableAdmin.ensureTables(bigtableOptions, tablesAndColumnFamilies, createDisposition)
-    }
-
-  def ensureTables(
-    bigtableOptions: BigtableOptions,
-    tablesAndColumnFamilies: Map[String, Iterable[String]]
-  ): Unit =
-    ensureTables(bigtableOptions, tablesAndColumnFamilies, TableAdmin.CreateDisposition.default)
-
-  /**
-   * Ensure that tables and column families exist. Checks for existence of tables or creates them if
-   * they do not exist. Also checks for existence of column families within each table and creates
-   * them if they do not exist.
-   *
-   * @param tablesAndColumnFamiliesWithExpiration
+   * @param columnFamiliesWithExpiration
    *   A map of tables and column families. Keys are table names. Values are a list of column family
    *   names along with the desired cell expiration. Cell expiration is the duration before which
    *   garbage collection of a cell may occur. Note: minimum granularity is second.
@@ -302,64 +170,19 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def ensureTablesWithExpiration(
     projectId: String,
     instanceId: String,
-    tablesAndColumnFamiliesWithExpiration: Map[String, Iterable[(String, Option[Duration])]],
-    createDisposition: TableAdmin.CreateDisposition
+    tableId: String,
+    columnFamiliesWithExpiration: Iterable[(String, Option[Duration])],
+    createDisposition: Admin.Table.CreateDisposition = Admin.Table.CreateDisposition.Default
   ): Unit =
     if (!self.isTest) {
-      val bigtableOptions = BigtableOptions
-        .builder()
-        .setProjectId(projectId)
-        .setInstanceId(instanceId)
-        .build
-      TableAdmin.ensureTablesWithExpiration(
-        bigtableOptions,
-        tablesAndColumnFamiliesWithExpiration,
+      Admin.Table.ensureTablesWithExpiration(
+        projectId,
+        instanceId,
+        tableId,
+        columnFamiliesWithExpiration,
         createDisposition
       )
     }
-
-  def ensureTablesWithExpiration(
-    projectId: String,
-    instanceId: String,
-    tablesAndColumnFamiliesWithExpiration: Map[String, Iterable[(String, Option[Duration])]]
-  ): Unit = ensureTablesWithExpiration(
-    projectId,
-    instanceId,
-    tablesAndColumnFamiliesWithExpiration,
-    TableAdmin.CreateDisposition.default
-  )
-
-  /**
-   * Ensure that tables and column families exist. Checks for existence of tables or creates them if
-   * they do not exist. Also checks for existence of column families within each table and creates
-   * them if they do not exist.
-   *
-   * @param tablesAndColumnFamiliesWithExpiration
-   *   A map of tables and column families. Keys are table names. Values are a list of column family
-   *   names along with the desired cell expiration. Cell expiration is the duration before which
-   *   garbage collection of a cell may occur. Note: minimum granularity is second.
-   */
-  def ensureTablesWithExpiration(
-    bigtableOptions: BigtableOptions,
-    tablesAndColumnFamiliesWithExpiration: Map[String, Iterable[(String, Option[Duration])]],
-    createDisposition: TableAdmin.CreateDisposition
-  ): Unit =
-    if (!self.isTest) {
-      TableAdmin.ensureTablesWithExpiration(
-        bigtableOptions,
-        tablesAndColumnFamiliesWithExpiration,
-        createDisposition
-      )
-    }
-
-  def ensureTablesWithExpiration(
-    bigtableOptions: BigtableOptions,
-    tablesAndColumnFamiliesWithExpiration: Map[String, Iterable[(String, Option[Duration])]]
-  ): Unit = ensureTablesWithExpiration(
-    bigtableOptions,
-    tablesAndColumnFamiliesWithExpiration,
-    TableAdmin.CreateDisposition.default
-  )
 
   /**
    * Ensure that tables and column families exist. Checks for existence of tables or creates them if
@@ -373,66 +196,19 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def ensureTablesWithGcRules(
     projectId: String,
     instanceId: String,
-    tablesAndColumnFamiliesWithGcRules: Map[String, Iterable[(String, Option[GcRule])]],
-    createDisposition: TableAdmin.CreateDisposition
+    tableId: String,
+    columnFamiliesWithGcRules: Iterable[(String, Option[GCRule])],
+    createDisposition: Admin.Table.CreateDisposition
   ): Unit =
     if (!self.isTest) {
-      val bigtableOptions = BigtableOptions
-        .builder()
-        .setProjectId(projectId)
-        .setInstanceId(instanceId)
-        .build
-      TableAdmin.ensureTablesWithGcRules(
-        bigtableOptions,
-        tablesAndColumnFamiliesWithGcRules,
+      Admin.Table.ensureTableWithGcRules(
+        projectId,
+        instanceId,
+        tableId,
+        columnFamiliesWithGcRules,
         createDisposition
       )
     }
-
-  def ensureTablesWithGcRules(
-    projectId: String,
-    instanceId: String,
-    tablesAndColumnFamiliesWithGcRules: Map[String, Iterable[(String, Option[GcRule])]]
-  ): Unit = ensureTablesWithGcRules(
-    projectId,
-    instanceId,
-    tablesAndColumnFamiliesWithGcRules,
-    TableAdmin.CreateDisposition.default
-  )
-
-  /**
-   * Ensure that tables and column families exist. Checks for existence of tables or creates them if
-   * they do not exist. Also checks for existence of column families within each table and creates
-   * them if they do not exist.
-   *
-   * @param tablesAndColumnFamiliesWithGcRule
-   *   A map of tables and column families. Keys are table names. Values are a list of column family
-   *   names along with the desired cell expiration. Cell expiration is the duration before which
-   *   garbage collection of a cell may occur. Note: minimum granularity is second.
-   */
-  def ensureTablesWithGcRules(
-    bigtableOptions: BigtableOptions,
-    tablesAndColumnFamiliesWithGcRule: Map[String, Iterable[(String, Option[GcRule])]],
-    createDisposition: TableAdmin.CreateDisposition
-  ): Unit =
-    if (!self.isTest) {
-      TableAdmin.ensureTablesWithGcRules(
-        bigtableOptions,
-        tablesAndColumnFamiliesWithGcRule,
-        createDisposition
-      )
-    }
-
-  def ensureTablesWithGcRules(
-    bigtableOptions: BigtableOptions,
-    tablesAndColumnFamiliesWithGcRule: Map[String, Iterable[(String, Option[GcRule])]]
-  ): Unit =
-    ensureTablesWithGcRules(
-      bigtableOptions,
-      tablesAndColumnFamiliesWithGcRule,
-      TableAdmin.CreateDisposition.default
-    )
-
 }
 
 trait ScioContextSyntax {
