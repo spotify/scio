@@ -1874,7 +1874,7 @@ lazy val integration = project
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client" % gcpBom.key.value,
       "com.google.protobuf" % "protobuf-java" % gcpBom.key.value,
-      "com.microsoft.sqlserver" % "mssql-jdbc" % "12.8.1.jre11",
+      "com.microsoft.sqlserver" % "mssql-jdbc" % "12.10.0.jre11",
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
