@@ -517,7 +517,9 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ),
   ProblemFilters.exclude[DirectMissingMethodProblem](
     "com.spotify.scio.bigquery.syntax.SCollectionTypedOps.saveAsTypedBigQueryTable$extension"
-  )
+  ),
+  // Only used for testing, shouldn't be public
+  ProblemFilters.exclude[Problem]("com.spotify.scio.bigquery.validation.Country.*")
 )
 
 // headers
