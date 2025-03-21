@@ -1728,7 +1728,8 @@ lazy val `scio-jmh` = project
   .enablePlugins(NoPublishPlugin)
   .dependsOn(
     `scio-core`,
-    `scio-avro`
+    `scio-avro`,
+    `scio-google-cloud-platform`
   )
   .settings(commonSettings)
   .settings(macroSettings)
