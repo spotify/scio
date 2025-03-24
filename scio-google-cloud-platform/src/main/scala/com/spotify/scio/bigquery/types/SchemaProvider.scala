@@ -31,12 +31,12 @@ import com.spotify.scio.util.Cache
 import org.typelevel.scalaccompat.annotation.nowarn
 
 private[types] object SchemaProvider {
-  private[this] val AvroSchemaCache = Cache.concurrentHashMap[String, Schema]
+  private[this] val AvroSchemaCache = Cache.concurrentHashMap[Type, Schema]
   private[this] val TableSchemaCache = Cache.concurrentHashMap[Type, TableSchema]
 
   def avroSchemaOf[T: TypeTag]: Schema =
     AvroSchemaCache.get(
-      typeTag[T].tpe.toString, {
+      typeTag[T].tpe, {
         // BigQueryUtils converts nested record namespaces, but not top-level namespace
         val converted =
           BigQueryUtils.toGenericAvroSchema(typeTag[T].tpe.toString, schemaOf[T].getFields, true)
