@@ -72,13 +72,12 @@ object BigtableWriteExample {
     // before the ingestion starts.
     sc.updateNumberOfBigtableNodes(btProjectId, btInstanceId, 15)
 
-    // Ensure that destination tables and column families exist
-    sc.ensureTables(
+    // Ensure that destination table and column families exist
+    sc.ensureTable(
       btProjectId,
       btInstanceId,
-      Map(
-        btTableId -> List(BigtableExample.FAMILY_NAME)
-      )
+      btTableId,
+      List(BigtableExample.FAMILY_NAME)
     )
 
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))

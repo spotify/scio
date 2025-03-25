@@ -18,11 +18,8 @@
 package com.spotify.scio.bigtable
 
 import java.util.UUID
-
-import com.google.bigtable.admin.v2.{DeleteTableRequest, GetTableRequest, ListTablesRequest}
 import com.google.bigtable.v2.{Mutation, Row, RowFilter}
-import com.google.cloud.bigtable.config.BigtableOptions
-import com.google.cloud.bigtable.grpc._
+import com.google.cloud.bigtable.admin.v2.{BigtableInstanceAdminClient, BigtableTableAdminClient}
 import com.google.protobuf.ByteString
 import com.spotify.scio._
 import com.spotify.scio.testing._
@@ -40,12 +37,6 @@ object BigtableIT {
   def testId(): String = UUID.randomUUID().toString.substring(0, 8)
   def testData(id: String): Seq[(String, Long)] =
     Seq((s"$id-key1", 1L), (s"$id-key2", 2L), (s"$id-key3", 3L))
-
-  val bigtableOptions: BigtableOptions = BigtableOptions
-    .builder()
-    .setProjectId(projectId)
-    .setInstanceId(instanceId)
-    .build
 
   val FAMILY_NAME: String = "count"
   val COLUMN_QUALIFIER: ByteString = ByteString.copyFromUtf8("long")
@@ -67,12 +58,6 @@ object BigtableIT {
 
   def fromRow(r: Row): (String, Long) =
     (r.getKey.toStringUtf8, r.getValue(FAMILY_NAME, COLUMN_QUALIFIER).get.toStringUtf8.toLong)
-
-  def listTables(client: BigtableTableAdminGrpcClient): Set[String] = {
-    val instancePath = s"projects/$projectId/instances/$instanceId"
-    val tables = client.listTables(ListTablesRequest.newBuilder().setParent(instancePath).build)
-    tables.getTablesList.asScala.map(t => new BigtableTableName(t.getName).getTableId).toSet
-  }
 }
 
 class BigtableIT extends PipelineSpec {
@@ -80,18 +65,22 @@ class BigtableIT extends PipelineSpec {
 
   // "Update number of bigtable nodes" should "work" in {
   ignore should "update number of bigtable nodes" in {
-    val bt = new BigtableClusterUtilities(bigtableOptions)
-    val sc = ScioContext()
-    sc.updateNumberOfBigtableNodes(projectId, instanceId, 4, Duration.standardSeconds(10))
-    sc.getBigtableClusterSizes(projectId, instanceId)(clusterId) shouldBe 4
-    bt.getClusterNodeCount(clusterId, zoneId) shouldBe 4
-    sc.updateNumberOfBigtableNodes(projectId, instanceId, 3, Duration.standardSeconds(10))
-    sc.getBigtableClusterSizes(projectId, instanceId)(clusterId) shouldBe 3
-    bt.getClusterNodeCount(clusterId, zoneId) shouldBe 3
+    val client = BigtableInstanceAdminClient.create(projectId)
+    try {
+      val sc = ScioContext()
+      sc.updateNumberOfBigtableNodes(projectId, instanceId, 4, Duration.standardSeconds(10))
+      sc.getBigtableClusterSizes(projectId, instanceId)(clusterId) shouldBe 4
+      client.getCluster(clusterId, zoneId).getServeNodes shouldBe 4
+      sc.updateNumberOfBigtableNodes(projectId, instanceId, 3, Duration.standardSeconds(10))
+      sc.getBigtableClusterSizes(projectId, instanceId)(clusterId) shouldBe 3
+      client.getCluster(clusterId, zoneId).getServeNodes shouldBe 3
+    } finally {
+      client.close()
+    }
   }
 
   "BigtableIO" should "work in default mode" in {
-    TableAdmin.ensureTables(bigtableOptions, Map(tableId -> List(FAMILY_NAME)))
+    Admin.Table.ensureTable(projectId, instanceId, tableId, List(FAMILY_NAME))
     val id = testId()
     val data = testData(id)
     try {
@@ -126,12 +115,7 @@ class BigtableIT extends PipelineSpec {
   }
 
   it should "work in bulk mode" in {
-    TableAdmin.ensureTables(bigtableOptions, Map(tableId -> List(FAMILY_NAME)))
-    val options = BigtableOptions
-      .builder()
-      .setProjectId(projectId)
-      .setInstanceId(instanceId)
-      .build()
+    Admin.Table.ensureTable(projectId, instanceId, tableId, List(FAMILY_NAME))
     val id = testId()
     val data = testData(id)
 
@@ -140,7 +124,7 @@ class BigtableIT extends PipelineSpec {
       runWithRealContext() { sc =>
         sc
           .parallelize(data.map(kv => toWriteMutation(kv._1, kv._2)))
-          .saveAsBigtable(options, tableId, 1)
+          .saveAsBigtable(projectId, instanceId, tableId)
       }.waitUntilDone()
 
       // Read rows back
@@ -166,48 +150,48 @@ class BigtableIT extends PipelineSpec {
       }.waitUntilFinish()
   }
 
-  "TableAdmin" should "work" in {
+  "Admin.Table" should "work" in {
     val id = testId()
     val tables = Map(
       s"scio-bigtable-empty-table-$id" -> List(),
       s"scio-bigtable-one-cf-table-$id" -> List("colfam1"),
       s"scio-bigtable-two-cf-table-$id" -> List("colfam1", "colfam2")
     )
-    val channel = ChannelPoolCreator.createPool(bigtableOptions)
-    val executorService = BigtableSessionSharedThreadPools.getInstance().getRetryExecutor
-    val client = new BigtableTableAdminGrpcClient(channel, executorService, bigtableOptions)
-    val instancePath = s"projects/$projectId/instances/$instanceId"
-    val tableIds = tables.keys.toSet
-    def tablePath(table: String): String = s"$instancePath/tables/$table"
-    def deleteTable(table: String): Unit =
-      client.deleteTable(DeleteTableRequest.newBuilder().setName(tablePath(table)).build)
 
-    // Delete any tables that could be left around from previous IT run.
-    val oldTables = listTables(client).intersect(tableIds)
-    oldTables.foreach(deleteTable)
+    val client = BigtableTableAdminClient.create(projectId, instanceId)
+    try {
+      val tableIds = tables.keys.toSet
 
-    // Ensure that the tables don't exist now
-    listTables(client).intersect(tableIds) shouldBe empty
+      // Delete any tables that could be left around from previous IT run.
+      client
+        .listTables()
+        .asScala
+        .filterNot(tableIds.contains)
+        .foreach(client.deleteTable)
 
-    // Run UUT
-    TableAdmin.ensureTables(bigtableOptions, tables)
+      // Ensure that the tables don't exist now
+      client.listTables().asScala.toSet.intersect(tableIds) shouldBe empty
 
-    // Tables must exist
-    listTables(client).intersect(tableIds) shouldEqual tableIds
+      // Run UUT
+      tables.foreach { case (tableId, cfs) =>
+        Admin.Table.ensureTable(projectId, instanceId, tableId, cfs)
+      }
 
-    // Assert Column families exist
-    for ((table, columnFamilies) <- tables) {
-      val tableInfo = client.getTable(
-        GetTableRequest
-          .newBuilder()
-          .setName(tablePath(table))
-          .build
-      )
-      val actualColumnFamilies = tableInfo.getColumnFamiliesMap.asScala.keys
-      actualColumnFamilies should contain theSameElementsAs columnFamilies
+      // Tables must exist
+      client.listTables().asScala should contain allElementsOf tableIds
+
+      // Assert Column families exist
+      tables.foreach { case (id, columnFamilies) =>
+        val table = client.getTable(id)
+        val actualFamilies = table.getColumnFamilies.asScala.map(_.getId)
+
+        actualFamilies should contain theSameElementsAs columnFamilies
+      }
+
+      // Clean up and delete
+      tableIds.foreach(client.deleteTable)
+    } finally {
+      client.close()
     }
-
-    // Clean up and delete
-    tables.keys.foreach(deleteTable)
   }
 }
