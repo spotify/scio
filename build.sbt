@@ -732,13 +732,14 @@ def avroSettings(scope: Configuration): Seq[Setting[_]] = Def.settings(
 )
 
 lazy val protobufSettings = Def.settings(
-  PB.protocVersion := gcpBom.key.value.version("com.google.protobuf" % "protobuf-java"),
+  PB.protocVersion := protobufVersion,
   protocJavaSourceManaged := sourceManaged.value / "compiled_proto",
   protocGrpcSourceManaged := sourceManaged.value / "compiled_grpc",
   libraryDependencies ++= Seq(
     "io.grpc" % "protoc-gen-grpc-java" % gcpBom.key.value asProtocPlugin (),
-    "com.google.protobuf" % "protobuf-java" % gcpBom.key.value % "protobuf",
-    "com.google.protobuf" % "protobuf-java" % gcpBom.key.value
+    "com.google.protobuf" % "protobuf-java" % protobufVersion % "protobuf",
+    "com.google.protobuf" % "protobuf-java-util" % protobufVersion,
+    "com.google.protobuf" % "protobuf-java" % protobufVersion
   )
 ) ++ Seq(Compile, Test).flatMap(c => inConfig(c)(protobufConfigSettings))
 
