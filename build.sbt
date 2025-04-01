@@ -38,7 +38,7 @@ val autoValueVersion = "1.9"
 val avroVersion = sys.props.getOrElse("avro.version", "1.11.4")
 val bigdataossVersion = "2.2.26"
 val bigtableClientVersion = "1.28.0"
-val commonsCodecVersion = "1.17.1"
+val commonsCodecVersion = "1.18.0"
 val commonsCompressVersion = "1.26.2"
 val commonsIoVersion = "2.16.1"
 val commonsLang3Version = "3.14.0"
@@ -71,7 +71,7 @@ val sparkMajorVersion = VersionNumber(sparkVersion).numbers.take(1).mkString("."
 // check recommended versions from libraries-bom
 // https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.56.0/index.html
 val failureAccessVersion = "1.0.2"
-val checkerQualVersion = "3.48.3"
+val checkerQualVersion = "3.49.0"
 val jsr305Version = "3.0.2"
 val perfmarkVersion = "0.27.0"
 
