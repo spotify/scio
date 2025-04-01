@@ -596,6 +596,7 @@ val commonSettings = bomSettings ++ Def.settings(
   resolvers ++= Resolver.sonatypeOssRepos("public"),
   excludeDependencies += Exclude.beamKafka,
   excludeDependencies ++= Exclude.loggerImplementations,
+  excludeDependencies ++= Exclude.jacksonCrossBuilt(scalaVersion.value),
   dependencyOverrides ++= Seq(
     // override when testing with legacy version
     "org.apache.avro" % "avro" % avroVersion,
