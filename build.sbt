@@ -738,7 +738,6 @@ lazy val protobufSettings = Def.settings(
   libraryDependencies ++= Seq(
     "io.grpc" % "protoc-gen-grpc-java" % gcpBom.key.value asProtocPlugin (),
     "com.google.protobuf" % "protobuf-java" % protobufVersion % "protobuf",
-    "com.google.protobuf" % "protobuf-java-util" % protobufVersion,
     "com.google.protobuf" % "protobuf-java" % protobufVersion
   )
 ) ++ Seq(Compile, Test).flatMap(c => inConfig(c)(protobufConfigSettings))
