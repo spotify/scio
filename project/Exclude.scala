@@ -16,4 +16,17 @@ object Exclude {
     "io.dropwizard.metrics" % "metrics-logback",
     "log4j" % "log4j"
   )
+
+  // Beam 2.64 pulls in jackson-module-scala_2.12, which pulls in chill_2.12
+  def jacksonCrossBuilt(scalaVersion: String): Seq[ExclusionRule] = VersionNumber(
+    scalaVersion
+  ) match {
+    case v if v.matchesSemVer(SemanticSelector("2.12.x")) =>
+      Nil
+    case _ =>
+      Seq(
+        ExclusionRule("com.twitter", "chill_2.12"),
+        ExclusionRule("com.fasterxml.jackson.module", "jackson-module-scala_2.12")
+      )
+  }
 }

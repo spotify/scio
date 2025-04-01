@@ -281,10 +281,8 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
     )
   }
 
-  it should "fail when writing case classes with LocalTime fields using GenericRecord representation and Storage API" in {
-    the[IllegalArgumentException] thrownBy {
-      testRoundtrip(Format.GenericRecordWithLogicalTypes, WriteMethod.STORAGE_WRITE_API)(records)
-    } should have message "TIME schemas are not currently supported for Typed Storage Write API writes for Avro format. Please use Write method FILE_LOADS instead, or use TableRow Format."
+  it should "write case classes with LocalTime fields using GenericRecord representation and Storage API" in {
+    testRoundtrip(Format.GenericRecordWithLogicalTypes, WriteMethod.STORAGE_WRITE_API)(records)
   }
 
   it should "read rows in TableRow format and manually convert to case classes" in {

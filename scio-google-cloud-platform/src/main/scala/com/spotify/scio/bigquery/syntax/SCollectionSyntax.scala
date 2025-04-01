@@ -285,17 +285,6 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
     val bqt = BigQueryType[T]
 
     if (
-      BigQueryUtil.isAvroFormat(format) &&
-      BigQueryUtil.isStorageApiWrite(method) &&
-      BigQueryUtil.containsType(bqt.schema, "TIME")
-    ) {
-      // Todo remove once https://github.com/apache/beam/issues/34038 is fixed
-      throw new IllegalArgumentException(
-        "TIME schemas are not currently supported for Typed Storage Write API writes for Avro format. Please use Write method FILE_LOADS instead, or use TableRow Format."
-      )
-    }
-
-    if (
       format == Format.TableRow && method == Method.FILE_LOADS && BigQueryUtil.containsType(
         bqt.schema,
         "JSON"
