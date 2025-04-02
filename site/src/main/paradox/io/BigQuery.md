@@ -228,6 +228,22 @@ def main(cmdlineArgs: Array[String]): Unit = {
 }
 ```
 
+Note: Between Scio [0.14.11, 0.14.15), typed BigQuery IO used Beam's new `GenericRecord` API for BigQuery, converting
+case classes into Avro records which can be loaded directly into BQ tables. However, due to regressions for certain types as well as
+limited OverrideTypeProvider support, Scio 0.14.15 returns to using Beam's classic `TableRow` API for reads and writes. If you'd prefer to
+use the `GenericRecord` API, which has better support for certain types like `Json`, you can optionally supply a `format` parameter to your write:
+
+```scala mdoc:compile-only
+import com.spotify.scio.values.SCollection
+import com.spotify.scio.bigquery.BigQueryTypedTable.Format
+
+val data: SCollection[Result] = ???
+data.saveAsTypedBigQueryTable(
+  Table.Spec("..."),
+  format = Format.GenericRecordWithLogicalTypes
+)
+```
+
 ### Type safe BigQueryClient
 
 Annotated classes can be used with the `BigQueryClient` directly too.
