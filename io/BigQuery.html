@@ -231,7 +231,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.14.13-14-640d575-20250305T145534Z*
+<i class="md-icon" title="Version">label_outline</i> 0.14.14-18-324867e-20250402T151020Z*
 </label>
 </li>
 </ul>
@@ -433,6 +433,16 @@ def main(cmdlineArgs: Array[String]): Unit = {
   ()
 }
 </code></pre>
+<p>Note: Between Scio [0.14.11, 0.14.15), typed BigQuery IO used Beam&rsquo;s new <code>GenericRecord</code> API for BigQuery, converting case classes into Avro records which can be loaded directly into BQ tables. However, due to regressions for certain types as well as limited OverrideTypeProvider support, Scio 0.14.15 returns to using Beam&rsquo;s classic <code>TableRow</code> API for reads and writes. If you&rsquo;d prefer to use the <code>GenericRecord</code> API, which has better support for certain types like <code>Json</code>, you can optionally supply a <code>format</code> parameter to your write:</p>
+<pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
+import com.spotify.scio.bigquery.BigQueryTypedTable.Format
+
+val data: SCollection[Result] = ???
+data.saveAsTypedBigQueryTable(
+  Table.Spec(&quot;...&quot;),
+  format = Format.GenericRecordWithLogicalTypes
+)
+</code></pre>
 <h3><a href="#type-safe-bigqueryclient" name="type-safe-bigqueryclient" class="anchor"><span class="anchor-link"></span></a>Type safe BigQueryClient</h3>
 <p>Annotated classes can be used with the <code>BigQueryClient</code> directly too.</p>
 <pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio.bigquery.types.BigQueryType
@@ -477,7 +487,7 @@ def result =
 <p>See <a href="../internals/OverrideTypeProvider.html">OverrideTypeProvider</a> for details about the custom types and validation mechanism.</p>
 <h2><a href="#bigquery-authentication" name="bigquery-authentication" class="anchor"><span class="anchor-link"></span></a>BigQuery authentication</h2>
 <p>BigQuery authentication works a bit differently than other IO types and can be hard to reason about. File-based IOs, for example, are read from directly on each remote worker node. In contrast, for BigQuery reads, Scio will actually launch a <a href="https://cloud.google.com/bigquery/docs/exporting-data">Bigquery export job</a> from the main class process before submitting a Dataflow job request. This export job extracts the requested BQ data to a temporary GCS location, from which the job workers can read directly from. Thus, your launcher code must be credentialed with the <a href="https://cloud.google.com/bigquery/docs/exporting-data#required_permissions">required permissions</a> to export data.</p>
-<p>This credential will be picked up from the values of <code>bigquery.project</code> and <code>bigquery.secret</code>, if set. If they are not, Scio will attempt to find an active <a href="https://cloud.google.com/docs/authentication/production#automatically">Application Default Credential</a> and set the billing project to the value from <a href="https://beam.apache.org/releases/javadoc/2.63.0/?org/apache/beam/sdk/extensions/gcp/options/GcpOptions.DefaultProjectFactory.html" title="org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory"><code>DefaultProjectFactory</code></a>. As of Scio 0.11.6, you can set the SBT option <code>bigquery.debug_auth=true</code>, which enables Scio to log the active credential used in BigQuery queries that return a 403 FORBIDDEN status.</p>
+<p>This credential will be picked up from the values of <code>bigquery.project</code> and <code>bigquery.secret</code>, if set. If they are not, Scio will attempt to find an active <a href="https://cloud.google.com/docs/authentication/production#automatically">Application Default Credential</a> and set the billing project to the value from <a href="https://beam.apache.org/releases/javadoc/2.64.0/?org/apache/beam/sdk/extensions/gcp/options/GcpOptions.DefaultProjectFactory.html" title="org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory"><code>DefaultProjectFactory</code></a>. As of Scio 0.11.6, you can set the SBT option <code>bigquery.debug_auth=true</code>, which enables Scio to log the active credential used in BigQuery queries that return a 403 FORBIDDEN status.</p>
 <p>A <a href="https://cloud.google.com/iam/docs/impersonating-service-accounts">service account impersonation</a> is available using SBT option <code>bigquery.act_as=service-account@my-project.iam.gserviceaccount.com</code>. It requires <code>roles/iam.serviceAccountTokenCreator</code> to be granted to a source account.</p>
 <p>Note that BigQuery Storage APIs don&rsquo;t require an export job as they can read from BigQuery directly.</p>
 <h2><a href="#bigquery-configurations-in-sbt" name="bigquery-configurations-in-sbt" class="anchor"><span class="anchor-link"></span></a>BigQuery configurations in SBT</h2>
@@ -492,7 +502,7 @@ def result =
   <tbody>
     <tr>
       <td><code>bigquery.project</code> </td>
-      <td>Specifies the billing project to use for queries. Defaults to the default project associated with the active GCP configuration (see <a href="https://beam.apache.org/releases/javadoc/2.63.0/?org/apache/beam/sdk/extensions/gcp/options/GcpOptions.DefaultProjectFactory.html" title="org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory"><code>DefaultProjectFactory</code></a>). </td>
+      <td>Specifies the billing project to use for queries. Defaults to the default project associated with the active GCP configuration (see <a href="https://beam.apache.org/releases/javadoc/2.64.0/?org/apache/beam/sdk/extensions/gcp/options/GcpOptions.DefaultProjectFactory.html" title="org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory"><code>DefaultProjectFactory</code></a>). </td>
     </tr>
     <tr>
       <td><code>bigquery.secret</code> </td>
@@ -552,7 +562,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.14.13-14-640d575-20250305T145534Z*
+0.14.14-18-324867e-20250402T151020Z*
 </span>
 </div>
 </article>
