@@ -384,10 +384,12 @@ class SCollectionWithSideInputTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq("a", "b", "d"))
       val p2 = sc.parallelize(sideData).asMapSingletonSideInput
-      val pf: PartialFunction[(String, SideInputContext[String]), Int] = {
-        case (i, c) if c(p2).contains(i) => c(p2)(i) * 2
-      }
-      val s = p1.withSideInputs(p2).collect(pf).toSCollection
+      val s = p1
+        .withSideInputs(p2)
+        .collect {
+          case (record, ctx) if ctx(p2).contains(record) => ctx(p2)(record) * 2
+        }
+        .toSCollection
       s should containInAnyOrder(Set(2, 4))
     }
   }
