@@ -82,6 +82,16 @@ class SCollectionWithSideInput[T] private[values] (
     new SCollectionWithSideInput[U](o, sides)
   }
 
+  /** [[SCollection.map]] with an additional [[SideInputContext]] argument. */
+  def collect[U: Coder](
+    f: PartialFunction[(T, SideInputContext[T]), U]
+  ): SCollectionWithSideInput[U] = {
+    val o = coll
+      .pApply(parDo(FunctionsWithSideInput.partialFn(f)))
+      .setCoder(CoderMaterializer.beam(context, Coder[U]))
+    new SCollectionWithSideInput[U](o, sides)
+  }
+
   /**
    * Allows multiple outputs from [[SCollectionWithSideInput]].
    *
