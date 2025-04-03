@@ -379,4 +379,18 @@ class SCollectionWithSideInputTest extends PipelineSpec {
       s should forAll[(Int, Seq[Int])](t => (1 to t._1).map(_ * 2).toSet == t._2.toSet)
     }
   }
+
+  it should "support collect" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq("a", "b", "d"))
+      val p2 = sc.parallelize(sideData).asMapSingletonSideInput
+      val s = p1
+        .withSideInputs(p2)
+        .collect {
+          case (record, ctx) if ctx(p2).contains(record) => ctx(p2)(record) * 2
+        }
+        .toSCollection
+      s should containInAnyOrder(Set(2, 4))
+    }
+  }
 }
