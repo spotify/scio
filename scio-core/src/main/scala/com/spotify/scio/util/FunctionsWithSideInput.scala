@@ -17,9 +17,11 @@
 
 package com.spotify.scio.util
 
+import com.spotify.scio.transforms.DoFnWithResource
+import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.scio.values.SideInputContext
 import org.apache.beam.sdk.transforms.DoFn
-import org.apache.beam.sdk.transforms.DoFn.ProcessElement
+import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 import com.twitter.chill.ClosureCleaner
 
@@ -86,4 +88,88 @@ private[scio] object FunctionsWithSideInput {
         }
       }
     }
+
+  class CollectFnWithResource[T, U, R] private[transforms] (
+                                                             resource: => R,
+                                                             resourceType: ResourceType,
+                                                             pfn: PartialFunction[(R, T, SideInputContext[T]), U]
+                                                           ) extends DoFnWithResource[T, U, R]
+    with SideInputDoFn[T, U] {
+    override def getResourceType: ResourceType = resourceType
+
+    override def createResource: R = resource
+
+    val isDefined: ((R, T, SideInputContext[T])) => Boolean = ClosureCleaner.clean(pfn.isDefinedAt) // defeat closure
+    val g: PartialFunction[(R, T, SideInputContext[T]), U] = ClosureCleaner.clean(pfn)
+    @ProcessElement
+    def processElement(
+                        c: DoFn[T, U]#ProcessContext, w: BoundedWindow, @Element element: T,
+                        out: OutputReceiver[U]): Unit =
+      if (isDefined((getResource, element, sideInputContext(c, w)))) {
+        out.output(g((getResource, element, sideInputContext(c, w))))
+      }
+  }
+
+  class MapFnWithSideInputWithResource[T, U, R] private[transforms] (
+      resource: => R,
+      resourceType: ResourceType,
+      f: (R, T, SideInputContext[T]) => U
+    ) extends DoFnWithResource[T, U, R] with SideInputDoFn[T, U] {
+
+    override def getResourceType: ResourceType = resourceType
+
+    override def createResource: R = resource
+
+    val g = ClosureCleaner.clean(f)
+
+    @ProcessElement
+    def processElement(
+                        c: DoFn[T, U]#ProcessContext, w: BoundedWindow,
+                        @Element element: T,
+                        out: OutputReceiver[U]
+                      ): Unit =
+      out.output(g(getResource, element, sideInputContext(c, w)))
+  }
+
+  class FlatMapFnWithResource[T, U, R] private[transforms] (
+                                                             resource: => R,
+                                                             resourceType: ResourceType,
+                                                             f: (R, T, SideInputContext[T]) => TraversableOnce[U]
+                                                           ) extends DoFnWithResource[T, U, R] with
+    SideInputDoFn[T, U] {
+    override def getResourceType: ResourceType = resourceType
+
+    override def createResource: R = resource
+
+    val g = ClosureCleaner.clean(f)
+    @ProcessElement
+    def processElement(
+                        c: DoFn[T, U]#ProcessContext, w: BoundedWindow,
+                        @Element element: T,
+                        out: OutputReceiver[U]
+                      ): Unit = {
+      val i = g(getResource, element, sideInputContext(c, w)).iterator
+      while (i.hasNext) out.output(i.next())
+    }
+  }
+
+  class FilterFnWithResource[T, R] private[transforms] (
+                                                         resource: => R,
+                                                         resourceType: ResourceType,
+                                                         f: (R, T, SideInputContext[T]) => Boolean
+                                                       ) extends DoFnWithResource[T, T, R] with
+    SideInputDoFn[T, T] {
+    override def getResourceType: ResourceType = resourceType
+
+    override def createResource: R = resource
+
+    val g = ClosureCleaner.clean(f)
+    @ProcessElement
+    def processElement(
+                        c: DoFn[T, T]#ProcessContext, w: BoundedWindow, @Element element: T,
+                        out: OutputReceiver[T]): Unit =
+      if (g(getResource, element, sideInputContext(c, w))) {
+        out.output(element)
+      }
+  }
 }

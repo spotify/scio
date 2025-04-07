@@ -19,8 +19,9 @@ package com.spotify.scio.values
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
-import com.spotify.scio.transforms.BatchDoFn
-import com.spotify.scio.util.FunctionsWithSideInput.SideInputDoFn
+import com.spotify.scio.transforms.{BatchDoFn, MapFnWithResource}
+import com.spotify.scio.transforms.DoFnWithResource.ResourceType
+import com.spotify.scio.util.FunctionsWithSideInput.{MapFnWithSideInputWithResource, SideInputDoFn}
 import com.spotify.scio.util.{Functions, FunctionsWithSideInput, ScioUtil}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow
@@ -124,6 +125,24 @@ class SCollectionWithSideInput[T] private[values] (
       .map(_.asScala)
       .setCoder(CoderMaterializer.beam(context, Coder[Iterable[T]]))
     new SCollectionWithSideInput[Iterable[T]](o, sides)
+  }
+
+  def mapWithResource[R, U: Coder](resource: => R, resourceType: ResourceType)(
+    fn: (R, T, SideInputContext[T]) => U
+  ): SCollectionWithSideInput[U] = {
+  val o = coll
+    .pApply(parDo(new MapFnWithSideInputWithResource(resource, resourceType, fn)))
+    .setCoder(CoderMaterializer.beam(context, Coder[Iterable[U]]))
+  new SCollectionWithSideInput[U](o, sides)
+  }
+
+  def mapWithResource[R, U: Coder](resource: => R, resourceType: ResourceType)(
+    fn: (R, T, SideInputContext[T]) => U
+  ): SCollectionWithSideInput[U] = {
+    val o = coll
+      .pApply(parDo(new MapFnWithSideInputWithResource(resource, resourceType, fn)))
+      .setCoder(CoderMaterializer.beam(context, Coder[Iterable[U]]))
+    new SCollectionWithSideInput[U](o, sides)
   }
 
   /**
