@@ -19,9 +19,9 @@ package com.spotify.scio.values
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
-
+import com.spotify.scio.transforms.BatchDoFn
 import com.spotify.scio.util.FunctionsWithSideInput.SideInputDoFn
-import com.spotify.scio.util.FunctionsWithSideInput
+import com.spotify.scio.util.{Functions, FunctionsWithSideInput, ScioUtil}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
@@ -90,6 +90,40 @@ class SCollectionWithSideInput[T] private[values] (
       .pApply(parDo(FunctionsWithSideInput.partialFn(f)))
       .setCoder(CoderMaterializer.beam(context, Coder[U]))
     new SCollectionWithSideInput[U](o, sides)
+  }
+
+  /** [[SCollection.batch]] that retains [[SideInput]]. */
+  def batch(
+             batchSize: Long,
+             maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
+           ): SCollectionWithSideInput[Iterable[T]] = {
+    val weigher = Functions.serializableFn[T, java.lang.Long](_ => 1)
+    val o = coll
+      .pApply(parDo(new BatchDoFn[T](batchSize, weigher, maxLiveWindows)))
+      .map(_.asScala)
+      .setCoder(CoderMaterializer.beam(context, Coder[Iterable[T]]))
+    new SCollectionWithSideInput[Iterable[T]](o, sides)
+  }
+
+  /** [[SCollection.batchByteSized]] that retains [[SideInput]]. */
+  def batchByteSized(
+                      batchByteSize: Long,
+                      maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
+                    ): SCollectionWithSideInput[Iterable[T]] =
+    batchWeighted(batchByteSize, ScioUtil.elementByteSize(context), maxLiveWindows)
+
+  /** [[SCollection.batchWeighted]] that retains [[SideInput]]. */
+  def batchWeighted(
+                     batchWeight: Long,
+                     cost: T => Long,
+                     maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
+                   ): SCollectionWithSideInput[Iterable[T]] = {
+    val weigher = Functions.serializableFn(cost.andThen(Long.box))
+    val o = coll
+      .pApply(parDo(new BatchDoFn[T](batchWeight, weigher, maxLiveWindows)))
+      .map(_.asScala)
+      .setCoder(CoderMaterializer.beam(context, Coder[Iterable[T]]))
+    new SCollectionWithSideInput[Iterable[T]](o, sides)
   }
 
   /**

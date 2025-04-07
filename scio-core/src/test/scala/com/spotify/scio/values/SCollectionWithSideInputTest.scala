@@ -391,4 +391,54 @@ class SCollectionWithSideInputTest extends PipelineSpec {
       s should containInAnyOrder(Set(2, 4))
     }
   }
+
+  it should "support batch() with size" in {
+    runWithContext { sc =>
+      // SCollection with 1 element to get a single bundle, then flattened
+      val p1 = sc.parallelize(Seq(Seq("a", "b", "c", "d", "e"))).flatten
+      val p2 = sc.parallelize(sideData).asMapSingletonSideInput
+      val p = p1
+        .withSideInputs(p2)
+        .batch(2)
+        .map((i, s) => {
+          i.map(v => s(p2).getOrElse(v, None)).filterNot(x => x == None).size
+        })
+        .toSCollection
+      p should containInAnyOrder(Seq(2, 1, 0))
+    }
+  }
+
+  it should "support batchByteSized() with byte size" in {
+    val bytes = Array.fill[Byte](4)(0)
+    runWithContext { sc =>
+      // SCollection with 1 element to get a single bundle, then flattened
+      val p1 = sc.parallelize(Seq(Seq.fill(5)(bytes))).flatten
+      val p2 = sc.parallelize(sideData).asMapSingletonSideInput
+      val p = p1
+        .withSideInputs(p2)
+        .batchByteSized(8)
+        .map((i, _) => i.size)
+        .toSCollection
+      p should containInAnyOrder(Seq(2, 2, 1))
+    }
+  }
+
+  it should "support batchWeighted() with custom weight" in {
+    runWithContext { sc =>
+
+      // SCollection with 1 element to get a single bundle, then flattened
+      val p1 = sc.parallelize(
+          Seq(Seq(("a", 1L), ("d", 1L), ("a", 2L), ("a", 5L), ("d", 1L)))
+        ).flatten
+      val p2 = sc.parallelize(sideData).asMapSingletonSideInput
+      val p = p1
+        .withSideInputs(p2)
+        .batchWeighted(3, { case (_, w) => w })
+        .map((i, s) => {
+          i.map(v => s(p2).getOrElse(v._1, None)).filterNot(x => x == None).size
+        })
+        .toSCollection
+      p should containInAnyOrder(Seq(2, 1, 0))
+    }
+  }
 }
