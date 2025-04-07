@@ -28,9 +28,9 @@ import com.spotify.scio.util.FunctionsWithSideInput.{
   MapFnWithWithResource,
   SideInputDoFn
 }
-import com.spotify.scio.util.{Functions, FunctionsWithSideInput, ScioUtil}
+import com.spotify.scio.util.{FunctionsWithSideInput, ScioUtil}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
-import org.apache.beam.sdk.transforms.windowing.BoundedWindow
+import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.apache.beam.sdk.values.{PCollection, TupleTag, TupleTagList}
 
@@ -38,6 +38,7 @@ import scala.jdk.CollectionConverters._
 import scala.collection.compat._
 import scala.util.Try
 import com.twitter.chill.ClosureCleaner
+import org.joda.time.{Duration, Instant}
 
 /**
  * An enhanced SCollection that provides access to one or more [[SideInput]] s for some transforms.
@@ -99,40 +100,6 @@ class SCollectionWithSideInput[T] private[values] (
     new SCollectionWithSideInput[U](o, sides)
   }
 
-  /** [[SCollection.batch]] that retains [[SideInput]]. */
-  def batch(
-    batchSize: Long,
-    maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
-  ): SCollectionWithSideInput[Iterable[T]] = {
-    val weigher = Functions.serializableFn[T, java.lang.Long](_ => 1)
-    val o = coll
-      .pApply(parDo(new BatchDoFn[T](batchSize, weigher, maxLiveWindows)))
-      .map(_.asScala)
-      .setCoder(CoderMaterializer.beam(context, Coder[Iterable[T]]))
-    new SCollectionWithSideInput[Iterable[T]](o, sides)
-  }
-
-  /** [[SCollection.batchByteSized]] that retains [[SideInput]]. */
-  def batchByteSized(
-    batchByteSize: Long,
-    maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
-  ): SCollectionWithSideInput[Iterable[T]] =
-    batchWeighted(batchByteSize, ScioUtil.elementByteSize(context), maxLiveWindows)
-
-  /** [[SCollection.batchWeighted]] that retains [[SideInput]]. */
-  def batchWeighted(
-    batchWeight: Long,
-    cost: T => Long,
-    maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
-  ): SCollectionWithSideInput[Iterable[T]] = {
-    val weigher = Functions.serializableFn(cost.andThen(Long.box))
-    val o = coll
-      .pApply(parDo(new BatchDoFn[T](batchWeight, weigher, maxLiveWindows)))
-      .map(_.asScala)
-      .setCoder(CoderMaterializer.beam(context, Coder[Iterable[T]]))
-    new SCollectionWithSideInput[Iterable[T]](o, sides)
-  }
-
   /** [[filter]] with additional resource arguments. */
   def filterWithResource[R](resource: => R, resourceType: ResourceType)(
     f: (R, T, SideInputContext[T]) => Boolean
@@ -172,6 +139,51 @@ class SCollectionWithSideInput[T] private[values] (
       .setCoder(CoderMaterializer.beam(context, Coder[U]))
     new SCollectionWithSideInput[U](o, sides)
   }
+
+  /** [[SCollection.batch]] that retains [[SideInput]]. */
+  def batch(
+    batchSize: Long,
+    maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
+  ): SCollectionWithSideInput[Iterable[T]] =
+    new SCollectionWithSideInput[Iterable[T]](coll.batch(batchSize, maxLiveWindows), sides)
+
+  /** [[SCollection.batchByteSized]] that retains [[SideInput]]. */
+  def batchByteSized(
+    batchByteSize: Long,
+    maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
+  ): SCollectionWithSideInput[Iterable[T]] =
+    batchWeighted(batchByteSize, ScioUtil.elementByteSize(context), maxLiveWindows)
+
+  /** [[SCollection.batchWeighted]] that retains [[SideInput]]. */
+  def batchWeighted(
+    batchWeight: Long,
+    cost: T => Long,
+    maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
+  ): SCollectionWithSideInput[Iterable[T]] =
+    new SCollectionWithSideInput[Iterable[T]](
+      coll.batchWeighted(batchWeight, cost, maxLiveWindows),
+      sides
+    )
+
+  /** [[SCollection.withPaneInfo]] that retains [[SideInput]]. */
+  def withPaneInfo: SCollectionWithSideInput[(T, PaneInfo)] =
+    new SCollectionWithSideInput(coll.withPaneInfo, sides)
+
+  /** [[SCollection.withTimestamp]] that retains [[SideInput]]. */
+  def withTimestamp: SCollectionWithSideInput[(T, Instant)] =
+    new SCollectionWithSideInput(coll.withTimestamp, sides)
+
+  /** [[SCollection.withTimestamp]] that retains [[SideInput]]. */
+  def withWindow[W <: BoundedWindow: Coder]: SCollectionWithSideInput[(T, W)] =
+    new SCollectionWithSideInput(coll.withWindow, sides)
+
+  /** [[SCollection.withFixedWindows]] that retains [[SideInput]]. */
+  def withFixedWindows(
+    duration: Duration,
+    offset: Duration = Duration.ZERO,
+    options: WindowOptions = WindowOptions()
+  ): SCollectionWithSideInput[T] =
+    new SCollectionWithSideInput(coll.withFixedWindows(duration, offset, options), sides)
 
   /**
    * Allows multiple outputs from [[SCollectionWithSideInput]].

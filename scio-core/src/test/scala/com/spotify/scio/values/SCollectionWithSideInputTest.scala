@@ -20,6 +20,13 @@ package com.spotify.scio.values
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import org.apache.beam.sdk.transforms.View
+import org.apache.beam.sdk.transforms.windowing.{
+  BoundedWindow,
+  GlobalWindow,
+  IntervalWindow,
+  PaneInfo
+}
+import org.apache.beam.sdk.transforms.windowing.PaneInfo.Timing
 import org.joda.time.{DateTimeConstants, Duration, Instant}
 
 import java.util.concurrent.Semaphore
@@ -527,6 +534,95 @@ class SCollectionWithSideInputTest extends PipelineSpec {
         }
         .toSCollection
       p should containInAnyOrder(Seq(1, 0))
+    }
+  }
+
+  it should "support withPaneInfo" in {
+    runWithContext { sc =>
+      val pane = PaneInfo.createPane(true, true, Timing.UNKNOWN, 0, 0)
+      val p1 = sc.parallelizeTimestamped(
+        Seq("a", "b", "d"),
+        Seq(1L, 2L, 3L).map(new Instant(_))
+      )
+      val p2 = sc.parallelize(sideData).asMapSideInput
+      val r = p1
+        .withSideInputs(p2)
+        .withPaneInfo
+        .map((kv, s) => (s(p2).getOrElse(kv._1, 0), kv._2))
+        .toSCollection
+      r should containInAnyOrder(Seq((1, pane), (2, pane), (0, pane)))
+    }
+  }
+
+  it should "support withTimestamp" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelizeTimestamped(
+        Seq("a", "b", "d"),
+        Seq(1L, 2L, 3L).map(new Instant(_))
+      )
+      val p2 = sc.parallelize(sideData).asMapSideInput
+      val r = p1
+        .withSideInputs(p2)
+        .withTimestamp
+        .map((kv, s) => (s(p2).getOrElse(kv._1, 0), kv._2.getMillis))
+        .toSCollection
+      r should containInAnyOrder(Seq((1, 1L), (2, 2L), (0, 3L)))
+    }
+  }
+
+  it should "support withWindow" in {
+    def w2s(window: BoundedWindow): String = window match {
+      case w: GlobalWindow   => s"GlobalWindow(${w.maxTimestamp()})"
+      case w: IntervalWindow => s"IntervalWindow(${w.start()}, ${w.end()})"
+      case _                 => ???
+    }
+
+    val timestamps = Seq(1L, 2L, 3L).map(t => new Instant(t * DateTimeConstants.MILLIS_PER_MINUTE))
+
+    runWithContext { sc =>
+      val p1 = sc
+        .parallelizeTimestamped(Seq("a", "b", "d"), timestamps)
+      val p2 = sc.parallelize(sideData).asMapSideInput
+      val r = p1
+        .withSideInputs(p2)
+        .withWindow[BoundedWindow]
+        .map((kv, s) => (s(p2).getOrElse(kv._1, 0), w2s(kv._2)))
+        .toSCollection
+
+      // default is GlobalWindow
+      val w = w2s(GlobalWindow.INSTANCE)
+      r should containInAnyOrder(Seq((1, w), (2, w), (0, w)))
+    }
+
+    runWithContext { sc =>
+      val p1 = sc
+        .parallelizeTimestamped(Seq("a", "b", "d"), timestamps)
+      val p2 = sc.parallelize(sideData).asMapSideInput
+      val r = p1
+        .withSideInputs(p2)
+        .withWindow[GlobalWindow]
+        .map((kv, s) => (s(p2).getOrElse(kv._1, 0), w2s(kv._2)))
+        .toSCollection
+
+      // default is GlobalWindow
+      val w = w2s(GlobalWindow.INSTANCE)
+      r should containInAnyOrder(Seq((1, w), (2, w), (0, w)))
+    }
+
+    runWithContext { sc =>
+      val p1 = sc
+        .parallelizeTimestamped(Seq("a", "b", "d"), timestamps)
+      val p2 = sc.parallelize(sideData).asMapSideInput
+      val r = p1
+        .withSideInputs(p2)
+        .withFixedWindows(Duration.standardMinutes(1))
+        .withWindow[IntervalWindow]
+        .map((kv, s) => (s(p2).getOrElse(kv._1, 0), w2s(kv._2)))
+        .toSCollection
+
+      // type is IntervalWindow after windowing is applied
+      val ws = timestamps.map(t => w2s(new IntervalWindow(t, t.plus(Duration.standardMinutes(1)))))
+      r should containInAnyOrder(Seq(1, 2, 0).zip(ws))
     }
   }
 }
