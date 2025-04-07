@@ -34,6 +34,12 @@ private[scio] object FunctionsWithSideInput {
       new SideInputContext(c.asInstanceOf[DoFn[T, AnyRef]#ProcessContext], w)
   }
 
+  trait SideInputDoFnWithResource[T, U, R] extends DoFnWithResource[T, U, R] with NamedFn {
+    def sideInputContext(c: DoFn[T, U]#ProcessContext, w: BoundedWindow): SideInputContext[T] =
+      // Workaround for type inference limit
+      new SideInputContext(c.asInstanceOf[DoFn[T, AnyRef]#ProcessContext], w)
+  }
+
   def filterFn[T](f: (T, SideInputContext[T]) => Boolean): DoFn[T, T] =
     new SideInputDoFn[T, T] {
       val g = ClosureCleaner.clean(f) // defeat closure
@@ -89,85 +95,97 @@ private[scio] object FunctionsWithSideInput {
       }
     }
 
-  class CollectFnWithResource[T, U, R] private[transforms] (
-                                                             resource: => R,
-                                                             resourceType: ResourceType,
-                                                             pfn: PartialFunction[(R, T, SideInputContext[T]), U]
-                                                           ) extends DoFnWithResource[T, U, R]
-    with SideInputDoFn[T, U] {
+  class CollectFnWithResource[T, U, R](
+    resource: => R,
+    resourceType: ResourceType,
+    pfn: PartialFunction[(R, T, SideInputContext[T]), U]
+  ) extends SideInputDoFnWithResource[T, U, R] {
     override def getResourceType: ResourceType = resourceType
-
     override def createResource: R = resource
-
-    val isDefined: ((R, T, SideInputContext[T])) => Boolean = ClosureCleaner.clean(pfn.isDefinedAt) // defeat closure
+    val isDefined: ((R, T, SideInputContext[T])) => Boolean =
+      ClosureCleaner.clean(pfn.isDefinedAt) // defeat closure
     val g: PartialFunction[(R, T, SideInputContext[T]), U] = ClosureCleaner.clean(pfn)
+
+    /*
+     * ProcessContext is required as an argument because it is passed to SideInputContext
+     * */
     @ProcessElement
     def processElement(
-                        c: DoFn[T, U]#ProcessContext, w: BoundedWindow, @Element element: T,
-                        out: OutputReceiver[U]): Unit =
+      c: DoFn[T, U]#ProcessContext,
+      w: BoundedWindow,
+      @Element element: T,
+      out: OutputReceiver[U]
+    ): Unit =
       if (isDefined((getResource, element, sideInputContext(c, w)))) {
         out.output(g((getResource, element, sideInputContext(c, w))))
       }
   }
 
-  class MapFnWithSideInputWithResource[T, U, R] private[transforms] (
-      resource: => R,
-      resourceType: ResourceType,
-      f: (R, T, SideInputContext[T]) => U
-    ) extends DoFnWithResource[T, U, R] with SideInputDoFn[T, U] {
-
+  class MapFnWithWithResource[T, U, R](
+    resource: => R,
+    resourceType: ResourceType,
+    f: (R, T, SideInputContext[T]) => U
+  ) extends SideInputDoFnWithResource[T, U, R] {
     override def getResourceType: ResourceType = resourceType
-
     override def createResource: R = resource
-
     val g = ClosureCleaner.clean(f)
 
+    /*
+     * ProcessContext is required as an argument because it is passed to SideInputContext
+     * */
     @ProcessElement
     def processElement(
-                        c: DoFn[T, U]#ProcessContext, w: BoundedWindow,
-                        @Element element: T,
-                        out: OutputReceiver[U]
-                      ): Unit =
+      c: DoFn[T, U]#ProcessContext,
+      w: BoundedWindow,
+      @Element element: T,
+      out: OutputReceiver[U]
+    ): Unit =
       out.output(g(getResource, element, sideInputContext(c, w)))
   }
 
-  class FlatMapFnWithResource[T, U, R] private[transforms] (
-                                                             resource: => R,
-                                                             resourceType: ResourceType,
-                                                             f: (R, T, SideInputContext[T]) => TraversableOnce[U]
-                                                           ) extends DoFnWithResource[T, U, R] with
-    SideInputDoFn[T, U] {
+  class FlatMapFnWithResource[T, U, R](
+    resource: => R,
+    resourceType: ResourceType,
+    f: (R, T, SideInputContext[T]) => TraversableOnce[U]
+  ) extends SideInputDoFnWithResource[T, U, R] {
     override def getResourceType: ResourceType = resourceType
-
     override def createResource: R = resource
-
     val g = ClosureCleaner.clean(f)
+
+    /*
+     * ProcessContext is required as an argument because it is passed to SideInputContext
+     * */
     @ProcessElement
     def processElement(
-                        c: DoFn[T, U]#ProcessContext, w: BoundedWindow,
-                        @Element element: T,
-                        out: OutputReceiver[U]
-                      ): Unit = {
+      c: DoFn[T, U]#ProcessContext,
+      w: BoundedWindow,
+      @Element element: T,
+      out: OutputReceiver[U]
+    ): Unit = {
       val i = g(getResource, element, sideInputContext(c, w)).iterator
       while (i.hasNext) out.output(i.next())
     }
   }
 
-  class FilterFnWithResource[T, R] private[transforms] (
-                                                         resource: => R,
-                                                         resourceType: ResourceType,
-                                                         f: (R, T, SideInputContext[T]) => Boolean
-                                                       ) extends DoFnWithResource[T, T, R] with
-    SideInputDoFn[T, T] {
+  class FilterFnWithResource[T, R](
+    resource: => R,
+    resourceType: ResourceType,
+    f: (R, T, SideInputContext[T]) => Boolean
+  ) extends SideInputDoFnWithResource[T, T, R] {
     override def getResourceType: ResourceType = resourceType
-
     override def createResource: R = resource
-
     val g = ClosureCleaner.clean(f)
+
+    /*
+     * ProcessContext is required as an argument because it is passed to SideInputContext
+     * */
     @ProcessElement
     def processElement(
-                        c: DoFn[T, T]#ProcessContext, w: BoundedWindow, @Element element: T,
-                        out: OutputReceiver[T]): Unit =
+      c: DoFn[T, T]#ProcessContext,
+      w: BoundedWindow,
+      @Element element: T,
+      out: OutputReceiver[T]
+    ): Unit =
       if (g(getResource, element, sideInputContext(c, w))) {
         out.output(element)
       }

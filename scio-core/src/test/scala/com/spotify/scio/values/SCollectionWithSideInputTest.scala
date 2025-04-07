@@ -18,8 +18,11 @@
 package com.spotify.scio.values
 
 import com.spotify.scio.testing.PipelineSpec
+import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import org.apache.beam.sdk.transforms.View
 import org.joda.time.{DateTimeConstants, Duration, Instant}
+
+import java.util.concurrent.Semaphore
 
 class SCollectionWithSideInputTest extends PipelineSpec {
   val sideData: Seq[(String, Int)] = Seq(("a", 1), ("b", 2), ("c", 3))
@@ -402,9 +405,9 @@ class SCollectionWithSideInputTest extends PipelineSpec {
       val p = p1
         .withSideInputs(p2)
         .batch(2)
-        .map((i, s) => {
+        .map { (i, s) =>
           i.map(v => s(p2).getOrElse(v, None)).filterNot(x => x == None).size
-        })
+        }
         .toSCollection
       p should containInAnyOrder(Seq(2, 1, 0))
     }
@@ -427,20 +430,103 @@ class SCollectionWithSideInputTest extends PipelineSpec {
 
   it should "support batchWeighted() with custom weight" in {
     runWithContext { sc =>
-
       // SCollection with 1 element to get a single bundle, then flattened
-      val p1 = sc.parallelize(
+      val p1 = sc
+        .parallelize(
           Seq(Seq(("a", 1L), ("d", 1L), ("a", 2L), ("a", 5L), ("d", 1L)))
-        ).flatten
+        )
+        .flatten
       val p2 = sc.parallelize(sideData).asMapSingletonSideInput
       val p = p1
         .withSideInputs(p2)
         .batchWeighted(3, { case (_, w) => w })
-        .map((i, s) => {
+        .map { (i, s) =>
           i.map(v => s(p2).getOrElse(v._1, None)).filterNot(x => x == None).size
-        })
+        }
         .toSCollection
       p should containInAnyOrder(Seq(2, 1, 0))
+    }
+  }
+
+  it should "support asMapSideInput" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(1))
+      val p2 = sc.parallelize(sideData).asMapSideInput
+      val s = p1.withSideInputs(p2).flatMap((_, s) => s(p2).toSeq).toSCollection
+      s should containInAnyOrder(sideData)
+    }
+  }
+
+  it should "support filter with resource" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(1, 2, 3, 4, 5))
+      val p2 = sc.parallelize(Seq((1, true), (2, false), (3, true))).asMapSideInput
+      val p = p1
+        .withSideInputs(p2)
+        .filterWithResource(new Semaphore(10, true), ResourceType.PER_INSTANCE) { (r, v, s) =>
+          r.acquire()
+          r.release()
+          s(p2).getOrElse(v, false)
+        }
+        .toSCollection
+      p should containInAnyOrder(Seq(1, 3))
+    }
+  }
+
+  it should "support flat map with resource" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq("a b c", "d e", "f"))
+      val p2 = sc.parallelize(Seq("a", "b", "e")).asSetSingletonSideInput
+      val p = p1
+        .withSideInputs(p2)
+        .flatMapWithResource(new Semaphore(10, true), ResourceType.PER_INSTANCE) { (r, v, s) =>
+          r.acquire()
+          r.release()
+          v.split(" ")
+            .filter(c => s(p2).contains(c))
+        }
+        .toSCollection
+      p.map(println)
+      p should containInAnyOrder(Seq("a", "b", "e"))
+    }
+  }
+
+  it should "support map with resource" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq("a", "b", "c", "d"))
+      val p2 = sc.parallelize(sideData).asMapSingletonSideInput
+      val p = p1
+        .withSideInputs(p2)
+        .mapWithResource(new Semaphore(10, true), ResourceType.PER_INSTANCE) { (r, v, s) =>
+          r.acquire()
+          r.release()
+          s(p2).getOrElse(v, 0)
+        }
+        .toSCollection
+      p should containInAnyOrder(Seq(1, 2, 3, 0))
+    }
+  }
+
+  it should "support collect with resource" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(
+        Seq(
+          ("test1", "a"),
+          ("test1", "d"),
+          ("test2", "c")
+        )
+      )
+      val p2 = sc.parallelize(sideData).asMapSingletonSideInput
+      val p = p1
+        .withSideInputs(p2)
+        .collectWithResource(new Semaphore(10, true), ResourceType.PER_INSTANCE) {
+          case (r, ("test1", v), s) =>
+            r.acquire()
+            r.release()
+            s(p2).getOrElse(v, 0)
+        }
+        .toSCollection
+      p should containInAnyOrder(Seq(1, 0))
     }
   }
 }

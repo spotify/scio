@@ -19,9 +19,15 @@ package com.spotify.scio.values
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
-import com.spotify.scio.transforms.{BatchDoFn, MapFnWithResource}
+import com.spotify.scio.transforms.BatchDoFn
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
-import com.spotify.scio.util.FunctionsWithSideInput.{MapFnWithSideInputWithResource, SideInputDoFn}
+import com.spotify.scio.util.FunctionsWithSideInput.{
+  CollectFnWithResource,
+  FilterFnWithResource,
+  FlatMapFnWithResource,
+  MapFnWithWithResource,
+  SideInputDoFn
+}
 import com.spotify.scio.util.{Functions, FunctionsWithSideInput, ScioUtil}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow
@@ -95,9 +101,9 @@ class SCollectionWithSideInput[T] private[values] (
 
   /** [[SCollection.batch]] that retains [[SideInput]]. */
   def batch(
-             batchSize: Long,
-             maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
-           ): SCollectionWithSideInput[Iterable[T]] = {
+    batchSize: Long,
+    maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
+  ): SCollectionWithSideInput[Iterable[T]] = {
     val weigher = Functions.serializableFn[T, java.lang.Long](_ => 1)
     val o = coll
       .pApply(parDo(new BatchDoFn[T](batchSize, weigher, maxLiveWindows)))
@@ -108,17 +114,17 @@ class SCollectionWithSideInput[T] private[values] (
 
   /** [[SCollection.batchByteSized]] that retains [[SideInput]]. */
   def batchByteSized(
-                      batchByteSize: Long,
-                      maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
-                    ): SCollectionWithSideInput[Iterable[T]] =
+    batchByteSize: Long,
+    maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
+  ): SCollectionWithSideInput[Iterable[T]] =
     batchWeighted(batchByteSize, ScioUtil.elementByteSize(context), maxLiveWindows)
 
   /** [[SCollection.batchWeighted]] that retains [[SideInput]]. */
   def batchWeighted(
-                     batchWeight: Long,
-                     cost: T => Long,
-                     maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
-                   ): SCollectionWithSideInput[Iterable[T]] = {
+    batchWeight: Long,
+    cost: T => Long,
+    maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
+  ): SCollectionWithSideInput[Iterable[T]] = {
     val weigher = Functions.serializableFn(cost.andThen(Long.box))
     val o = coll
       .pApply(parDo(new BatchDoFn[T](batchWeight, weigher, maxLiveWindows)))
@@ -127,21 +133,43 @@ class SCollectionWithSideInput[T] private[values] (
     new SCollectionWithSideInput[Iterable[T]](o, sides)
   }
 
-  def mapWithResource[R, U: Coder](resource: => R, resourceType: ResourceType)(
-    fn: (R, T, SideInputContext[T]) => U
-  ): SCollectionWithSideInput[U] = {
-  val o = coll
-    .pApply(parDo(new MapFnWithSideInputWithResource(resource, resourceType, fn)))
-    .setCoder(CoderMaterializer.beam(context, Coder[Iterable[U]]))
-  new SCollectionWithSideInput[U](o, sides)
+  /** [[filter]] with additional resource arguments. */
+  def filterWithResource[R](resource: => R, resourceType: ResourceType)(
+    f: (R, T, SideInputContext[T]) => Boolean
+  ): SCollectionWithSideInput[T] = {
+    val o = coll
+      .pApply(parDo(new FilterFnWithResource(resource, resourceType, f)))
+      .setCoder(internal.getCoder)
+    new SCollectionWithSideInput(o, sides)
   }
 
+  /** [[flatMap]] with additional resource arguments. */
+  def flatMapWithResource[R, U: Coder](resource: => R, resourceType: ResourceType)(
+    f: (R, T, SideInputContext[T]) => TraversableOnce[U]
+  ): SCollectionWithSideInput[U] = {
+    val o = coll
+      .pApply(parDo(new FlatMapFnWithResource(resource, resourceType, f)))
+      .setCoder(CoderMaterializer.beam(context, Coder[U]))
+    new SCollectionWithSideInput[U](o, sides)
+  }
+
+  /** [[map]] with additional resource arguments. */
   def mapWithResource[R, U: Coder](resource: => R, resourceType: ResourceType)(
     fn: (R, T, SideInputContext[T]) => U
   ): SCollectionWithSideInput[U] = {
     val o = coll
-      .pApply(parDo(new MapFnWithSideInputWithResource(resource, resourceType, fn)))
-      .setCoder(CoderMaterializer.beam(context, Coder[Iterable[U]]))
+      .pApply(parDo(new MapFnWithWithResource(resource, resourceType, fn)))
+      .setCoder(CoderMaterializer.beam(context, Coder[U]))
+    new SCollectionWithSideInput[U](o, sides)
+  }
+
+  /** [[collect]] with additional resource arguments. */
+  def collectWithResource[R, U: Coder](resource: => R, resourceType: ResourceType)(
+    pfn: PartialFunction[(R, T, SideInputContext[T]), U]
+  ): SCollectionWithSideInput[U] = {
+    val o = coll
+      .pApply(parDo(new CollectFnWithResource(resource, resourceType, pfn)))
+      .setCoder(CoderMaterializer.beam(context, Coder[U]))
     new SCollectionWithSideInput[U](o, sides)
   }
 
