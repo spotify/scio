@@ -90,7 +90,7 @@ class SCollectionWithSideInput[T] private[values] (
     new SCollectionWithSideInput[U](o, sides)
   }
 
-  /** [[SCollection.map]] with an additional [[SideInputContext]] argument. */
+  /** [[SCollection.collect]] with an additional [[SideInputContext]] argument. */
   def collect[U: Coder](
     f: PartialFunction[(T, SideInputContext[T]), U]
   ): SCollectionWithSideInput[U] = {
