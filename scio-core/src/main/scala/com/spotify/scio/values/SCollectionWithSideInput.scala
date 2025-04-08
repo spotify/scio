@@ -165,26 +165,6 @@ class SCollectionWithSideInput[T] private[values] (
       sides
     )
 
-  /** [[SCollection.withPaneInfo]] that retains [[SideInput]]. */
-  def withPaneInfo: SCollectionWithSideInput[(T, PaneInfo)] =
-    new SCollectionWithSideInput(coll.withPaneInfo, sides)
-
-  /** [[SCollection.withTimestamp]] that retains [[SideInput]]. */
-  def withTimestamp: SCollectionWithSideInput[(T, Instant)] =
-    new SCollectionWithSideInput(coll.withTimestamp, sides)
-
-  /** [[SCollection.withTimestamp]] that retains [[SideInput]]. */
-  def withWindow[W <: BoundedWindow: Coder]: SCollectionWithSideInput[(T, W)] =
-    new SCollectionWithSideInput(coll.withWindow, sides)
-
-  /** [[SCollection.withFixedWindows]] that retains [[SideInput]]. */
-  def withFixedWindows(
-    duration: Duration,
-    offset: Duration = Duration.ZERO,
-    options: WindowOptions = WindowOptions()
-  ): SCollectionWithSideInput[T] =
-    new SCollectionWithSideInput(coll.withFixedWindows(duration, offset, options), sides)
-
   /**
    * Allows multiple outputs from [[SCollectionWithSideInput]].
    *
