@@ -48,18 +48,19 @@ public class JsonBucketMetadataTest {
                     .set("currentCountry", "US")
                     .set("prevCountries", Arrays.asList("CN", "MX")));
 
-    Assert.assertEquals(
-        (Integer) 10,
+    BucketMetadata<Integer, String, TableRow> metadata =
         new JsonBucketMetadata<>(
-                1,
-                1,
-                Integer.class,
-                "age",
-                null,
-                null,
-                HashType.MURMUR3_32,
-                SortedBucketIO.DEFAULT_FILENAME_PREFIX)
-            .extractKeyPrimary(user));
+            1,
+            1,
+            Integer.class,
+            "age",
+            String.class,
+            "user",
+            HashType.MURMUR3_32,
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX);
+
+    Assert.assertEquals((Integer) 10, metadata.extractKeyPrimary(user));
+    Assert.assertEquals("Alice", metadata.extractKeySecondary(user));
 
     Assert.assertEquals(
         "US",
