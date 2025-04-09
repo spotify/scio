@@ -197,10 +197,10 @@ public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> 
       final Class<K2> keyClass = getKeyClassSecondary();
       if (IndexedRecord.class.isAssignableFrom(recordClass)) {
         final IndexedRecord record = (IndexedRecord) value;
-        final int[] path = AvroUtils.toKeyPath(keyField, keyClass, record.getSchema());
+        final int[] path = AvroUtils.toKeyPath(keyFieldSecondary, keyClass, record.getSchema());
         getter = (v) -> AvroBucketMetadata.extractKey(keyClass, path, (IndexedRecord) v);
       } else if (scala.Product.class.isAssignableFrom(recordClass)) {
-        final Method[] methods = toKeyGetters(keyField, keyClass, recordClass);
+        final Method[] methods = toKeyGetters(keyFieldSecondary, keyClass, recordClass);
         getter = (v) -> extractKey(methods, v);
       } else {
         throw new IllegalArgumentException(

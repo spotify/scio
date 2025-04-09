@@ -55,31 +55,33 @@ class ParquetBucketMetadataTest extends AnyFlatSpec with Matchers {
       .set("suffix", "Jr")
       .build()
 
-    val idMeta = new ParquetBucketMetadata[Long, Void, GenericRecord](
+    val idMeta = new ParquetBucketMetadata[Long, ByteBuffer, GenericRecord](
       1,
       1,
       classOf[Long],
       "id",
-      null,
-      null,
+      classOf[ByteBuffer],
+      "location.countryId",
       HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       RECORD_SCHEMA
     )
     idMeta.extractKeyPrimary(user) shouldBe 10L
+    idMeta.extractKeySecondary(user) shouldBe countryId
 
-    val countryIdMeta = new ParquetBucketMetadata[ByteBuffer, Void, GenericRecord](
+    val countryIdMeta = new ParquetBucketMetadata[ByteBuffer, Long, GenericRecord](
       1,
       1,
       classOf[ByteBuffer],
       "location.countryId",
-      null,
-      null,
+      classOf[Long],
+      "id",
       HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       RECORD_SCHEMA
     )
     countryIdMeta.extractKeyPrimary(user) shouldBe countryId
+    countryIdMeta.extractKeySecondary(user) shouldBe 10L
 
     val postalCodeMeta = new ParquetBucketMetadata[ByteBuffer, Void, GenericRecord](
       1,
