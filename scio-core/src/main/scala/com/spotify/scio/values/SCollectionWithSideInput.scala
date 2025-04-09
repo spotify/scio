@@ -30,7 +30,7 @@ import com.spotify.scio.util.FunctionsWithSideInput.{
 }
 import com.spotify.scio.util.{FunctionsWithSideInput, ScioUtil}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
-import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
+import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.apache.beam.sdk.values.{PCollection, TupleTag, TupleTagList}
 
@@ -38,7 +38,6 @@ import scala.jdk.CollectionConverters._
 import scala.collection.compat._
 import scala.util.Try
 import com.twitter.chill.ClosureCleaner
-import org.joda.time.{Duration, Instant}
 
 /**
  * An enhanced SCollection that provides access to one or more [[SideInput]] s for some transforms.

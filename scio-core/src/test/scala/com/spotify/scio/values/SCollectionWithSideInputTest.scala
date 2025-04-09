@@ -20,13 +20,6 @@ package com.spotify.scio.values
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import org.apache.beam.sdk.transforms.View
-import org.apache.beam.sdk.transforms.windowing.{
-  BoundedWindow,
-  GlobalWindow,
-  IntervalWindow,
-  PaneInfo
-}
-import org.apache.beam.sdk.transforms.windowing.PaneInfo.Timing
 import org.joda.time.{DateTimeConstants, Duration, Instant}
 
 import java.util.concurrent.Semaphore
@@ -535,6 +528,5 @@ class SCollectionWithSideInputTest extends PipelineSpec {
         .toSCollection
       p should containInAnyOrder(Seq(1, 0))
     }
-  }
   }
 }
