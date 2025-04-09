@@ -19,9 +19,16 @@ package com.spotify.scio.values
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
-
-import com.spotify.scio.util.FunctionsWithSideInput.SideInputDoFn
-import com.spotify.scio.util.FunctionsWithSideInput
+import com.spotify.scio.transforms.BatchDoFn
+import com.spotify.scio.transforms.DoFnWithResource.ResourceType
+import com.spotify.scio.util.FunctionsWithSideInput.{
+  CollectFnWithResource,
+  FilterFnWithResource,
+  FlatMapFnWithResource,
+  MapFnWithWithResource,
+  SideInputDoFn
+}
+import com.spotify.scio.util.{FunctionsWithSideInput, ScioUtil}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
@@ -81,6 +88,81 @@ class SCollectionWithSideInput[T] private[values] (
       .setCoder(CoderMaterializer.beam(context, Coder[U]))
     new SCollectionWithSideInput[U](o, sides)
   }
+
+  /** [[SCollection.collect]] with an additional [[SideInputContext]] argument. */
+  def collect[U: Coder](
+    f: PartialFunction[(T, SideInputContext[T]), U]
+  ): SCollectionWithSideInput[U] = {
+    val o = coll
+      .pApply(parDo(FunctionsWithSideInput.partialFn(f)))
+      .setCoder(CoderMaterializer.beam(context, Coder[U]))
+    new SCollectionWithSideInput[U](o, sides)
+  }
+
+  /** [[filter]] with additional resource arguments. */
+  def filterWithResource[R](resource: => R, resourceType: ResourceType)(
+    f: (R, T, SideInputContext[T]) => Boolean
+  ): SCollectionWithSideInput[T] = {
+    val o = coll
+      .pApply(parDo(new FilterFnWithResource(resource, resourceType, f)))
+      .setCoder(internal.getCoder)
+    new SCollectionWithSideInput(o, sides)
+  }
+
+  /** [[flatMap]] with additional resource arguments. */
+  def flatMapWithResource[R, U: Coder](resource: => R, resourceType: ResourceType)(
+    f: (R, T, SideInputContext[T]) => TraversableOnce[U]
+  ): SCollectionWithSideInput[U] = {
+    val o = coll
+      .pApply(parDo(new FlatMapFnWithResource(resource, resourceType, f)))
+      .setCoder(CoderMaterializer.beam(context, Coder[U]))
+    new SCollectionWithSideInput[U](o, sides)
+  }
+
+  /** [[map]] with additional resource arguments. */
+  def mapWithResource[R, U: Coder](resource: => R, resourceType: ResourceType)(
+    fn: (R, T, SideInputContext[T]) => U
+  ): SCollectionWithSideInput[U] = {
+    val o = coll
+      .pApply(parDo(new MapFnWithWithResource(resource, resourceType, fn)))
+      .setCoder(CoderMaterializer.beam(context, Coder[U]))
+    new SCollectionWithSideInput[U](o, sides)
+  }
+
+  /** [[collect]] with additional resource arguments. */
+  def collectWithResource[R, U: Coder](resource: => R, resourceType: ResourceType)(
+    pfn: PartialFunction[(R, T, SideInputContext[T]), U]
+  ): SCollectionWithSideInput[U] = {
+    val o = coll
+      .pApply(parDo(new CollectFnWithResource(resource, resourceType, pfn)))
+      .setCoder(CoderMaterializer.beam(context, Coder[U]))
+    new SCollectionWithSideInput[U](o, sides)
+  }
+
+  /** [[SCollection.batch]] that retains [[SideInput]]. */
+  def batch(
+    batchSize: Long,
+    maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
+  ): SCollectionWithSideInput[Iterable[T]] =
+    new SCollectionWithSideInput[Iterable[T]](coll.batch(batchSize, maxLiveWindows), sides)
+
+  /** [[SCollection.batchByteSized]] that retains [[SideInput]]. */
+  def batchByteSized(
+    batchByteSize: Long,
+    maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
+  ): SCollectionWithSideInput[Iterable[T]] =
+    batchWeighted(batchByteSize, ScioUtil.elementByteSize(context), maxLiveWindows)
+
+  /** [[SCollection.batchWeighted]] that retains [[SideInput]]. */
+  def batchWeighted(
+    batchWeight: Long,
+    cost: T => Long,
+    maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
+  ): SCollectionWithSideInput[Iterable[T]] =
+    new SCollectionWithSideInput[Iterable[T]](
+      coll.batchWeighted(batchWeight, cost, maxLiveWindows),
+      sides
+    )
 
   /**
    * Allows multiple outputs from [[SCollectionWithSideInput]].
