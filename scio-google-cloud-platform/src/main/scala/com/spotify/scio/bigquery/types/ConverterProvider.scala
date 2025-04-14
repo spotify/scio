@@ -207,7 +207,7 @@ private[types] object ConverterProvider {
 
         // nested records
         case t if isCaseClass(c)(t) =>
-          val fn = TermName("r" + fieldName)
+          val fn = TermName("r" + s"${fieldName}_${t.typeSymbol.name}")
           q"""{
                 val $fn = $tree
                 ${constructor(fieldName, t, fn)}
