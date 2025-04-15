@@ -214,6 +214,12 @@ class ConverterProviderTest extends AnyFlatSpec with Matchers {
     bqt.toAvro(cc2) shouldBe avro2
     bqt.fromAvro(avro2) shouldBe cc2
   }
+
+  it should "produce a valid toAvro impl for records with nested repeated field names" in {
+    val record = NestedBase(NestedLevel1(NestedLevel2("foo")))
+    val bqt = BigQueryType[NestedBase]
+    bqt.fromAvro(bqt.toAvro(record)) shouldEqual record
+  }
 }
 
 object ConverterProviderTest {
@@ -271,4 +277,9 @@ object ConverterProviderTest {
     repeatedField: List[Required],
     doubleNestedField: DoubleNested
   )
+
+  @BigQueryType.toTable
+  case class NestedBase(repeatFieldName: NestedLevel1)
+  case class NestedLevel1(repeatFieldName: NestedLevel2)
+  case class NestedLevel2(s: String)
 }
