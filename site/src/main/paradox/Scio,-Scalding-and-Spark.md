@@ -6,7 +6,7 @@ Scio's API is heavily influenced by Spark with a lot of ideas from Scalding.
 
 ## Scio and Spark
 
-The Dataflow programming model is fundamentally different from that of Spark. Read this Google [blog article](https://cloud.google.com/dataflow/blog/dataflow-beam-and-spark-comparison) for more details.
+The Dataflow programming model is fundamentally different from that of Spark. Read this Google [blog article](https://cloud.google.com/blog/products/gcp/comparing-the-dataflowbeam-and-spark-programming-models) for more details.
 
 The Scio API is heavily influenced by Spark but there are some minor differences.
 
