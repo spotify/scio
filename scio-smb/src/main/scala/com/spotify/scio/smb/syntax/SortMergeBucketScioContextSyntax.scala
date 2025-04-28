@@ -700,7 +700,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
         )
       }
       if (self.isTest) {
-        val result = SMBMultiJoin(self).testCoGroup[(K1, K2)](a, b)
+        val result = SMBMultiJoin(self).testCoGroup[(K1, K2)](a, b, c)
         val keyed = result.map { kv =>
           val (k1, k2) = kv.getKey
           KV.of(k1, k2) -> fromResult(kv.getValue)
