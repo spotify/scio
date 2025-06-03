@@ -32,7 +32,7 @@ val beamVendorVersion = "0.1"
 val beamVersion = "2.65.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.64.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.65.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = sys.props.getOrElse("avro.version", "1.11.4")
@@ -51,7 +51,7 @@ val httpClientVersion = "4.5.13"
 val httpCoreVersion = "4.4.14"
 val jacksonVersion = "2.15.4"
 val jodaTimeVersion = "2.10.14"
-val nettyVersion = "4.1.110.Final"
+val nettyVersion = "4.1.118.Final"
 val protobufVersion = "3.25.5"
 val slf4jVersion = "1.7.30"
 val zstdJniVersion = "1.5.6-3"
