@@ -136,7 +136,7 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
   private def getMetric[V](m: Map[beam.MetricName, V], k: beam.MetricName): V =
     m.get(k) match {
       case Some(value) => value
-      case None =>
+      case None        =>
         val e = new NoSuchElementException(
           s"metric not found: $k, the metric might not have been accessed inside the pipeline"
         )

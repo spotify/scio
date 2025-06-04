@@ -133,7 +133,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
       .toSCollection(sc)
       .map { example =>
         projectionOpt match {
-          case None => example
+          case None             => example
           case Some(projection) =>
             val featureNames = projection.getFeatureList.asScala.map(_.getName).toSet
             val projectedFeatures = example.getFeatures.getFeatureMap.asScala.filter {

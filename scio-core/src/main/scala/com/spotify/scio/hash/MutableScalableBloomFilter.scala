@@ -284,7 +284,7 @@ case class MutableScalableBloomFilter[T](
 
   def +=(item: T): MutableScalableBloomFilter[T] = {
     val headFilter = head match {
-      case None => scale()
+      case None    => scale()
       case Some(h) =>
         val shouldGrow = headCount >= headCapacity
         if (shouldGrow) scale() else h

@@ -87,7 +87,7 @@ private object TFRecordCodec {
           pushback
         }
       case Compression.UNCOMPRESSED => stream
-      case _ =>
+      case _                        =>
         Channels.newInputStream(compression.readDecompressed(Channels.newChannel(stream)))
     }
   }

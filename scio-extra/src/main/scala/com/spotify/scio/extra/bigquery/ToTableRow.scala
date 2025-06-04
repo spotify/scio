@@ -83,7 +83,7 @@ private[bigquery] trait ToTableRow {
       case x: org.joda.time.LocalDate => JodaLocalDateFormatter.print(x)
       case x: org.joda.time.LocalTime => JodaLocalTimeFormatter.print(x)
       case x: org.joda.time.DateTime  => JodaTimestampFormatter.print(x)
-      case _ =>
+      case _                          =>
         throw AvroConversionException(
           s"ToTableRow conversion failed:" +
             s"could not match ${fieldValue.getClass}"

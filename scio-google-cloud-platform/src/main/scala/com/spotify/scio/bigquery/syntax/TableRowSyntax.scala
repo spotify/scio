@@ -43,7 +43,7 @@ object TableRowOps {
   def int(value: AnyRef): Int = value match {
     case x: java.lang.Number => x.intValue()
     case x: String           => x.toInt
-    case _ =>
+    case _                   =>
       throw new UnsupportedOperationException("Cannot convert to integer: " + value)
   }
 
@@ -62,13 +62,13 @@ object TableRowOps {
   def double(value: AnyRef): Double = value match {
     case x: java.lang.Number => x.doubleValue()
     case x: String           => x.toDouble
-    case _ =>
+    case _                   =>
       throw new UnsupportedOperationException("Cannot convert to double: " + value)
   }
 
   def string(value: AnyRef): String = value match {
     case x: java.lang.String => x
-    case _ =>
+    case _                   =>
       throw new UnsupportedOperationException("Cannot convert to string: " + value)
   }
 
@@ -77,7 +77,7 @@ object TableRowOps {
     case x: java.math.BigDecimal  => Numeric(BigDecimal(x))
     case x: java.lang.Number      => Numeric(x.toString)
     case x: String                => Numeric(x)
-    case _ =>
+    case _                        =>
       throw new UnsupportedOperationException("Cannot convert to numeric: " + value)
   }
 
@@ -90,7 +90,7 @@ object TableRowOps {
   def timestamp(value: AnyRef): Instant = value match {
     case x: Instant          => x
     case x: java.lang.String => Timestamp.parse(x)
-    case _ =>
+    case _                   =>
       throw new UnsupportedOperationException("Cannot convert to timestamp: " + value)
   }
 
@@ -109,14 +109,14 @@ object TableRowOps {
   def datetime(value: AnyRef): LocalDateTime = value match {
     case x: LocalDateTime => x
     case x: String        => DateTime.parse(x)
-    case _ =>
+    case _                =>
       throw new UnsupportedOperationException("Cannot convert to datetime: " + value)
   }
 
   def geography(value: AnyRef): Geography = value match {
     case x: Geography => x
     case x: String    => Geography(x)
-    case _ =>
+    case _            =>
       throw new UnsupportedOperationException("Cannot convert to geography: " + value)
   }
 
@@ -131,7 +131,7 @@ object TableRowOps {
     case x: java.math.BigDecimal => BigNumeric(x)
     case x: java.lang.Number     => BigNumeric(x.toString)
     case x: String               => BigNumeric(x)
-    case _ =>
+    case _                       =>
       throw new UnsupportedOperationException("Cannot convert to bigNumeric: " + value)
   }
 

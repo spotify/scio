@@ -47,7 +47,7 @@ object SchemaUtil {
       case DOUBLE        => ("Double", Seq.empty)
       case STRING | ENUM => ("String", Seq.empty)
       case BYTES         => ("ByteString", Seq.empty)
-      case ARRAY =>
+      case ARRAY         =>
         val (fieldType, nested) =
           getFieldType(className, fieldName, fieldSchema.getElementType, indent)
         (s"List[$fieldType]", nested)

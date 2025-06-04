@@ -872,7 +872,7 @@ class ScioContext private[scio] (
   def unionAll[T: Coder](scs: => Iterable[SCollection[T]]): SCollection[T] = {
     val tfName = this.tfName // evaluate eagerly to avoid overriding `scs` names
     scs match {
-      case Nil => empty()
+      case Nil      => empty()
       case contents =>
         wrap(
           PCollectionList

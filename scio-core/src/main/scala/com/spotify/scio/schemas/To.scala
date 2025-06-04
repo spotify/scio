@@ -141,7 +141,7 @@ object To {
     while (iter.hasNext) {
       val f = iter.next()
       val value = t0.getValue[Object](f.getName) match {
-        case None => null
+        case None                                                    => null
         case r: Row if f.getType.getTypeName == BSchema.TypeName.ROW =>
           transform(f.getType.getRowSchema)(r)
         case v =>

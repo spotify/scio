@@ -28,7 +28,7 @@ class FixLogicalTypeSupplier extends SemanticRule("FixLogicalTypeSupplier") {
   private def isLogicalTypeSupplier(term: Term)(implicit doc: SemanticDocument): Boolean =
     term match {
       case q"classOf[$tpe]" => LogicalTypeSupplierMatcher.matches(tpe.symbol)
-      case _ =>
+      case _                =>
         term.symbol.info
           .map(_.signature)
           .collect { case MethodSignature(_, _, returnedType) => returnedType }

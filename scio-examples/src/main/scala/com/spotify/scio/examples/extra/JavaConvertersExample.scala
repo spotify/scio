@@ -39,7 +39,7 @@ object JavaConvertersExample {
         t.toResource(StaticValueProvider.of(output.toResourceId))
       case "String#toFilenamePolicy"      => t.to(output.toFilenamePolicy)
       case "String#toStaticValueProvider" => t.to(output.toStaticValueProvider)
-      case "FilenamePolicy#toJava" =>
+      case "FilenamePolicy#toJava"        =>
         t.to(FilenamePolicy(output, "-SSSSS-of-NNNNN", ".csv").asJava)
     }
 

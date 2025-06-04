@@ -78,7 +78,7 @@ class ParquetReadFn[T, R](
       ) match {
       case ParquetReadConfiguration.SplitGranularityFile     => SplitGranularity.File
       case ParquetReadConfiguration.SplitGranularityRowGroup => SplitGranularity.RowGroup
-      case other: String =>
+      case other: String                                     =>
         logger.warn(
           "Found unsupported setting value {} for key {}. Defaulting to file-level splitting.",
           Array(other, ParquetReadConfiguration.SplitGranularity) // varargs fails with 2.12
@@ -96,7 +96,7 @@ class ParquetReadFn[T, R](
       ) match {
       case ParquetReadConfiguration.FilterGranularityPage   => FilterGranularity.Page
       case ParquetReadConfiguration.FilterGranularityRecord => FilterGranularity.Record
-      case other: String =>
+      case other: String                                    =>
         logger.warn(
           "Found unsupported setting value {} for key {}. Defaulting to record-level filtering.",
           Array(other, ParquetReadConfiguration.FilterGranularity) // varargs fails with 2.12
@@ -111,7 +111,7 @@ class ParquetReadFn[T, R](
 
   @GetInitialRestriction
   def getInitialRestriction(@Element file: ReadableFile): OffsetRange = splitGranularity match {
-    case SplitGranularity.File => EntireFileRange
+    case SplitGranularity.File     => EntireFileRange
     case SplitGranularity.RowGroup =>
       val reader = parquetFileReader(file)
       val rowGroups =
@@ -141,7 +141,7 @@ class ParquetReadFn[T, R](
     @Element file: ReadableFile
   ): Unit = {
     splitGranularity match {
-      case SplitGranularity.File => output.output(EntireFileRange)
+      case SplitGranularity.File     => output.output(EntireFileRange)
       case SplitGranularity.RowGroup =>
         val reader = parquetFileReader(file)
         try {

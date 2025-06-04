@@ -39,7 +39,7 @@ final class RowOps(private val self: Row) extends AnyVal {
   /** Map of qualifiers to values. */
   def getFamilyMap(familyName: String): Map[ByteString, ByteString] =
     self.getFamiliesList.asScala.find(_.getName == familyName) match {
-      case None => Map.empty
+      case None    => Map.empty
       case Some(f) =>
         if (f.getColumnsCount > 0) {
           f.getColumnsList.asScala

@@ -82,7 +82,7 @@ private[client] object Cache {
     if (isCacheEnabled) {
       get(key, f) match {
         case Some(schema) => schema
-        case None =>
+        case None         =>
           val schema = method
           set(key, schema, f)
           schema

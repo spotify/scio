@@ -273,7 +273,7 @@ object BigQuery {
 
         _credentials match {
           case sa: ServiceAccountCredentials => s"service account ${sa.getAccount}"
-          case uc: UserCredentials =>
+          case uc: UserCredentials           =>
             s"user ${uc.getClientId} in project ${Option(uc.getQuotaProjectId).filterNot(_.isEmpty).getOrElse("unknown")}"
           case ic: ImpersonatedCredentials =>
             s"impersonated account ${ic.getAccount} in project ${Option(ic.getQuotaProjectId).filterNot(_.isEmpty).getOrElse("unknown")}"
