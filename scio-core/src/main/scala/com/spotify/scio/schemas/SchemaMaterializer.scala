@@ -57,7 +57,7 @@ object SchemaMaterializer {
       case s @ LogicalType(_)       => (decode(s)(_)).asInstanceOf[schema.Repr => A]
       case s @ OptionType(_)        => (decode(s)(_)).asInstanceOf[schema.Repr => A]
       case s @ ArrayType(_, _, _)   => (decode[s._F, s._T](s)(_)).asInstanceOf[schema.Repr => A]
-      case s @ MapType(_, _, _, _) =>
+      case s @ MapType(_, _, _, _)  =>
         (decode[s._F, s._K, s._V](s)(_)).asInstanceOf[schema.Repr => A]
     }
 

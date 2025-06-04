@@ -58,7 +58,7 @@ private[scio] object ArtisanJoin {
           |a.groupByKey.join(b) => a.join(b)
         """.stripMargin
       a.context.optionsAs[ScioOptions].getChainedCogroups match {
-        case CheckEnabled.OFF =>
+        case CheckEnabled.OFF     =>
         case CheckEnabled.WARNING =>
           log.warn(msg)
         case CheckEnabled.ERROR =>

@@ -112,19 +112,20 @@ object TrafficMaxLaneFlow {
       .maxByKey(Ordering.by(_.flow))
       .values
       .withTimestamp
-      .map { case (l, ts) => // (lane flow, timestamp)
-        Record(
-          l.stationId,
-          l.direction,
-          l.freeway,
-          l.flow,
-          l.lane,
-          l.avgOcc,
-          l.avgSpeed,
-          l.totalFlow,
-          l.recordedTimestamp,
-          ts
-        )
+      .map {
+        case (l, ts) => // (lane flow, timestamp)
+          Record(
+            l.stationId,
+            l.direction,
+            l.freeway,
+            l.flow,
+            l.lane,
+            l.avgOcc,
+            l.avgSpeed,
+            l.totalFlow,
+            l.recordedTimestamp,
+            ts
+          )
       }
       .saveAsTypedBigQueryTable(Table.Spec(args("output")))
 

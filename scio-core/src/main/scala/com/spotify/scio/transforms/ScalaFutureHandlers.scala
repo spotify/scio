@@ -48,7 +48,7 @@ trait ScalaFutureHandlers[T] extends FutureHandlers.Base[Future[T], T] {
   ): Future[T] =
     future.andThen {
       case Failure(exception) => onFailure(exception)
-      case Success(value) =>
+      case Success(value)     =>
         try onSuccess(value)
         catch { case exp: Throwable => onFailure(exp) }
     }

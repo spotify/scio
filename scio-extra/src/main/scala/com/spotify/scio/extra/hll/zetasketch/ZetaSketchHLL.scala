@@ -39,7 +39,7 @@ final class ZetaSketchHll[T](arrOpt: Option[Array[Byte]], elemOpt: Option[T] = N
       x.add(hp.convert(elem))
       x
     }
-    case (Some(arr), None) => hp.hll(arr)
+    case (Some(arr), None)  => hp.hll(arr)
     case (None, Some(elem)) => {
       val x = hp.hll()
       x.add(hp.convert(elem))

@@ -147,7 +147,7 @@ private[sparkey] object ShardedSparkeyUri {
 
     val distinctNumShards = shardInfo.map { case (_, numShards) => numShards }.distinct.toList
     distinctNumShards match {
-      case Nil => (Seq.empty[String], 0)
+      case Nil              => (Seq.empty[String], 0)
       case numShards :: Nil =>
         val numShardFiles = shardInfo.map { case (shardIdx, _) => shardIdx }.toSet.size
         require(

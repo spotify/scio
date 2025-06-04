@@ -66,8 +66,8 @@ class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") 
   )(symbol: Symbol)(implicit doc: SemanticDocument): Boolean = {
     @tailrec def go(isSub: Boolean, sym: List[Symbol]): Boolean = {
       (isSub, sym) match {
-        case (true, _)    => true
-        case (false, Nil) => false
+        case (true, _)        => true
+        case (false, Nil)     => false
         case (false, s :: ss) =>
           val parents = s.info.map(_.signature) match {
             case Some(ClassSignature(_, parents, _, _)) =>

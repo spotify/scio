@@ -83,7 +83,7 @@ final case class Neo4jIO[T](neo4jOptions: Neo4jOptions, cypher: String)(implicit
 
   private[neo4j] lazy val unwindMapName: String = cypher match {
     case UnwindParameterRegex(name) => name
-    case _ =>
+    case _                          =>
       throw new IllegalArgumentException(
         s"""Expected unwind cypher with parameter but got:
            |$cypher

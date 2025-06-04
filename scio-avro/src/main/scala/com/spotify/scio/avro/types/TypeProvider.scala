@@ -99,7 +99,7 @@ private[types] object TypeProvider {
         }
       val r = matchResult(FileSystems.`match`(p)) match {
         case Some(x) => Some(x)
-        case None =>
+        case None    =>
           matchResult(FileSystems.`match`(p.replaceFirst("/?$", "/*.avro")))
       }
       require(r.isDefined, s"Unable to match Avro file from path '$p'")

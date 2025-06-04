@@ -321,7 +321,7 @@ object BinaryIO {
           current = Option(record)
           current match {
             case Some(_) => true
-            case None =>
+            case None    =>
               binaryFileReader.end(state, is)
               false
           }

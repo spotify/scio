@@ -53,7 +53,7 @@ object ParquetReadConfiguration {
 
   private[scio] def getUseSplittableDoFn(conf: Configuration, opts: PipelineOptions): Boolean = {
     Option(conf.get(UseSplittableDoFn)) match {
-      case Some(v) => v.toBoolean
+      case Some(v)                                => v.toBoolean
       case None if dataflowRunnerV2Disabled(opts) =>
         log.info(
           "Defaulting to HadoopFormatIO-based Parquet read as Dataflow Runner V2 is disabled. To opt in, " +

@@ -27,9 +27,9 @@ import org.scalatest.matchers.should.Matchers
 object GrpcSerializerTest {
 
   val eqCause: Equality[Throwable] = {
-    case (null, null) => true
-    case (null, _)    => false
-    case (_, null)    => false
+    case (null, null)                 => true
+    case (null, _)                    => false
+    case (_, null)                    => false
     case (a: Throwable, b: Throwable) =>
       a.getClass == b.getClass &&
       a.getMessage == b.getMessage

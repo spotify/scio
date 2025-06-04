@@ -1650,7 +1650,7 @@ lazy val `scio-repl` = project
             sdkDeps.toList match {
               case Library(_, _, t, s) :: Nil => Right(Vector(JarEntry(t, s)))
               case Project(_, _, t, s) :: Nil => Right(Vector(JarEntry(t, s)))
-              case _ =>
+              case _                          =>
                 val conflictList = conflicts.mkString("\n  ", "\n  ", "\n")
                 Left("Error merging beam sdk classes:" + conflictList)
             }
@@ -1667,7 +1667,7 @@ lazy val `scio-repl` = project
                   JarEntry(t, s)
               } match {
                 case Some(e) => Right(Vector(e))
-                case None =>
+                case None    =>
                   val conflictList = conflicts.mkString("\n  ", "\n  ", "\n")
                   Left("Error merging squareup classes:" + conflictList)
               }

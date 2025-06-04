@@ -66,25 +66,25 @@ object StorageUtil {
   private def setRawType(tableField: TableFieldSchema, schema: Schema): Unit = {
     val tpe = schema.getType match {
       case Type.BOOLEAN => "BOOLEAN"
-      case Type.LONG =>
+      case Type.LONG    =>
         schema.getLogicalType match {
           case null                                 => "INT64"
           case t if t.getName == "timestamp-micros" => "TIMESTAMP"
           case t if t.getName == "time-micros"      => "TIME"
-          case t =>
+          case t                                    =>
             throw new IllegalStateException(s"Unsupported logical type: $t")
         }
       case Type.DOUBLE => "FLOAT64"
-      case Type.BYTES =>
+      case Type.BYTES  =>
         schema.getLogicalType match {
-          case null => "BYTES"
+          case null                        => "BYTES"
           case t if t.getName == "decimal" =>
             val precision = schema.getObjectProp("precision").asInstanceOf[Int]
             val scale = schema.getObjectProp("scale").asInstanceOf[Int]
             (precision, scale) match {
               case (38, 9)  => "NUMERIC"
               case (77, 38) => "BIGNUMERIC"
-              case _ =>
+              case _        =>
                 throw new IllegalStateException(
                   s"Unsupported decimal precision and scale: ($precision, $scale)"
                 )

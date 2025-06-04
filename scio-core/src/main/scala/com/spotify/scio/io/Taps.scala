@@ -161,7 +161,7 @@ object Taps extends {
   def apply(): Taps =
     Algorithm.value(AlgorithmDefault) match {
       case "immediate" => new ImmediateTaps
-      case "polling" =>
+      case "polling"   =>
         val maxAttempts =
           PollingMaximumAttempts.value(PollingMaximumAttemptsDefault).toInt
         val initInterval =

@@ -140,7 +140,7 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Double]  => tree
         case t if t =:= typeOf[String]  => tree
 
-        case t if t =:= typeOf[ByteString] => q"$tree.asReadOnlyByteBuffer"
+        case t if t =:= typeOf[ByteString]  => q"$tree.asReadOnlyByteBuffer"
         case t if t =:= typeOf[Array[Byte]] =>
           q"_root_.java.nio.ByteBuffer.wrap($tree)"
 
