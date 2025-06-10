@@ -49,18 +49,28 @@ object JdbcIO {
 
   private[jdbc] def dataSourceConfiguration(
     opts: JdbcConnectionOptions
-  ): BJdbcIO.DataSourceConfiguration =
-    opts.password match {
-      case Some(pass) =>
-        BJdbcIO.DataSourceConfiguration
+  ): BJdbcIO.DataSourceConfiguration = {
+    val urlParameters = opts.connectionUrl
+      .split('?')(1)
+      .split('&')
+      .map { x =>
+        val pair = x.split('=')
+        (pair(0), pair(1))
+      }
+      .toMap
+
+    val config = BJdbcIO.DataSourceConfiguration
           .create(opts.driverClass.getCanonicalName, opts.connectionUrl)
           .withUsername(opts.username)
-          .withPassword(pass)
-      case None =>
-        BJdbcIO.DataSourceConfiguration
-          .create(opts.driverClass.getCanonicalName, opts.connectionUrl)
-          .withUsername(opts.username)
-    }
+
+    val config2 = opts.password
+      .map(pass => config.withPassword(pass))
+      .getOrElse(config)
+
+    urlParameters.get("cloudSqlInstance")
+      .map(instance => config2.withConnectionProperties("cloudSqlInstance=" + instance))
+      .getOrElse(config2)
+  }
 
   object ReadParam {
     val BeamDefaultFetchSize: Int = -1
