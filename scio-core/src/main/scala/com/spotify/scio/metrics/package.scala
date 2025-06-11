@@ -17,7 +17,10 @@
 
 package com.spotify.scio
 
+import org.apache.beam.sdk.metrics.{Lineage => BLineage, MetricResults}
 import org.joda.time.Instant
+
+import scala.jdk.CollectionConverters.SetHasAsScala
 
 /** This package contains the schema types for metrics collected during a pipeline run. */
 package object metrics {
@@ -52,4 +55,17 @@ package object metrics {
   final case class BeamMetric[T](namespace: String, name: String, value: MetricValue[T])
   final case class BeamDistribution(sum: Long, count: Long, min: Long, max: Long, mean: Double)
   final case class BeamGauge(value: Long, timestamp: Instant)
+
+  final case class Lineage(
+    sources: List[String],
+    sinks: List[String]
+  )
+
+  object Lineage {
+    def apply(metricResults: MetricResults): Lineage =
+      Lineage(
+        BLineage.query(metricResults, BLineage.Type.SOURCE).asScala.toList,
+        BLineage.query(metricResults, BLineage.Type.SINK).asScala.toList
+      )
+  }
 }

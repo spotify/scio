@@ -22,7 +22,7 @@ import com.spotify.scio.coders.CoderMaterializer
 import java.io.PrintWriter
 import java.nio.file.{Files, NoSuchFileException}
 import com.spotify.scio.io.TextIO
-import com.spotify.scio.metrics.Metrics
+import com.spotify.scio.metrics.{Lineage, Metrics}
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing.{PipelineSpec, TestValidationOptions}
 import com.spotify.scio.util.ScioUtil
@@ -140,6 +140,21 @@ class ScioContextTest extends PipelineSpec {
 
     val metrics = mapper.readValue(metricsFile, classOf[Metrics])
     metrics.version shouldBe BuildInfo.version
+  }
+
+  it should "support save lineage on close for finished pipeline" in {
+    val lineageFile = Files.createTempFile("scio-lineage-dump-", ".json").toFile
+    val opts = PipelineOptionsFactory.create()
+    opts.setRunner(classOf[DirectRunner])
+    opts.as(classOf[ScioOptions]).setLineageLocation(lineageFile.toString)
+    val sc = ScioContext(opts)
+    sc.run().waitUntilFinish() // block non-test runner
+
+    val mapper = ScioUtil.getScalaJsonMapper
+
+    val metrics = mapper.readValue(lineageFile, classOf[Lineage])
+    metrics.sources shouldBe List()
+    metrics.sinks shouldBe List()
   }
 
   it should "fail to run() on closed context" in {

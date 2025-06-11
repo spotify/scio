@@ -40,6 +40,11 @@ public interface ScioOptions extends PipelineOptions, KryoOptions {
 
   void setMetricsLocation(String metricsLocation);
 
+  @Description("Filename to save lineage to")
+  String getLineageLocation();
+
+  void setLineageLocation(String lineageLocation);
+
   @Description("Set to true to block on ScioContext#close()")
   boolean isBlocking();
 

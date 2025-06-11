@@ -18,10 +18,9 @@
 package com.spotify.scio.runners.dataflow
 
 import java.util.Collections
-
 import com.google.api.services.dataflow.Dataflow
 import com.google.api.services.dataflow.model.{Job, JobMetrics}
-import com.spotify.scio.metrics.Metrics
+import com.spotify.scio.metrics.{Lineage, Metrics}
 import com.spotify.scio.{RunnerResult, ScioResult}
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.runners.dataflow.{DataflowClient, DataflowPipelineJob}
@@ -71,6 +70,9 @@ class DataflowResult(val internal: DataflowPipelineJob) extends RunnerResult {
         getBeamMetrics
       )
     }
+
+    /** Get lineage data of the finished pipeline. */
+    override def getLineage: Lineage = Lineage(internal.metrics())
   }
 }
 

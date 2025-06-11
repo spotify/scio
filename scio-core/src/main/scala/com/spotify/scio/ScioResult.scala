@@ -59,6 +59,9 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
   /** Get metrics of the finished pipeline. */
   def getMetrics: Metrics
 
+  /** Get lineage data of the finished pipeline. */
+  def getLineage: Lineage
+
   /** Whether this is the result of a test. */
   def isTest: Boolean = false
 
@@ -66,12 +69,19 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
   def state: State = Try(internal.getState).getOrElse(State.UNKNOWN)
 
   /** Save metrics of the finished pipeline to a file. */
-  def saveMetrics(filename: String): Unit = {
+  def saveMetrics(filename: String): Unit =
+    saveJsonFile(filename, getMetrics)
+
+  /** Save lineage of the finished pipeline to a file. */
+  def saveLineage(filename: String): Unit =
+    saveJsonFile(filename, getLineage)
+
+  private def saveJsonFile(filename: String, value: Object): Unit = {
     val mapper = ScioUtil.getScalaJsonMapper
     val resourceId = FileSystems.matchNewResource(filename, false)
     val out = FileSystems.create(resourceId, MimeTypes.TEXT)
     try {
-      out.write(ByteBuffer.wrap(mapper.writeValueAsBytes(getMetrics)))
+      out.write(ByteBuffer.wrap(mapper.writeValueAsBytes(value)))
     } finally {
       if (out != null) {
         out.close()
