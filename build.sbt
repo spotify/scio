@@ -53,7 +53,7 @@ val httpCoreVersion = "4.4.14"
 val jacksonVersion = "2.15.4"
 val jodaTimeVersion = "2.10.14"
 val nettyVersion = "4.1.118.Final"
-val protobufVersion = "3.25.5" // stuck on Protobuf 3: https://github.com/spotify/scio/issues/5617
+val protobufVersion = "4.29.4"
 val slf4jVersion = "1.7.30"
 val zstdJniVersion = "1.5.6-3"
 // dependent versions
@@ -116,7 +116,6 @@ val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.2.19"
 val shapelessVersion = "2.3.13"
 val sparkeyVersion = "3.2.5"
-val tensorFlowVersion = "0.4.2"
 val tensorFlowMetadataVersion = "1.16.1"
 val testContainersVersion = "0.43.0"
 val voyagerVersion = "2.1.0"
@@ -1020,8 +1019,7 @@ lazy val `scio-test-parquet` = project
       "org.apache.parquet" % "parquet-avro" % parquetVersion,
       "org.apache.parquet" % "parquet-column" % parquetVersion,
       "org.apache.parquet" % "parquet-common" % parquetVersion,
-      "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
-      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided
+      "org.apache.parquet" % "parquet-hadoop" % parquetVersion
     )
   )
 
@@ -1395,7 +1393,6 @@ lazy val `scio-parquet` = project
       "org.slf4j" % "log4j-over-slf4j" % slf4jVersion, // log4j is excluded from hadoop
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // provided
-      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided,
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Provided,
       // runtime
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion % Runtime excludeAll (Exclude.metricsCore),
@@ -1446,7 +1443,6 @@ lazy val `scio-tensorflow` = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
-      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion,
       // test
       "com.spotify" %% "featran-core" % featranVersion % Test,
       "com.spotify" %% "featran-scio" % featranVersion % Test,
@@ -1583,7 +1579,6 @@ lazy val `scio-examples` = project
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
       "org.neo4j.driver" % "neo4j-java-driver" % neo4jDriverVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion,
       "redis.clients" % "jedis" % jedisVersion,
       // runtime
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
@@ -1814,7 +1809,6 @@ lazy val `scio-smb` = project
       "org.apache.parquet" % "parquet-column" % parquetVersion % Provided, // scio-parquet
       "org.apache.parquet" % "parquet-common" % parquetVersion % Provided, // scio-parquet
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion % Provided, // scio-parquet
-      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided, // scio-tensorflow
       // test
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % Test classifier "tests",
       "org.hamcrest" % "hamcrest" % hamcrestVersion % Test,
