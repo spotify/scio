@@ -35,35 +35,5 @@ final case class JdbcConnectionOptions(
   username: String,
   password: Option[String],
   connectionUrl: String,
-  cloudSqlInstanceConnectionName: Option[String],
   driverClass: Class[_ <: Driver]
 )
-
-object JdbcConnectionOptions {
-  def apply(
-    username: String,
-    password: Option[String],
-    connectionUrl: String,
-    driverClass: Class[_ <: Driver]
-  ): JdbcConnectionOptions = {
-    val cloudSqlInstance = getParameters(connectionUrl)
-      .get("cloudSqlInstance")
-      .flatten
-    JdbcConnectionOptions(username, password, connectionUrl, cloudSqlInstance, driverClass)
-  }
-
-  def getParameters(connectionUrl: String): Map[String, Option[String]] = {
-    connectionUrl.split('?').toList match {
-      case _ :: parameters :: _ =>
-        parameters
-          .split('&')
-          .map { x =>
-            val pair = x.split('=')
-            (pair(0), if (pair.length > 1) Some(pair(1)) else None)
-          }
-          .toMap
-      case _ =>
-        Map.empty
-    }
-  }
-}

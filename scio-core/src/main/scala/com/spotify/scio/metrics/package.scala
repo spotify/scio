@@ -20,7 +20,7 @@ package com.spotify.scio
 import org.apache.beam.sdk.metrics.{Lineage => BLineage, MetricResults}
 import org.joda.time.Instant
 
-import scala.jdk.CollectionConverters.SetHasAsScala
+import scala.collection.mutable.ListBuffer
 
 /** This package contains the schema types for metrics collected during a pipeline run. */
 package object metrics {
@@ -62,10 +62,20 @@ package object metrics {
   )
 
   object Lineage {
-    def apply(metricResults: MetricResults): Lineage =
+    def apply(metricResults: MetricResults): Lineage = {
       Lineage(
-        BLineage.query(metricResults, BLineage.Type.SOURCE).asScala.toList,
-        BLineage.query(metricResults, BLineage.Type.SINK).asScala.toList
+        asScalaCrossCompatible(BLineage.query(metricResults, BLineage.Type.SOURCE)).toList,
+        asScalaCrossCompatible(BLineage.query(metricResults, BLineage.Type.SINK)).toList
       )
+    }
+
+    private def asScalaCrossCompatible(set: java.util.Set[String]): Iterable[String] = {
+      val iterator = set.iterator()
+      val buffer = new ListBuffer[String]()
+      while (iterator.hasNext) {
+        buffer += iterator.next()
+      }
+      buffer
+    }
   }
 }
