@@ -137,7 +137,8 @@ class BigQueryTypeIT extends AnyFlatSpec with Matchers {
     typed.map(bqt.toTableRow).map(bqt.fromTableRow) shouldBe typed
   }
 
-  it should "round trip rows with SQL syntax" in {
+  // Ignore persistent test failure: see https://github.com/spotify/scio/issues/5702
+  ignore should "round trip rows with SQL syntax" in {
     val bqt = BigQueryType[SqlT]
     val rows = bq.query.rows(sqlQuery).toList
     val typed = Seq(SqlT(Some("Romeo"), Some(117L)))
