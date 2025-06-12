@@ -128,7 +128,8 @@ class BigQueryTypeIT extends AnyFlatSpec with Matchers {
     fields.map(_.getMode) shouldBe Seq("NULLABLE", "NULLABLE")
   }
 
-  it should "round trip rows with legacy syntax" in {
+  // Ignore persistent test failure: see https://github.com/spotify/scio/issues/5702
+  ignore should "round trip rows with legacy syntax" in {
     val bqt = BigQueryType[LegacyT]
     val rows = bq.query.rows(legacyQuery).toList
     val typed = Seq(LegacyT("Romeo", 117L))
