@@ -23,7 +23,7 @@ import java.net.URI
 import java.nio.file.Files
 import com.spotify.scio.coders.{Coder, CoderMaterializer, KVCoder}
 import com.spotify.scio.io._
-import com.spotify.scio.metrics.{Lineage, Metrics}
+import com.spotify.scio.metrics.Metrics
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
@@ -700,14 +700,9 @@ class ScioContext private[scio] (
 
         new ScioResult(pipelineResult) {
           private val metricsLocation = sc.optionsAs[ScioOptions].getMetricsLocation
-          private val lineageLocation = sc.optionsAs[ScioOptions].getLineageLocation
 
           if (metricsLocation != null) {
             saveMetrics(metricsLocation)
-          }
-
-          if (lineageLocation != null) {
-            saveLineage(lineageLocation)
           }
 
           override def getMetrics: Metrics =
@@ -716,11 +711,9 @@ class ScioContext private[scio] (
               BuildInfo.scalaVersion,
               sc.optionsAs[ApplicationNameOptions].getAppName,
               this.state.toString,
-              getBeamMetrics
+              getBeamMetrics,
+              getBeamLineage
             )
-
-          /** Get lineage data of the finished pipeline. */
-          override def getLineage: Lineage = Lineage(pipelineResult.metrics())
 
           override def isTest: Boolean = sc.isTest
         }

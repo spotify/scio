@@ -17,18 +17,21 @@
 
 package com.spotify.scio
 
-import java.nio.ByteBuffer
-
 import com.spotify.scio.io.{ClosedTap, Tap}
 import com.spotify.scio.metrics._
 import com.spotify.scio.util.ScioUtil
 import com.twitter.algebird.Semigroup
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.io.FileSystems
-import org.apache.beam.sdk.metrics.{DistributionResult, GaugeResult}
+import org.apache.beam.sdk.io.fs.{ResolveOptions, ResourceId}
+import org.apache.beam.sdk.metrics.{DistributionResult, GaugeResult, Lineage}
 import org.apache.beam.sdk.util.MimeTypes
 import org.apache.beam.sdk.{metrics => beam, PipelineResult}
 
+import java.io.File
+import java.nio.ByteBuffer
+import java.util.UUID
+import scala.collection.mutable.ListBuffer
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import scala.util.Try
@@ -59,26 +62,30 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
   /** Get metrics of the finished pipeline. */
   def getMetrics: Metrics
 
-  /** Get lineage data of the finished pipeline. */
-  def getLineage: Lineage
-
   /** Whether this is the result of a test. */
   def isTest: Boolean = false
 
   /** Pipeline's current state. */
   def state: State = Try(internal.getState).getOrElse(State.UNKNOWN)
 
-  /** Save metrics of the finished pipeline to a file. */
-  def saveMetrics(filename: String): Unit =
-    saveJsonFile(filename, getMetrics)
+  /** Save metrics of the finished pipeline to a file or directory. */
+  def saveMetrics(path: String): Unit = {
+    val isDirectory = path.endsWith(File.separator)
 
-  /** Save lineage of the finished pipeline to a file. */
-  def saveLineage(filename: String): Unit =
-    saveJsonFile(filename, getLineage)
+    val resourceId = if (isDirectory) {
+      val randomFileName = f"${UUID.randomUUID()}.json"
+      FileSystems
+        .matchNewResource(path, true)
+        .resolve(randomFileName, ResolveOptions.StandardResolveOptions.RESOLVE_FILE)
+    } else {
+      FileSystems.matchNewResource(path, false)
+    }
 
-  private def saveJsonFile(filename: String, value: Object): Unit = {
+    saveJsonFile(resourceId, getMetrics)
+  }
+
+  private def saveJsonFile(resourceId: ResourceId, value: Object): Unit = {
     val mapper = ScioUtil.getScalaJsonMapper
-    val resourceId = FileSystems.matchNewResource(filename, false)
     val out = FileSystems.create(resourceId, MimeTypes.TEXT)
     try {
       out.write(ByteBuffer.wrap(mapper.writeValueAsBytes(value)))
@@ -87,7 +94,33 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
         out.close()
       }
     }
-    ()
+  }
+
+  protected def getBeamLineage: BeamLineage = {
+    def asScalaCrossCompatible(set: java.util.Set[String]): Iterable[String] = {
+      val iterator = set.iterator()
+      val buffer = new ListBuffer[String]()
+      while (iterator.hasNext) {
+        buffer += iterator.next()
+      }
+      buffer
+    }
+
+    def getBeamResource(metricValue: String): LineageResource = {
+      metricValue.split(':') match {
+        case Array(tp, id) => LineageResource(tp, id, metricValue)
+        case _             => LineageResource(null, null, metricValue)
+      }
+    }
+
+    BeamLineage(
+      asScalaCrossCompatible(Lineage.query(internal.metrics(), Lineage.Type.SOURCE))
+        .map(getBeamResource)
+        .toList,
+      asScalaCrossCompatible(Lineage.query(internal.metrics(), Lineage.Type.SINK))
+        .map(getBeamResource)
+        .toList
+    )
   }
 
   protected def getBeamMetrics: BeamMetrics = {

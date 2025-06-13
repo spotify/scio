@@ -17,10 +17,7 @@
 
 package com.spotify.scio
 
-import org.apache.beam.sdk.metrics.{Lineage => BLineage, MetricResults}
 import org.joda.time.Instant
-
-import scala.collection.mutable.ListBuffer
 
 /** This package contains the schema types for metrics collected during a pipeline run. */
 package object metrics {
@@ -44,7 +41,8 @@ package object metrics {
     scalaVersion: String,
     appName: String,
     state: String,
-    beamMetrics: BeamMetrics
+    beamMetrics: BeamMetrics,
+    beamLineage: BeamLineage
   )
 
   final case class BeamMetrics(
@@ -56,26 +54,14 @@ package object metrics {
   final case class BeamDistribution(sum: Long, count: Long, min: Long, max: Long, mean: Double)
   final case class BeamGauge(value: Long, timestamp: Instant)
 
-  final case class Lineage(
-    sources: List[String],
-    sinks: List[String]
+  final case class BeamLineage(
+    sources: List[LineageResource],
+    sinks: List[LineageResource]
   )
 
-  object Lineage {
-    def apply(metricResults: MetricResults): Lineage = {
-      Lineage(
-        asScalaCrossCompatible(BLineage.query(metricResults, BLineage.Type.SOURCE)).toList,
-        asScalaCrossCompatible(BLineage.query(metricResults, BLineage.Type.SINK)).toList
-      )
-    }
-
-    private def asScalaCrossCompatible(set: java.util.Set[String]): Iterable[String] = {
-      val iterator = set.iterator()
-      val buffer = new ListBuffer[String]()
-      while (iterator.hasNext) {
-        buffer += iterator.next()
-      }
-      buffer
-    }
-  }
+  final case class LineageResource(
+    `type`: String,
+    id: String,
+    rawValue: String
+  )
 }

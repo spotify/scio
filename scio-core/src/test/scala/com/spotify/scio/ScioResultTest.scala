@@ -86,7 +86,5 @@ object ScioResultTest {
   // Mock Scio result takes 100 milliseconds to complete
   private val mockScioResult = new ScioResult(mockPipeline) {
     override def getMetrics: metrics.Metrics = null
-
-    override def getLineage: metrics.Lineage = null
   }
 }
