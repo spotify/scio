@@ -129,15 +129,21 @@ class SampleSCollectionFunctions[T](self: SCollection[T]) {
    *   sampled only once
    * @param fraction
    *   the sampling fraction
+   * @param seedOpt
+   *   if the same seed is set, sampling is done deterministically
+   *   default to None where sampling is done non-deterministically
    * @group transform
    */
-  def sample(withReplacement: Boolean, fraction: Double): SCollection[T] = {
+  def sample(withReplacement: Boolean, fraction: Double, seedOpt: Option[Long]): SCollection[T] = {
     import self.coder
     if (withReplacement) {
-      self.parDo(new PoissonSampler[T](fraction))
+      self.parDo(new PoissonSampler[T](fraction, seedOpt))
     } else {
-      self.parDo(new BernoulliSampler[T](fraction))
+      self.parDo(new BernoulliSampler[T](fraction, seedOpt))
     }
   }
 
+  // Reintroduce the original method: delegates to new one
+  def sample(withReplacement: Boolean, fraction: Double): SCollection[T] =
+    sample(withReplacement, fraction, None)
 }
