@@ -1,0 +1,59 @@
+name: Continuous Integration
+
+on:
+  workflow_dispatch: # Manual trigger for ad-hoc runs
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+concurrency:
+  group: ${{ github.workflow }} @ ${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  it-test:
+    name: Integration Test
+    if: (github.repository == 'spotify/scio') # don't run on forks
+    strategy:
+      matrix:
+        os: [ubuntu-22.04]
+        scala: [2.13]
+        java: [corretto@11]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout current branch (full)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java (corretto@11)
+        id: setup-java-corretto-11
+        if: matrix.java == 'corretto@11'
+        uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: 11
+          cache: sbt
+
+      - name: sbt update
+        if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
+        run: sbt +update
+
+      - name: Check that workflows are up to date
+        run: sbt '++ ${{ matrix.scala }}' githubWorkflowCheck
+
+      - name: gcloud auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          export_environment_variables: true
+          create_credentials_file: true
+
+      - name: Setup GitHub Action
+        env:
+          BQ_READ_TIMEOUT: 30000
+          CLOUDSQL_SQLSERVER_PASSWORD: ${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}
+        run: scripts/gha_setup.sh
+
+      - name: Test
+        run: 'sbt ''++ ${{ matrix.scala }}'' ''set integration/test/skip := false'' integration/test'
