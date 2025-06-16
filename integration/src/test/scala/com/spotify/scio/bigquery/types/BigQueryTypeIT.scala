@@ -20,13 +20,14 @@ package com.spotify.scio.bigquery.types
 import com.google.api.services.bigquery.model.TableReference
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.{Query, Table}
-import org.scalatest.Assertion
+import org.scalatest.{Assertion, BeforeAndAfterAll}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.annotation.StaticAnnotation
 import scala.jdk.CollectionConverters._
 import scala.reflect.runtime.universe._
+import scala.util.Try
 
 object BigQueryTypeIT {
   @BigQueryType.fromQuery(
@@ -88,7 +89,7 @@ object BigQueryTypeIT {
 }
 
 // integration/runMain com.spotify.scio.PopulateTestData to re-populate data for integration tests
-class BigQueryTypeIT extends AnyFlatSpec with Matchers {
+class BigQueryTypeIT extends AnyFlatSpec with Matchers with BeforeAndAfterAll {
   import BigQueryTypeIT._
 
   val bq: BigQuery = BigQuery.defaultInstance()
@@ -101,6 +102,10 @@ class BigQueryTypeIT extends AnyFlatSpec with Matchers {
     "SELECT word, word_count FROM [data-integration-test:partition_a.table_%s]"
   val sqlLatestQuery =
     "SELECT word, word_count FROM `data-integration-test.partition_a.table_%s`"
+
+  // First BQ service call fails on GHA; see https://github.com/spotify/scio/issues/5702
+  override protected def beforeAll(): Unit =
+    Try(bq.query.rows(sqlQuery).toList)
 
   "fromQuery" should "work with legacy syntax" in {
     val bqt = BigQueryType[LegacyT]
@@ -128,8 +133,7 @@ class BigQueryTypeIT extends AnyFlatSpec with Matchers {
     fields.map(_.getMode) shouldBe Seq("NULLABLE", "NULLABLE")
   }
 
-  // Ignore persistent test failure: see https://github.com/spotify/scio/issues/5702
-  ignore should "round trip rows with legacy syntax" in {
+  it should "round trip rows with legacy syntax" in {
     val bqt = BigQueryType[LegacyT]
     val rows = bq.query.rows(legacyQuery).toList
     val typed = Seq(LegacyT("Romeo", 117L))
@@ -137,8 +141,7 @@ class BigQueryTypeIT extends AnyFlatSpec with Matchers {
     typed.map(bqt.toTableRow).map(bqt.fromTableRow) shouldBe typed
   }
 
-  // Ignore persistent test failure: see https://github.com/spotify/scio/issues/5702
-  ignore should "round trip rows with SQL syntax" in {
+  it should "round trip rows with SQL syntax" in {
     val bqt = BigQueryType[SqlT]
     val rows = bq.query.rows(sqlQuery).toList
     val typed = Seq(SqlT(Some("Romeo"), Some(117L)))
