@@ -18,27 +18,31 @@
 package com.spotify.scio.bigquery
 
 import java.util.UUID
-
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.google.cloud.storage.Storage.BlobListOption
 import com.google.cloud.storage.{Blob, StorageOptions}
 import com.spotify.scio.bigquery.client.{BigQuery, ParquetCompression}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.jdk.CollectionConverters._
-import scala.util.Success
+import scala.util.{Success, Try}
 
 // integration/runMain com.spotify.scio.PopulateTestData to re-populate data for integration tests
-class BigQueryClientIT extends AnyFlatSpec with Matchers {
+class BigQueryClientIT extends AnyFlatSpec with Matchers with BeforeAndAfterAll {
   private[this] val bq = BigQuery.defaultInstance()
 
   val legacyQuery =
     "SELECT word, word_count FROM [bigquery-public-data:samples.shakespeare] LIMIT 10"
   val sqlQuery =
     "SELECT word, word_count FROM `bigquery-public-data.samples.shakespeare` LIMIT 10"
+
+  // First BQ service call fails on GHA; see https://github.com/spotify/scio/issues/5702
+  override protected def beforeAll(): Unit =
+    Try(bq.query.rows(sqlQuery).toList)
 
   "QueryService.run" should "run DML queries" in {
     val schema =
