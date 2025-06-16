@@ -1,4 +1,4 @@
-name: Continuous Integration
+name: Ad-hoc Continuous Integration
 
 on:
   workflow_dispatch: # Manual trigger for ad-hoc runs
