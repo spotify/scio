@@ -99,7 +99,7 @@ private[scio] class BernoulliSampler[T](val fraction: Double, private val seedOp
 }
 
 /** Companion object set seed to None by default, which samples non-deterministically */
-object BernoulliSampler {
+private[scio] object BernoulliSampler {
   def apply[T](fraction: Double, seed: Option[Long] = None): BernoulliSampler[T] =
     new BernoulliSampler[T](fraction, seed)
 }
@@ -136,7 +136,7 @@ private[scio] class PoissonSampler[T](val fraction: Double, private val seedOpt:
 }
 
 /** Companion object set seed to None by default, which samples non-deterministically */
-object PoissonSampler {
+private[scio] object PoissonSampler {
   def apply[T](fraction: Double, seed: Option[Long] = None): PoissonSampler[T] =
     new PoissonSampler[T](fraction, seed)
 }
