@@ -87,7 +87,7 @@ class RandomSamplerTest extends PipelineSpec {
     val result1 = test(sampler1, population).toArray
     val result2 = test(sampler2, population).toArray
 
-    result1 should contain theSameElementsInOrderAs(result2)
+    result1 should contain theSameElementsInOrderAs result2
   }
 
   "PoissonSampler" should "produce different output for different seeds" in {
@@ -107,7 +107,7 @@ class RandomSamplerTest extends PipelineSpec {
     val result1 = test(sampler1, population).toArray
     val result2 = test(sampler2, population).toArray
 
-    result1 should contain theSameElementsInOrderAs(result2)
+    result1 should contain theSameElementsInOrderAs result2
   }
 
   "BernoulliSampler" should "produce different output for different seeds" in {

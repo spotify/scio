@@ -130,8 +130,8 @@ class SampleSCollectionFunctions[T](self: SCollection[T]) {
    * @param fraction
    *   the sampling fraction
    * @param seedOpt
-   *   if the same seed is set, sampling is done deterministically
-   *   default to None where sampling is done non-deterministically
+   *   if the same seed is set, sampling is done deterministically default to None where sampling is
+   *   done non-deterministically
    * @group transform
    */
   def sample(withReplacement: Boolean, fraction: Double, seedOpt: Option[Long]): SCollection[T] = {

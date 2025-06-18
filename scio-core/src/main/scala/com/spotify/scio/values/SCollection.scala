@@ -939,8 +939,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @param fraction
    *   the sampling fraction
    * @param seedOpt
-   *   if the same seed is set, sampling is done deterministically
-   *   default to None where sampling is done non-deterministically
+   *   if the same seed is set, sampling is done deterministically default to None where sampling is
+   *   done non-deterministically
    * @group transform
    */
   // TODO move to implicit

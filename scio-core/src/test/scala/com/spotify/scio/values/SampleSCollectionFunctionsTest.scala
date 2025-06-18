@@ -69,7 +69,7 @@ class SampleSCollectionFunctionsTest extends PipelineSpec {
     val sample2 = runWithData(population)(_.sample(false, 0.2, Some(fixedSeed)))
     val sample3 = runWithData(population)(_.sample(false, 0.2, Some(otherSeed)))
 
-    sample1 should contain theSameElementsAs(sample2)
+    sample1 should contain theSameElementsAs sample2
     sample1 should not contain theSameElementsAs(sample3)
   }
 
@@ -80,7 +80,7 @@ class SampleSCollectionFunctionsTest extends PipelineSpec {
     val sample2 = runWithData(population)(_.sample(true, 0.2, Some(fixedSeed)))
     val sample3 = runWithData(population)(_.sample(true, 0.2, Some(otherSeed)))
 
-    sample1 should contain theSameElementsAs(sample2)
+    sample1 should contain theSameElementsAs sample2
     sample1 should not contain theSameElementsAs(sample3)
   }
 

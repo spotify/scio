@@ -67,13 +67,13 @@ abstract private[scio] class RandomSampler[T, R] extends DoFn[T, T] {
  * @param fraction
  *   the sampling fraction, aka Bernoulli sampling probability
  * @param seedOpt
- *   optional random seed to make sampling deterministic
- *   default to None, which samples non-deterministically
+ *   optional random seed to make sampling deterministic default to None, which samples
+ *   non-deterministically
  * @tparam T
  *   item type
  */
 private[scio] class BernoulliSampler[T](val fraction: Double, private val seedOpt: Option[Long])
-  extends RandomSampler[T, JRandom] {
+    extends RandomSampler[T, JRandom] {
 
   /** Epsilon slop to avoid failure from floating point jitter */
   require(
@@ -110,8 +110,8 @@ private[scio] object BernoulliSampler {
  * @param fraction
  *   the sampling fraction (with replacement)
  * @param seedOpt
- *   optional random seed to make sampling deterministic
- *   default to None, which samples non-deterministically
+ *   optional random seed to make sampling deterministic default to None, which samples
+ *   non-deterministically
  * @tparam T
  *   item type
  */
