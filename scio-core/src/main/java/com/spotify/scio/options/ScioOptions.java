@@ -35,10 +35,15 @@ public interface ScioOptions extends PipelineOptions, KryoOptions {
 
   void setScalaVersion(String version);
 
-  @Description("Filename to save metrics to")
+  @Description("Filename or folder to save metrics to")
   String getMetricsLocation();
 
   void setMetricsLocation(String metricsLocation);
+
+  @Description("Filename or folder to save lineage to")
+  String getLineageLocation();
+
+  void setLineageLocation(String metricsLocation);
 
   @Description("Set to true to block on ScioContext#close()")
   boolean isBlocking();

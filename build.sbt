@@ -392,6 +392,12 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ProblemFilters.exclude[ReversedMissingMethodProblem](
     "com.spotify.scio.options.ScioOptions.getZstdDictionary"
   ),
+  ProblemFilters.exclude[ReversedMissingMethodProblem](
+    "com.spotify.scio.options.ScioOptions.getLineageLocation"
+  ),
+  ProblemFilters.exclude[ReversedMissingMethodProblem](
+    "com.spotify.scio.options.ScioOptions.setLineageLocation"
+  ),
   // removal of private classes
   ProblemFilters.exclude[MissingClassProblem](
     "com.spotify.scio.coders.instances.kryo.GaxApiExceptionSerializer"
