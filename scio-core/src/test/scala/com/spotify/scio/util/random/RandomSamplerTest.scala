@@ -55,9 +55,9 @@ class RandomSamplerTest extends PipelineSpec {
     val expected = expectedSamples(withReplacement, expectedFraction)
 
     val sampler = if (withReplacement) {
-      new PoissonSampler[Int](actualFraction)
+      PoissonSampler[Int](actualFraction)
     } else {
-      new BernoulliSampler[Int](actualFraction)
+      BernoulliSampler[Int](actualFraction)
     }
     sampler.setSeed(fixedSeed)
 
@@ -78,6 +78,46 @@ class RandomSamplerTest extends PipelineSpec {
     testSampler(false, 0.7, 0.7) should be < D
     testSampler(false, 0.9, 0.9) should be < D
     testSampler(false, 0.4, 0.6) should be >= D
+  }
+
+  "PoissonSampler" should "produce identical output for same seed" in {
+    val sampler1 = new PoissonSampler[Int](0.5, Some(fixedSeed))
+    val sampler2 = new PoissonSampler[Int](0.5, Some(fixedSeed))
+
+    val result1 = test(sampler1, population).toArray
+    val result2 = test(sampler2, population).toArray
+
+    result1 should contain theSameElementsInOrderAs result2
+  }
+
+  "PoissonSampler" should "produce different output for different seeds" in {
+    val sampler1 = new PoissonSampler[Int](0.5, Some(fixedSeed))
+    val sampler2 = new PoissonSampler[Int](0.5, Some(otherSeed))
+
+    val result1 = test(sampler1, population).toArray
+    val result2 = test(sampler2, population).toArray
+
+    result1 should not contain theSameElementsInOrderAs(result2)
+  }
+
+  "BernoulliSampler" should "produce identical output for same seed" in {
+    val sampler1 = new BernoulliSampler[Int](0.5, Some(fixedSeed))
+    val sampler2 = new BernoulliSampler[Int](0.5, Some(fixedSeed))
+
+    val result1 = test(sampler1, population).toArray
+    val result2 = test(sampler2, population).toArray
+
+    result1 should contain theSameElementsInOrderAs result2
+  }
+
+  "BernoulliSampler" should "produce different output for different seeds" in {
+    val sampler1 = new BernoulliSampler[Int](0.5, Some(fixedSeed))
+    val sampler2 = new BernoulliSampler[Int](0.5, Some(otherSeed))
+
+    val result1 = test(sampler1, population).toArray
+    val result2 = test(sampler2, population).toArray
+
+    result1 should not contain theSameElementsInOrderAs(result2)
   }
 
   def testValueSampler(

@@ -62,4 +62,22 @@ class SampleSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
+  it should "support sample() with different seeds without replacement" in {
+    import RandomSamplerUtils._
+
+    val sample1 = runWithData(population)(_.sample(false, 0.2, Some(fixedSeed)))
+    val sample2 = runWithData(population)(_.sample(false, 0.2, Some(otherSeed)))
+
+    sample1 should not contain theSameElementsAs(sample2)
+  }
+
+  it should "support sample() with different seeds with replacement" in {
+    import RandomSamplerUtils._
+
+    val sample1 = runWithData(population)(_.sample(true, 0.2, Some(fixedSeed)))
+    val sample2 = runWithData(population)(_.sample(true, 0.2, Some(otherSeed)))
+
+    sample1 should not contain theSameElementsAs(sample2)
+  }
+
 }

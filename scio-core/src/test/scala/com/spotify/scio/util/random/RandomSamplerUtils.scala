@@ -51,6 +51,7 @@ object RandomSamplerUtils extends Serializable {
   val D = 0.0544280747619
 
   val fixedSeed = 235711L
+  val otherSeed = 1244321L
 
   // I'm not a big fan of fixing seeds, but unit testing based on running statistical tests
   // will always fail with some nonzero probability, so I'll fix the seed to prevent these

@@ -66,10 +66,14 @@ abstract private[scio] class RandomSampler[T, R] extends DoFn[T, T] {
  *
  * @param fraction
  *   the sampling fraction, aka Bernoulli sampling probability
+ * @param seedOpt
+ *   optional random seed to make sampling deterministic default to None, which samples
+ *   non-deterministically
  * @tparam T
  *   item type
  */
-private[scio] class BernoulliSampler[T](val fraction: Double) extends RandomSampler[T, JRandom] {
+private[scio] class BernoulliSampler[T](val fraction: Double, private val seedOpt: Option[Long])
+    extends RandomSampler[T, JRandom] {
 
   /** Epsilon slop to avoid failure from floating point jitter */
   require(
@@ -80,9 +84,7 @@ private[scio] class BernoulliSampler[T](val fraction: Double) extends RandomSamp
 
   override def init: JRandom = {
     val r = RandomSampler.newDefaultRNG
-    if (seed > 0) {
-      r.setSeed(seed)
-    }
+    seedOpt.foreach(r.setSeed)
     r
   }
 
@@ -96,15 +98,24 @@ private[scio] class BernoulliSampler[T](val fraction: Double) extends RandomSamp
     }
 }
 
+/** Companion object set seed to None by default, which samples non-deterministically */
+private[scio] object BernoulliSampler {
+  def apply[T](fraction: Double, seed: Option[Long] = None): BernoulliSampler[T] =
+    new BernoulliSampler[T](fraction, seed)
+}
+
 /**
  * A sampler for sampling with replacement, based on values drawn from Poisson distribution.
  *
  * @param fraction
  *   the sampling fraction (with replacement)
+ * @param seedOpt
+ *   optional random seed to make sampling deterministic default to None, which samples
+ *   non-deterministically
  * @tparam T
  *   item type
  */
-private[scio] class PoissonSampler[T](val fraction: Double)
+private[scio] class PoissonSampler[T](val fraction: Double, private val seedOpt: Option[Long])
     extends RandomSampler[T, IntegerDistribution] {
 
   /** Epsilon slop to avoid failure from floating point jitter. */
@@ -117,13 +128,17 @@ private[scio] class PoissonSampler[T](val fraction: Double)
   // If fraction is <= 0, 0 is used below, so we can use any placeholder value.
   override def init: IntegerDistribution = {
     val r = new PoissonDistribution(if (fraction > 0.0) fraction else 1.0)
-    if (seed > 0) {
-      r.reseedRandomGenerator(seed)
-    }
+    seedOpt.foreach(r.reseedRandomGenerator)
     r
   }
 
   override def samples: Int = if (fraction <= 0.0) 0 else rng.sample()
+}
+
+/** Companion object set seed to None by default, which samples non-deterministically */
+private[scio] object PoissonSampler {
+  def apply[T](fraction: Double, seed: Option[Long] = None): PoissonSampler[T] =
+    new PoissonSampler[T](fraction, seed)
 }
 
 abstract private[scio] class RandomValueSampler[K, V, R](val fractions: Map[K, Double])
