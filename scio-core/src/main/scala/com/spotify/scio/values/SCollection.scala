@@ -947,7 +947,16 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def sample(withReplacement: Boolean, fraction: Double, seedOpt: Option[Long]): SCollection[T] =
     new SampleSCollectionFunctions(this).sample(withReplacement, fraction, seedOpt)
 
-  // Ensures binary compatibility
+  /**
+   * Return a sampled subset of this SCollection. Does not trigger shuffling.
+   *
+   * @param withReplacement
+   *   if `true` the same element can be produced more than once, otherwise the same element will be
+   *   sampled only once
+   * @param fraction
+   *   the sampling fraction
+   * @group transform
+   */
   def sample(withReplacement: Boolean, fraction: Double): SCollection[T] =
     new SampleSCollectionFunctions(this).sample(withReplacement, fraction, None)
 

@@ -143,7 +143,16 @@ class SampleSCollectionFunctions[T](self: SCollection[T]) {
     }
   }
 
-  // Reintroduce the original method: delegates to new one
+  /**
+   * Return a sampled subset of this SCollection. Does not trigger shuffling.
+   *
+   * @param withReplacement
+   *   if `true` the same element can be produced more than once, otherwise the same element will be
+   *   sampled only once
+   * @param fraction
+   *   the sampling fraction
+   * @group transform
+   */
   def sample(withReplacement: Boolean, fraction: Double): SCollection[T] =
     sample(withReplacement, fraction, None)
 }
