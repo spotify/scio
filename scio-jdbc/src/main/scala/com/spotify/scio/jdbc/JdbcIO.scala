@@ -49,7 +49,7 @@ object JdbcIO {
 
   private[jdbc] def dataSourceConfiguration(
     opts: JdbcConnectionOptions
-  ): BJdbcIO.DataSourceConfiguration = {
+  ): BJdbcIO.DataSourceConfiguration =
     BJdbcIO.DataSourceConfiguration
       .create(opts.driverClass.getCanonicalName, opts.connectionUrl)
       .withUsername(opts.username)
@@ -63,9 +63,8 @@ object JdbcIO {
           .map(instance => "cloudSqlInstance=" + instance)
           .fold(c)(c.withConnectionProperties)
       }
-  }
 
-  private def getUrlParameters(connectionUrl: String): Map[String, Option[String]] = {
+  private def getUrlParameters(connectionUrl: String): Map[String, Option[String]] =
     connectionUrl.split('?').toList match {
       case _ :: parameters :: _ =>
         parameters
@@ -78,7 +77,6 @@ object JdbcIO {
       case _ =>
         Map.empty
     }
-  }
 
   object ReadParam {
     val BeamDefaultFetchSize: Int = -1

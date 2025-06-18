@@ -41,8 +41,7 @@ package object metrics {
     scalaVersion: String,
     appName: String,
     state: String,
-    beamMetrics: BeamMetrics,
-    beamLineage: BeamLineage
+    beamMetrics: BeamMetrics
   )
 
   final case class BeamMetrics(
@@ -55,13 +54,7 @@ package object metrics {
   final case class BeamGauge(value: Long, timestamp: Instant)
 
   final case class BeamLineage(
-    sources: List[LineageResource],
-    sinks: List[LineageResource]
-  )
-
-  final case class LineageResource(
-    `type`: String,
-    id: String,
-    rawValue: String
+    sources: List[String],
+    sinks: List[String]
   )
 }

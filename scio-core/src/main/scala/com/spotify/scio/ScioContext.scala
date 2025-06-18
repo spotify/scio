@@ -699,11 +699,8 @@ class ScioContext private[scio] (
         }
 
         new ScioResult(pipelineResult) {
-          private val metricsLocation = sc.optionsAs[ScioOptions].getMetricsLocation
-
-          if (metricsLocation != null) {
-            saveMetrics(metricsLocation)
-          }
+          Option(sc.optionsAs[ScioOptions].getMetricsLocation).foreach(saveMetrics)
+          Option(sc.optionsAs[ScioOptions].getLineageLocation).foreach(saveLineage)
 
           override def getMetrics: Metrics =
             Metrics(
@@ -711,8 +708,7 @@ class ScioContext private[scio] (
               BuildInfo.scalaVersion,
               sc.optionsAs[ApplicationNameOptions].getAppName,
               this.state.toString,
-              getBeamMetrics,
-              getBeamLineage
+              getBeamMetrics
             )
 
           override def isTest: Boolean = sc.isTest

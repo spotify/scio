@@ -28,9 +28,10 @@ import org.apache.beam.sdk.metrics.{DistributionResult, GaugeResult, Lineage}
 import org.apache.beam.sdk.util.MimeTypes
 import org.apache.beam.sdk.{metrics => beam, PipelineResult}
 
+import org.joda.time.Instant
+
 import java.io.File
 import java.nio.ByteBuffer
-import java.util.UUID
 import scala.collection.mutable.ListBuffer
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
@@ -71,17 +72,34 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
   /** Save metrics of the finished pipeline to a file or directory. */
   def saveMetrics(path: String): Unit = {
     val isDirectory = path.endsWith(File.separator)
+    saveJsonFile(
+      getResourceId(path, enforceNewFile = isDirectory, newFilePrefix = "metrics"),
+      getMetrics
+    )
+  }
 
-    val resourceId = if (isDirectory) {
-      val randomFileName = f"${UUID.randomUUID()}.json"
+  /** Save lineage of the finished pipeline to a file or directory. */
+  def saveLineage(path: String): Unit = {
+    val isDirectory = path.endsWith(File.separator)
+    saveJsonFile(
+      getResourceId(path, enforceNewFile = isDirectory, newFilePrefix = "lineage"),
+      getBeamLineage
+    )
+  }
+
+  private def getResourceId(
+    path: String,
+    enforceNewFile: Boolean,
+    newFilePrefix: String
+  ): ResourceId = {
+    if (enforceNewFile) {
+      val randomFileName = f"${newFilePrefix}_${Instant.now().getMillis}.json"
       FileSystems
         .matchNewResource(path, true)
         .resolve(randomFileName, ResolveOptions.StandardResolveOptions.RESOLVE_FILE)
     } else {
       FileSystems.matchNewResource(path, false)
     }
-
-    saveJsonFile(resourceId, getMetrics)
   }
 
   private def saveJsonFile(resourceId: ResourceId, value: Object): Unit = {
@@ -96,7 +114,7 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
     }
   }
 
-  protected def getBeamLineage: BeamLineage = {
+  def getBeamLineage: BeamLineage = {
     def asScalaCrossCompatible(set: java.util.Set[String]): Iterable[String] = {
       val iterator = set.iterator()
       val buffer = new ListBuffer[String]()
@@ -106,20 +124,9 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
       buffer
     }
 
-    def getBeamResource(metricValue: String): LineageResource = {
-      metricValue.split(':') match {
-        case Array(tp, id) => LineageResource(tp, id, metricValue)
-        case _             => LineageResource(null, null, metricValue)
-      }
-    }
-
     BeamLineage(
-      asScalaCrossCompatible(Lineage.query(internal.metrics(), Lineage.Type.SOURCE))
-        .map(getBeamResource)
-        .toList,
-      asScalaCrossCompatible(Lineage.query(internal.metrics(), Lineage.Type.SINK))
-        .map(getBeamResource)
-        .toList
+      asScalaCrossCompatible(Lineage.query(internal.metrics(), Lineage.Type.SOURCE)).toList,
+      asScalaCrossCompatible(Lineage.query(internal.metrics(), Lineage.Type.SINK)).toList
     )
   }
 
