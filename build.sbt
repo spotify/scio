@@ -1424,6 +1424,7 @@ lazy val `scio-snowflake` = project
 val tensorFlowMetadataSourcesDir =
   settingKey[File]("Directory containing TensorFlow metadata proto files")
 val tensorFlowMetadata = taskKey[Seq[File]]("Retrieve TensorFlow metadata proto files")
+val tensorflowPackage = taskKey[File]("Produce an artifact containing raw Tensorflow proto files")
 
 lazy val `scio-tensorflow` = project
   .in(file("scio-tensorflow"))
@@ -1480,7 +1481,22 @@ lazy val `scio-tensorflow` = project
       val metadataDep = ProtocPlugin.UnpackedDependency(protoFiles, Seq.empty)
       val deps = (Compile / PB.unpackDependencies).value
       new ProtocPlugin.UnpackedDependencies(deps.mappedFiles ++ Map(root -> metadataDep))
-    }
+    },
+    // Package TF proto files as standalone proto artifact
+    inConfig(Compile) {
+      Defaults.packageTaskSettings(
+        tensorflowPackage,
+        Def.task {
+          (
+            ((Compile / tensorFlowMetadata).value ** "*.proto").allPaths.get
+              .map(file => (file, (Compile / tensorFlowMetadataSourcesDir).value)) ++
+              (sourceDirectory.value / "protobuf" ** "*.proto").allPaths.get
+                .map(file => (file, (sourceDirectory.value / "protobuf")))
+          ).map { case (file, relativeDir) => (file, file.relativeTo(relativeDir).get.getPath) }
+        }
+      ) :+ (tensorflowPackage / artifactClassifier := Some("proto"))
+    },
+    addArtifact(Artifact("scio-tensorflow", "proto"), Compile / tensorflowPackage)
   )
 
 lazy val `scio-examples` = project
