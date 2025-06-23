@@ -46,3 +46,10 @@ examples.saveAsTfRecordFile("gs://output-example-path")
 seqExamples.saveAsTfRecordFile("gs://output-seq-example-path")
 sequenceExamples.saveAsTfRecordFile("gs://output-sequence-example-path")
 ```
+
+## Protobuf 3 vs Protobuf 4
+
+Scio <= 0.14.17 are compiled with Protobuf 3. They use pre-built Tensorflow schemas for `Example` and `Feature`/`FeatureList` from the `tensorflow-core-api` artifact.
+
+As of Scio 0.14.18, all Tensorflow proto models are compiled using Protobuf 4.x. `scio-tensorflow` ships with an extra `proto`-classifier artifact containing the raw Tensorflow `.proto` files,
+which you can import if you'd prefer to compile the models against your project's Protobuf version.
