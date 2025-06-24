@@ -52,4 +52,9 @@ package object metrics {
   final case class BeamMetric[T](namespace: String, name: String, value: MetricValue[T])
   final case class BeamDistribution(sum: Long, count: Long, min: Long, max: Long, mean: Double)
   final case class BeamGauge(value: Long, timestamp: Instant)
+
+  final case class BeamLineage(
+    sources: List[String],
+    sinks: List[String]
+  )
 }

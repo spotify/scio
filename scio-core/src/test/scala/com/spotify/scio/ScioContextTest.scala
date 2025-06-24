@@ -128,7 +128,7 @@ class ScioContextTest extends PipelineSpec {
     output.delete()
   }
 
-  it should "support save metrics on close for finished pipeline" in {
+  it should "support save metrics to specific file on close for finished pipeline" in {
     val metricsFile = Files.createTempFile("scio-metrics-dump-", ".json").toFile
     val opts = PipelineOptionsFactory.create()
     opts.setRunner(classOf[DirectRunner])
@@ -139,6 +139,23 @@ class ScioContextTest extends PipelineSpec {
     val mapper = ScioUtil.getScalaJsonMapper
 
     val metrics = mapper.readValue(metricsFile, classOf[Metrics])
+    metrics.version shouldBe BuildInfo.version
+  }
+
+  it should "support save metrics to a specific folder on close for finished pipeline" in {
+    val metricsDir = Files.createTempDirectory("scio-metrics-dump")
+    val opts = PipelineOptionsFactory.create()
+    opts.setRunner(classOf[DirectRunner])
+    opts.as(classOf[ScioOptions]).setMetricsLocation(metricsDir.toString + "/")
+    val sc = ScioContext(opts)
+    sc.run().waitUntilFinish() // block non-test runner
+
+    val mapper = ScioUtil.getScalaJsonMapper
+
+    val generatedFiles = metricsDir.toFile.list()
+
+    generatedFiles should have size 1
+    val metrics = mapper.readValue(metricsDir.resolve(generatedFiles.head).toFile, classOf[Metrics])
     metrics.version shouldBe BuildInfo.version
   }
 
