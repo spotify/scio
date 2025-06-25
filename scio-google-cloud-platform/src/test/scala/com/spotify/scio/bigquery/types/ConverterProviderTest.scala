@@ -215,6 +215,23 @@ class ConverterProviderTest extends AnyFlatSpec with Matchers {
     bqt.fromAvro(avro2) shouldBe cc2
   }
 
+  it should "support backwards-compatibility rules in Scio" in {
+    // Avro record returned from BQ service is missing an optional field defined in the case class;
+    // it should be populated as None in fromAvro
+    val avroSchema = new Schema.Parser().parse(s"""{
+         |  "type":"record",
+         |  "name":"Nullable",
+         |  "namespace":"org.apache.beam.sdk.io.gcp.bigquery",
+         |  "fields":[]
+         |}
+         |""".stripMargin)
+
+    val avroRecord = new GenericRecordBuilder(avroSchema).build()
+
+    val bqt = BigQueryType[Nullable]
+    bqt.fromAvro(avroRecord) shouldEqual Nullable(None)
+  }
+
   it should "produce a valid toAvro impl for records with nested repeated field names" in {
     val record = NestedBase(NestedLevel1(NestedLevel2("foo")))
     val bqt = BigQueryType[NestedBase]

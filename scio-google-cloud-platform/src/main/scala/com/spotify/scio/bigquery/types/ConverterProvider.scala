@@ -131,13 +131,16 @@ private[types] object ConverterProvider {
       val name = symbol.name.toString
       val tpe = symbol.asMethod.returnType
 
-      val tree = q"$record.get($name)"
       if (tpe.erasure =:= typeOf[Option[_]].erasure) {
+        val tree = q"Try($record.get($name)).getOrElse(null)"
         option(tree, tpe.typeArgs.head)
-      } else if (tpe.erasure =:= typeOf[List[_]].erasure) {
-        list(tree, tpe.typeArgs.head)
       } else {
-        cast(tree, tpe)
+        val tree = q"$record.get($name)"
+        if (tpe.erasure =:= typeOf[List[_]].erasure) {
+          list(tree, tpe.typeArgs.head)
+        } else {
+          cast(tree, tpe)
+        }
       }
     }
 
@@ -155,6 +158,7 @@ private[types] object ConverterProvider {
     // =======================================================================
     q"""(r: _root_.org.apache.avro.generic.GenericRecord) => {
           import _root_.scala.jdk.javaapi.CollectionConverters._
+          import scala.util.Try
           ${constructor(tpe, q"r")}
         }
     """

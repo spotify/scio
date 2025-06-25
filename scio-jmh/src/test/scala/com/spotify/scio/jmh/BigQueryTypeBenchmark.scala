@@ -30,6 +30,9 @@ object BigQueryTypeBenchmark {
   case class BqTypeSimple(l: Long, s: String)
 
   @BigQueryType.toTable
+  case class BqTypeOptional(o: Option[String])
+
+  @BigQueryType.toTable
   case class BqTypeNested(l: Long, s: String, n: NestedBqType)
 
   @BigQueryType.toTable
@@ -43,10 +46,13 @@ class BigQueryTypeBenchmark {
   import BigQueryTypeBenchmark._
 
   val BqtSimple = BigQueryType[BqTypeSimple]
+  val BqtOptional = BigQueryType[BqTypeOptional]
   val BqtNested = BigQueryType[BqTypeNested]
   val BqtLogical = BigQueryType[BqTypeLogical]
 
   val CaseClassSimple = BqTypeSimple(10, "foo")
+  val CaseClassOptionalNonEmpty = BqTypeOptional(Some("foo"))
+  val CaseClassOptionalEmpty = BqTypeOptional(None)
   val CaseClassNested = BqTypeNested(10, "foo", NestedBqType("bar"))
   val CaseClassLogical = BqTypeLogical(LocalDateTime.now(), Instant.now())
 
@@ -55,6 +61,8 @@ class BigQueryTypeBenchmark {
   val TableRowLogical = BqtLogical.toTableRow(CaseClassLogical)
 
   val GrSimple = BqtSimple.toAvro(CaseClassSimple)
+  val GrOptionalNonEmpty = BqtOptional.toAvro(CaseClassOptionalNonEmpty)
+  val GrOptionalEmpty = BqtOptional.toAvro(CaseClassOptionalEmpty)
   val GrNested = BqtNested.toAvro(CaseClassNested)
   val GrLogical = BqtLogical.toAvro(CaseClassLogical)
 
@@ -69,6 +77,12 @@ class BigQueryTypeBenchmark {
 
   @Benchmark
   def bqtSimpleFromAvro(): Unit = BqtSimple.fromAvro(GrSimple)
+
+  @Benchmark
+  def bqtOptionalNonEmptyFromAvro(): Unit = BqtOptional.fromAvro(GrOptionalNonEmpty)
+
+  @Benchmark
+  def bqtOptionalEmptyFromAvro(): Unit = BqtOptional.fromAvro(GrOptionalEmpty)
 
   @Benchmark
   def bqtNestedToTableRow(): Unit = BqtNested.toTableRow(CaseClassNested)
