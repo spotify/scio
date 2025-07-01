@@ -93,7 +93,7 @@ public abstract class BaseAsyncDoFn<Input, Output, Resource, Future>
           final Output o = r.getValue();
           final Instant ts = r.getTimestamp();
           final Collection<BoundedWindow> ws = Collections.singleton(r.getWindow());
-          final PaneInfo p = r.getPane();
+          final PaneInfo p = r.getPaneInfo();
           out.outputWindowedValue(o, ts, ws, p);
         });
 

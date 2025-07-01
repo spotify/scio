@@ -186,7 +186,7 @@ public abstract class BaseAsyncLookupDoFn<Input, Output, Client, Future, TryWrap
           final KV<Input, TryWrapper> io = r.getValue();
           final Instant ts = r.getTimestamp();
           final Collection<BoundedWindow> ws = Collections.singleton(r.getWindow());
-          final PaneInfo p = r.getPane();
+          final PaneInfo p = r.getPaneInfo();
           out.outputWindowedValue(io, ts, ws, p);
         });
     final Client client = getResourceClient();
