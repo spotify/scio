@@ -56,7 +56,7 @@ val protobufVersion = "3.25.5" // stuck on Protobuf 3: https://github.com/spotif
 val slf4jVersion = "1.7.30"
 val zstdJniVersion = "1.5.6-3"
 // dependent versions
-val googleApiServicesBigQueryVersion = s"v2-rev20250313-$googleClientsVersion"
+val googleApiServicesBigQueryVersion = s"v2-rev20250427-$googleClientsVersion"
 val googleApiServicesDataflowVersion = s"v1b3-rev20250106-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 // beam tested versions
