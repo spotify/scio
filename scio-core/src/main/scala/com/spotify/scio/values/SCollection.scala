@@ -65,9 +65,16 @@ object SCollection {
    * iterable is empty. For a version that accepts empty iterables, see [[ScioContext#unionAll]].
    */
   // `T: Coder` context bound is required since `scs` might be empty.
-  def unionAll[T: Coder](scs: Iterable[SCollection[T]]): SCollection[T] =
-    scs.head.context.unionAll(scs)
-
+  def unionAll[T: Coder](scs: Iterable[SCollection[T]]): SCollection[T] = {
+  scs.toSeq match {
+    case Seq() => 
+      throw new IllegalArgumentException(
+        "unionAll called with empty collection. Use ScioContext#unionAll for empty-safe union operations."
+      )
+    case Seq(single) => single
+    case head +: tail => head.union(tail)
+  }
+}
   /** Implicit conversion from SCollection to DoubleSCollectionFunctions. */
   implicit def makeDoubleSCollectionFunctions(s: SCollection[Double]): DoubleSCollectionFunctions =
     new DoubleSCollectionFunctions(s)
