@@ -101,7 +101,7 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
             final OutputT o = r.getValue();
             final Instant ts = r.getTimestamp();
             final Collection<BoundedWindow> ws = Collections.singleton(r.getWindow());
-            final PaneInfo p = r.getPane();
+            final PaneInfo p = r.getPaneInfo();
             out.outputWindowedValue(o, ts, ws, p);
           });
     }
@@ -137,7 +137,7 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
       final OutputT o = fn.apply(path);
       final Instant ts = r.getTimestamp();
       final BoundedWindow w = r.getWindow();
-      final PaneInfo p = r.getPane();
+      final PaneInfo p = r.getPaneInfo();
       outputFn.accept(ValueInSingleWindow.of(o, ts, w, p));
     }
 

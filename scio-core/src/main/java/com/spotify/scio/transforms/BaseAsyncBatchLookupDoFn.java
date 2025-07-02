@@ -184,7 +184,7 @@ public abstract class BaseAsyncBatchLookupDoFn<
           final KV<Input, TryWrapper> io = r.getValue();
           final Instant ts = r.getTimestamp();
           final Collection<BoundedWindow> ws = Collections.singleton(r.getWindow());
-          final PaneInfo p = r.getPane();
+          final PaneInfo p = r.getPaneInfo();
           out.outputWindowedValue(io, ts, ws, p);
         });
     final Cache<String, Output> cache = getResourceCache();
@@ -312,7 +312,7 @@ public abstract class BaseAsyncBatchLookupDoFn<
                                         : success(output);
                                 final Instant ts = processInput.getTimestamp();
                                 final BoundedWindow w = processInput.getWindow();
-                                final PaneInfo p = processInput.getPane();
+                                final PaneInfo p = processInput.getPaneInfo();
                                 return ValueInSingleWindow.of(KV.of(i, o), ts, w, p);
                               })
                           .collect(Collectors.toList());
@@ -332,7 +332,7 @@ public abstract class BaseAsyncBatchLookupDoFn<
                               final TryWrapper o = failure(throwable);
                               final Instant ts = processInput.getTimestamp();
                               final BoundedWindow w = processInput.getWindow();
-                              final PaneInfo p = processInput.getPane();
+                              final PaneInfo p = processInput.getPaneInfo();
                               return ValueInSingleWindow.of(KV.of(i, o), ts, w, p);
                             })
                         .collect(Collectors.toList());
