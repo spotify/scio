@@ -57,7 +57,7 @@ val slf4jVersion = "1.7.30"
 val zstdJniVersion = "1.5.6-3"
 // dependent versions
 val googleApiServicesBigQueryVersion = s"v2-rev20250427-$googleClientsVersion"
-val googleApiServicesDataflowVersion = s"v1b3-rev20250106-$googleClientsVersion"
+val googleApiServicesDataflowVersion = s"v1b3-rev20250519-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 // beam tested versions
 val zetasketchVersion = "0.1.0" // sdks/java/extensions/zetasketch/build.gradle
