@@ -141,7 +141,7 @@ ThisBuild / organization := "com.spotify"
 ThisBuild / organizationName := "Spotify AB"
 ThisBuild / startYear := Some(2016)
 ThisBuild / licenses := Seq(License.Apache2)
-ThisBuild / sonatypeCredentialHost := Sonatype.sonatypeLegacy
+ThisBuild / sonatypeCredentialHost := Sonatype.sonatypeCentralHost
 ThisBuild / developers := List(
   Developer(
     id = "sinisa_lyh",
