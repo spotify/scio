@@ -700,10 +700,7 @@ class ScioContext private[scio] (
 
         new ScioResult(pipelineResult) {
           Option(sc.optionsAs[ScioOptions].getMetricsLocation).foreach(saveMetrics)
-          List(
-            Option(sc.optionsAs[ScioOptions].getLineageLocation),
-            sys.env.get("SCIO_LINEAGE_LOCATION")
-          ).flatten.foreach(saveLineage)
+          Option(sc.optionsAs[ScioOptions].getLineageLocation).foreach(saveLineage)
 
           override def getMetrics: Metrics =
             Metrics(
