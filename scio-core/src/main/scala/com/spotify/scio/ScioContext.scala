@@ -33,7 +33,15 @@ import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
 import org.apache.beam.sdk.io.FileSystems
-import org.apache.beam.sdk.metrics.Counter
+import org.apache.beam.sdk.metrics.{
+  Counter,
+  Lineage,
+  MetricNameFilter,
+  MetricQueryResults,
+  MetricsFilter,
+  MetricsOptions,
+  MetricsSink
+}
 import org.apache.beam.sdk.options._
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values._
@@ -247,6 +255,39 @@ object ContextAndArgs {
   }
 }
 
+class CustomMetricsSink extends MetricsSink {
+  private[scio] val log = LoggerFactory.getLogger(this.getClass)
+
+  override def writeMetrics(metricQueryResults: MetricQueryResults): Unit = {
+    log.warn("!!!!!!! WRITE METRIC stringSets = " + queryLineageStringSets(metricQueryResults))
+    log.warn("!!!!!!! WRITE METRIC boundedTries = " + queryLineageBoundedTries(metricQueryResults))
+  }
+
+  private def queryLineageStringSets(results: MetricQueryResults): Set[String] = {
+    results.getStringSets.asScala.flatMap { metric =>
+      Try(metric.getCommitted.getStringSet.asScala.toSet)
+        .orElse(Try(metric.getAttempted.getStringSet.asScala.toSet))
+        .getOrElse(Set.empty[String])
+    }.toSet
+  }
+
+  private def queryLineageBoundedTries(results: MetricQueryResults): Set[String] = {
+    results.getBoundedTries.asScala.flatMap { metric =>
+      val processResult = (result: java.util.Set[java.util.List[String]]) =>
+        result.asScala.map { fqn =>
+          val segments = fqn.asScala.toList
+          val truncated = if (segments.nonEmpty && segments.last.toBoolean) "*" else ""
+          segments.dropRight(1).mkString + truncated
+        }.toSet
+
+      Try(processResult(metric.getCommitted.getResult))
+        .orElse(Try(processResult(metric.getAttempted.getResult)))
+        .getOrElse(Set.empty[String])
+    }.toSet
+  }
+
+}
+
 /**
  * ScioExecutionContext is the result of [[ScioContext#run()]].
  *
@@ -378,6 +419,11 @@ object ScioContext {
           .as(classOf[ScioOptions])
           .setAppArguments(sanitizedArgString)
       }
+
+      val metricsOptions = pipelineOpts.as(classOf[MetricsOptions])
+      metricsOptions.setMetricsSink(classOf[CustomMetricsSink])
+      metricsOptions.setMetricsPushPeriod(5)
+
       (pipelineOpts, args)
     }
   }
