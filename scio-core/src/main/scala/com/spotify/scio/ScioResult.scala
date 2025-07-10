@@ -46,7 +46,7 @@ trait RunnerResult {
 
 /** Represent a Scio pipeline result. */
 abstract class ScioResult private[scio] (val internal: PipelineResult) {
-  private val logger = LoggerFactory.getLogger(this.getClass)
+  private val logger = LoggerFactory.getLogger(getClass)
 
   /** Get a Beam runner specific result. */
   def as[T <: RunnerResult: ClassTag]: T = {
