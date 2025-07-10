@@ -75,7 +75,6 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
     val isDirectory = path.endsWith(File.separator)
     saveJsonFile(
       getResourceId(path, enforceNewFile = isDirectory, newFilePrefix = "metrics"),
-      path,
       getMetrics
     )
   }
@@ -85,7 +84,6 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
     val isDirectory = path.endsWith(File.separator)
     saveJsonFile(
       getResourceId(path, enforceNewFile = isDirectory, newFilePrefix = "lineage"),
-      path,
       getBeamLineage
     )
   }
@@ -105,7 +103,7 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
     }
   }
 
-  private def saveJsonFile(resourceId: => ResourceId, path: String, value: Object): Unit = {
+  private def saveJsonFile(resourceId: ResourceId, value: Object): Unit = {
     val mapper = ScioUtil.getScalaJsonMapper
     try {
       val out = FileSystems.create(resourceId, MimeTypes.TEXT)
@@ -116,11 +114,11 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
           out.close()
         }
       }
-      logger.info(f"Saved metrics to '$path'")
+      logger.info(f"Saved metrics to '$resourceId'")
     } catch {
       case e: Throwable =>
         logger.warn(
-          f"Failed to save metrics to '$path': ${mapper.writeValueAsString(value)}",
+          f"Failed to save metrics to '$resourceId': ${mapper.writeValueAsString(value)}",
           e
         )
     }
