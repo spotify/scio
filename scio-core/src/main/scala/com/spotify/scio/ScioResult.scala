@@ -27,8 +27,8 @@ import org.apache.beam.sdk.io.fs.{ResolveOptions, ResourceId}
 import org.apache.beam.sdk.metrics.{DistributionResult, GaugeResult, Lineage}
 import org.apache.beam.sdk.util.MimeTypes
 import org.apache.beam.sdk.{metrics => beam, PipelineResult}
-
 import org.joda.time.Instant
+import org.slf4j.LoggerFactory
 
 import java.io.File
 import java.nio.ByteBuffer
@@ -46,6 +46,7 @@ trait RunnerResult {
 
 /** Represent a Scio pipeline result. */
 abstract class ScioResult private[scio] (val internal: PipelineResult) {
+  private val logger = LoggerFactory.getLogger(getClass)
 
   /** Get a Beam runner specific result. */
   def as[T <: RunnerResult: ClassTag]: T = {
@@ -104,16 +105,26 @@ abstract class ScioResult private[scio] (val internal: PipelineResult) {
 
   private def saveJsonFile(resourceId: ResourceId, value: Object): Unit = {
     val mapper = ScioUtil.getScalaJsonMapper
-    val out = FileSystems.create(resourceId, MimeTypes.TEXT)
     try {
-      out.write(ByteBuffer.wrap(mapper.writeValueAsBytes(value)))
-    } finally {
-      if (out != null) {
-        out.close()
+      val out = FileSystems.create(resourceId, MimeTypes.TEXT)
+      try {
+        out.write(ByteBuffer.wrap(mapper.writeValueAsBytes(value)))
+      } finally {
+        if (out != null) {
+          out.close()
+        }
       }
+      logger.info(f"Saved metrics to '$resourceId'")
+    } catch {
+      case e: Throwable =>
+        logger.warn(
+          f"Failed to save metrics to '$resourceId': ${mapper.writeValueAsString(value)}",
+          e
+        )
     }
   }
 
+  /** Get lineage metric values. */
   def getBeamLineage: BeamLineage = {
     def asScalaCrossCompatible(set: java.util.Set[String]): Iterable[String] = {
       val iterator = set.iterator()
