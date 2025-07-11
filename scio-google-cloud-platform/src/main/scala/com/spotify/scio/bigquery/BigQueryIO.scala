@@ -73,7 +73,7 @@ private object Reads {
       .newQueryJob(sqlQuery, flattenResults, labels)
       .map { job =>
         sc.onClose(_ => bigQueryClient.waitForJobs(job))
-        LineageProducer.addSource(sc, BigQueryHelpers.toTableSpec(job.table), sqlQuery)
+        LineageProducer.addSource(BigQueryHelpers.toTableSpec(job.table), sqlQuery)
         typedRead.from(job.table).withoutValidation()
       }
 
@@ -471,7 +471,7 @@ final case class BigQueryTypedTable[T: Coder](
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val coder = CoderMaterializer.beam(sc, Coder[T])
-    LineageProducer.addSource(sc, table.spec)
+    LineageProducer.addSource(table.spec)
     val io = reader.from(table.ref).withCoder(coder)
     sc.applyTransform(s"Read BQ table ${table.spec}", io)
   }
