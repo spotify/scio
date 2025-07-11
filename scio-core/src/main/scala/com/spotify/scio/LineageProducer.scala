@@ -1,13 +1,15 @@
 package com.spotify.scio
 
 import org.apache.beam.sdk.PipelineResult
-import org.apache.beam.sdk.metrics.{Counter, Metrics}
+import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ArrayBuffer
+import java.util.concurrent.ConcurrentHashMap
+import scala.jdk.CollectionConverters._
 
 trait LineageProducer {
-  def addSource(id: String, extra: String = null): Unit
-  def addSink(id: String, extra: String = null): Unit
+  def addSource(schema: String, id: String, extra: String = null): Unit
+  def addSink(schema: String, id: String, extra: String = null): Unit
   def commit(result: PipelineResult): Unit
 }
 
@@ -18,35 +20,48 @@ object LineageProducer extends LineageProducer {
   def addProducer(producer: LineageProducer): Unit =
     producers.addOne(producer)
 
-  def addSource(id: String, extra: String = null): Unit =
-    producers.foreach(_.addSource(id, extra))
+  def addSource(schema: String, id: String, extra: String = null): Unit =
+    producers.foreach(_.addSource(schema, id, extra))
 
-  def addSink(id: String, extra: String = null): Unit =
-    producers.foreach(_.addSink(id, extra))
+  def addSink(schema: String, id: String, extra: String = null): Unit =
+    producers.foreach(_.addSink(schema, id, extra))
 
   def commit(result: PipelineResult): Unit =
     producers.foreach(_.commit(result))
 
 }
 
-class MetricLineageProducer extends LineageProducer {
+object MetricLineageProducer
 
-  private val counters: scala.collection.mutable.Map[String, Counter] =
-    scala.collection.mutable.Map.empty
+class MetricLineageProducer() extends LineageProducer {
+  private val logger = LoggerFactory.getLogger(this.getClass)
 
-  override def addSource(id: String, extra: String = null): Unit = {
-    val key = s"source.$id"
-    val counter = counters.getOrElseUpdate(key, Metrics.counter("scio_lineage", key))
-    counter.inc(1)
+  // Thread-safe sets to collect unique sources and sinks  
+  private val sources: ConcurrentHashMap[String, java.lang.Boolean] = new ConcurrentHashMap()
+  private val sinks: ConcurrentHashMap[String, java.lang.Boolean] = new ConcurrentHashMap()
+
+  override def addSource(schema: String, id: String, extra: String = null): Unit = {
+    val key = s"$schema:$id"
+    val wasAbsent = sources.putIfAbsent(key, java.lang.Boolean.TRUE) == null
+    if (wasAbsent) {
+      logger.info(s"Tracked source: $key")
+    }
   }
 
-  override def addSink(id: String, extra: String = null): Unit = {
-    val key = s"sink.$id"
-    val counter = counters.getOrElseUpdate(key, Metrics.counter("scio_lineage", key))
-    counter.inc(1)
+  override def addSink(schema: String, id: String, extra: String = null): Unit = {
+    val key = s"$schema:$id"
+    val wasAbsent = sinks.putIfAbsent(key, java.lang.Boolean.TRUE) == null
+    if (wasAbsent) {
+      logger.info(s"Tracked sink: $key")
+    }
   }
 
   override def commit(result: PipelineResult): Unit = {
-    /// save counters to file....
+    logger.info(s"Pipeline lineage summary:")
+    logger.info(s"Sources: ${sources.keySet().asScala.toSet}")
+    logger.info(s"Sinks: ${sinks.keySet().asScala.toSet}")
+    
+    // TODO: Save lineage data to file or external system
+    // e.g., write to JSON file, send to monitoring system, etc.
   }
 }

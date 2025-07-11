@@ -87,7 +87,7 @@ private object Reads {
     selectedFields: List[String] = BigQueryStorage.ReadParam.DefaultSelectFields,
     rowRestriction: Option[String] = BigQueryStorage.ReadParam.DefaultRowRestriction
   ): SCollection[T] = {
-    LineageProducer.addSource(table.spec)
+    LineageProducer.addSource("bigquery", table.spec)
     val read = typedRead
       .from(table.spec)
       .withMethod(ReadMethod.DIRECT_READ)
@@ -471,7 +471,7 @@ final case class BigQueryTypedTable[T: Coder](
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val coder = CoderMaterializer.beam(sc, Coder[T])
-    LineageProducer.addSource(table.spec)
+    LineageProducer.addSource("bigquery", table.spec)
     val io = reader.from(table.ref).withCoder(coder)
     sc.applyTransform(s"Read BQ table ${table.spec}", io)
   }
@@ -486,7 +486,7 @@ final case class BigQueryTypedTable[T: Coder](
       data.internal.isBounded
     )
 
-    LineageProducer.addSink(table.spec)
+    LineageProducer.addSink("bigquery", table.spec)
     val transform = writer
       .to(table.ref)
       .withMethod(params.method)
