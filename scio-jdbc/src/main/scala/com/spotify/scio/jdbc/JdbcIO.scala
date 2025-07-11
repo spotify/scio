@@ -17,7 +17,7 @@
 
 package com.spotify.scio.jdbc
 
-import com.spotify.scio.ScioContext
+import com.spotify.scio.{LineageProducer, ScioContext}
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.util.Functions
@@ -49,20 +49,23 @@ object JdbcIO {
 
   private[jdbc] def dataSourceConfiguration(
     opts: JdbcConnectionOptions
-  ): BJdbcIO.DataSourceConfiguration =
-    BJdbcIO.DataSourceConfiguration
+  ): (BJdbcIO.DataSourceConfiguration, Option[String]) = {
+    val cloudSqlInstance = getUrlParameters(opts.connectionUrl)
+      .get("cloudSqlInstance")
+      .flatten
+    val cfg = BJdbcIO.DataSourceConfiguration
       .create(opts.driverClass.getCanonicalName, opts.connectionUrl)
       .withUsername(opts.username)
       .pipe { c =>
         opts.password.fold(c)(c.withPassword)
       }
       .pipe { c =>
-        getUrlParameters(opts.connectionUrl)
-          .get("cloudSqlInstance")
-          .flatten
+        cloudSqlInstance
           .map(instance => "cloudSqlInstance=" + instance)
           .fold(c)(c.withConnectionProperties)
       }
+    (cfg, cloudSqlInstance)
+  }
 
   private def getUrlParameters(connectionUrl: String): Map[String, Option[String]] =
     connectionUrl.split('?').toList match {
@@ -134,10 +137,14 @@ final case class JdbcSelect[T: Coder](opts: JdbcConnectionOptions, query: String
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val coder = CoderMaterializer.beam(sc, Coder[T])
+    val (jdbcConfiguration, cloudSqlInstance) = JdbcIO.dataSourceConfiguration(opts)
+    cloudSqlInstance.foreach { instance =>
+      LineageProducer.addSource("cloudsql", instance)
+    }
     val transform = BJdbcIO
       .read[T]()
       .withCoder(coder)
-      .withDataSourceConfiguration(JdbcIO.dataSourceConfiguration(opts))
+      .withDataSourceConfiguration(jdbcConfiguration)
       .withQuery(query)
       .withRowMapper(params.rowMapper(_))
       .withOutputParallelization(params.outputParallelization)
@@ -181,9 +188,13 @@ final case class JdbcWrite[T](opts: JdbcConnectionOptions, statement: String) ex
     throw new UnsupportedOperationException("jdbc.Write is write-only")
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
+    val (jdbcConfiguration, cloudSqlInstance) = JdbcIO.dataSourceConfiguration(opts)
+    cloudSqlInstance.foreach { instance =>
+      LineageProducer.addSink("cloudsql", instance)
+    }
     val transform = BJdbcIO
       .write[T]()
-      .withDataSourceConfiguration(JdbcIO.dataSourceConfiguration(opts))
+      .withDataSourceConfiguration(jdbcConfiguration)
       .withStatement(statement)
       .withRetryConfiguration(params.retryConfiguration)
       .withRetryStrategy(params.retryStrategy.apply)

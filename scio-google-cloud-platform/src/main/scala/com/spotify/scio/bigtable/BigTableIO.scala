@@ -20,7 +20,7 @@ package com.spotify.scio.bigtable
 import com.google.bigtable.v2._
 import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.protobuf.ByteString
-import com.spotify.scio.ScioContext
+import com.spotify.scio.{LineageProducer, ScioContext}
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TapT, TestIO}
 import com.spotify.scio.util.Functions
@@ -57,6 +57,10 @@ final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
   override protected def read(sc: ScioContext, params: ReadP): SCollection[Row] = {
     val coder = CoderMaterializer.beam(sc, Coder.protoMessageCoder[Row])
     val opts = bigtableOptions // defeat closure
+    LineageProducer.addSource(
+      "bigtable",
+      f"${bigtableOptions.getProjectId}.${bigtableOptions.getInstanceId}.$tableId"
+    )
     val read = beam.BigtableIO
       .read()
       .withProjectId(bigtableOptions.getProjectId)
@@ -142,6 +146,10 @@ final case class BigtableWrite[T <: Mutation](bigtableOptions: BigtableOptions, 
         case BigtableWrite.Bulk(numOfShards, flushInterval) =>
           new BigtableBulkWriter(tableId, bigtableOptions, numOfShards, flushInterval)
       }
+    LineageProducer.addSink(
+      "bigtable",
+      f"${bigtableOptions.getProjectId}.${bigtableOptions.getInstanceId}.$tableId"
+    )
     data.transform_("Bigtable write") { coll =>
       coll
         .map { case (key, value) =>

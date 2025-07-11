@@ -433,6 +433,8 @@ class ScioContext private[scio] (
   // before any IO
   FileSystems.setDefaultPipelineOptions(options)
 
+  LineageProducer.addProducer(new MetricLineageProducer())
+
   /** Get PipelineOptions as a more specific sub-type. */
   def optionsAs[T <: PipelineOptions: ClassTag]: T =
     options.as(ScioUtil.classOf[T])
@@ -701,6 +703,7 @@ class ScioContext private[scio] (
         new ScioResult(pipelineResult) {
           Option(sc.optionsAs[ScioOptions].getMetricsLocation).foreach(saveMetrics)
           Option(sc.optionsAs[ScioOptions].getLineageLocation).foreach(saveLineage)
+          LineageProducer.commit(pipelineResult)
 
           override def getMetrics: Metrics =
             Metrics(
