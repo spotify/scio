@@ -18,7 +18,7 @@
 package com.spotify.scio.bigquery
 
 import com.google.api.services.bigquery.model.TableSchema
-import com.spotify.scio.ScioContext
+import com.spotify.scio.{LineageProducer, ScioContext}
 import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
@@ -73,6 +73,7 @@ private object Reads {
       .newQueryJob(sqlQuery, flattenResults, labels)
       .map { job =>
         sc.onClose(_ => bigQueryClient.waitForJobs(job))
+        LineageProducer.addSource(sc, BigQueryHelpers.toTableSpec(job.table), sqlQuery)
         typedRead.from(job.table).withoutValidation()
       }
 
@@ -86,6 +87,7 @@ private object Reads {
     selectedFields: List[String] = BigQueryStorage.ReadParam.DefaultSelectFields,
     rowRestriction: Option[String] = BigQueryStorage.ReadParam.DefaultRowRestriction
   ): SCollection[T] = {
+    LineageProducer.addSource(table.spec)
     val read = typedRead
       .from(table.spec)
       .withMethod(ReadMethod.DIRECT_READ)
@@ -469,6 +471,7 @@ final case class BigQueryTypedTable[T: Coder](
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val coder = CoderMaterializer.beam(sc, Coder[T])
+    LineageProducer.addSource(sc, table.spec)
     val io = reader.from(table.ref).withCoder(coder)
     sc.applyTransform(s"Read BQ table ${table.spec}", io)
   }
@@ -483,6 +486,7 @@ final case class BigQueryTypedTable[T: Coder](
       data.internal.isBounded
     )
 
+    LineageProducer.addSink(data.context, table.spec)
     val transform = writer
       .to(table.ref)
       .withMethod(params.method)
