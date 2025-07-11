@@ -486,7 +486,7 @@ final case class BigQueryTypedTable[T: Coder](
       data.internal.isBounded
     )
 
-    LineageProducer.addSink(data.context, table.spec)
+    LineageProducer.addSink(table.spec)
     val transform = writer
       .to(table.ref)
       .withMethod(params.method)

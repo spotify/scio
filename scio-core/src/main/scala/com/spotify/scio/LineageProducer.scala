@@ -18,17 +18,14 @@ object LineageProducer extends LineageProducer {
   def addProducer(producer: LineageProducer): Unit =
     producers.addOne(producer)
 
-  def addSource(id: String, extra: String = null): Unit = {
+  def addSource(id: String, extra: String = null): Unit =
     producers.foreach(_.addSource(id, extra))
-  }
 
-  def addSink(id: String, extra: String = null): Unit = {
+  def addSink(id: String, extra: String = null): Unit =
     producers.foreach(_.addSink(id, extra))
-  }
 
-  def commit(result: PipelineResult): Unit = {
+  def commit(result: PipelineResult): Unit =
     producers.foreach(_.commit(result))
-  }
 
 }
 
@@ -49,5 +46,7 @@ class MetricLineageProducer extends LineageProducer {
     counter.inc(1)
   }
 
-  override def commit(result: PipelineResult): Unit = {}
+  override def commit(result: PipelineResult): Unit = {
+    /// save counters to file....
+  }
 }
