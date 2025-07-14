@@ -218,11 +218,10 @@ spotify/scio
 <ul>
   <li><a href="../dev/How-to-Release.html#how-to-release" class="header">How to Release</a>
   <ul>
-    <li><a href="../dev/How-to-Release.html#prerequisites" class="header">Prerequisites</a></li>
-    <li><a href="../dev/How-to-Release.html#update-version-matrix" class="header">Update version matrix</a></li>
-    <li><a href="../dev/How-to-Release.html#automatic-ci-" class="header">Automatic (CI)</a></li>
-    <li><a href="../dev/How-to-Release.html#manual" class="header">Manual</a></li>
-    <li><a href="../dev/How-to-Release.html#after-successfully-published-artifacts" class="header">After successfully published artifacts</a></li>
+    <li><a href="../dev/How-to-Release.html#1-update-version-matrix" class="header">1. Update version matrix</a></li>
+    <li><a href="../dev/How-to-Release.html#2-run-the-pre-release-check" class="header">2. Run the pre-release check</a></li>
+    <li><a href="../dev/How-to-Release.html#3-release" class="header">3. Release</a></li>
+    <li><a href="../dev/How-to-Release.html#4-post-release-steps" class="header">4. Post-release steps</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -231,7 +230,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.14.16-9-3cf3f89-20250507T143400Z*
+<i class="md-icon" title="Version">label_outline</i> 0.14.17-31-b648b4a-20250714T202047Z*
 </label>
 </li>
 </ul>
@@ -246,11 +245,10 @@ spotify/scio
 <ul>
   <li><a href="../dev/How-to-Release.html#how-to-release" class="header">How to Release</a>
   <ul>
-    <li><a href="../dev/How-to-Release.html#prerequisites" class="header">Prerequisites</a></li>
-    <li><a href="../dev/How-to-Release.html#update-version-matrix" class="header">Update version matrix</a></li>
-    <li><a href="../dev/How-to-Release.html#automatic-ci-" class="header">Automatic (CI)</a></li>
-    <li><a href="../dev/How-to-Release.html#manual" class="header">Manual</a></li>
-    <li><a href="../dev/How-to-Release.html#after-successfully-published-artifacts" class="header">After successfully published artifacts</a></li>
+    <li><a href="../dev/How-to-Release.html#1-update-version-matrix" class="header">1. Update version matrix</a></li>
+    <li><a href="../dev/How-to-Release.html#2-run-the-pre-release-check" class="header">2. Run the pre-release check</a></li>
+    <li><a href="../dev/How-to-Release.html#3-release" class="header">3. Release</a></li>
+    <li><a href="../dev/How-to-Release.html#4-post-release-steps" class="header">4. Post-release steps</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -262,7 +260,38 @@ spotify/scio
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
 <h1><a href="#how-to-release" name="how-to-release" class="anchor"><span class="anchor-link"></span></a>How to Release</h1>
-<h2><a href="#prerequisites" name="prerequisites" class="anchor"><span class="anchor-link"></span></a>Prerequisites</h2>
+<h2><a href="#1-update-version-matrix" name="1-update-version-matrix" class="anchor"><span class="anchor-link"></span></a>1. Update version matrix</h2>
+<p>If the release includes a Beam version bump, update the <a href="../releases/Apache-Beam.html">version matrix</a></p>
+<h2><a href="#2-run-the-pre-release-check" name="2-run-the-pre-release-check" class="anchor"><span class="anchor-link"></span></a>2. Run the pre-release check</h2>
+<p>Trigger the <a href="https://github.com/spotify/scio/actions/workflows/pre-release-check.yml">pre-release check</a> and ensure that the latest CI build is green.</p>
+<h2><a href="#3-release" name="3-release" class="anchor"><span class="anchor-link"></span></a>3. Release</h2>
+<p>The release steps are configured in <a href="https://github.com/spotify/scio/blob/main/.github/workflows/ci.yml">GHA</a> using the <a href="https://typelevel.org/sbt-typelevel/customization.html#sbt-typelevel-sonatype-ci-release">Typelevel CI Release plugin</a>. Any tag pushed with the format <code>vx.y.z</code> will trigger a release of Scio verison <code>x.y.z</code>.</p>
+<p>You can release fully using the GitHub UI, or manage tag creation on command line.</p>
+<p>When drafting release notes, we recommend organizing the release notes into the following categories:</p>
+<pre class="prettyprint"><code class="language-md">## 🚀 Enhancements
+## 🐛 Bug Fixes
+## 📗 Documentation
+## 🏗️ Build Improvements
+## 🌱 Dependency Updates
+</code></pre>
+<p>Call out any Beam version upgrades in the top line of the release notes. See <a href="https://github.com/spotify/scio/releases">https://github.com/spotify/scio/releases</a> for reference.</p>
+<h3><a href="#option-1-release-using-github-ui" name="option-1-release-using-github-ui" class="anchor"><span class="anchor-link"></span></a>Option 1: Release using GitHub UI</h3>
+<p>This is the easiest way to release the <code>main</code> branch. Simply draft a new release from the <a href="https://github.com/spotify/scio/releases">Releases</a> tab and create a new tag (in the format <code>vx.y.z</code>). This will trigger a tag build in GHA, which performs the release steps automatically.</p>
+<h3><a href="#option-2-release-using-github-cli" name="option-2-release-using-github-cli" class="anchor"><span class="anchor-link"></span></a>Option 2: Release using Github CLI</h3>
+<p>Checkout and update the <code>main</code> branch.</p>
+<pre class="prettyprint"><code class="language-bash">git checkout main
+
+git pull
+</code></pre>
+<p>Create and push a new version tag</p>
+<pre class="prettyprint"><code class="language-bash">git tag -a vX.Y.Z -m &quot;vX.Y.Z&quot;
+
+git push origin vX.Y.Z
+</code></pre>
+<p>In the GitHub UI, create a <a href="https://github.com/spotify/scio/releases">GitHub release</a> from the newly created tag.</p>
+<h3><a href="#option-3-release-manually" name="option-3-release-manually" class="anchor"><span class="anchor-link"></span></a>Option 3: Release Manually</h3>
+<p>Included for reference, but not recommended.</p>
+<p><strong>Prerequisites:</strong></p>
 <ul>
   <li>Sign up for a Sonatype account <a href="https://issues.sonatype.org/secure/Signup!default.jspa">here</a></li>
   <li>Ask for permissions to push to com.spotify domain like in this <a href="https://issues.sonatype.org/browse/OSSRH-20689">ticket</a></li>
@@ -278,30 +307,16 @@ Credentials(
 <ul>
   <li>Create a PGP key, for example on <a href="https://keybase.io/">keybase.io</a>, and <a href="https://www.gnupg.org/gph/en/manual/x457.html">distribute</a> it to a public keyserver</li>
 </ul>
-<h2><a href="#update-version-matrix" name="update-version-matrix" class="anchor"><span class="anchor-link"></span></a>Update version matrix</h2>
-<p>If the release includes a Beam version bump, update the <a href="../releases/Apache-Beam.html">version matrix</a></p>
-<h2><a href="#automatic-ci-" name="automatic-ci-" class="anchor"><span class="anchor-link"></span></a>Automatic (CI)</h2>
-<p>Checkout and update the <code>main</code> branch.</p>
-<pre class="prettyprint"><code class="language-bash">git checkout main
-
-git pull
-</code></pre>
-<p>Create and push a new version tag</p>
-<pre class="prettyprint"><code class="language-bash">git tag -a vX.Y.Z -m &quot;vX.Y.Z&quot;
-
-git push origin vX.Y.Z
-</code></pre>
-<h2><a href="#manual" name="manual" class="anchor"><span class="anchor-link"></span></a>Manual</h2>
+<p><strong>Manual release steps:</strong></p>
 <ul>
   <li>Run <code>release skip-tests</code> in sbt console and follow the instructions</li>
   <li>Go to <a href="https://oss.sonatype.org/">oss.sonatype.org</a>, find the staging repository, &ldquo;close&rdquo; and &ldquo;release&rdquo;</li>
-  <li>When the tag build completes, update release notes with name and change log</li>
-  <li>Run <code>./scripts/make-site.sh</code> to update documentation</li>
+  <li>When the tag build completes, draft a release in the GitHub UI using the existing tag.</li>
 </ul>
-<h2><a href="#after-successfully-published-artifacts" name="after-successfully-published-artifacts" class="anchor"><span class="anchor-link"></span></a>After successfully published artifacts</h2>
+<h2><a href="#4-post-release-steps" name="4-post-release-steps" class="anchor"><span class="anchor-link"></span></a>4. Post-release steps</h2>
+<p>When the artifacts have been published, you can:</p>
 <ul>
   <li>Clean the <code>mimaBinaryIssueFilters</code> in <code>build.sbt</code> if needed</li>
-  <li>Create a <a href="https://github.com/spotify/scio/releases">GitHub release</a></li>
   <li>Run <a href="https://github.com/spotify/scio/tree/master/scripts/bump_scio.sh">scripts/bump_scio.sh</a> to update <a href="https://github.com/spotify/homebrew-public/blob/master/scio.rb">homebrew formula</a></li>
   <li>Update <code>scioVersion</code> in downstream repos (<a href="https://github.com/spotify/scio.g8">scio.g8</a>, etc.)</li>
   <li>Send announcement to <a href="mailto:&#115;c&#105;&#x6f;&#x2d;&#x75;&#x73;&#101;&#x72;&#x73;@&#103;&#x6f;&#111;g&#108;&#101;&#103;r&#111;u&#x70;&#115;&#x2e;&#x63;&#111;&#109;">&#115;c&#105;&#x6f;&#x2d;&#x75;&#x73;&#101;&#x72;&#x73;@&#103;&#x6f;&#111;g&#108;&#101;&#103;r&#111;u&#x70;&#115;&#x2e;&#x63;&#111;&#109;</a></li>
@@ -314,7 +329,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.14.16-9-3cf3f89-20250507T143400Z*
+0.14.17-31-b648b4a-20250714T202047Z*
 </span>
 </div>
 </article>
