@@ -699,8 +699,10 @@ class ScioContext private[scio] (
         }
 
         new ScioResult(pipelineResult) {
-          Option(sc.optionsAs[ScioOptions].getMetricsLocation).foreach(saveMetrics)
-          Option(sc.optionsAs[ScioOptions].getLineageLocation).foreach(saveLineage)
+          private val metricsLocation = sc.optionsAs[ScioOptions].getMetricsLocation
+          if (metricsLocation != null) {
+            saveMetrics(metricsLocation)
+          }
 
           override def getMetrics: Metrics =
             Metrics(
