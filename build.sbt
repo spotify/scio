@@ -382,9 +382,6 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
 
 // mima
 ThisBuild / mimaBinaryIssueFilters ++= Seq(
-  ProblemFilters.exclude[DirectMissingMethodProblem](
-    "com.spotify.scio.testing.TransformOverride.ofSource"
-  ),
   ProblemFilters.exclude[ReversedMissingMethodProblem](
     "com.spotify.scio.options.ScioOptions.setZstdDictionary"
   ),
@@ -463,9 +460,6 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ProblemFilters.exclude[MissingClassProblem]("com.spotify.scio.tensorflow.SavedBundlePredictDoFn"),
   ProblemFilters.exclude[MissingClassProblem](
     "com.spotify.scio.tensorflow.SavedBundlePredictDoFn$"
-  ),
-  ProblemFilters.exclude[DirectMissingMethodProblem](
-    "com.spotify.scio.tensorflow.package.tensorFlowPredictSCollectionOps"
   ),
   ProblemFilters.exclude[DirectMissingMethodProblem](
     "com.spotify.scio.tensorflow.package.tensorFlowPredictSCollectionOps"
