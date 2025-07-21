@@ -282,6 +282,53 @@ Here are some other recommended settings.
 
 A full list of Parquet configuration options can be found [here](https://github.com/apache/parquet-mr/blob/master/parquet-hadoop/README.md).
 
+## Enabling Vectored Read API
+
+Parquet's Java SDK added [support](https://github.com/apache/parquet-java/pull/1139) for vectored reads in 1.14.0+, configurable through the `parquet.hadoop.vectored.io.enabled` option.
+This option currently defaults to false, though it's slated to be enabled by default in a future release [defaulted to true](https://github.com/apache/parquet-java/pull/3128).
+
+Before enabling vectored read support, you must ensure that your underlying filesystem supports it as well.
+
+### Vectored Reads for Google Cloud Storage
+
+Google Cloud Storage has added support as of gcs-connector 3.x; however, as this version drops Java 8 support, Scio and Beam remain pinned to 2.x versions until 0.15.x and 3.x releases, respectively.
+
+You can override your gcs-connector version to 3.x, if your pipeline meets the following conditions:
+
+- Beam SDK is on 2.64.0+
+- Scio SDK is on 0.14.19+
+- Java runtime is 11+
+
+To override gcs-connector, add the following setting to your build.sbt:
+
+```sbt
+val bigdataOssVersion = "3.1.3" // Check Maven for latest
+
+dependencyOverrides ++= Seq(
+  "com.google.cloud.bigdataoss" % "gcs-connector" % bigdataOssVersion,
+  "com.google.cloud.bigdataoss" % "gcsio" % bigdataOssVersion,
+  "com.google.cloud.bigdataoss" % "util-hadoop" % bigdataOssVersion
+)
+```
+
+Note that due to binary incompatibilities between gcs-connector 2.x and 3.x, Scio will not be able to autamatically load any
+[gcsio configuration options](https://github.com/GoogleCloudDataproc/hadoop-connectors/blob/master/gcs/CONFIGURATION.md#io-configuration) you may be passing though `core-site.xml`.
+You'll have to configure them yourself:
+
+```scala
+val sc: ScioContext = ???
+val options = sc.optionsAs[GcsOptions]
+
+options.setGoogleCloudStorageReadOptions(
+  GoogleCloudStorageReadOptions
+    .builder()
+    .setFastFailOnNotFound(false)
+    .setFadvise(Fadvise.RANDOM)
+    ...
+    .build()
+)
+```
+
 ## Parquet Reads in Scio 0.12.0+
 
 Parquet read internals have been reworked in Scio 0.12.0. As of 0.12.0, you can opt-into the new Parquet read implementation,
