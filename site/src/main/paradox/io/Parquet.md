@@ -311,7 +311,7 @@ dependencyOverrides ++= Seq(
 )
 ```
 
-Note that due to binary incompatibilities between gcs-connector 2.x and 3.x, Scio will not be able to autamatically load any
+Note that due to binary incompatibilities between gcs-connector 2.x and 3.x, Scio will not be able to automatically load any
 [gcsio configuration options](https://github.com/GoogleCloudDataproc/hadoop-connectors/blob/master/gcs/CONFIGURATION.md#io-configuration) you may be passing though `core-site.xml`.
 You'll have to configure them yourself:
 
