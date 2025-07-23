@@ -36,7 +36,7 @@ val beamVersion = "2.66.0"
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = sys.props.getOrElse("avro.version", "1.11.4")
-val bigdataossVersion = "2.2.26"
+val bigdataossVersion = "3.1.3"
 val bigtableClientVersion = "1.28.0"
 val commonsCodecVersion = "1.18.0"
 val commonsCompressVersion = "1.26.2"
@@ -879,9 +879,9 @@ lazy val `scio-core` = project
       "org.apache.beam" % s"beam-runners-spark-$sparkMajorVersion" % beamVersion % Provided,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion % Provided,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion % Provided,
-      "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Provided,
+      "com.google.cloud.bigdataoss" % "gcs-connector" % bigdataossVersion % Provided,
       "com.google.cloud.bigdataoss" % "gcsio" % bigdataossVersion % Provided,
-      "com.google.cloud.bigdataoss" % "util-hadoop" % s"hadoop2-$bigdataossVersion" % Provided,
+      "com.google.cloud.bigdataoss" % "util-hadoop" % bigdataossVersion % Provided,
       // test
       "com.lihaoyi" %% "fansi" % fansiVersion % Test,
       "com.lihaoyi" %% "pprint" % pprintVersion % Test,
@@ -1355,7 +1355,7 @@ lazy val `scio-parquet` = project
     libraryDependencies ++= Seq(
       // compile
       "com.google.auth" % "google-auth-library-oauth2-http" % gcpBom.key.value,
-      "com.google.cloud.bigdataoss" % "util-hadoop" % s"hadoop2-$bigdataossVersion",
+      "com.google.cloud.bigdataoss" % "util-hadoop" % bigdataossVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
       "com.twitter" %% "chill" % chillVersion,
@@ -1563,7 +1563,8 @@ lazy val `scio-examples` = project
       "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion,
       "redis.clients" % "jedis" % jedisVersion,
       // runtime
-      "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
+      "com.google.cloud.bigdataoss" % "gcs-connector" % bigdataossVersion % Runtime,
+      "com.google.cloud.bigdataoss" % "gcsio" % bigdataossVersion % Runtime,
       "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.25.2" % Runtime,
       // test
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test

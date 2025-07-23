@@ -106,7 +106,10 @@ class ApplicationDefaultTokenProvider() extends AccessTokenProvider {
 
   override def getAccessToken: AccessTokenProvider.AccessToken = {
     val gToken = Option(adc.getAccessToken).getOrElse { adc.refresh(); adc.getAccessToken }
-    new AccessTokenProvider.AccessToken(gToken.getTokenValue, gToken.getExpirationTime.getTime)
+    new AccessTokenProvider.AccessToken(
+      gToken.getTokenValue,
+      gToken.getExpirationTime.toInstant
+    )
   }
   override def refresh(): Unit = adc.refresh()
   override def setConf(c: Configuration): Unit = conf = Some(c)
