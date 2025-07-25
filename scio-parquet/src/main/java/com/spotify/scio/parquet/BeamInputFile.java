@@ -39,11 +39,26 @@ public class BeamInputFile implements InputFile {
 
   private final SeekableByteChannel channel;
 
-  // Todo: detect & warn if gcs-connector < 3.x?
-  public static InputFile ofVectored(
+  public static InputFile of(
       FileIO.ReadableFile readableFile, SerializableConfiguration configuration)
       throws IOException {
-    return new VectoredInputFile(readableFile, configuration);
+    if (isReadVectorRequested(configuration)) {
+      return new VectoredInputFile(readableFile, configuration);
+    } else {
+      return of(readableFile.getMetadata().resourceId());
+    }
+  }
+
+  public static InputFile of(java.nio.file.Path path, SerializableConfiguration configuration)
+      throws IOException {
+    if (isReadVectorRequested(configuration)) {
+      return new VectoredInputFile(
+          FileSystems.matchNewResource(path.toString(), false),
+          FileSystems.matchSingleFileSpec(path.toString()).sizeBytes(),
+          configuration);
+    } else {
+      return of(FileSystems.matchNewResource(path.toString(), false));
+    }
   }
 
   public static BeamInputFile of(SeekableByteChannel seekableByteChannel) {
@@ -72,7 +87,11 @@ public class BeamInputFile implements InputFile {
     return new BeamInputStream(channel);
   }
 
-  static class VectoredInputFile implements InputFile, Serializable {
+  private static boolean isReadVectorRequested(SerializableConfiguration conf) {
+    return conf.get().getBoolean("parquet.hadoop.vectored.io.enabled", false);
+  }
+
+  public static class VectoredInputFile implements InputFile, Serializable {
     private final long length;
     private final ResourceId resourceId;
     private final GoogleHadoopFileSystem fs;
@@ -82,14 +101,23 @@ public class BeamInputFile implements InputFile {
     private VectoredInputFile(
         FileIO.ReadableFile readableFile, SerializableConfiguration configuration)
         throws IOException {
-      final ResourceId resourceId = readableFile.getMetadata().resourceId();
+      this(
+          readableFile.getMetadata().resourceId(),
+          readableFile.getMetadata().sizeBytes(),
+          configuration);
+    }
 
+    // Todo: detect & warn if gcs-connector < 3.x or java < 17?
+    private VectoredInputFile(
+        ResourceId resourceId, long sizeBytes, SerializableConfiguration configuration)
+        throws IOException {
+      this.length = sizeBytes;
+      this.resourceId = resourceId;
+
+      // todo handle this better
       if (!resourceId.getScheme().equals("gs")) {
         throw new IllegalArgumentException("Vectored reads are only supported for schemes: [gs]");
       }
-
-      this.length = readableFile.getMetadata().sizeBytes();
-      this.resourceId = resourceId;
 
       fs = new GoogleHadoopFileSystem();
       final Configuration c = configuration.get();

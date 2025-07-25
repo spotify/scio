@@ -105,11 +105,7 @@ class ParquetReadFn[T, R](
     }
 
   private def parquetFileReader(file: ReadableFile): ParquetFileReader =
-    if (conf.get().getBoolean("parquet.hadoop.vectored.io.enabled", false)) {
-      ParquetFileReader.open(BeamInputFile.ofVectored(file, conf), options)
-    } else {
-      ParquetFileReader.open(BeamInputFile.of(file.openSeekable), options)
-    }
+    ParquetFileReader.open(BeamInputFile.of(file, conf), options)
 
   @GetRestrictionCoder def getRestrictionCoder = new OffsetRange.Coder
 
