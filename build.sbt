@@ -63,7 +63,7 @@ val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 val zetasketchVersion = "0.1.0" // sdks/java/extensions/zetasketch/build.gradle
 val flinkVersion = "1.19.0" // runners/flink/1.19/build.gradle
 val flinkMinorVersion = VersionNumber(flinkVersion).numbers.take(2).mkString(".")
-val hadoopVersion = "3.4.1" // sdks/java/io/parquet/build.gradle
+val hadoopVersion = "3.3.6" // DO NOT UPDATE: 3.4 breaks readVectored impl in gcs-connector
 val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
 val sparkMajorVersion = VersionNumber(sparkVersion).numbers.take(1).mkString(".")
 
@@ -1376,6 +1376,7 @@ lazy val `scio-parquet` = project
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // provided
       "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided,
+      "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Provided,
       // runtime
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion % Runtime excludeAll (Exclude.metricsCore),
       "io.dropwizard.metrics" % "metrics-core" % metricsVersion % Runtime,
@@ -1563,7 +1564,10 @@ lazy val `scio-examples` = project
       "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion,
       "redis.clients" % "jedis" % jedisVersion,
       // runtime
-      "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
+      // bigdataoss 3.x supports readVectored, but targets Java 11, so we can't include in published artifacts
+      "com.google.cloud.bigdataoss" % "gcs-connector" % "3.1.3" % Runtime,
+      "com.google.cloud.bigdataoss" % "gcsio" % "3.1.3" % Runtime,
+      "com.google.cloud.bigdataoss" % "util-hadoop" % "3.1.3" % Runtime,
       "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.25.2" % Runtime,
       // test
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
