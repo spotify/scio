@@ -118,13 +118,13 @@ public abstract class FileOperations<V> implements Serializable, HasDisplayData 
               path.toFile().delete();
               return diskBufferBytes.getAndUpdate(prev -> prev + fileSize);
             });
-        reader.prepareRead(Files.newByteChannel(path));
+        reader.prepareRead(path);
         return reader.iterator();
       }
     }
 
     filesStreamed.inc();
-    reader.prepareRead(readableFile.open());
+    reader.prepareRead(readableFile);
     return reader.iterator();
   }
 
@@ -150,6 +150,14 @@ public abstract class FileOperations<V> implements Serializable, HasDisplayData 
     }
 
     public abstract void prepareRead(ReadableByteChannel channel) throws IOException;
+
+    public void prepareRead(Path path) throws IOException {
+      prepareRead(Files.newByteChannel(path));
+    }
+
+    public void prepareRead(ReadableFile readableFile) throws IOException {
+      prepareRead(readableFile.open());
+    }
 
     /** Reads next record in the collection. */
     public abstract V readNext() throws IOException, NoSuchElementException;
