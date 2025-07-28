@@ -64,7 +64,7 @@ val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 val zetasketchVersion = "0.1.0" // sdks/java/extensions/zetasketch/build.gradle
 val flinkVersion = "1.19.0" // runners/flink/1.19/build.gradle
 val flinkMinorVersion = VersionNumber(flinkVersion).numbers.take(2).mkString(".")
-val hadoopVersion = "3.3.6" // DO NOT UPDATE: 3.4 breaks readVectored impl in gcs-connector
+val hadoopVersion = "3.4.1" // sdks/java/io/parquet/build.gradle
 val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
 val sparkMajorVersion = VersionNumber(sparkVersion).numbers.take(1).mkString(".")
 
@@ -716,9 +716,9 @@ def vectoredReadSettings: Seq[Setting[_]] = sys.props
         "com.google.cloud.bigdataoss" % "gcs-connector" % bigdataoss3Version,
         "com.google.cloud.bigdataoss" % "gcsio" % bigdataoss3Version,
         "com.google.cloud.bigdataoss" % "util-hadoop" % bigdataoss3Version,
-        "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
-        "org.apache.hadoop" % "hadoop-auth" % hadoopVersion,
-        "org.apache.hadoop" % "hadoop-client" % hadoopVersion
+        "org.apache.hadoop" % "hadoop-common" % "3.3.6",
+        "org.apache.hadoop" % "hadoop-auth" % "3.3.6",
+        "org.apache.hadoop" % "hadoop-client" % "3.3.6"
       )
     )
   }
