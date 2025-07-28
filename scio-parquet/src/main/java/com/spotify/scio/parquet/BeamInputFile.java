@@ -19,7 +19,6 @@ package com.spotify.scio.parquet;
 
 import com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem;
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.channels.Channels;
 import java.nio.channels.SeekableByteChannel;
 import org.apache.beam.sdk.io.FileIO;
@@ -91,7 +90,8 @@ public class BeamInputFile implements InputFile {
     return conf.get().getBoolean("parquet.hadoop.vectored.io.enabled", false);
   }
 
-  public static class VectoredInputFile implements InputFile, Serializable {
+  // Experimental specialization on InputFile that provides readVectored support
+  static class VectoredInputFile implements InputFile {
     private final long length;
     private final ResourceId resourceId;
     private final GoogleHadoopFileSystem fs;
@@ -107,14 +107,12 @@ public class BeamInputFile implements InputFile {
           configuration);
     }
 
-    // Todo: detect & warn if gcs-connector < 3.x or java < 17?
     private VectoredInputFile(
         ResourceId resourceId, long sizeBytes, SerializableConfiguration configuration)
         throws IOException {
       this.length = sizeBytes;
       this.resourceId = resourceId;
 
-      // todo handle this better
       if (!resourceId.getScheme().equals("gs")) {
         throw new IllegalArgumentException("Vectored reads are only supported for schemes: [gs]");
       }
@@ -152,6 +150,11 @@ public class BeamInputFile implements InputFile {
             stream.getClass());
       }
       return stream;
+    }
+
+    @Override
+    public String toString() {
+      return "VectoredInputFile(" + resourceId + ")";
     }
   }
 
