@@ -17,6 +17,10 @@ object Exclude {
     "log4j" % "log4j"
   )
 
+  val hadoopThirdParty: Seq[ExclusionRule] = Seq(
+    "org.apache.hadoop.thirdparty" % "hadoop-shaded-protobuf_3_7"
+  )
+
   // Beam 2.66 pulls in jackson-module-scala_2.12, which pulls in chill_2.12
   def jacksonCrossBuilt(scalaVersion: String): Seq[ExclusionRule] = VersionNumber(
     scalaVersion
