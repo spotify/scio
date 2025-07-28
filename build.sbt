@@ -712,7 +712,6 @@ def vectoredReadSettings: Seq[Setting[_]] = sys.props
   .map(_.toBoolean)
   .collect { case true =>
     Seq(
-      libraryDependencies += "com.google.cloud.bigdataoss" % "gcs-connector" % bigdataoss3Version,
       dependencyOverrides ++= Seq(
         "com.google.cloud.bigdataoss" % "gcs-connector" % bigdataoss3Version,
         "com.google.cloud.bigdataoss" % "gcsio" % bigdataoss3Version,
