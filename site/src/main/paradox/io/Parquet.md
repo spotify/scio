@@ -297,12 +297,14 @@ You can override your gcs-connector version to 3.x, if your pipeline meets the f
 
 - Beam SDK is on 2.64.0+
 - Scio SDK is on 0.14.19+
+- Hadoop libraries are on 3.3.x (gcs-connector 3.1.3 is explicitly not compatible with Hadooop 3.4)
 - Java runtime is 17+
 
 To override gcs-connector, add the following settings to your build.sbt:
 
 ```sbt
 val bigdataOssVersion = "3.1.3" // Check Maven for latest
+val hadoopVersion = "3.3.6" // Check Maven for latest
 
 libraryDependencies += "com.google.cloud.bigdataoss" % "gcs-connector" % bigdataossVersion,
 dependencyOverrides ++= Seq(
