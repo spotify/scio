@@ -18,6 +18,7 @@
 package org.apache.beam.sdk.extensions.smb
 
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.spotify.scio.parquet.BeamInputFile
 import magnolify.parquet.ParquetType
 import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
@@ -29,8 +30,10 @@ import org.apache.parquet.filter2.compat.FilterCompat
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.{ParquetReader, ParquetWriter}
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
+import org.apache.parquet.io.InputFile
 
 import java.nio.channels.{ReadableByteChannel, WritableByteChannel}
+import java.nio.file.Path
 
 object ParquetTypeFileOperations {
 
@@ -101,8 +104,17 @@ private case class ParquetTypeReader[T](
   @transient private var reader: ParquetReader[T] = _
   @transient private var current: T = _
 
-  override def prepareRead(channel: ReadableByteChannel): Unit = {
-    var builder = pt.readBuilder(new ParquetInputFile(channel)).withConf(conf.get())
+  override def prepareRead(channel: ReadableByteChannel): Unit =
+    throw new IllegalStateException("PrepareRead is overridden in ParquetTypeReader")
+
+  override def prepareRead(path: Path): Unit =
+    prepareRead(BeamInputFile.of(path, conf))
+
+  override def prepareRead(readableFile: FileIO.ReadableFile): Unit =
+    prepareRead(BeamInputFile.of(readableFile, conf))
+
+  private def prepareRead(parquetInputFile: InputFile): Unit = {
+    var builder = pt.readBuilder(parquetInputFile).withConf(conf.get())
     if (predicate != null) {
       builder = builder.withFilter(FilterCompat.get(predicate))
     }

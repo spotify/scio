@@ -297,35 +297,44 @@ You can override your gcs-connector version to 3.x, if your pipeline meets the f
 
 - Beam SDK is on 2.64.0+
 - Scio SDK is on 0.14.19+
-- Java runtime is 11+
+- Hadoop libraries are on 3.3.x (gcs-connector 3.1.3 is explicitly not compatible with Hadooop 3.4)
+- Java runtime is 17+
 
-To override gcs-connector, add the following setting to your build.sbt:
+To override gcs-connector, add the following settings to your build.sbt:
 
 ```sbt
 val bigdataOssVersion = "3.1.3" // Check Maven for latest
+val hadoopVersion = "3.3.6" // Check Maven for latest
 
+libraryDependencies += "com.google.cloud.bigdataoss" % "gcs-connector" % bigdataossVersion,
 dependencyOverrides ++= Seq(
-  "com.google.cloud.bigdataoss" % "gcs-connector" % bigdataOssVersion,
-  "com.google.cloud.bigdataoss" % "gcsio" % bigdataOssVersion,
-  "com.google.cloud.bigdataoss" % "util-hadoop" % bigdataOssVersion
+  "com.google.cloud.bigdataoss" % "gcsio" % bigdataossVersion,
+  "com.google.cloud.bigdataoss" % "util-hadoop" % bigdataossVersion,
+  "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
+  "org.apache.hadoop" % "hadoop-auth" % hadoopVersion,
+  "org.apache.hadoop" % "hadoop-client" % hadoopVersion
 )
 ```
 
-Note that due to binary incompatibilities between gcs-connector 2.x and 3.x, Scio will not be able to automatically load any
-[gcsio configuration options](https://github.com/GoogleCloudDataproc/hadoop-connectors/blob/master/gcs/CONFIGURATION.md#io-configuration) you may be passing though `core-site.xml`.
-You'll have to configure them yourself:
+Then, in your Parquet read configuration, enable vectored reads:
 
 ```scala
-val sc: ScioContext = ???
-val options = sc.optionsAs[GcsOptions]
+sc.typedParquetFile[MyCaseClass](
+  input,
+  conf = ParquetConfiguration.of("parquet.hadoop.vectored.io.enabled" -> true)
+)
+```
 
-options.setGoogleCloudStorageReadOptions(
-  GoogleCloudStorageReadOptions
-    .builder()
-    .setFastFailOnNotFound(false)
-    .setFadvise(Fadvise.RANDOM)
-    ...
-    .build()
+SMB Parquet IOs also support vectored reads:
+
+```scala
+sc.sortMergeJoin(
+  classOf[String],
+  ParquetTypeSortedBucketIO
+    .read(new TupleTag[MyCaseClass]("lhs"))
+    .withConfiguration(ParquetConfiguration.of("parquet.hadoop.vectored.io.enabled" -> true))
+    .from(args("input")),
+  ...
 )
 ```
 

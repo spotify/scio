@@ -17,9 +17,11 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
+import com.spotify.scio.parquet.BeamInputFile;
 import java.io.IOException;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.nio.file.Path;
 import java.util.NoSuchElementException;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
@@ -41,6 +43,7 @@ import org.apache.parquet.filter2.predicate.FilterPredicate;
 import org.apache.parquet.hadoop.ParquetReader;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
+import org.apache.parquet.io.InputFile;
 
 /**
  * {@link org.apache.beam.sdk.extensions.smb.FileOperations} implementation for Parquet files with
@@ -154,6 +157,20 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
     @Override
     public void prepareRead(ReadableByteChannel channel) throws IOException {
+      throw new IllegalStateException("PrepareRead is overridden in ParquetAvroReader");
+    }
+
+    @Override
+    public void prepareRead(Path path) throws IOException {
+      prepareRead(BeamInputFile.of(path, conf));
+    }
+
+    @Override
+    public void prepareRead(FileIO.ReadableFile readableFile) throws IOException {
+      prepareRead(BeamInputFile.of(readableFile, conf));
+    }
+
+    private void prepareRead(InputFile parquetInputFile) throws IOException {
       final Schema readSchema = readSchemaSupplier.get();
       final Configuration configuration = conf.get();
       AvroReadSupport.setAvroReadSchema(configuration, readSchema);
@@ -170,7 +187,7 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
       }
 
       ParquetReader.Builder<ValueT> builder =
-          AvroParquetReader.<ValueT>builder(new ParquetInputFile(channel)).withConf(configuration);
+          AvroParquetReader.<ValueT>builder(parquetInputFile).withConf(configuration);
       if (predicate != null) {
         builder = builder.withFilter(FilterCompat.get(predicate));
       }
