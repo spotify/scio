@@ -316,6 +316,28 @@ dependencyOverrides ++= Seq(
 )
 ```
 
+Then, in your Parquet read configuration, enable vectored reads:
+
+```scala
+sc.typedParquetFile[MyCaseClass](
+  input,
+  conf = ParquetConfiguration.of("parquet.hadoop.vectored.io.enabled" -> true)
+)
+```
+
+SMB Parquet IOs also support vectored reads:
+
+```scala
+sc.sortMergeJoin(
+  classOf[String],
+  ParquetTypeSortedBucketIO
+    .read(new TupleTag[MyCaseClass]("lhs"))
+    .withConfiguration(ParquetConfiguration.of("parquet.hadoop.vectored.io.enabled" -> true))
+    .from(args("input")),
+  ...
+)
+```
+
 ## Parquet Reads in Scio 0.12.0+
 
 Parquet read internals have been reworked in Scio 0.12.0. As of 0.12.0, you can opt-into the new Parquet read implementation,
