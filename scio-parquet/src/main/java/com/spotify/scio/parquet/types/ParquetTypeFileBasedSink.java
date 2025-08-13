@@ -20,6 +20,7 @@ package com.spotify.scio.parquet.types;
 import com.spotify.scio.parquet.BeamOutputFile;
 import com.spotify.scio.parquet.WriterUtils;
 import java.nio.channels.WritableByteChannel;
+import java.util.Map;
 import magnolify.parquet.ParquetType;
 import org.apache.beam.sdk.io.FileBasedSink;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -35,22 +36,25 @@ public class ParquetTypeFileBasedSink<T> extends FileBasedSink<T, Void, T> {
   private final ParquetType<T> type;
   private final SerializableConfiguration conf;
   private final CompressionCodecName compression;
+  private final Map<String, String> extraMetadata;
 
   public ParquetTypeFileBasedSink(
       ValueProvider<ResourceId> baseOutputFileName,
       FileBasedSink.DynamicDestinations<T, Void, T> dynamicDestinations,
       ParquetType<T> type,
       Configuration conf,
-      CompressionCodecName compression) {
+      CompressionCodecName compression,
+      Map<String, String> extraMetadata) {
     super(baseOutputFileName, dynamicDestinations);
     this.type = type;
     this.conf = new SerializableConfiguration(conf);
     this.compression = compression;
+    this.extraMetadata = extraMetadata;
   }
 
   @Override
   public FileBasedSink.WriteOperation<Void, T> createWriteOperation() {
-    return new ParquetTypeWriteOperation<>(this, type, conf, compression);
+    return new ParquetTypeWriteOperation<>(this, type, conf, compression, extraMetadata);
   }
 
   // =======================================================================
@@ -61,21 +65,24 @@ public class ParquetTypeFileBasedSink<T> extends FileBasedSink<T, Void, T> {
     private final ParquetType<T> type;
     private final SerializableConfiguration conf;
     private final CompressionCodecName compression;
+    private final Map<String, String> extraMetadata;
 
     public ParquetTypeWriteOperation(
         FileBasedSink<T, Void, T> sink,
         ParquetType<T> type,
         SerializableConfiguration conf,
-        CompressionCodecName compression) {
+        CompressionCodecName compression,
+        Map<String, String> extraMetadata) {
       super(sink);
       this.type = type;
       this.conf = conf;
       this.compression = compression;
+      this.extraMetadata = extraMetadata;
     }
 
     @Override
     public Writer<Void, T> createWriter() throws Exception {
-      return new ParquetTypeWriter<>(this, type, conf, compression);
+      return new ParquetTypeWriter<>(this, type, conf, compression, extraMetadata);
     }
   }
 
@@ -88,24 +95,28 @@ public class ParquetTypeFileBasedSink<T> extends FileBasedSink<T, Void, T> {
     private final ParquetType<T> type;
     private final SerializableConfiguration conf;
     private final CompressionCodecName compression;
+    private final Map<String, String> extraMetadata;
     private ParquetWriter<T> writer;
 
     public ParquetTypeWriter(
         WriteOperation<Void, T> writeOperation,
         ParquetType<T> type,
         SerializableConfiguration conf,
-        CompressionCodecName compression) {
+        CompressionCodecName compression,
+        Map<String, String> extraMetadata) {
       super(writeOperation, MimeTypes.BINARY);
       this.type = type;
       this.conf = conf;
       this.compression = compression;
+      this.extraMetadata = extraMetadata;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     protected void prepareWrite(WritableByteChannel channel) throws Exception {
       BeamOutputFile outputFile = BeamOutputFile.of(channel);
-      writer = WriterUtils.build(type.writeBuilder(outputFile), conf.get(), compression);
+      writer =
+          WriterUtils.build(type.writeBuilder(outputFile), conf.get(), compression, extraMetadata);
     }
 
     @Override

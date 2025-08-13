@@ -17,37 +17,30 @@
 
 package com.spotify.scio.examples.extra
 
-import com.google.datastore.v1.client.DatastoreHelper.{makeKey, makeValue}
-import com.google.datastore.v1.Entity
 import com.spotify.scio.io._
 import com.spotify.scio.datastore._
 import com.spotify.scio.testing._
 
 class MagnolifyDatastoreExampleTest extends PipelineSpec {
+  import MagnolifyDatastoreExample._
+
   val textIn: Seq[String] = Seq("a b c d e", "a b a b")
   val wordCount: Seq[(String, Long)] = Seq(("a", 3L), ("b", 3L), ("c", 1L), ("d", 1L), ("e", 1L))
-  val entities: Seq[Entity] = wordCount.map { kv =>
-    Entity
-      .newBuilder()
-      .setKey(makeKey(MagnolifyDatastoreExample.kind, kv._1))
-      .putProperties("word", makeValue(kv._1).build())
-      .putProperties("count", makeValue(kv._2).build())
-      .build()
-  }
+  val entities: Seq[WordCount] = wordCount.map { case (word, count) => WordCount(word, count) }
   val textOut: Seq[String] = wordCount.map(kv => kv._1 + ": " + kv._2)
 
   "MagnolifyDatastoreWriteExample" should "work" in {
     JobTest[com.spotify.scio.examples.extra.MagnolifyDatastoreWriteExample.type]
       .args("--input=in.txt", "--output=project")
       .input(TextIO("in.txt"), textIn)
-      .output(DatastoreIO("project"))(coll => coll should containInAnyOrder(entities))
+      .output(DatastoreIO[WordCount]("project"))(_ should containInAnyOrder(entities))
       .run()
   }
 
   "MagnolifyDatastoreReadExample" should "work" in {
     JobTest[com.spotify.scio.examples.extra.MagnolifyDatastoreReadExample.type]
       .args("--input=project", "--output=out.txt")
-      .input(DatastoreIO("project"), entities)
+      .input(DatastoreIO[WordCount]("project"), entities)
       .output(TextIO("out.txt"))(coll => coll should containInAnyOrder(textOut))
       .run()
   }

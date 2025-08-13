@@ -41,11 +41,7 @@ object BigtableIT {
   def testData(id: String): Seq[(String, Long)] =
     Seq((s"$id-key1", 1L), (s"$id-key2", 2L), (s"$id-key3", 3L))
 
-  val bigtableOptions: BigtableOptions = BigtableOptions
-    .builder()
-    .setProjectId(projectId)
-    .setInstanceId(instanceId)
-    .build
+  val bigtableOptions: BigtableOptions = BTOptions(projectId, instanceId)
 
   val FAMILY_NAME: String = "count"
   val COLUMN_QUALIFIER: ByteString = ByteString.copyFromUtf8("long")
@@ -110,7 +106,7 @@ class BigtableIT extends PipelineSpec {
         .build()
       runWithRealContext() { sc =>
         sc
-          .bigtable(projectId, instanceId, tableId, rowFilter = rowFilter)
+          .bigtable(BTOptions(projectId, instanceId), tableId, rowFilter = rowFilter)
           .map(fromRow) should containInAnyOrder(data)
       }.waitUntilDone()
     } catch {
@@ -151,7 +147,7 @@ class BigtableIT extends PipelineSpec {
         .build()
       runWithRealContext() { sc =>
         sc
-          .bigtable(projectId, instanceId, tableId, rowFilter = rowFilter)
+          .bigtable(BTOptions(projectId, instanceId), tableId, rowFilter = rowFilter)
           .map(fromRow) should containInAnyOrder(data)
       }.waitUntilDone()
     } catch {
