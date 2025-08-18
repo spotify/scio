@@ -29,7 +29,7 @@ import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 // To test release candidates, find the beam repo and add it as a resolver
 // ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.66.0"
+val beamVersion = "2.67.0"
 
 // check version used by beam
 // https://github.com/apache/beam/blob/v2.66.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
