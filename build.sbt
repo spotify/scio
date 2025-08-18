@@ -1554,7 +1554,7 @@ lazy val `scio-examples` = project
       "com.google.http-client" % "google-http-client" % gcpBom.key.value,
       "com.google.oauth-client" % "google-oauth-client" % gcpBom.key.value,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
-      "com.mysql" % "mysql-connector-j" % "9.3.0",
+      "com.mysql" % "mysql-connector-j" % "9.4.0",
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
       "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
