@@ -40,7 +40,7 @@ import com.spotify.scio.parquet.avro._
 import com.spotify.scio.parquet.types._
 import com.spotify.scio.parquet.tensorflow._
 import com.spotify.scio.io.TextIO
-import org.tensorflow.proto.example.{Example, Feature, Features, FloatList}
+import org.tensorflow.proto.{Example, Feature, Features, FloatList}
 
 class ParquetExampleTest extends PipelineSpec {
 

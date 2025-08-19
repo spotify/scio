@@ -21,6 +21,7 @@ import com.google.api.services.bigquery.model.{TableRow => GTableRow}
 import com.spotify.scio.bigquery.instances.CoderInstances
 import com.spotify.scio.bigquery.syntax.{
   FileStorageSyntax,
+  MagnolifySyntax,
   SCollectionSyntax,
   ScioContextSyntax,
   TableReferenceSyntax,
@@ -51,6 +52,7 @@ package object bigquery
     with TableRowSyntax
     with TableReferenceSyntax
     with FileStorageSyntax
+    with MagnolifySyntax
     with CoderInstances {
 
   /** Alias for BigQuery `CreateDisposition`. */
