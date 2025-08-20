@@ -511,6 +511,8 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ProblemFilters.exclude[DirectMissingMethodProblem](
     "com.spotify.scio.bigquery.syntax.SCollectionTypedOps.saveAsTypedBigQueryTable$extension"
   ),
+  ProblemFilters.exclude[MissingTypesProblem]("com.spotify.scio.bigtable.BigtableWrite$WriteParam"),
+  ProblemFilters.exclude[MissingTypesProblem]("com.spotify.scio.bigtable.BigtableWrite$Default$"),
   // Only used for testing, shouldn't be public
   ProblemFilters.exclude[Problem]("com.spotify.scio.bigquery.validation.Country.*")
 )
