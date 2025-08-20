@@ -45,3 +45,21 @@ Bigtable is replicated only within a single zone. Bigtable does not support tran
 Think of Datastore as distributed, persistent, fully managed key-value store, with support for transactions. Datastore is replicated across multiple datacenters thus making it theoretically more available than Bigtable (as of today).
 
 Read more about Bigtable [here](https://cloud.google.com/bigtable/docs/concepts), and more about Datastore over [here](https://cloud.google.com/datastore/docs/concepts/overview).
+
+## Flow Control
+
+Support for Bigtable's [Flow Control](https://cloud.google.com/bigtable/docs/writes#flow-control) feature for batch writes has been added in Scio 0.14.19.
+
+Just set the `flowControlEnabled` flag in your Bigtable write:
+
+```diff
+data.saveAsBigtable(
+    projectId = "myproject",
+    instanceId= = "myinstance",
+    tableId = "mytable",
++   flowControlEnabled = true
+)
+```
+
+Note that enabling this feature replaces the need for manual upscaling/downscaling of your Bigtable cluster before and after your job runs.
+Your cluster must also have autoscaling enabled.
