@@ -129,13 +129,14 @@ final case class BigtableWrite[T <: Mutation](bigtableOptions: BigtableOptions, 
   ): Tap[Nothing] = {
     val sink =
       params match {
-        case BigtableWrite.Default =>
+        case BigtableWrite.Default(flowControlEnabled) =>
           val opts = bigtableOptions // defeat closure
           beam.BigtableIO
             .write()
             .withProjectId(bigtableOptions.getProjectId)
             .withInstanceId(bigtableOptions.getInstanceId)
             .withTableId(tableId)
+            .withFlowControl(flowControlEnabled)
             .withBigtableOptionsConfigurator(
               Functions.serializableFn(_ => opts.toBuilder)
             ): @nowarn("cat=deprecation")
@@ -158,7 +159,12 @@ final case class BigtableWrite[T <: Mutation](bigtableOptions: BigtableOptions, 
 
 object BigtableWrite {
   sealed trait WriteParam
-  object Default extends WriteParam
+
+  object Default {
+    private[bigtable] val DefaultFlowControlEnabled = false
+  }
+  final case class Default(flowControlEnabled: Boolean = Default.DefaultFlowControlEnabled)
+      extends WriteParam
 
   object Bulk {
     private[bigtable] val DefaultFlushInterval = Duration.standardSeconds(1)

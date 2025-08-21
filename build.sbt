@@ -29,10 +29,10 @@ import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 // To test release candidates, find the beam repo and add it as a resolver
 // ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.66.0"
+val beamVersion = "2.67.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.66.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.67.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = sys.props.getOrElse("avro.version", "1.11.4")
@@ -44,7 +44,7 @@ val commonsCompressVersion = "1.26.2"
 val commonsIoVersion = "2.16.1"
 val commonsLang3Version = "3.14.0"
 val commonsMath3Version = "3.6.1"
-val gcpLibrariesVersion = "26.60.0"
+val gcpLibrariesVersion = "26.62.0"
 val googleClientsVersion = "2.0.0"
 val guavaVersion = "33.1.0-jre"
 val hamcrestVersion = "2.1"
@@ -57,7 +57,7 @@ val protobufVersion = "3.25.5" // stuck on Protobuf 3: https://github.com/spotif
 val slf4jVersion = "1.7.30"
 val zstdJniVersion = "1.5.6-3"
 // dependent versions
-val googleApiServicesBigQueryVersion = s"v2-rev20250427-$googleClientsVersion"
+val googleApiServicesBigQueryVersion = s"v2-rev20250511-$googleClientsVersion"
 val googleApiServicesDataflowVersion = s"v1b3-rev20250519-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 // beam tested versions
@@ -69,7 +69,7 @@ val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
 val sparkMajorVersion = VersionNumber(sparkVersion).numbers.take(1).mkString(".")
 
 // check recommended versions from libraries-bom
-// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.60.0/index.html
+// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.62.0/index.html
 val failureAccessVersion = "1.0.2"
 val checkerQualVersion = "3.49.0"
 val jsr305Version = "3.0.2"
@@ -88,12 +88,12 @@ val circeVersion = "0.14.14"
 val commonsTextVersion = "1.10.0"
 val elasticsearch7Version = "7.17.21"
 val elasticsearch8Version = "8.18.5"
-val fansiVersion = "0.5.0"
+val fansiVersion = "0.5.1"
 val featranVersion = "0.8.0"
 val httpAsyncClientVersion = "4.1.5"
 val jakartaJsonVersion = "2.1.3"
 val javaLshVersion = "0.12"
-val jedisVersion = "6.0.0"
+val jedisVersion = "6.1.0"
 val jnaVersion = "5.17.0"
 val junitInterfaceVersion = "0.13.3"
 val junitVersion = "4.13.2"
@@ -511,6 +511,8 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ProblemFilters.exclude[DirectMissingMethodProblem](
     "com.spotify.scio.bigquery.syntax.SCollectionTypedOps.saveAsTypedBigQueryTable$extension"
   ),
+  ProblemFilters.exclude[MissingTypesProblem]("com.spotify.scio.bigtable.BigtableWrite$WriteParam"),
+  ProblemFilters.exclude[MissingTypesProblem]("com.spotify.scio.bigtable.BigtableWrite$Default$"),
   // Only used for testing, shouldn't be public
   ProblemFilters.exclude[Problem]("com.spotify.scio.bigquery.validation.Country.*")
 )
@@ -1554,7 +1556,7 @@ lazy val `scio-examples` = project
       "com.google.http-client" % "google-http-client" % gcpBom.key.value,
       "com.google.oauth-client" % "google-oauth-client" % gcpBom.key.value,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
-      "com.mysql" % "mysql-connector-j" % "9.3.0",
+      "com.mysql" % "mysql-connector-j" % "9.4.0",
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
       "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
@@ -1585,7 +1587,7 @@ lazy val `scio-examples` = project
       "redis.clients" % "jedis" % jedisVersion,
       // runtime
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
-      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.25.2" % Runtime,
+      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.25.3" % Runtime,
       // test
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
     ),
@@ -1889,13 +1891,13 @@ lazy val integration = project
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client" % gcpBom.key.value,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
-      "com.microsoft.sqlserver" % "mssql-jdbc" % "12.10.1.jre11",
+      "com.microsoft.sqlserver" % "mssql-jdbc" % "13.2.0.jre11",
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // runtime
-      "com.google.cloud.sql" % "cloud-sql-connector-jdbc-sqlserver" % "1.25.2" % Runtime,
+      "com.google.cloud.sql" % "cloud-sql-connector-jdbc-sqlserver" % "1.25.3" % Runtime,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Runtime,
       // test
