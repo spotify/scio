@@ -221,6 +221,7 @@ spotify/scio
     <li><a href="../io/Parquet.html#avro" class="header">Avro</a></li>
     <li><a href="../io/Parquet.html#case-classes" class="header">Case classes</a></li>
     <li><a href="../io/Parquet.html#configuring-parquet" class="header">Configuring Parquet</a></li>
+    <li><a href="../io/Parquet.html#enabling-vectored-read-api" class="header">Enabling Vectored Read API</a></li>
     <li><a href="../io/Parquet.html#parquet-reads-in-scio-0-12-0-" class="header">Parquet Reads in Scio 0.12.0+</a></li>
     <li><a href="../io/Parquet.html#testing" class="header">Testing</a></li>
   </ul></li>
@@ -231,7 +232,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.14.17-31-b648b4a-20250714T202047Z*
+<i class="md-icon" title="Version">label_outline</i> 0.14.18-23-19528e8-20250827T172948Z*
 </label>
 </li>
 </ul>
@@ -249,6 +250,7 @@ spotify/scio
     <li><a href="../io/Parquet.html#avro" class="header">Avro</a></li>
     <li><a href="../io/Parquet.html#case-classes" class="header">Case classes</a></li>
     <li><a href="../io/Parquet.html#configuring-parquet" class="header">Configuring Parquet</a></li>
+    <li><a href="../io/Parquet.html#enabling-vectored-read-api" class="header">Enabling Vectored Read API</a></li>
     <li><a href="../io/Parquet.html#parquet-reads-in-scio-0-12-0-" class="header">Parquet Reads in Scio 0.12.0+</a></li>
     <li><a href="../io/Parquet.html#testing" class="header">Testing</a></li>
   </ul></li>
@@ -485,6 +487,47 @@ val parquetConf: Configuration = {
   <li><code>compression</code> - Parquet defaults to ZSTD compression with a level of 3; compression level can be set to any integer from 1-22 using the configuration option <code>parquet.compression.codec.zstd.level</code>. <code>SNAPPY</code> and <code>GZIP</code> compression types also work out of the box; Snappy is less CPU intensive but has lower compression ratio. In our benchmarks GZIP seem to work better than Snappy on GCS.</li>
 </ul>
 <p>A full list of Parquet configuration options can be found <a href="https://github.com/apache/parquet-mr/blob/master/parquet-hadoop/README.md">here</a>.</p>
+<h2><a href="#enabling-vectored-read-api" name="enabling-vectored-read-api" class="anchor"><span class="anchor-link"></span></a>Enabling Vectored Read API</h2>
+<p>Parquet&rsquo;s Java SDK added <a href="https://github.com/apache/parquet-java/pull/1139">support</a> for vectored reads in 1.14.0+, configurable through the <code>parquet.hadoop.vectored.io.enabled</code> option. This option currently defaults to false, though it&rsquo;s slated to be enabled by default in a future release <a href="https://github.com/apache/parquet-java/pull/3128">defaulted to true</a>.</p>
+<p>Before enabling vectored read support, you must ensure that your underlying filesystem supports it as well.</p>
+<h3><a href="#vectored-reads-for-google-cloud-storage" name="vectored-reads-for-google-cloud-storage" class="anchor"><span class="anchor-link"></span></a>Vectored Reads for Google Cloud Storage</h3>
+<p>Google Cloud Storage has added support as of gcs-connector 3.x; however, as this version drops Java 8 support, Scio and Beam remain pinned to 2.x versions until 0.15.x and 3.x releases, respectively.</p>
+<p>You can override your gcs-connector version to 3.x, if your pipeline meets the following conditions:</p>
+<ul>
+  <li>Beam SDK is on 2.64.0+</li>
+  <li>Scio SDK is on 0.14.19+</li>
+  <li>Hadoop libraries are on 3.3.x (gcs-connector 3.1.3 is explicitly not compatible with Hadooop 3.4)</li>
+  <li>Java runtime is 17+</li>
+</ul>
+<p>To override gcs-connector, add the following settings to your build.sbt:</p>
+<pre class="prettyprint"><code class="language-sbt">val bigdataOssVersion = &quot;3.1.3&quot; // Check Maven for latest
+val hadoopVersion = &quot;3.3.6&quot; // Check Maven for latest
+
+libraryDependencies += &quot;com.google.cloud.bigdataoss&quot; % &quot;gcs-connector&quot; % bigdataossVersion,
+dependencyOverrides ++= Seq(
+  &quot;com.google.cloud.bigdataoss&quot; % &quot;gcsio&quot; % bigdataossVersion,
+  &quot;com.google.cloud.bigdataoss&quot; % &quot;util-hadoop&quot; % bigdataossVersion,
+  &quot;org.apache.hadoop&quot; % &quot;hadoop-common&quot; % hadoopVersion,
+  &quot;org.apache.hadoop&quot; % &quot;hadoop-auth&quot; % hadoopVersion,
+  &quot;org.apache.hadoop&quot; % &quot;hadoop-client&quot; % hadoopVersion
+)
+</code></pre>
+<p>Then, in your Parquet read configuration, enable vectored reads:</p>
+<pre class="prettyprint"><code class="language-scala">sc.typedParquetFile[MyCaseClass](
+  input,
+  conf = ParquetConfiguration.of(&quot;parquet.hadoop.vectored.io.enabled&quot; -&gt; true)
+)
+</code></pre>
+<p>SMB Parquet IOs also support vectored reads:</p>
+<pre class="prettyprint"><code class="language-scala">sc.sortMergeJoin(
+  classOf[String],
+  ParquetTypeSortedBucketIO
+    .read(new TupleTag[MyCaseClass](&quot;lhs&quot;))
+    .withConfiguration(ParquetConfiguration.of(&quot;parquet.hadoop.vectored.io.enabled&quot; -&gt; true))
+    .from(args(&quot;input&quot;)),
+  ...
+)
+</code></pre>
 <h2><a href="#parquet-reads-in-scio-0-12-0-" name="parquet-reads-in-scio-0-12-0-" class="anchor"><span class="anchor-link"></span></a>Parquet Reads in Scio 0.12.0+</h2>
 <p>Parquet read internals have been reworked in Scio 0.12.0. As of 0.12.0, you can opt-into the new Parquet read implementation, backed by the new Beam <a href="https://beam.apache.org/blog/splittable-do-fn/">SplittableDoFn</a> API, by following the instructions <a href="../releases/migrations/v0.12.0-Migration-Guide.html#parquet-reads">here</a>.</p>
 <h2><a href="#testing" name="testing" class="anchor"><span class="anchor-link"></span></a>Testing</h2>
@@ -516,7 +559,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.14.17-31-b648b4a-20250714T202047Z*
+0.14.18-23-19528e8-20250827T172948Z*
 </span>
 </div>
 </article>

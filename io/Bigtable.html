@@ -220,6 +220,7 @@ spotify/scio
   <ul>
     <li><a href="../io/Bigtable.html#bigtable-example" class="header">Bigtable example</a></li>
     <li><a href="../io/Bigtable.html#common-issues" class="header">Common issues</a></li>
+    <li><a href="../io/Bigtable.html#flow-control" class="header">Flow Control</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -228,7 +229,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.14.17-31-b648b4a-20250714T202047Z*
+<i class="md-icon" title="Version">label_outline</i> 0.14.18-23-19528e8-20250827T172948Z*
 </label>
 </li>
 </ul>
@@ -245,6 +246,7 @@ spotify/scio
   <ul>
     <li><a href="../io/Bigtable.html#bigtable-example" class="header">Bigtable example</a></li>
     <li><a href="../io/Bigtable.html#common-issues" class="header">Common issues</a></li>
+    <li><a href="../io/Bigtable.html#flow-control" class="header">Flow Control</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -281,6 +283,17 @@ spotify/scio
 <p>Bigtable is replicated only within a single zone. Bigtable does not support transactions, that said all operations are atomic at the row level.</p>
 <p>Think of Datastore as distributed, persistent, fully managed key-value store, with support for transactions. Datastore is replicated across multiple datacenters thus making it theoretically more available than Bigtable (as of today).</p>
 <p>Read more about Bigtable <a href="https://cloud.google.com/bigtable/docs/concepts">here</a>, and more about Datastore over <a href="https://cloud.google.com/datastore/docs/concepts/overview">here</a>.</p>
+<h2><a href="#flow-control" name="flow-control" class="anchor"><span class="anchor-link"></span></a>Flow Control</h2>
+<p>Support for Bigtable&rsquo;s <a href="https://cloud.google.com/bigtable/docs/writes#flow-control">Flow Control</a> feature for batch writes has been added in Scio 0.14.19.</p>
+<p>Just set the <code>flowControlEnabled</code> flag in your Bigtable write:</p>
+<pre class="prettyprint"><code class="language-diff">data.saveAsBigtable(
+    projectId = &quot;myproject&quot;,
+    instanceId= = &quot;myinstance&quot;,
+    tableId = &quot;mytable&quot;,
++   flowControlEnabled = true
+)
+</code></pre>
+<p>Note that enabling this feature replaces the need for manual upscaling/downscaling of your Bigtable cluster before and after your job runs. Your cluster must also have autoscaling enabled.</p>
 </div>
 <div>
 <a href="https://github.com/spotify/scio/tree/master/site/src/main/paradox/io/Bigtable.md" title="Edit this page" class="md-source-file md-edit">
@@ -289,7 +302,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.14.17-31-b648b4a-20250714T202047Z*
+0.14.18-23-19528e8-20250827T172948Z*
 </span>
 </div>
 </article>
