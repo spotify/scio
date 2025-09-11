@@ -17,6 +17,7 @@
 
 package org.apache.beam.sdk.extensions.smb
 
+import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
 import org.apache.beam.sdk.testing.TestPipeline
 import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.beam.sdk.values.TupleTag
@@ -97,5 +98,24 @@ class ParquetTypeSortedBucketIOTest extends AnyFlatSpec with Matchers {
         .to("/output")
         .expand(null)
     } should have message "numBuckets must be set to a nonzero value"
+  }
+
+  it should "support EmptyMatchTreatment parameter" in {
+    // Test that EmptyMatchTreatment can be set without throwing exceptions
+    noException shouldBe thrownBy {
+      val read = ParquetTypeSortedBucketIO
+        .read[User](new TupleTag("input"))
+        .from("/input")
+        .withEmptyMatchTreatment(EmptyMatchTreatment.ALLOW)
+      
+      // Verify that the parameter is stored correctly
+      read.emptyMatchTreatment shouldBe EmptyMatchTreatment.ALLOW
+    }
+
+    // Test default behavior
+    val defaultRead = ParquetTypeSortedBucketIO
+      .read[User](new TupleTag("input"))
+      .from("/input")
+    defaultRead.emptyMatchTreatment shouldBe null
   }
 }

@@ -23,6 +23,7 @@ import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.Predicate
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput
 import org.apache.beam.sdk.io.FileSystems
+import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.values.TupleTag
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList
@@ -64,7 +65,8 @@ object ParquetTypeSortedBucketIO {
     filenameSuffix: String = DefaultSuffix,
     filterPredicate: FilterPredicate = null,
     predicate: Predicate[T] = null,
-    configuration: Configuration = new Configuration()
+    configuration: Configuration = new Configuration(),
+    emptyMatchTreatment: EmptyMatchTreatment = null
   ) extends SortedBucketIO.Read[T] {
     def from(inputDirectories: String*): Read[T] =
       this.copy(inputDirectories = inputDirectories)
@@ -81,6 +83,9 @@ object ParquetTypeSortedBucketIO {
     def withConfiguration(configuration: Configuration): Read[T] =
       this.copy(configuration = configuration)
 
+    def withEmptyMatchTreatment(emptyMatchTreatment: EmptyMatchTreatment): Read[T] =
+      this.copy(emptyMatchTreatment = emptyMatchTreatment)
+
     def getInputDirectories: ImmutableList[String] =
       ImmutableList.copyOf(inputDirectories.asJava: java.lang.Iterable[String])
     def getFilenameSuffix: String = filenameSuffix
@@ -96,7 +101,8 @@ object ParquetTypeSortedBucketIO {
         inputDirectories.asJava,
         filenameSuffix,
         getFileOperations,
-        predicate
+        predicate,
+        emptyMatchTreatment
       )
     }
 
