@@ -57,6 +57,7 @@ import org.apache.beam.sdk.extensions.smb.SortedBucketSource.Predicate;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.LocalResources;
 import org.apache.beam.sdk.io.Read;
+import org.apache.beam.sdk.io.fs.EmptyMatchTreatment;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.metrics.DistributionResult;
 import org.apache.beam.sdk.metrics.MetricResult;
@@ -1351,6 +1352,43 @@ public class SortedBucketSourceTest {
             counter ->
                 Assert.assertEquals(
                     counter.getValue(), actualCounters.getOrDefault(counter.getKey(), 0L)));
+  }
+
+  @Test
+  public void testEmptyMatchTreatmentAllow() throws Exception {
+    // Create an empty directory that will be allowed by EmptyMatchTreatment.ALLOW
+    final File emptyDir = lhsFolder.newFolder("empty");
+
+    // Test BucketedInput with empty directory and EmptyMatchTreatment.ALLOW
+    final BucketedInput<String> bucketedInput =
+        new PrimaryKeyedBucketedInput<>(
+            new TupleTag<>("testInput"),
+            Collections.singletonList(emptyDir.getAbsolutePath()),
+            FILENAME_SUFFIX,
+            new TestFileOperations(),
+            null,
+            EmptyMatchTreatment.ALLOW);
+
+    // Should return 0 bytes for empty directory
+    Assert.assertEquals(0L, bucketedInput.getOrSampleByteSize());
+  }
+
+  @Test
+  public void testEmptyMatchTreatmentDisallow() throws Exception {
+    // Create an empty directory that will be disallowed by EmptyMatchTreatment.DISALLOW
+    final File emptyDir = lhsFolder.newFolder("empty_disallow");
+
+    // Test BucketedInput with empty directory and EmptyMatchTreatment.DISALLOW (default)
+    final BucketedInput<String> bucketedInput =
+        new PrimaryKeyedBucketedInput<>(
+            new TupleTag<>("testInput"),
+            Collections.singletonList(emptyDir.getAbsolutePath()),
+            FILENAME_SUFFIX,
+            new TestFileOperations(),
+            null); // Default is DISALLOW
+
+    // Should throw exception for empty directory with DISALLOW treatment
+    Assert.assertThrows(IllegalArgumentException.class, bucketedInput::getOrSampleByteSize);
   }
 
   private static GenericRecord toAvroUserGenericRecord(AvroGeneratedUser user) {

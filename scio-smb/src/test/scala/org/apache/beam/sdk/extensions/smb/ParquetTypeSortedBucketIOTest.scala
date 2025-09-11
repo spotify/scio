@@ -17,6 +17,7 @@
 
 package org.apache.beam.sdk.extensions.smb
 
+import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
 import org.apache.beam.sdk.testing.TestPipeline
 import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.beam.sdk.values.TupleTag
@@ -97,5 +98,76 @@ class ParquetTypeSortedBucketIOTest extends AnyFlatSpec with Matchers {
         .to("/output")
         .expand(null)
     } should have message "numBuckets must be set to a nonzero value"
+  }
+
+  it should "support EmptyMatchTreatment parameter" in {
+    // Test that EmptyMatchTreatment can be set without throwing exceptions
+    noException shouldBe thrownBy {
+      val read = ParquetTypeSortedBucketIO
+        .read[User](new TupleTag("input"))
+        .from("/input")
+        .withEmptyMatchTreatment(EmptyMatchTreatment.ALLOW)
+
+      // Verify that the parameter is stored correctly
+      read.emptyMatchTreatment shouldBe EmptyMatchTreatment.ALLOW
+    }
+
+    // Test default behavior
+    val defaultRead = ParquetTypeSortedBucketIO
+      .read[User](new TupleTag("input"))
+      .from("/input")
+    defaultRead.emptyMatchTreatment shouldBe null
+  }
+
+  it should "support all EmptyMatchTreatment values" in {
+    // Test DISALLOW
+    val disallowRead = ParquetTypeSortedBucketIO
+      .read[User](new TupleTag("input"))
+      .from("/input")
+      .withEmptyMatchTreatment(EmptyMatchTreatment.DISALLOW)
+    disallowRead.emptyMatchTreatment shouldBe EmptyMatchTreatment.DISALLOW
+
+    // Test ALLOW_IF_WILDCARD
+    val wildcardRead = ParquetTypeSortedBucketIO
+      .read[User](new TupleTag("input"))
+      .from("/input")
+      .withEmptyMatchTreatment(EmptyMatchTreatment.ALLOW_IF_WILDCARD)
+    wildcardRead.emptyMatchTreatment shouldBe EmptyMatchTreatment.ALLOW_IF_WILDCARD
+  }
+
+  it should "create BucketedInput with EmptyMatchTreatment" in {
+    val read = ParquetTypeSortedBucketIO
+      .read[User](new TupleTag("input"))
+      .from("/input")
+      .withEmptyMatchTreatment(EmptyMatchTreatment.ALLOW)
+
+    val bucketedInput = read.toBucketedInput(SortedBucketSource.Keying.PRIMARY)
+    bucketedInput should not be null
+    bucketedInput.getTupleTag shouldBe read.getTupleTag
+  }
+
+  it should "preserve EmptyMatchTreatment when chaining methods" in {
+    val read = ParquetTypeSortedBucketIO
+      .read[User](new TupleTag("input"))
+      .from("/input")
+      .withEmptyMatchTreatment(EmptyMatchTreatment.ALLOW)
+      .withSuffix(".custom")
+
+    read.emptyMatchTreatment shouldBe EmptyMatchTreatment.ALLOW
+    read.getFilenameSuffix shouldBe ".custom"
+  }
+
+  it should "maintain backward compatibility with existing API usage" in {
+    // Test that existing code patterns without EmptyMatchTreatment still work
+    val read = ParquetTypeSortedBucketIO
+      .read[User](new TupleTag("input"))
+      .from("/input")
+      .withSuffix(".parquet")
+
+    read.emptyMatchTreatment shouldBe null // Default behavior preserved
+
+    // Should still create BucketedInput successfully
+    val bucketedInput = read.toBucketedInput(SortedBucketSource.Keying.PRIMARY)
+    bucketedInput should not be null
   }
 }

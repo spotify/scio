@@ -41,11 +41,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import javax.annotation.Nullable;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.KvCoder;
 import org.apache.beam.sdk.extensions.smb.BucketMetadataUtil.SourceMetadata;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.FileSystems;
+import org.apache.beam.sdk.io.fs.EmptyMatchTreatment;
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -348,20 +350,39 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
         String filenameSuffix,
         FileOperations<V> fileOperations,
         Predicate<V> predicate) {
+      this(tupleTag, inputDirectories, filenameSuffix, fileOperations, predicate, EmptyMatchTreatment.DISALLOW);
+    }
+
+    public PrimaryKeyedBucketedInput(
+        TupleTag<V> tupleTag,
+        List<String> inputDirectories,
+        String filenameSuffix,
+        FileOperations<V> fileOperations,
+        Predicate<V> predicate,
+        EmptyMatchTreatment emptyMatchTreatment) {
       this(
           tupleTag,
           inputDirectories.stream()
               .collect(
                   Collectors.toMap(
                       Functions.identity(), dir -> KV.of(filenameSuffix, fileOperations))),
-          predicate);
+          predicate,
+          emptyMatchTreatment);
     }
 
     public PrimaryKeyedBucketedInput(
         TupleTag<V> tupleTag,
         Map<String, KV<String, FileOperations<V>>> directories,
         Predicate<V> predicate) {
-      super(Keying.PRIMARY, tupleTag, directories, predicate);
+      this(tupleTag, directories, predicate, EmptyMatchTreatment.DISALLOW);
+    }
+
+    public PrimaryKeyedBucketedInput(
+        TupleTag<V> tupleTag,
+        Map<String, KV<String, FileOperations<V>>> directories,
+        Predicate<V> predicate,
+        EmptyMatchTreatment emptyMatchTreatment) {
+      super(Keying.PRIMARY, tupleTag, directories, predicate, emptyMatchTreatment);
     }
 
     public SourceMetadata<V> getSourceMetadata() {
@@ -378,20 +399,39 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
         String filenameSuffix,
         FileOperations<V> fileOperations,
         Predicate<V> predicate) {
+      this(tupleTag, inputDirectories, filenameSuffix, fileOperations, predicate, EmptyMatchTreatment.DISALLOW);
+    }
+
+    public PrimaryAndSecondaryKeyedBucktedInput(
+        TupleTag<V> tupleTag,
+        List<String> inputDirectories,
+        String filenameSuffix,
+        FileOperations<V> fileOperations,
+        Predicate<V> predicate,
+        EmptyMatchTreatment emptyMatchTreatment) {
       this(
           tupleTag,
           inputDirectories.stream()
               .collect(
                   Collectors.toMap(
                       Functions.identity(), dir -> KV.of(filenameSuffix, fileOperations))),
-          predicate);
+          predicate,
+          emptyMatchTreatment);
     }
 
     public PrimaryAndSecondaryKeyedBucktedInput(
         TupleTag<V> tupleTag,
         Map<String, KV<String, FileOperations<V>>> directories,
         Predicate<V> predicate) {
-      super(Keying.PRIMARY_AND_SECONDARY, tupleTag, directories, predicate);
+      this(tupleTag, directories, predicate, EmptyMatchTreatment.DISALLOW);
+    }
+
+    public PrimaryAndSecondaryKeyedBucktedInput(
+        TupleTag<V> tupleTag,
+        Map<String, KV<String, FileOperations<V>>> directories,
+        Predicate<V> predicate,
+        EmptyMatchTreatment emptyMatchTreatment) {
+      super(Keying.PRIMARY_AND_SECONDARY, tupleTag, directories, predicate, emptyMatchTreatment);
     }
 
     public SourceMetadata<V> getSourceMetadata() {
@@ -413,6 +453,7 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
     protected TupleTag<V> tupleTag;
     protected Predicate<V> predicate;
     protected Keying keying;
+    protected EmptyMatchTreatment emptyMatchTreatment;
     // lazy, internal checks depend on what kind of iteration is requested
     protected transient SourceMetadata<V> sourceMetadata = null; // lazy
 
@@ -427,11 +468,23 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
         String filenameSuffix,
         FileOperations<V> fileOperations,
         Predicate<V> predicate) {
+      return of(keying, tupleTag, inputDirectories, filenameSuffix, fileOperations, predicate, null);
+    }
+
+    public static <V> BucketedInput<V> of(
+        Keying keying,
+        TupleTag<V> tupleTag,
+        List<String> inputDirectories,
+        String filenameSuffix,
+        FileOperations<V> fileOperations,
+        Predicate<V> predicate,
+        @Nullable EmptyMatchTreatment emptyMatchTreatment) {
+      EmptyMatchTreatment treatment = emptyMatchTreatment != null ? emptyMatchTreatment : EmptyMatchTreatment.DISALLOW;
       if (keying == Keying.PRIMARY)
         return new PrimaryKeyedBucketedInput<>(
-            tupleTag, inputDirectories, filenameSuffix, fileOperations, predicate);
+            tupleTag, inputDirectories, filenameSuffix, fileOperations, predicate, treatment);
       return new PrimaryAndSecondaryKeyedBucktedInput<>(
-          tupleTag, inputDirectories, filenameSuffix, fileOperations, predicate);
+          tupleTag, inputDirectories, filenameSuffix, fileOperations, predicate, treatment);
     }
 
     public static <V> BucketedInput<V> of(
@@ -439,9 +492,19 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
         TupleTag<V> tupleTag,
         Map<String, KV<String, FileOperations<V>>> directories,
         Predicate<V> predicate) {
+      return of(keying, tupleTag, directories, predicate, null);
+    }
+
+    public static <V> BucketedInput<V> of(
+        Keying keying,
+        TupleTag<V> tupleTag,
+        Map<String, KV<String, FileOperations<V>>> directories,
+        Predicate<V> predicate,
+        @Nullable EmptyMatchTreatment emptyMatchTreatment) {
+      EmptyMatchTreatment treatment = emptyMatchTreatment != null ? emptyMatchTreatment : EmptyMatchTreatment.DISALLOW;
       if (keying == Keying.PRIMARY)
-        return new PrimaryKeyedBucketedInput<>(tupleTag, directories, predicate);
-      return new PrimaryAndSecondaryKeyedBucktedInput<>(tupleTag, directories, predicate);
+        return new PrimaryKeyedBucketedInput<>(tupleTag, directories, predicate, treatment);
+      return new PrimaryAndSecondaryKeyedBucktedInput<>(tupleTag, directories, predicate, treatment);
     }
 
     public BucketedInput(
@@ -458,7 +521,8 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
               .collect(
                   Collectors.toMap(
                       Functions.identity(), dir -> KV.of(filenameSuffix, fileOperations))),
-          predicate);
+          predicate,
+          EmptyMatchTreatment.DISALLOW);
     }
 
     public BucketedInput(
@@ -466,8 +530,18 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
         TupleTag<V> tupleTag,
         Map<String, KV<String, FileOperations<V>>> directories,
         Predicate<V> predicate) {
+      this(keying, tupleTag, directories, predicate, EmptyMatchTreatment.DISALLOW);
+    }
+
+    public BucketedInput(
+        Keying keying,
+        TupleTag<V> tupleTag,
+        Map<String, KV<String, FileOperations<V>>> directories,
+        Predicate<V> predicate,
+        EmptyMatchTreatment emptyMatchTreatment) {
       this.keying = keying;
       this.tupleTag = tupleTag;
+      this.emptyMatchTreatment = emptyMatchTreatment;
       this.inputs =
           directories.entrySet().stream()
               .collect(
@@ -537,9 +611,14 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
     }
 
     private static List<Metadata> sampleDirectory(ResourceId directory, String filepattern) {
+      return sampleDirectory(directory, filepattern, EmptyMatchTreatment.DISALLOW);
+    }
+
+    private static List<Metadata> sampleDirectory(ResourceId directory, String filepattern, EmptyMatchTreatment emptyMatchTreatment) {
       try {
         return FileSystems.match(
-                directory.resolve(filepattern, StandardResolveOptions.RESOLVE_FILE).toString())
+                directory.resolve(filepattern, StandardResolveOptions.RESOLVE_FILE).toString(),
+                emptyMatchTreatment)
             .metadata();
       } catch (FileNotFoundException e) {
         return Collections.emptyList();
@@ -559,11 +638,11 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
                 final String filenameSuffix = entry.getValue().getKey();
                 final ResourceId directory = entry.getKey();
                 List<Metadata> sampledFiles =
-                    sampleDirectory(directory, "*-0000?-of-?????" + filenameSuffix);
+                    sampleDirectory(directory, "*-0000?-of-?????" + filenameSuffix, emptyMatchTreatment);
                 if (sampledFiles.isEmpty()) {
                   sampledFiles =
                       sampleDirectory(
-                          directory, "*-0000?-of-*-shard-00000-of-?????" + filenameSuffix);
+                          directory, "*-0000?-of-*-shard-00000-of-?????" + filenameSuffix, emptyMatchTreatment);
                 }
 
                 int numBuckets = 0;
@@ -585,6 +664,10 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
                   sampledBytes += metadata.sizeBytes();
                 }
                 if (numBuckets == 0) {
+                  if (emptyMatchTreatment == EmptyMatchTreatment.ALLOW ||
+                      emptyMatchTreatment == EmptyMatchTreatment.ALLOW_IF_WILDCARD) {
+                    return 0L; // Return 0 bytes for empty directories when allowed
+                  }
                   throw new IllegalArgumentException(
                       "Directory " + directory + " has no bucket files");
                 }

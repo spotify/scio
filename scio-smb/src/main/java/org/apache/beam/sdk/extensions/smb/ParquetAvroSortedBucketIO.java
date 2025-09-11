@@ -34,6 +34,7 @@ import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.Predicate;
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.NewBucketMetadataFn;
 import org.apache.beam.sdk.io.FileSystems;
+import org.apache.beam.sdk.io.fs.EmptyMatchTreatment;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
@@ -222,6 +223,9 @@ public class ParquetAvroSortedBucketIO {
     @Nullable
     abstract Schema getProjection();
 
+    @Nullable
+    abstract EmptyMatchTreatment getEmptyMatchTreatment();
+
     abstract Builder<T> toBuilder();
 
     @AutoValue.Builder
@@ -245,6 +249,8 @@ public class ParquetAvroSortedBucketIO {
       abstract Builder<T> setConfiguration(Configuration configuration);
 
       abstract Builder<T> setProjection(Schema projection);
+
+      abstract Builder<T> setEmptyMatchTreatment(EmptyMatchTreatment emptyMatchTreatment);
 
       abstract Read<T> build();
     }
@@ -283,6 +289,19 @@ public class ParquetAvroSortedBucketIO {
       return toBuilder().setProjection(projection).build();
     }
 
+    /**
+     * Specifies how to handle empty file matches when reading input directories.
+     *
+     * @param emptyMatchTreatment the behavior when file patterns don't match any files. Use
+     *     {@link EmptyMatchTreatment#ALLOW} to proceed with empty inputs, {@link
+     *     EmptyMatchTreatment#DISALLOW} to fail on empty matches, or {@link
+     *     EmptyMatchTreatment#ALLOW_IF_WILDCARD} to allow empty matches only for wildcard patterns.
+     * @return a new {@link Read} instance with the specified empty match treatment
+     */
+    public Read<T> withEmptyMatchTreatment(EmptyMatchTreatment emptyMatchTreatment) {
+      return toBuilder().setEmptyMatchTreatment(emptyMatchTreatment).build();
+    }
+
     @Override
     public BucketedInput<T> toBucketedInput(final SortedBucketSource.Keying keying) {
       return BucketedInput.of(
@@ -291,7 +310,8 @@ public class ParquetAvroSortedBucketIO {
           getInputDirectories(),
           getFilenameSuffix(),
           getFileOperations(),
-          getPredicate());
+          getPredicate(),
+          getEmptyMatchTreatment());
     }
 
     FileOperations<T> getFileOperations() {

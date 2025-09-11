@@ -109,6 +109,7 @@ public class SortedBucketTransformTest {
             Collections.singletonList(inputLhsFolder.getRoot().getAbsolutePath()),
             ".txt",
             new TestFileOperations(),
+            null,
             null),
         BucketedInput.of(
             keying,
@@ -116,7 +117,8 @@ public class SortedBucketTransformTest {
             Collections.singletonList(inputRhsFolder.getRoot().getAbsolutePath()),
             ".txt",
             new TestFileOperations(),
-            predicate));
+            predicate,
+            null));
   }
 
   @BeforeClass
@@ -358,5 +360,25 @@ public class SortedBucketTransformTest {
         Status.NOT_FOUND);
 
     return KV.of((TestBucketMetadata) metadata, bucketsToOutputs);
+  }
+
+  @Test
+  public void testEmptyMatchTreatmentIntegration() throws Exception {
+    // Test that BucketedInput can be created with EmptyMatchTreatment.ALLOW for nonexistent paths
+    final BucketedInput<String> emptyInput =
+        BucketedInput.of(
+            SortedBucketSource.Keying.PRIMARY,
+            new TupleTag<>("emptyInput"),
+            Collections.singletonList("/nonexistent/path"),
+            ".txt",
+            new TestFileOperations(),
+            null,
+            EmptyMatchTreatment.ALLOW);
+
+    // Should not throw exception when constructing with empty inputs that are allowed
+    Assert.assertNotNull(emptyInput);
+
+    // Should return 0 bytes for nonexistent directories with ALLOW treatment
+    Assert.assertEquals(0L, emptyInput.getOrSampleByteSize());
   }
 }
