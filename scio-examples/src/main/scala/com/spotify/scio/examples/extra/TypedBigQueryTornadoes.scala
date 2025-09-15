@@ -19,12 +19,12 @@
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.TypedBigQueryTornadoes
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --output=[PROJECT]:[DATASET].[TABLE]"`
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio.bigquery._
-import com.spotify.scio.ContextAndArgs
+import com.spotify.scio.{ContextAndArgs, ScioContext}
 
 object TypedBigQueryTornadoes {
   // Annotate input class with schema inferred from a BigQuery SELECT.
@@ -40,12 +40,13 @@ object TypedBigQueryTornadoes {
   @BigQueryType.toTable
   case class Result(month: Long, tornado_count: Long)
 
-  def main(cmdlineArgs: Array[String]): Unit = {
+  def pipeline(cmdlineArgs: Array[String]): ScioContext = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     // Get input from BigQuery and convert elements from `TableRow` to `Row`.
     // SELECT query from the original annotation is used by default.
-    sc.typedBigQuery[Row]()
+    val resultTap = sc
+      .typedBigQuery[Row]()
       .flatMap(r => if (r.tornado.getOrElse(false)) Seq(r.month) else Nil)
       .countByValue
       .map(kv => Result(kv._1, kv._2))
@@ -56,7 +57,24 @@ object TypedBigQueryTornadoes {
         createDisposition = CREATE_IF_NEEDED
       )
 
-    sc.run()
+    // Access the loaded tables
+    resultTap
+      .output(BigQueryIO.SuccessfulTableLoads)
+      .map(_.getTableSpec)
+      .debug(prefix = "Loaded table: ")
+
+    // Access the failed records
+    resultTap
+      .output(BigQueryIO.FailedInserts)
+      .count
+      .debug(prefix = "Failed inserts: ")
+
+    sc
+  }
+
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val sc = pipeline(cmdlineArgs)
+    sc.run().waitUntilDone()
     ()
   }
 }

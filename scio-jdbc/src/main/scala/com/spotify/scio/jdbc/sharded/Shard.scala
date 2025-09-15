@@ -80,6 +80,13 @@ object Shard {
   implicit val base64StringJdbcShardable: RangeShard[ShardString.Base64String] =
     new RangeStringShard[ShardString.Base64String]
 
+  implicit val sqlServerUuidUpperStringJdbcShardable
+    : RangeShard[ShardString.SqlServerUuidUpperString] =
+    new RangeStringShard[ShardString.SqlServerUuidUpperString]
+
+  implicit val sqlServerUuidLowerStringJdbcShardable
+    : RangeShard[ShardString.SqlServerUuidLowerString] =
+    new RangeStringShard[ShardString.SqlServerUuidLowerString]
 }
 
 final class NumericRangeShard[T](

@@ -18,8 +18,8 @@
 package org.apache.beam.sdk.extensions.smb;
 
 import org.apache.beam.sdk.Pipeline;
+import org.apache.beam.sdk.extensions.avro.io.AvroGeneratedUser;
 import org.apache.beam.sdk.extensions.smb.SortedBucketIO.CoGbkTransform;
-import org.apache.beam.sdk.io.AvroGeneratedUser;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.util.SerializableUtils;
@@ -77,7 +77,7 @@ public class AvroSortedBucketIOTest {
     final ResourceId tempDirectory = TestUtils.fromFolder(temporaryFolder);
     pipeline.getOptions().setTempLocation(tempDirectory.toString());
 
-    final SortedBucketIO.Write<String, AvroGeneratedUser> write =
+    final SortedBucketIO.Write<String, Void, AvroGeneratedUser> write =
         AvroSortedBucketIO.write(String.class, "name", AvroGeneratedUser.class)
             .to(folder.toString());
 
@@ -92,5 +92,17 @@ public class AvroSortedBucketIOTest {
 
     Assert.assertEquals(tempDirectory, write.getTempDirectoryOrDefault(pipeline));
     Assert.assertEquals(tempDirectory, transform.getTempDirectoryOrDefault(pipeline));
+  }
+
+  @Test
+  public void testNumBucketsRequiredParam() {
+    Throwable t =
+        Assert.assertThrows(
+            IllegalArgumentException.class,
+            () ->
+                AvroSortedBucketIO.write(String.class, "name", AvroGeneratedUser.class)
+                    .to(folder.toString())
+                    .expand(null));
+    Assert.assertEquals("numBuckets must be set to a nonzero value", t.getMessage());
   }
 }

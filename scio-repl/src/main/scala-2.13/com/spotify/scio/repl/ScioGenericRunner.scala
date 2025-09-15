@@ -24,12 +24,14 @@ trait ScioGenericRunner extends MainGenericRunner {
   /**
    * The main entry point for executing the REPL.
    *
-   * This method is lifted from [[scala.tools.nsc.MainGenericRunner]] and modified to allow
-   * for custom functionality, including determining at runtime if the REPL is running,
-   * and making custom REPL colon-commands available to the user.
+   * This method is lifted from [[scala.tools.nsc.MainGenericRunner]] and modified to allow for
+   * custom functionality, including determining at runtime if the REPL is running, and making
+   * custom REPL colon-commands available to the user.
    *
-   * @param args passed from the command line
-   * @return `true` if execution was successful, `false` otherwise
+   * @param args
+   *   passed from the command line
+   * @return
+   *   `true` if execution was successful, `false` otherwise
    */
   override def process(args: Array[String]): Boolean = {
     val command = new GenericRunnerCommand(args.toList, _ => ())

@@ -17,70 +17,44 @@
 
 package com.spotify.scio.io
 
-import java.io._
-import java.nio.ByteBuffer
-import java.nio.channels.{Channels, SeekableByteChannel}
-import java.util.Collections
-
-import com.google.api.client.util.Charsets
-import com.google.api.services.bigquery.model.TableRow
 import com.spotify.scio.util.ScioUtil
-import org.apache.avro.Schema
-import org.apache.avro.file.{DataFileReader, SeekableInput}
-import org.apache.avro.generic.GenericDatumReader
-import org.apache.avro.specific.SpecificDatumReader
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.IOUtils
 
+import java.io._
+import java.nio.channels.Channels
+import java.nio.charset.StandardCharsets
+import java.util.Collections
+import scala.collection.compat._
 import scala.jdk.CollectionConverters._
-import scala.reflect.ClassTag
+import scala.util.Try
 
 private[scio] object FileStorage {
-  @inline final def apply(path: String): FileStorage = new FileStorage(path)
+
+  private val ShardPattern = "(.*)-(\\d+)-of-(\\d+)(.*)".r
+
+  @inline final def apply(path: String, suffix: String): FileStorage = new FileStorage(path, suffix)
+
+  def listFiles(path: String, suffix: String): Seq[Metadata] =
+    FileSystems
+      .`match`(ScioUtil.filePattern(path, suffix), EmptyMatchTreatment.DISALLOW)
+      .metadata()
+      .iterator
+      .asScala
+      .toSeq
 }
 
-final private[scio] class FileStorage(protected[scio] val path: String) {
-  private def listFiles: Seq[Metadata] =
-    FileSystems.`match`(path, EmptyMatchTreatment.DISALLOW).metadata().iterator.asScala.toSeq
+final private[scio] class FileStorage(path: String, suffix: String) {
+
+  import FileStorage._
+
+  private def listFiles: Seq[Metadata] = FileStorage.listFiles(path, suffix)
 
   private def getObjectInputStream(meta: Metadata): InputStream =
     Channels.newInputStream(FileSystems.open(meta.resourceId()))
-
-  private def getAvroSeekableInput(meta: Metadata): SeekableInput =
-    new SeekableInput {
-      require(meta.isReadSeekEfficient)
-      private val in = {
-        val channel = FileSystems.open(meta.resourceId()).asInstanceOf[SeekableByteChannel]
-        // metadata is lazy loaded on GCS FS and only triggered upon first read
-        channel.read(ByteBuffer.allocate(1))
-        // reset position
-        channel.position(0)
-      }
-      override def read(b: Array[Byte], off: Int, len: Int): Int =
-        in.read(ByteBuffer.wrap(b, off, len))
-      override def tell(): Long = in.position()
-      override def length(): Long = in.size()
-      override def seek(p: Long): Unit = {
-        in.position(p)
-        ()
-      }
-      override def close(): Unit = in.close()
-    }
-
-  def avroFile[T](schema: Schema): Iterator[T] =
-    avroFile(new GenericDatumReader[T](schema))
-
-  def avroFile[T: ClassTag](): Iterator[T] =
-    avroFile(new SpecificDatumReader[T](ScioUtil.classOf[T]))
-
-  def avroFile[T](reader: GenericDatumReader[T]): Iterator[T] =
-    listFiles
-      .map(m => DataFileReader.openReader(getAvroSeekableInput(m), reader))
-      .map(_.iterator().asScala)
-      .reduce(_ ++ _)
 
   def textFile: Iterator[String] = {
     val factory = new CompressorStreamFactory()
@@ -92,47 +66,44 @@ final private[scio] class FileStorage(protected[scio] val path: String) {
         case _: Throwable => buffered
       }
     }
-    val input = getDirectoryInputStream(path, wrapInputStream)
-    IOUtils.lineIterator(input, Charsets.UTF_8).asScala
+    val input = getDirectoryInputStream(wrapInputStream)
+    IOUtils.lineIterator(input, StandardCharsets.UTF_8).asScala
   }
 
-  def tableRowJsonFile: Iterator[TableRow] =
-    textFile.map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
+  def isDone(): Boolean = {
+    val files = Try(listFiles).recover { case _: FileNotFoundException => Seq.empty }.get
 
-  def isDone: Boolean = {
-    val partPattern = "([0-9]{5})-of-([0-9]{5})".r
-    val metadata =
-      try {
-        listFiles
-      } catch {
-        case _: FileNotFoundException => Seq.empty
+    // best effort matching shardNumber and numShards
+    // relies on the shardNameTemplate to be of '$prefix-$shardNumber-of-$numShards$suffix' format
+    val writtenShards = files
+      .map(_.resourceId().toString)
+      .flatMap {
+        case ShardPattern(prefix, shardNumber, numShards, suffix) =>
+          val part = for {
+            idx <- Try(shardNumber.toInt)
+            total <- Try(numShards.toInt)
+            // prefix or suffix may contain pane/window info
+            key = (prefix, suffix, total)
+          } yield key -> idx
+          part.toOption
+        case _ =>
+          None
       }
-    val nums = metadata.flatMap { meta =>
-      val m = partPattern.findAllIn(meta.resourceId().toString)
-      if (m.hasNext) {
-        Some((m.group(1).toInt, m.group(2).toInt))
-      } else {
-        None
-      }
-    }
+      .groupMap(_._1)(_._2)
 
-    if (metadata.isEmpty) {
-      // empty list
+    if (files.isEmpty) {
+      // no file matched
       false
-    } else if (nums.nonEmpty) {
-      // found xxxxx-of-yyyyy pattern
-      val parts = nums.map(_._1).sorted
-      val total = nums.map(_._2).toSet
-      metadata.size == nums.size && // all paths matched
-      total.size == 1 && total.head == parts.size && // yyyyy part
-      parts.head == 0 && parts.last + 1 == parts.size // xxxxx part
-    } else {
+    } else if (writtenShards.isEmpty) {
+      // assume progress is complete when shard info is not retrieved and files are present
       true
+    } else {
+      // we managed to get shard info, verify that all of them were written
+      writtenShards.forall { case ((_, _, total), idxs) => idxs.size == total }
     }
   }
 
   private[scio] def getDirectoryInputStream(
-    path: String,
     wrapperFn: InputStream => InputStream = identity
   ): InputStream = {
     val inputs = listFiles.map(getObjectInputStream).map(wrapperFn).asJava

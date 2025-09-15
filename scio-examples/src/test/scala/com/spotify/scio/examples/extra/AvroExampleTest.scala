@@ -25,7 +25,10 @@ import com.spotify.scio.testing._
 class AvroExampleTest extends PipelineSpec {
   "AvroExample" should "work for specific input" in {
     val input =
-      Seq(new Account(1, "checking", "Alice", 1000.0), new Account(2, "checking", "Bob", 1500.0))
+      Seq(
+        new Account(1, "checking", "Alice", 1000.0, AccountStatus.Active),
+        new Account(2, "checking", "Bob", 1500.0, AccountStatus.Active)
+      )
 
     val expected = input.map(_.toString)
 

@@ -26,7 +26,7 @@ import com.spotify.scio._
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.TapOutputExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --output=gs://[OUTPUT] --method=[METHOD]"`
 object TapOutputExample {
   def main(cmdlineArgs: Array[String]): Unit = {
@@ -60,7 +60,7 @@ object TapOutputExample {
     // Re-open taps in new `ScioContext`
     (t1.open(sc2) ++ t2.open(sc2).map(_.toInt)).sum
     // Execute the pipeline and block until it completes
-    val result = sc2.run().waitUntilFinish()
+    val result = sc2.run().waitUntilDone()
 
     println(result.state)
   }

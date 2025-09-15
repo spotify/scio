@@ -19,7 +19,7 @@
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.WordCount
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=gs://[BUCKET]/[PATH]/wordcount"`
 package com.spotify.scio.examples
@@ -53,7 +53,7 @@ object WordCount {
         _.map { w =>
           // Trim input lines, update distribution metric
           val trimmed = w.trim
-          lineDist.update(trimmed.length)
+          lineDist.update(trimmed.length.toLong)
           trimmed
         }.filter { w =>
           // Filter out empty lines, update counter metrics
@@ -65,7 +65,7 @@ object WordCount {
       .transform("counter") {
         // Split input lines, filter out empty tokens and expand into a collection of tokens
         _.flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
-        // Count occurrences of each unique `String` to get `(String, Long)`
+          // Count occurrences of each unique `String` to get `(String, Long)`
           .countByValue
       }
       // Map `(String, Long)` tuples into strings
@@ -74,7 +74,7 @@ object WordCount {
       .saveAsTextFile(output)
 
     // Execute the pipeline and block until it finishes
-    val result = sc.run().waitUntilFinish()
+    val result = sc.run().waitUntilDone()
 
     // Retrieve metric values
     logger.info("Max: " + result.distribution(lineDist).committed.map(_.getMax))

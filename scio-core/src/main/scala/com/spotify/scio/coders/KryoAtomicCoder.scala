@@ -17,37 +17,34 @@
 
 package com.spotify.scio.coders
 
+import com.esotericsoftware.kryo.KryoException
+import com.esotericsoftware.kryo.io.{InputChunked, OutputChunked}
+import com.google.protobuf.{ByteString, Message}
+import com.spotify.scio.coders.instances.JavaCollectionWrappers
+import com.spotify.scio.coders.instances.kryo._
+import com.spotify.scio.options.ScioOptions
+
 import java.io.{EOFException, InputStream, OutputStream}
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
-
-import com.esotericsoftware.kryo.KryoException
-import com.esotericsoftware.kryo.io.{InputChunked, OutputChunked}
-import com.esotericsoftware.kryo.serializers.JavaSerializer
-import com.google.protobuf.{ByteString, Message}
-import com.spotify.scio.coders.instances.kryo.{GrpcSerializers => grpc, _}
-import com.spotify.scio.options.ScioOptions
 import com.twitter.chill._
 import com.twitter.chill.algebird.AlgebirdRegistrar
 import com.twitter.chill.protobuf.ProtobufSerializer
-import org.apache.avro.generic.GenericRecord
-import org.apache.avro.specific.SpecificRecordBase
+import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{AtomicCoder, CoderException => BCoderException, InstantCoder}
-import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.util.VarInt
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.{
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.io.{
   ByteStreams,
   CountingOutputStream
 }
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.reflect.ClassPath
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.reflect.ClassPath
 import org.joda.time.{DateTime, LocalDate, LocalDateTime, LocalTime}
 import org.slf4j.LoggerFactory
 
-import scala.jdk.CollectionConverters._
 import scala.collection.mutable
-import scala.collection.compat.extra.Wrappers
+import scala.jdk.CollectionConverters._
 
 private object KryoRegistrarLoader {
   private[this] val logger = LoggerFactory.getLogger(this.getClass)
@@ -89,7 +86,8 @@ object ScioKryoRegistrar {
 
 /**
  * serializers we've written in Scio and want to add to Kryo serialization
- * @see com.spotify.scio.coders.instances.serializers
+ * @see
+ *   com.spotify.scio.coders.instances.serializers
  */
 final private class ScioKryoRegistrar extends IKryoRegistrar {
   import ScioKryoRegistrar.logger
@@ -97,26 +95,23 @@ final private class ScioKryoRegistrar extends IKryoRegistrar {
   override def apply(k: Kryo): Unit = {
     logger.debug("Loading common Kryo serializers...")
     k.forClass(new CoderSerializer(InstantCoder.of()))
-    k.forClass(new CoderSerializer(TableRowJsonCoder.of()))
     // Java Iterable/Collection are missing proper equality check, use custom CBF as a
     // workaround
     k.register(
-      classOf[Wrappers.JIterableWrapper[_]],
+      JavaCollectionWrappers.JIterableWrapperClass,
       new JTraversableSerializer[Any, Iterable[Any]]()(new JIterableWrapperCBF[Any])
     )
     k.register(
-      classOf[Wrappers.JCollectionWrapper[_]],
+      JavaCollectionWrappers.JCollectionWrapperClass,
       new JTraversableSerializer[Any, Iterable[Any]]()(new JCollectionWrapperCBF[Any])
     )
     // Wrapped Java collections may have immutable implementations, i.e. Guava, treat them
     // as regular Scala collections as a workaround
     k.register(
-      classOf[Wrappers.JListWrapper[_]],
+      JavaCollectionWrappers.JListWrapperClass,
       new JTraversableSerializer[Any, mutable.Buffer[Any]]
     )
 
-    k.forSubclass[SpecificRecordBase](new SpecificAvroSerializer)
-    k.forSubclass[GenericRecord](new GenericAvroSerializer)
     k.forSubclass[Message](new ProtobufSerializer)
     k.forClass[LocalDate](new JodaLocalDateSerializer)
     k.forClass[LocalTime](new JodaLocalTimeSerializer)
@@ -125,9 +120,8 @@ final private class ScioKryoRegistrar extends IKryoRegistrar {
     k.forSubclass[Path](new JPathSerializer)
     k.forSubclass[ByteString](new ByteStringSerializer)
     k.forClass(new KVSerializer)
-    k.forClass[io.grpc.Status](new grpc.StatusSerializer)
-    k.forSubclass[io.grpc.StatusRuntimeException](new grpc.StatusRuntimeExceptionSerializer)
-    k.addDefaultSerializer(classOf[Throwable], new JavaSerializer)
+    k.forClass[io.grpc.Status](new StatusSerializer)
+    k.addDefaultSerializer(classOf[Throwable], new ThrowableSerializer)
     ()
   }
 }
@@ -176,13 +170,19 @@ final private[scio] class KryoAtomicCoder[T](private val options: KryoOptions)
     o.asInstanceOf[T]
   }
 
+  override def verifyDeterministic(): Unit =
+    throw new NonDeterministicException(
+      this,
+      "Kryo-encoded instances are not guaranteed to be deterministic"
+    )
+
   // This method is called by PipelineRunner to sample elements in a PCollection and estimate
   // size. This could be expensive for collections with small number of very large elements.
   override def registerByteSizeObserver(value: T, observer: ElementByteSizeObserver): Unit =
     value match {
       // (K, Iterable[V]) is the return type of `groupBy` or `groupByKey`. This could be very slow
       // when there're few keys with many values.
-      case (key, wrapper: Wrappers.JIterableWrapper[_]) =>
+      case (key, JavaCollectionWrappers.JIterableWrapper(underlying)) =>
         observer.update(kryoEncodedElementByteSize(key))
         // FIXME: handle ElementByteSizeObservableIterable[_, _]
         var count = 0
@@ -192,7 +192,7 @@ final private[scio] class KryoAtomicCoder[T](private val options: KryoOptions)
         val warningThreshold = 10000 // 10s
         val abortThreshold = 60000 // 1min
         val start = System.currentTimeMillis()
-        val i = wrapper.underlying.iterator()
+        val i = underlying.iterator()
         while (i.hasNext && !aborted) {
           val size = kryoEncodedElementByteSize(i.next())
           observer.update(size)
@@ -202,17 +202,17 @@ final private[scio] class KryoAtomicCoder[T](private val options: KryoOptions)
           if (elapsed > abortThreshold) {
             aborted = true
             logger.warn(
-              s"Aborting size estimation for ${wrapper.underlying.getClass}, " +
+              s"Aborting size estimation for ${underlying.getClass}, " +
                 s"elapsed: $elapsed ms, count: $count, bytes: $bytes"
             )
-            wrapper.underlying match {
+            underlying match {
               case c: _root_.java.util.Collection[_] =>
                 // extrapolate remaining bytes in the collection
                 val remaining =
                   (bytes.toDouble / count * (c.size - count)).toLong
                 observer.update(remaining)
                 logger.warn(
-                  s"Extrapolated size estimation for ${wrapper.underlying.getClass} " +
+                  s"Extrapolated size estimation for ${underlying.getClass} " +
                     s"count: ${c.size}, bytes: ${bytes + remaining}"
                 )
               case _ =>
@@ -221,7 +221,7 @@ final private[scio] class KryoAtomicCoder[T](private val options: KryoOptions)
           } else if (elapsed > warningThreshold && !warned) {
             warned = true
             logger.warn(
-              s"Slow size estimation for ${wrapper.underlying.getClass}, " +
+              s"Slow size estimation for ${underlying.getClass}, " +
                 s"elapsed: $elapsed ms, count: $count, bytes: $bytes"
             )
           }

@@ -24,7 +24,7 @@ class ZetaSketchHllPlusPlusTestTest extends PipelineSpec {
 
   "ZetasketchHLL++" should "estimate int distinct count" in {
     val estimator = ZetaSketchHllPlusPlus[Int]()
-    val input = for (i <- 0 to 10000) yield (i % 20)
+    val input = for (i <- 0 to 10000) yield i % 20
     val output = runWithData(input) { scl =>
       scl
         .countApproxDistinct(estimator)
@@ -45,7 +45,7 @@ class ZetaSketchHllPlusPlusTestTest extends PipelineSpec {
 
   it should "estimate longs distinct count" in {
     val estimator = ZetaSketchHllPlusPlus[Long]()
-    val input = for (i <- 0L to 10000) yield (i % 20)
+    val input = for (i <- 0L to 10000) yield i % 20
     val output = runWithData(input) { scl =>
       scl
         .countApproxDistinct(estimator)
@@ -55,7 +55,7 @@ class ZetaSketchHllPlusPlusTestTest extends PipelineSpec {
 
   it should "estimate byte array distinct count" in {
     val estimator = ZetaSketchHllPlusPlus[Array[Byte]]()
-    val input = for (i <- 0 to 10000) yield (s"${i % 20}_".getBytes)
+    val input = for (i <- 0 to 10000) yield s"${i % 20}_".getBytes
     val output = runWithData(input) { scl =>
       scl
         .countApproxDistinct(estimator)

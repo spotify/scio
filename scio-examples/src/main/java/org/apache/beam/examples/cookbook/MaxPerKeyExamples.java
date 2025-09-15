@@ -60,14 +60,14 @@ import org.apache.beam.sdk.values.PCollection;
  *
  * See examples/java/README.md for instructions about how to configure different runners.
  *
- * <p>The BigQuery input table defaults to {@code clouddataflow-readonly:samples.weather_stations }
- * and can be overridden with {@code --input}.
+ * <p>The BigQuery input table defaults to {@code apache-beam-testing:samples.weather_stations } and
+ * can be overridden with {@code --input}.
  */
 public class MaxPerKeyExamples {
   // Default to using a 1000 row subset of the public weather station table
   // bigquery-public-data:samples.gsod.
   private static final String WEATHER_SAMPLES_TABLE =
-      "clouddataflow-readonly:samples.weather_stations";
+      "apache-beam-testing:samples.weather_stations";
 
   /**
    * Examines each row (weather reading) in the input table. Output the month of the reading, and
@@ -75,23 +75,20 @@ public class MaxPerKeyExamples {
    */
   static class ExtractTempFn extends DoFn<TableRow, KV<Integer, Double>> {
     @ProcessElement
-    public void processElement(ProcessContext c) {
-      TableRow row = c.element();
+    public void processElement(@Element TableRow row, OutputReceiver<KV<Integer, Double>> out) {
       Integer month = Integer.parseInt((String) row.get("month"));
       Double meanTemp = Double.parseDouble(row.get("mean_temp").toString());
-      c.output(KV.of(month, meanTemp));
+      out.output(KV.of(month, meanTemp));
     }
   }
 
   /** Format the results to a TableRow, to save to BigQuery. */
   static class FormatMaxesFn extends DoFn<KV<Integer, Double>, TableRow> {
     @ProcessElement
-    public void processElement(ProcessContext c) {
+    public void processElement(@Element KV<Integer, Double> element, OutputReceiver<TableRow> out) {
       TableRow row =
-          new TableRow()
-              .set("month", c.element().getKey())
-              .set("max_mean_temp", c.element().getValue());
-      c.output(row);
+          new TableRow().set("month", element.getKey()).set("max_mean_temp", element.getValue());
+      out.output(row);
     }
   }
 

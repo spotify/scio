@@ -17,14 +17,14 @@
 
 package com.spotify.scio.schemas
 
-import com.spotify.scio.values._
 import com.spotify.scio.coders._
 import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.values._
+import org.apache.beam.sdk.schemas.{Schema => BSchema, SchemaCoder}
 import org.apache.beam.sdk.values._
-import org.apache.beam.sdk.schemas.{SchemaCoder, Schema => BSchema}
+import org.typelevel.scalaccompat.annotation.nowarn
 
 import scala.jdk.CollectionConverters._
-import scala.annotation.tailrec
 import scala.reflect.ClassTag
 
 sealed trait To[I, O] extends (SCollection[I] => SCollection[O]) with Serializable {
@@ -36,13 +36,6 @@ sealed trait To[I, O] extends (SCollection[I] => SCollection[O]) with Serializab
 }
 
 object To {
-
-  @tailrec @inline
-  private def getBaseType(t: BSchema.FieldType): BSchema.FieldType = {
-    val log = t.getLogicalType()
-    if (log == null) t
-    else getBaseType(log.getBaseType())
-  }
 
   // Position API
   private case class Location(p: List[String])
@@ -138,10 +131,9 @@ object To {
   }
 
   /**
-   * Builds a function that reads a Row and convert it
-   * to a Row in the given Schema.
-   * The input Row needs to be compatible with the given Schema,
-   * that is, it may have more fields, or use LogicalTypes.
+   * Builds a function that reads a Row and convert it to a Row in the given Schema. The input Row
+   * needs to be compatible with the given Schema, that is, it may have more fields, or use
+   * LogicalTypes.
    */
   @inline private def transform(schema: BSchema): Row => Row = { t0 =>
     val iter = schema.getFields.iterator()
@@ -149,7 +141,7 @@ object To {
     while (iter.hasNext) {
       val f = iter.next()
       val value = t0.getValue[Object](f.getName) match {
-        case None => null
+        case None                                                    => null
         case r: Row if f.getType.getTypeName == BSchema.TypeName.ROW =>
           transform(f.getType.getRowSchema)(r)
         case v =>
@@ -164,10 +156,11 @@ object To {
   }
 
   /**
-   * Convert instance of ${T} in this SCollection into instances of ${O}
-   * based on the Schemas on the 2 classes.
-   * The compatibility of the 2 schemas is NOT checked at compile time, so the execution may fail.
-   * @see To#apply
+   * Convert instance of ${T} in this SCollection into instances of ${O} based on the Schemas on the
+   * 2 classes. The compatibility of the 2 schemas is NOT checked at compile time, so the execution
+   * may fail.
+   * @see
+   *   To#apply
    */
   def unsafe[I: Schema, O: Schema: ClassTag]: To[I, O] = unsafe(unchecked)
 
@@ -184,8 +177,10 @@ object To {
 
   /**
    * FOR INTERNAL USE ONLY - Convert from I to O without performing any check.
-   * @see To#safe
-   * @see To#unsafe
+   * @see
+   *   To#safe
+   * @see
+   *   To#unsafe
    */
   def unchecked[I: Schema, O: Schema: ClassTag]: To[I, O] =
     new To[I, O] {
@@ -209,10 +204,10 @@ object To {
     }
 
   /**
-   * Convert instance of ${T} in this SCollection into instances of ${O}
-   * based on the Schemas on the 2 classes. The compatibility of thoses classes is checked
-   * at compile time.
-   * @see To#unsafe
+   * Convert instance of ${T} in this SCollection into instances of ${O} based on the Schemas on the
+   * 2 classes. The compatibility of thoses classes is checked at compile time.
+   * @see
+   *   To#unsafe
    */
   def safe[I: Schema, O: Schema]: To[I, O] =
     macro ToMacro.safeImpl[I, O]
@@ -223,9 +218,10 @@ object ToMacro {
   def safeImpl[I: c.WeakTypeTag, O: c.WeakTypeTag](
     c: blackbox.Context
   )(iSchema: c.Expr[Schema[I]], oSchema: c.Expr[Schema[O]]): c.Expr[To[I, O]] = {
+    @nowarn("cat=deprecation")
     val h = new { val ctx: c.type = c } with SchemaMacroHelpers
-    import h._
     import c.universe._
+    import h._
 
     val tpeI = weakTypeOf[I]
     val tpeO = weakTypeOf[O]

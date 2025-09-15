@@ -22,7 +22,7 @@
 
 // To upload the template:
 // `sbt "runMain com.spotify.scio.examples.extra.TemplateExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --stagingLocation=gs://[BUCKET]/staging --templateLocation=gs://[BUCKET]/TemplateExample"`
 
 // To run the template, e.g. from gcloud:
@@ -32,7 +32,7 @@
 
 // To run the job directly:
 // `sbt "runMain com.spotify.scio.examples.extra.TemplateExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --inputSub=projects/[PROJECT]/subscriptions/sub
 // --outputTopic=projects/[PROJECT]/topics/[TOPIC]"`
 package com.spotify.scio.examples.extra

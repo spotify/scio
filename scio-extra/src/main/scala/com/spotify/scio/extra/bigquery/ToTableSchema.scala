@@ -29,8 +29,8 @@ import scala.jdk.CollectionConverters._
 
 /**
  * Converts a [[org.apache.avro.Schema Schema]] object into a
- * [[com.google.api.services.bigquery.model.TableSchema]] TableSchema.
- * All Avro primitive and complex types are supported.
+ * [[com.google.api.services.bigquery.model.TableSchema]] TableSchema. All Avro primitive and
+ * complex types are supported.
  */
 private[bigquery] trait ToTableSchema {
   private lazy val avroToBQTypes: Map[Type, String] = Map(
@@ -143,10 +143,9 @@ private[bigquery] trait ToTableSchema {
 
   /**
    * This uses avro logical type to Converted BigQuery mapping in the following table
-   * https://cloud.google.com/bigquery/docs/loading-data-cloud-storage-avro#logical_types
-   * Joda time library doesn't support microsecond level precision, therefore
-   * time-micros map to 'INTEGER' instead of 'TIME', for the same reason
-   * timestamp-micros map to 'INTEGER' instead of 'TIMESTAMP'
+   * https://cloud.google.com/bigquery/docs/loading-data-cloud-storage-avro#logical_types Joda time
+   * library doesn't support microsecond level precision, therefore time-micros map to 'INTEGER'
+   * instead of 'TIME', for the same reason timestamp-micros map to 'INTEGER' instead of 'TIMESTAMP'
    */
   private def typeFromLogicalType(logicalType: LogicalType): String = logicalType match {
     case _: Date            => "DATE"
@@ -155,6 +154,6 @@ private[bigquery] trait ToTableSchema {
     case _: TimestampMillis => "TIMESTAMP"
     case _: TimestampMicros => "INTEGER"
     case _: Decimal         => "NUMERIC"
-    case _                  => throw new IllegalStateException(s"Unknown Logical Type: [${logicalType.getName}]")
+    case _ => throw new IllegalStateException(s"Unknown Logical Type: [${logicalType.getName}]")
   }
 }

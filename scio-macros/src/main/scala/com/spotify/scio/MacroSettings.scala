@@ -30,8 +30,9 @@ private[scio] object MacroSettings {
     val ss: Map[String, String] =
       settings
         .map(_.split("="))
-        .map { case Array(k, v) =>
-          (k.trim, v.trim)
+        .flatMap {
+          case Array(k, v) => Some(k.trim -> v.trim)
+          case _           => None
         }
         .toMap
 
@@ -58,9 +59,8 @@ private[scio] object MacroSettings {
     getFlag(c.settings)("show-coder-fallback", FeatureFlag.Disable)
 
   /**
-   * Aggressively cache Schema implicit definitions to speed up compilation.
-   * This might lead to the incorrect implicit definition to be selected
-   * since implicits may escape their scope.
+   * Aggressively cache Schema implicit definitions to speed up compilation. This might lead to the
+   * incorrect implicit definition to be selected since implicits may escape their scope.
    */
   def cacheImplicitSchemas(c: blackbox.Context): FeatureFlag =
     getFlag(c.settings)("cache-implicit-schemas", FeatureFlag.Disable)

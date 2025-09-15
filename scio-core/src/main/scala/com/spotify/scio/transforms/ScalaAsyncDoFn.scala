@@ -20,8 +20,8 @@ package com.spotify.scio.transforms
 import scala.concurrent.Future
 
 /**
- * A [[org.apache.beam.sdk.transforms.DoFn DoFn]] that handles asynchronous requests to an
- * external service that returns Scala [[Future]]s.
+ * A [[org.apache.beam.sdk.transforms.DoFn DoFn]] that handles asynchronous requests to an external
+ * service that returns Scala [[Future]] s.
  */
 abstract class ScalaAsyncDoFn[I, O, R]
     extends BaseAsyncDoFn[I, O, R, Future[O]]

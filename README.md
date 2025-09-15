@@ -1,7 +1,6 @@
-Scio
-====
+# Scio
 
-[![Build Status](https://img.shields.io/github/workflow/status/spotify/scio/ci)](https://github.com/spotify/scio/actions?query=workflow%3Aci)
+[![Continuous Integration](https://github.com/spotify/scio/actions/workflows/ci.yml/badge.svg)](https://github.com/spotify/scio/actions/workflows/ci.yml)
 [![codecov.io](https://codecov.io/github/spotify/scio/coverage.svg?branch=master)](https://codecov.io/github/spotify/scio?branch=master)
 [![GitHub license](https://img.shields.io/github/license/spotify/scio.svg)](./LICENSE)
 [![Maven Central](https://img.shields.io/maven-central/v/com.spotify/scio-core_2.12.svg)](https://maven-badges.herokuapp.com/maven-central/com.spotify/scio-core_2.12)
@@ -15,22 +14,20 @@ Scio
 
 Scio is a Scala API for [Apache Beam](http://beam.incubator.apache.org/) and [Google Cloud Dataflow](https://github.com/GoogleCloudPlatform/DataflowJavaSDK) inspired by [Apache Spark](http://spark.apache.org/) and [Scalding](https://github.com/twitter/scalding).
 
-Scio 0.3.0 and future versions depend on Apache Beam (`org.apache.beam`) while earlier versions depend on Google Cloud Dataflow SDK (`com.google.cloud.dataflow`). See this [page](https://spotify.github.io/scio/Apache-Beam.html) for a list of breaking changes.
-
 # Features
 
 - Scala API close to that of Spark and Scalding core APIs
 - Unified batch and streaming programming model
-- Fully managed service<sup>*</sup>
+- Fully managed service<sup>\*</sup>
 - Integration with Google Cloud products: Cloud Storage, BigQuery, Pub/Sub, Datastore, Bigtable
-- JDBC, [TensorFlow](http://tensorflow.org/) TFRecords, Cassandra, Elasticsearch and Parquet I/O
+- Avro, Cassandra, Elasticsearch, gRPC, JDBC, neo4j, Parquet, Redis, [TensorFlow](http://tensorflow.org/) IOs
 - Interactive mode with Scio REPL
 - Type safe BigQuery
 - Integration with [Algebird](https://github.com/twitter/algebird) and [Breeze](https://github.com/scalanlp/breeze)
 - Pipeline orchestration with [Scala Futures](http://docs.scala-lang.org/overviews/core/futures.html)
 - Distributed cache
 
-<sup>*</sup> provided by Google Cloud Dataflow
+<sup>\*</sup> provided by Google Cloud Dataflow
 
 # Quick Start
 
@@ -46,7 +43,7 @@ Switch to the new repo (default `scio-job`) and build it:
 
 ```
 cd scio-job
-sbt stage 
+sbt stage
 ```
 
 Run the included word count example:
@@ -62,7 +59,7 @@ cat wc/part-00000-of-00004.txt
 
 # Documentation
 
-[Getting Started](https://spotify.github.io/scio/Getting-Started.html) is the best place to start with Scio. If you are new to Apache Beam and distributed data processing, check out the [Beam Programming Guide](https://beam.apache.org/documentation/programming-guide/) first for a detailed explanation of the Beam programming model and concepts. If you have experience with other Scala data processing libraries, check out this comparison between [Scio, Scalding and Spark](https://spotify.github.io/scio/Scio,-Scalding-and-Spark.html). Finally check out this document about the relationship between [Scio, Beam and Dataflow](https://spotify.github.io/scio/Scio,-Beam-and-Dataflow.html).
+[Getting Started](https://spotify.github.io/scio/Getting-Started.html) is the best place to start with Scio. If you are new to Apache Beam and distributed data processing, check out the [Beam Programming Guide](https://beam.apache.org/documentation/programming-guide/) first for a detailed explanation of the Beam programming model and concepts. If you have experience with other Scala data processing libraries, check out this comparison between [Scio, Scalding and Spark](https://spotify.github.io/scio/Scio,-Scalding-and-Spark.html).
 
 Example Scio pipelines and tests can be found under [scio-examples](https://github.com/spotify/scio/tree/master/scio-examples/src). A lot of them are direct ports from Beam's Java [examples](https://github.com/apache/beam/tree/master/examples). See this [page](http://spotify.github.io/scio/examples/) for some of them with side-by-side explanation. Also see [Big Data Rosetta Code](https://github.com/spotify/big-data-rosetta-code) for common data processing code snippets in Scio, Scalding and Spark.
 
@@ -74,20 +71,28 @@ Example Scio pipelines and tests can be found under [scio-examples](https://gith
 
 Scio includes the following artifacts:
 
-- `scio-core`: core library
-- `scio-test`: test utilities, add to your project as a "test" dependency
 - `scio-avro`: add-on for Avro, can also be used standalone
-- `scio-bigquery`: add-on for BigQuery, can also be used standalone
-- `scio-bigtable`: add-on for Bigtable
 - `scio-cassandra*`: add-ons for Cassandra
+- `scio-core`: core library
 - `scio-elasticsearch*`: add-ons for Elasticsearch
 - `scio-extra`: extra utilities for working with collections, Breeze, etc., best effort support
+- `scio-google-cloud-platform`: add-on for Google Cloud IO's: BigQuery, Bigtable, Pub/Sub, Datastore, Spanner
+- `scio-grpc`: add-on for gRPC service calls
 - `scio-jdbc`: add-on for JDBC IO
+- `scio-neo4j`: add-on for Neo4J IO
 - `scio-parquet`: add-on for Parquet
+- `scio-redis`: add-on for Redis
+- `scio-repl`: extension of the Scala REPL with Scio specific operations
+- `scio-smb`: add-on for Sort Merge Bucket operations
+- `scio-snowflake`: add-on for Snowflake IO
 - `scio-tensorflow`: add-on for TensorFlow TFRecords IO and prediction
+- `scio-test`: all following test utilities. Add to your project as a "test" dependency
+  - `scio-test-core`: test core utilities
+  - `scio-test-google-cloud-platform`: test utilities for Google Cloud IO's
+  - `scio-test-parquet`: test utilities for Parquet
 
 # License
 
-Copyright 2016 Spotify AB.
+Copyright 2024 Spotify AB.
 
 Licensed under the Apache License, Version 2.0: http://www.apache.org/licenses/LICENSE-2.0

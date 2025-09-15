@@ -19,7 +19,7 @@
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.cookbook.DistinctExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --output=gs://[BUCKET]/output/path"`
 package com.spotify.scio.examples.cookbook
 

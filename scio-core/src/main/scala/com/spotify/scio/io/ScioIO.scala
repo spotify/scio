@@ -18,8 +18,10 @@
 package com.spotify.scio.io
 
 import com.spotify.scio.ScioContext
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.testing.TestDataManager
-import com.spotify.scio.values.SCollection
+import com.spotify.scio.values.{SCollection, SideOutputCollections}
+
 import scala.annotation.unused
 
 sealed trait TapT[A] extends Serializable {
@@ -49,47 +51,67 @@ final class TapOf[A] private extends TapT[A] {
 object TapOf { def apply[A]: TapT.Aux[A, A] = new TapOf[A] }
 
 /**
- * Base trait for all Read/Write IO classes. Every IO connector must implement this.
- * This trait has two abstract implicit methods #read, #write that need to be implemented
- * in every subtype. Look at the [[com.spotify.scio.io.TextIO]] subclass for a reference
- * implementation. IO connectors can choose to override #readTest and #writeTest if custom
- * test logic is necessary.
+ * Base trait for all Read/Write IO classes. Every IO connector must implement this. This trait has
+ * two abstract implicit methods #read, #write that need to be implemented in every subtype. Look at
+ * the [[com.spotify.scio.io.TextIO]] subclass for a reference implementation. IO connectors can
+ * choose to override #readTest and #writeTest if custom test logic is necessary.
  */
 trait ScioIO[T] {
-  // abstract types for read/write params.
+
+  /** Read parameter type */
   type ReadP
+
+  /** Write parameter type */
   type WriteP
 
-  // !!! This needs to be a stable value (ie: a val, not a def) in every implementations,
-  // !!! otherwise the return type of write cannot be inferred.
+  /**
+   * Output tap type.
+   *
+   * This _must_ be a stable value (a `val`, not a `def`) in every implementation, otherwise the
+   * return type of write cannot be inferred.
+   */
   val tapT: TapT[T]
 
-  // identifier for JobTest IO matching
+  /** Identifier for JobTest IO matching */
   def testId: String = this.toString
 
+  /**
+   * Read data according to the read configuration provided in `params` as an SCollection, or return
+   * test data if this is in a JobTest
+   */
   private[scio] def readWithContext(sc: ScioContext, params: ReadP): SCollection[T] =
     sc.requireNotClosed(if (sc.isTest) readTest(sc, params) else read(sc, params))
 
+  /** Called only in a JobTest. Return test data for this `testId` as an SCollection */
   protected def readTest(sc: ScioContext, @unused params: ReadP): SCollection[T] =
     TestDataManager.getInput(sc.testId.get)(this).toSCollection(sc)
 
+  /** Read data according to the read configuration provided in `params` as an SCollection. */
   protected def read(sc: ScioContext, params: ReadP): SCollection[T]
 
-  private[scio] def writeWithContext(data: SCollection[T], params: WriteP): ClosedTap[tapT.T] =
-    ClosedTap(if (data.context.isTest) writeTest(data, params) else write(data, params))
+  /**
+   * Write `data` out according to write configuration provided in `params`, or if this is a test
+   * write to TestDataManager, returning the Tap type
+   */
+  private[scio] def writeWithContext(data: SCollection[T], params: WriteP): ClosedTap[tapT.T] = {
+    val tap = if (data.context.isTest) writeTest(data, params) else write(data, params)
+    ClosedTap(tap)
+  }
 
+  /** Write `data` out according to write configuration provided in `params`, returning the Tap type. */
   protected def write(data: SCollection[T], params: WriteP): Tap[tapT.T]
 
+  /** Called only in a JobTest. Write `data` to TestDataManager output and return the Tap type */
   protected def writeTest(data: SCollection[T], @unused params: WriteP): Tap[tapT.T] = {
     TestDataManager.getOutput(data.context.testId.get)(this)(data)
     tapT.saveForTest(data)
   }
 
   /**
-   * Write options also return a `ClosedTap`. Once the job completes you can open the `Tap`.
-   * Tap abstracts away the logic of reading the dataset directly as an Iterator[T] or
-   * re-opening it in another ScioContext. The Future is complete once the job finishes.
-   * This can be used to do light weight pipeline orchestration e.g. WordCountOrchestration.scala.
+   * Write options also return a `ClosedTap`. Once the job completes you can open the `Tap`. Tap
+   * abstracts away the logic of reading the dataset directly as an Iterator[T] or re-opening it in
+   * another ScioContext. The Future is complete once the job finishes. This can be used to do light
+   * weight pipeline orchestration e.g. WordCountOrchestration.scala.
    */
   def tap(read: ReadP): Tap[tapT.T]
 }
@@ -137,6 +159,39 @@ trait TestIO[T] extends ScioIO[T] {
     throw new UnsupportedOperationException(s"$this is for testing purpose only")
   override def tap(params: ReadP): Tap[tapT.T] =
     throw new UnsupportedOperationException(s"$this is for testing purpose only")
+}
+
+trait KeyedIO[T] { self: ScioIO[T] =>
+  type KeyT
+  def keyBy: T => KeyT
+  def keyCoder: Coder[KeyT]
+}
+
+trait WriteResultIO[T] { self: ScioIO[T] =>
+  override private[scio] def writeWithContext(
+    data: SCollection[T],
+    params: WriteP
+  ): ClosedTap[tapT.T] = {
+    if (data.context.isTest) {
+      val tap = writeTest(data, params)
+      // TODO: add possibility to fill this for testing
+      val output = SideOutputCollections.empty(data.context)
+      ClosedTap(tap, Some(output))
+    } else {
+      val (tap, outputs) = writeWithResult(data, params)
+      ClosedTap(tap, Some(outputs))
+    }
+  }
+
+  final override def write(data: SCollection[T], params: self.WriteP): Tap[self.tapT.T] =
+    throw new UnsupportedOperationException(
+      "WriteResultIO cannot be used with #write. Use #writeWithResult instead"
+    )
+
+  protected def writeWithResult(
+    data: SCollection[T],
+    params: self.WriteP
+  ): (Tap[self.tapT.T], SideOutputCollections)
 }
 
 /**

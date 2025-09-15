@@ -25,8 +25,8 @@ import com.spotify.sparkey.SparkeyReader
 import scala.jdk.CollectionConverters._
 
 /**
- * A wrapper around `SparkeyReader` that includes both a decoder (to map from each byte array
- * to a JVM type) and an optional in-memory cache.
+ * A wrapper around `SparkeyReader` that includes both a decoder (to map from each byte array to a
+ * JVM type) and an optional in-memory cache.
  */
 class TypedSparkeyReader[T](
   val sparkey: SparkeyReader,
@@ -35,18 +35,11 @@ class TypedSparkeyReader[T](
 ) extends SparkeyMapBase[String, T] {
   private def stringKeyToBytes(key: String): Array[Byte] = key.getBytes(Charset.defaultCharset())
 
-  private def loadValueFromSparkey(key: String): T = {
-    val value = sparkey.getAsByteArray(stringKeyToBytes(key))
-    if (value == null) {
-      // This is fine since `SparkeyMapBase` defeats primitive specialization
-      null.asInstanceOf[T]
-    } else {
-      decoder(value)
-    }
-  }
+  private def loadValueFromSparkey(key: String): Option[T] =
+    Option(sparkey.getAsByteArray(stringKeyToBytes(key))).map(decoder)
 
   override def get(key: String): Option[T] =
-    Option(cache.get(key, loadValueFromSparkey(key)))
+    cache.get(key, loadValueFromSparkey(key))
 
   override def iterator: Iterator[(String, T)] =
     sparkey.iterator.asScala.map { e =>

@@ -59,8 +59,10 @@ object TableAdmin {
   /**
    * Retrieves a set of tables from the given instancePath.
    *
-   * @param client Client for calling Bigtable.
-   * @param instancePath String of the form "projects/$project/instances/$instance".
+   * @param client
+   *   Client for calling Bigtable.
+   * @param instancePath
+   *   String of the form "projects/$project/instances/$instance".
    * @return
    */
   private def fetchTables(client: BigtableTableAdminClient, instancePath: String): Set[String] =
@@ -77,12 +79,13 @@ object TableAdmin {
       .toSet
 
   /**
-   * Ensure that tables and column families exist.
-   * Checks for existence of tables or creates them if they do not exist.  Also checks for
-   * existence of column families within each table and creates them if they do not exist.
+   * Ensure that tables and column families exist. Checks for existence of tables or creates them if
+   * they do not exist. Also checks for existence of column families within each table and creates
+   * them if they do not exist.
    *
-   * @param tablesAndColumnFamilies A map of tables and column families.  Keys are table names.
-   *                                Values are a list of column family names.
+   * @param tablesAndColumnFamilies
+   *   A map of tables and column families. Keys are table names. Values are a list of column family
+   *   names.
    */
   def ensureTables(
     bigtableOptions: BigtableOptions,
@@ -96,17 +99,14 @@ object TableAdmin {
   }
 
   /**
-   * Ensure that tables and column families exist.
-   * Checks for existence of tables or creates them if they do not exist.  Also checks for
-   * existence of column families within each table and creates them if they do not exist.
+   * Ensure that tables and column families exist. Checks for existence of tables or creates them if
+   * they do not exist. Also checks for existence of column families within each table and creates
+   * them if they do not exist.
    *
-   * @param tablesAndColumnFamilies A map of tables and column families.
-   *                                Keys are table names. Values are a
-   *                                list of column family names along with
-   *                                the desired cell expiration. Cell
-   *                                expiration is the duration before which
-   *                                garbage collection of a cell may occur.
-   *                                Note: minimum granularity is one second.
+   * @param tablesAndColumnFamilies
+   *   A map of tables and column families. Keys are table names. Values are a list of column family
+   *   names along with the desired cell expiration. Cell expiration is the duration before which
+   *   garbage collection of a cell may occur. Note: minimum granularity is one second.
    */
   def ensureTablesWithExpiration(
     bigtableOptions: BigtableOptions,
@@ -124,13 +124,13 @@ object TableAdmin {
   }
 
   /**
-   * Ensure that tables and column families exist.
-   * Checks for existence of tables or creates them if they do not exist.  Also checks for
-   * existence of column families within each table and creates them if they do not exist.
+   * Ensure that tables and column families exist. Checks for existence of tables or creates them if
+   * they do not exist. Also checks for existence of column families within each table and creates
+   * them if they do not exist.
    *
-   * @param tablesAndColumnFamilies A map of tables and column families. Keys are table names.
-   *                                Values are a list of column family names along with the desired
-   *                                GcRule.
+   * @param tablesAndColumnFamilies
+   *   A map of tables and column families. Keys are table names. Values are a list of column family
+   *   names along with the desired GcRule.
    */
   def ensureTablesWithGcRules(
     bigtableOptions: BigtableOptions,
@@ -140,12 +140,13 @@ object TableAdmin {
     ensureTablesImpl(bigtableOptions, tablesAndColumnFamilies, createDisposition).get
 
   /**
-   * Ensure that tables and column families exist.
-   * Checks for existence of tables or creates them if they do not exist.  Also checks for
-   * existence of column families within each table and creates them if they do not exist.
+   * Ensure that tables and column families exist. Checks for existence of tables or creates them if
+   * they do not exist. Also checks for existence of column families within each table and creates
+   * them if they do not exist.
    *
-   * @param tablesAndColumnFamilies A map of tables and column families.  Keys are table names.
-   *                                Values are a list of column family names.
+   * @param tablesAndColumnFamilies
+   *   A map of tables and column families. Keys are table names. Values are a list of column family
+   *   names.
    */
   private def ensureTablesImpl(
     bigtableOptions: BigtableOptions,
@@ -187,12 +188,14 @@ object TableAdmin {
   }
 
   /**
-   * Ensure that column families exist.
-   * Checks for existence of column families and creates them if they don't exist.
+   * Ensure that column families exist. Checks for existence of column families and creates them if
+   * they don't exist.
    *
-   * @param tablePath A full table path that the bigtable API expects, in the form of
-   *                  `projects/projectId/instances/instanceId/tables/tableId`
-   * @param columnFamilies A list of column family names.
+   * @param tablePath
+   *   A full table path that the bigtable API expects, in the form of
+   *   `projects/projectId/instances/instanceId/tables/tableId`
+   * @param columnFamilies
+   *   A list of column family names.
    */
   private def ensureColumnFamilies(
     client: BigtableTableAdminClient,
@@ -254,8 +257,10 @@ object TableAdmin {
   /**
    * Permanently deletes a row range from the specified table that match a particular prefix.
    *
-   * @param table table name
-   * @param rowPrefix row key prefix
+   * @param table
+   *   table name
+   * @param rowPrefix
+   *   row key prefix
    */
   def dropRowRange(bigtableOptions: BigtableOptions, table: String, rowPrefix: String): Try[Unit] =
     adminClient(bigtableOptions) { client =>
@@ -270,9 +275,11 @@ object TableAdmin {
   /**
    * Permanently deletes a row range from the specified table that match a particular prefix.
    *
-   * @param tablePath A full table path that the bigtable API expects, in the form of
-   *                  `projects/projectId/instances/instanceId/tables/tableId`
-   * @param rowPrefix row key prefix
+   * @param tablePath
+   *   A full table path that the bigtable API expects, in the form of
+   *   `projects/projectId/instances/instanceId/tables/tableId`
+   * @param rowPrefix
+   *   row key prefix
    */
   private def dropRowRange(
     tablePath: String,

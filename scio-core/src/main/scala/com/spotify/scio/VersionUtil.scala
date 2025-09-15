@@ -18,9 +18,9 @@
 package com.spotify.scio
 
 import com.google.api.client.http.javanet.NetHttpTransport
-import com.google.api.client.http.{GenericUrl, HttpRequest, HttpRequestInitializer}
+import com.google.api.client.http.{GenericUrl, HttpRequest}
 import com.google.api.client.json.JsonObjectParser
-import com.google.api.client.json.jackson2.JacksonFactory
+import com.google.api.client.json.gson.GsonFactory
 import org.apache.beam.sdk.util.ReleaseInfo
 import org.apache.beam.sdk.{PipelineResult, PipelineRunner}
 import org.slf4j.LoggerFactory
@@ -31,82 +31,77 @@ import scala.collection.mutable
 import scala.util.Try
 
 private[scio] object VersionUtil {
+
+  private val oderSemVer: Ordering[SemVer] =
+    Ordering.by(v => (v.major, v.minor, v.rev, v.suffix.toUpperCase()))
+
   case class SemVer(major: Int, minor: Int, rev: Int, suffix: String) extends Ordered[SemVer] {
-    def compare(that: SemVer): Int =
-      Ordering[(Int, Int, Int, String)].compare(SemVer.unapply(this).get, SemVer.unapply(that).get)
+    def compare(that: SemVer): Int = oderSemVer.compare(this, that)
   }
 
   private[this] val Timeout = 3000
   private[this] val Url = "https://api.github.com/repos/spotify/scio/releases"
 
   /**
-   * example versions:
-   * version = "0.10.0-beta1+42-828dca9a-SNAPSHOT"
-   * version = "0.10.0-beta1"
-   * version = "0.10.0-SNAPSHOT"
+   * example versions: version = "0.10.0-beta1+42-828dca9a-SNAPSHOT" version = "0.10.0-beta1"
+   * version = "0.10.0-SNAPSHOT" version = "0.10-e135ed2-SNAPSHOT"
    */
-  private[this] val Pattern = """v?(\d+)\.(\d+).(\d+)((-\w+)?(\+\d+-\w+(\+\d+-\d+)?(-\w+)?)?)?""".r
+  private[this] val Pattern = """^(0|[1-9]\d*)\.(0|[1-9]\d*)(?:\.(0|[1-9]\d*))?(?:-(.+))?$""".r
   private[this] val Logger = LoggerFactory.getLogger(this.getClass)
 
   private[this] val MessagePattern: (String, String) => String = (version, url) => s"""
        | $YELLOW>$BOLD Scio $version introduced some breaking changes in the API.$RESET
        | $YELLOW>$RESET Follow the migration guide to upgrade: $url.
        | $YELLOW>$RESET Scio provides automatic migration rules (See migration guide).
-      """.stripMargin
+       |""".stripMargin
   private[this] val NewerVersionPattern: (String, String) => String = (current, v) => s"""
       | $YELLOW>$BOLD A newer version of Scio is available: $current -> $v$RESET
-      | $YELLOW>$RESET Use `-Dscio.ignoreVersionWarning=true` to disable this check.$RESET
+      | $YELLOW>$RESET Use `-Dscio.ignoreVersionWarning=true` to disable this check.
       |""".stripMargin
 
-  private lazy val latest: Option[String] = Try {
-    val transport = new NetHttpTransport()
-    val response = transport
-      .createRequestFactory(new HttpRequestInitializer {
-        override def initialize(request: HttpRequest): Unit = {
-          request.setConnectTimeout(Timeout)
-          request.setReadTimeout(Timeout)
-          request.setParser(new JsonObjectParser(new JacksonFactory))
+  private lazy val requestFactory = new NetHttpTransport()
+    .createRequestFactory { (request: HttpRequest) =>
+      request.setConnectTimeout(Timeout)
+      request.setReadTimeout(Timeout)
+    }
 
-          ()
-        }
-      })
+  private lazy val latest: Option[String] = Try {
+    val response = requestFactory
       .buildGetRequest(new GenericUrl(Url))
+      .setParser(new JsonObjectParser(GsonFactory.getDefaultInstance))
       .execute()
       .parseAs(classOf[java.util.List[java.util.Map[String, AnyRef]]])
     response.asScala
-      .filter(node => !node.get("prerelease").asInstanceOf[Boolean])
-      .find(node => !node.get("draft").asInstanceOf[Boolean])
-      .map(latestNode => latestNode.get("tag_name").asInstanceOf[String])
+      .filterNot(_.get("prerelease").asInstanceOf[Boolean])
+      .filterNot(_.get("draft").asInstanceOf[Boolean])
+      .map(_.get("tag_name").asInstanceOf[String])
+      .collectFirst { case tag if tag.head == 'v' => tag.tail }
   }.toOption.flatten
 
   private def parseVersion(version: String): SemVer = {
     val m = Pattern.findFirstMatchIn(version).get
-    // higher value for no "-SNAPSHOT"
-    val snapshot = if (!m.group(4).isEmpty()) m.group(4).toUpperCase else "\uffff"
-    SemVer(m.group(1).toInt, m.group(2).toInt, m.group(3).toInt, snapshot)
+    // use max value for pre-release if not defined
+    val preRelease = Option(m.group(4)).getOrElse(new String(Array(Char.MaxValue)))
+    val major = m.group(1).toInt
+    val minor = m.group(2).toInt
+    val tiny = Option(m.group(3)).map(_.toInt).getOrElse(0)
+    SemVer(major, minor, tiny, preRelease)
   }
 
   private[scio] def ignoreVersionCheck: Boolean =
     sys.props.get("scio.ignoreVersionWarning").exists(_.trim == "true")
 
-  private def messages(current: SemVer, latest: SemVer): Option[String] = (current, latest) match {
-    case (SemVer(0, minor, _, _), SemVer(0, 7, _, _)) if minor < 7 =>
-      Some(
-        MessagePattern("0.7", "https://spotify.github.io/scio/migrations/v0.7.0-Migration-Guide")
-      )
-    case (SemVer(0, minor, _, _), SemVer(0, 8, _, _)) if minor < 8 =>
-      Some(
-        MessagePattern("0.8", "https://spotify.github.io/scio/migrations/v0.8.0-Migration-Guide")
-      )
-    case (SemVer(0, minor, _, _), SemVer(0, 9, _, _)) if minor < 9 =>
-      Some(
-        MessagePattern("0.9", "https://spotify.github.io/scio/migrations/v0.9.0-Migration-Guide")
-      )
-    case (SemVer(0, minor, _, _), SemVer(0, 10, _, _)) if minor < 10 =>
-      Some(
-        MessagePattern("0.10", "https://spotify.github.io/scio/migrations/v0.10.0-Migration-Guide")
-      )
-    case _ => None
+  private def migrationMessage(latest: SemVer): Option[String] = {
+    val SemVer(major, minor, rev, _) = latest
+    val shortVersion = s"$major.$minor"
+    val fullVersion = s"v$major.$minor.$rev"
+
+    val url =
+      s"https://spotify.github.io/scio/releases/migrations/$fullVersion-Migration-Guide.html"
+    Try(requestFactory.buildGetRequest(new GenericUrl(url)).execute())
+      .filter(_.getStatusCode == 200)
+      .map(_ => MessagePattern(shortVersion, url))
+      .toOption
   }
 
   def checkVersion(
@@ -118,15 +113,21 @@ private[scio] object VersionUtil {
       Nil
     } else {
       val buffer = mutable.Buffer.empty[String]
-      val v1 = parseVersion(current)
-      if (v1.suffix.contains("-SNAPSHOT")) {
+      val currentVersion = parseVersion(current)
+      if (currentVersion.suffix.contains("SNAPSHOT")) {
         buffer.append(s"Using a SNAPSHOT version of Scio: $current")
       }
       latestOverride.orElse(latest).foreach { v =>
-        val v2 = parseVersion(v)
-        if (v2 > v1) {
+        val latestVersion = parseVersion(v)
+        if (latestVersion > currentVersion) {
           buffer.append(NewerVersionPattern(current, v))
-          messages(v1, v2).foreach(buffer.append(_))
+          // check breaking upgrade by comparing base versions
+          val latestBaseVersion = latestVersion.copy(rev = 0, suffix = "")
+          val currentBaseVersion = currentVersion.copy(rev = 0, suffix = "")
+          if (latestBaseVersion > currentBaseVersion) {
+            // keep application for 2.12
+            migrationMessage(latestBaseVersion).foreach(buffer.append(_))
+          }
         }
       }
       buffer.toSeq
@@ -137,9 +138,10 @@ private[scio] object VersionUtil {
   def checkRunnerVersion(runner: Class[_ <: PipelineRunner[_ <: PipelineResult]]): Unit = {
     val name = runner.getSimpleName
     val version = ReleaseInfo.getReleaseInfo.getVersion
-    require(
-      version == BuildInfo.beamVersion,
-      s"Mismatched version for $name, expected: ${BuildInfo.beamVersion}, actual: $version"
-    )
+    if (version != BuildInfo.beamVersion) {
+      Logger.warn(
+        s"Mismatched version for $name, expected: ${BuildInfo.beamVersion}, actual: $version"
+      )
+    }
   }
 }

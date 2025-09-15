@@ -18,10 +18,8 @@
 package com.spotify.scio.schemas
 
 import java.util.{List => jList, Map => jMap}
-
 import com.spotify.scio.{FeatureFlag, IsJavaBean, MacroSettings}
 import com.spotify.scio.schemas.instances.{
-  AvroInstances,
   JavaInstances,
   JodaInstances,
   LowPrioritySchemaDerivation,
@@ -29,7 +27,7 @@ import com.spotify.scio.schemas.instances.{
 }
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.schemas.Schema.FieldType
-import org.apache.beam.sdk.schemas.{SchemaProvider, Schema => BSchema}
+import org.apache.beam.sdk.schemas.{Schema => BSchema, SchemaProvider}
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.values.{Row, TypeDescriptor}
 import com.twitter.chill.ClosureCleaner
@@ -40,7 +38,7 @@ import org.apache.beam.sdk.values.TupleTag
 
 import scala.collection.{mutable, SortedSet}
 
-object Schema extends JodaInstances with AvroInstances with LowPrioritySchemaDerivation {
+object Schema extends JodaInstances with LowPrioritySchemaDerivation {
   @inline final def apply[T](implicit c: Schema[T]): Schema[T] = c
 
   implicit val jByteSchema: Type[java.lang.Byte] = JavaInstances.jByteSchema
@@ -139,7 +137,7 @@ object LogicalType {
     }
   }
 
-  def unapply[T](logicalType: LogicalType[T]): Option[BSchema.FieldType] =
+  def unapply[T](logicalType: LogicalType[T]): Some[BSchema.FieldType] =
     Some(logicalType.underlying)
 }
 
@@ -272,7 +270,7 @@ private[scio] trait SchemaMacroHelpers {
   def inferClassTag(t: ctx.Type): ctx.Expr[ClassTag[_]] =
     ctx.Expr[ClassTag[_]](q"implicitly[_root_.scala.reflect.ClassTag[$t]]")
 
-  implicit def liftTupleTag[A: ctx.WeakTypeTag]: Liftable[TupleTag[A]] = Liftable[TupleTag[A]] {
-    x => q"new _root_.org.apache.beam.sdk.values.TupleTag[${weakTypeOf[A]}](${x.getId()})"
+  implicit def liftTupleTag[A: ctx.WeakTypeTag]: Liftable[TupleTag[A]] = Liftable[TupleTag[A]] { x =>
+    q"new _root_.org.apache.beam.sdk.values.TupleTag[${weakTypeOf[A]}](${x.getId()})"
   }
 }

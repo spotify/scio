@@ -45,6 +45,10 @@ sealed trait SnappyT extends CompressionT {
   case class Snappy() extends Compression(Some("SNAPPY"))
 }
 
+sealed trait ZstdT extends CompressionT {
+  case class Zstd() extends Compression(Some("ZSTD"))
+}
+
 sealed trait NoCompressionT extends CompressionT {
   case class NoCompression() extends Compression(None)
 }
@@ -52,6 +56,7 @@ sealed trait NoCompressionT extends CompressionT {
 object CsvCompression extends NoCompressionT with GzipT
 object AvroCompression extends NoCompressionT with DeflateT with SnappyT
 object JsonCompression extends NoCompressionT with GzipT
+object ParquetCompression extends NoCompressionT with GzipT with SnappyT with ZstdT
 
 final private[client] class ExtractOps(client: Client, jobService: JobOps) {
   import ExtractOps._
@@ -98,6 +103,18 @@ final private[client] class ExtractOps(client: Client, jobService: JobOps) {
       compression = compression.name
     )
 
+  def asParquet(
+    sourceTable: String,
+    destinationUris: List[String],
+    compression: ParquetCompression.Compression = ParquetCompression.NoCompression()
+  ): Unit =
+    exportTable(
+      sourceTable = sourceTable,
+      destinationUris = destinationUris,
+      format = "PARQUET",
+      compression = compression.name
+    )
+
   private def exportTable(
     sourceTable: String,
     destinationUris: List[String],
@@ -125,7 +142,7 @@ final private[client] class ExtractOps(client: Client, jobService: JobOps) {
 
     Logger.info(s"Extracting table $sourceTable to ${destinationUris.mkString(", ")}")
 
-    client.underlying.jobs().insert(client.project, job).execute()
+    client.execute(_.jobs().insert(client.project, job))
 
     val extractJob = ExtractJob(destinationUris, Some(jobReference), tableRef)
 

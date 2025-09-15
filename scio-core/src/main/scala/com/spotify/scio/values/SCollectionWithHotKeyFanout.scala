@@ -23,17 +23,22 @@ import com.spotify.scio.util.Functions
 import com.spotify.scio.util.TupleFunctions._
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.beam.sdk.transforms.Combine.PerKeyWithHotKeyFanout
-import org.apache.beam.sdk.transforms.{Combine, SerializableFunction}
+import org.apache.beam.sdk.transforms.Top.TopCombineFn
+import org.apache.beam.sdk.transforms.{Combine, Mean, SerializableFunction}
+import org.joda.time.ReadableInstant
+
+import java.lang.{Double => JDouble}
 
 /**
  * An enhanced SCollection that uses an intermediate node to combine "hot" keys partially before
  * performing the full combine.
  */
 class SCollectionWithHotKeyFanout[K, V] private[values] (
-  private val context: ScioContext,
   private val self: PairSCollectionFunctions[K, V],
   private val hotKeyFanout: Either[K => Int, Int]
 ) extends TransformNameable {
+
+  private[this] val context: ScioContext = self.self.context
   implicit private[this] val valueCoder: Coder[V] = self.valueCoder
 
   private def withFanout[K0, I, O](
@@ -61,38 +66,37 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
    */
   def aggregateByKey[U: Coder](
     zeroValue: U
-  )(seqOp: (U, V) => U, combOp: (U, U) => U): SCollection[(K, U)] =
-    self.applyPerKey(
-      withFanout(Combine.perKey(Functions.aggregateFn(context, zeroValue)(seqOp, combOp)))
-    )(
-      kvToTuple
-    )
+  )(seqOp: (U, V) => U, combOp: (U, U) => U): SCollection[(K, U)] = {
+    val cmb = Combine.perKey[K, V, U](Functions.aggregateFn(context, zeroValue)(seqOp, combOp))
+    self.applyPerKey(withFanout(cmb))(kvToTuple)
+  }
 
   /**
-   * [[PairSCollectionFunctions.aggregateByKey[A,U]* PairSCollectionFunctions.aggregateByKey]]
-   * with hot key fanout.
+   * [[PairSCollectionFunctions.aggregateByKey[A,U]* PairSCollectionFunctions.aggregateByKey]] with
+   * hot key fanout.
    */
   def aggregateByKey[A: Coder, U: Coder](aggregator: Aggregator[V, A, U]): SCollection[(K, U)] =
-    self.self.context.wrap(self.self.internal).transform { in =>
+    self.self.transform { in =>
       val a = aggregator // defeat closure
-      in.mapValues(a.prepare)
+      new SCollectionWithHotKeyFanout(in.mapValues(a.prepare), hotKeyFanout)
         .sumByKey(a.semigroup)
         .mapValues(a.present)
     }
 
   /**
-   * [[PairSCollectionFunctions.aggregateByKey[A,U]* PairSCollectionFunctions.aggregateByKey]]
-   * with hot key fanout.
+   * [[PairSCollectionFunctions.aggregateByKey[A,U]* PairSCollectionFunctions.aggregateByKey]] with
+   * hot key fanout.
    */
   def aggregateByKey[A: Coder, U: Coder](
     aggregator: MonoidAggregator[V, A, U]
-  ): SCollection[(K, U)] =
-    self.self.context.wrap(self.self.internal).transform { in =>
+  ): SCollection[(K, U)] = {
+    self.self.transform { in =>
       val a = aggregator // defeat closure
-      in.mapValues(a.prepare)
+      new SCollectionWithHotKeyFanout(in.mapValues(a.prepare), hotKeyFanout)
         .foldByKey(a.monoid)
         .mapValues(a.present)
     }
+  }
 
   /** [[PairSCollectionFunctions.combineByKey]] with hot key fanout. */
   def combineByKey[C: Coder](
@@ -120,8 +124,8 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
     )(kvToTuple)
 
   /**
-   * [[PairSCollectionFunctions.foldByKey(implicit* PairSCollectionFunctions.foldByKey]] with
-   * hot key fanout.
+   * [[PairSCollectionFunctions.foldByKey(implicit* PairSCollectionFunctions.foldByKey]] with hot
+   * key fanout.
    */
   def foldByKey(implicit mon: Monoid[V]): SCollection[(K, V)] =
     self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(context, mon))))(
@@ -132,6 +136,32 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
   def reduceByKey(op: (V, V) => V): SCollection[(K, V)] =
     self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(context, op))))(kvToTuple)
 
+  /** [[SCollection.min]] with hot key fan out. */
+  def minByKey(implicit ord: Ordering[V]): SCollection[(K, V)] =
+    self.reduceByKey(ord.min)
+
+  /** [[SCollection.max]] with hot key fan out. */
+  def maxByKey(implicit ord: Ordering[V]): SCollection[(K, V)] =
+    self.reduceByKey(ord.max)
+
+  /** [[SCollection.latest]] with hot key fan out. */
+  def latestByKey: SCollection[(K, V)] = {
+    self.self.transform { in =>
+      new SCollectionWithHotKeyFanout(in.withTimestampedValues, this.hotKeyFanout)
+        // widen to ReadableInstant for scala 2.12 implicit ordering
+        .maxByKey(Ordering.by(_._2: ReadableInstant))
+        .mapValues(_._1)
+    }
+  }
+
+  /** [[SCollection.mean]] with hot key fan out. */
+  def meanByKey(implicit ev: Numeric[V]): SCollection[(K, Double)] = {
+    val e = ev // defeat closure
+    self.self.transform { in =>
+      in.mapValues[JDouble](e.toDouble).applyPerKey(Mean.perKey[K, JDouble]())(kdToTuple)
+    }
+  }
+
   /** [[PairSCollectionFunctions.sumByKey]] with hot key fanout. */
   def sumByKey(implicit sg: Semigroup[V]): SCollection[(K, V)] = {
     SCollection.logger.warn(
@@ -140,4 +170,10 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
     )
     self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(context, sg))))(kvToTuple)
   }
+
+  /** [[PairSCollectionFunctions.topByKey]] with hot key fanout. */
+  def topByKey(num: Int)(implicit ord: Ordering[V]): SCollection[(K, Iterable[V])] =
+    self.applyPerKey(withFanout(Combine.perKey(new TopCombineFn[V, Ordering[V]](num, ord))))(
+      kvListToTuple
+    )
 }

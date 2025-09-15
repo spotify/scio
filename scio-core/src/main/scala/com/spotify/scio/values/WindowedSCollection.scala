@@ -64,8 +64,6 @@ class WindowedSCollection[T] private[values] (coll: SCollection[T]) extends PCol
     this
   }
 
-  // override def withName(name: String): WindowedSCollection[T] = coll.withName(name)
-
   /** [[SCollection.filter]] with access to window information via [[WindowedValue]]. */
   def filter(f: WindowedValue[T] => Boolean): WindowedSCollection[T] =
     new WindowedSCollection(coll.parDo(FunctionsWithWindowedValue.filterFn(f)))

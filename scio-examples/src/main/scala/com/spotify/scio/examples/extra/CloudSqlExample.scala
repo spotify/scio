@@ -29,14 +29,24 @@ object CloudSqlExample {
 
     val sc = ScioContext(opts)
     val connOptions = getConnectionOptions(opts)
-    val readOptions = getReadOptions(connOptions)
-    val writeOptions = getWriteOptions(connOptions)
 
     // Read from Cloud SQL
-    sc.jdbcSelect(readOptions)
-      .map(kv => (kv._1.toUpperCase, kv._2))
+    sc.jdbcSelect(
+      connOptions,
+      // Read from a table called `word_count` with two columns `word` and `count`
+      "SELECT * FROM word_count"
+    ) { r =>
+      r.getString(1) -> r.getLong(2)
+    }.map { case (word, count) => word.toUpperCase -> count }
       // Write to Cloud SQL
-      .saveAsJdbc(writeOptions)
+      .saveAsJdbc(
+        connOptions,
+        // Write to a table called `result_word_count` with two columns `word` and `count`
+        "INSERT INTO result_word_count values(?, ?)"
+      ) { case ((word, count), s) =>
+        s.setString(1, word)
+        s.setLong(2, count)
+      }
     sc.run()
     ()
   }
@@ -63,24 +73,5 @@ object CloudSqlExample {
       password = Some(opts.getCloudSqlPassword),
       driverClass = classOf[com.mysql.jdbc.Driver],
       connectionUrl = getJdbcUrl(opts)
-    )
-
-  // Read from a table called `word_count` with two columns `word` and `count`
-  def getReadOptions(connOpts: JdbcConnectionOptions): JdbcReadOptions[(String, Long)] =
-    JdbcReadOptions(
-      connectionOptions = connOpts,
-      query = "SELECT * FROM word_count",
-      rowMapper = r => (r.getString(1), r.getLong(2))
-    )
-
-  // Write to a table called `result_word_count` with two columns `word` and `count`
-  def getWriteOptions(connOpts: JdbcConnectionOptions): JdbcWriteOptions[(String, Long)] =
-    JdbcWriteOptions(
-      connectionOptions = connOpts,
-      statement = "INSERT INTO result_word_count values(?, ?)",
-      preparedStatementSetter = (kv, s) => {
-        s.setString(1, kv._1)
-        s.setLong(2, kv._2)
-      }
     )
 }

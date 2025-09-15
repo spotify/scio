@@ -22,6 +22,8 @@ import com.spotify.scio.values.SideOutputContext
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import com.twitter.chill.ClosureCleaner
 
+import scala.collection.compat._
+
 private[scio] object FunctionsWithSideOutput {
   trait SideOutputFn[T, U] extends NamedDoFn[T, U] {
     private var ctx: SideOutputContext[T] = _
@@ -37,6 +39,10 @@ private[scio] object FunctionsWithSideOutput {
   def mapFn[T, U](f: (T, SideOutputContext[T]) => U): DoFn[T, U] =
     new SideOutputFn[T, U] {
       val g = ClosureCleaner.clean(f) // defeat closure
+
+      /*
+       * ProcessContext is required as an argument because it is passed to SideOutputContext
+       * */
       @ProcessElement
       private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit =
         c.output(g(c.element(), sideOutputContext(c)))
@@ -45,9 +51,13 @@ private[scio] object FunctionsWithSideOutput {
   def flatMapFn[T, U](f: (T, SideOutputContext[T]) => TraversableOnce[U]): DoFn[T, U] =
     new SideOutputFn[T, U] {
       val g = ClosureCleaner.clean(f) // defeat closure
+
+      /*
+       * ProcessContext is required as an argument because it is passed to SideOutputContext
+       * */
       @ProcessElement
       private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
-        val i = g(c.element(), sideOutputContext(c)).toIterator
+        val i = g(c.element(), sideOutputContext(c)).iterator
         while (i.hasNext) c.output(i.next())
       }
     }

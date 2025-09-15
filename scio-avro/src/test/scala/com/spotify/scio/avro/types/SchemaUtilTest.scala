@@ -19,11 +19,9 @@ package com.spotify.scio.avro.types
 
 import com.spotify.scio.avro.types.Schemas._
 import com.spotify.scio.avro.types.Schemas.FieldMode._
-import org.apache.avro.Schema
+import org.apache.avro.SchemaBuilder
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-
-import scala.jdk.CollectionConverters._
 
 class SchemaUtilTest extends AnyFlatSpec with Matchers {
   "toPrettyString()" should "support primitive types" in {
@@ -149,16 +147,11 @@ class SchemaUtilTest extends AnyFlatSpec with Matchers {
     val expectedFields = SchemaUtil.scalaReservedWords
       .map(e => s"`$e`")
       .mkString(start = "", sep = ": Long, ", end = ": Long")
-    val schema =
-      Schema.createRecord(
-        "Row",
-        null,
-        null,
-        false,
-        SchemaUtil.scalaReservedWords.map { name =>
-          new Schema.Field(name, Schema.create(Schema.Type.LONG), null, null.asInstanceOf[Any])
-        }.asJava
-      )
+
+    val schema = SchemaUtil.scalaReservedWords
+      .foldLeft(SchemaBuilder.record("Row").fields())(_.requiredLong(_))
+      .endRecord()
+
     SchemaUtil.toPrettyString1(schema) shouldBe s"case class Row($expectedFields)"
   }
 }

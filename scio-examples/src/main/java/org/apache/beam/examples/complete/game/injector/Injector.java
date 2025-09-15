@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.*;
-
 import org.apache.beam.examples.complete.game.utils.GameConstants;
 
 /**

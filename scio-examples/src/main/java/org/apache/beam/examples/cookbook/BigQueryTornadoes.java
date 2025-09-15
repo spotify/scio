@@ -60,14 +60,14 @@ import org.apache.beam.sdk.values.PCollection;
  *
  * See examples/java/README.md for instructions about how to configure different runners.
  *
- * <p>The BigQuery input table defaults to {@code clouddataflow-readonly:samples.weather_stations}
- * and can be overridden with {@code --input}.
+ * <p>The BigQuery input table defaults to {@code apache-beam-testing:samples.weather_stations} and
+ * can be overridden with {@code --input}.
  */
 public class BigQueryTornadoes {
   // Default to using a 1000 row subset of the public weather station table
   // bigquery-public-data:samples.gsod.
   private static final String WEATHER_SAMPLES_TABLE =
-      "clouddataflow-readonly:samples.weather_stations";
+      "apache-beam-testing:samples.weather_stations";
 
   /**
    * Examines each row in the input table. If a tornado was recorded in that sample, the month in
@@ -75,10 +75,9 @@ public class BigQueryTornadoes {
    */
   static class ExtractTornadoesFn extends DoFn<TableRow, Integer> {
     @ProcessElement
-    public void processElement(ProcessContext c) {
-      TableRow row = c.element();
-      if ((Boolean) row.get("tornado")) {
-        c.output(Integer.parseInt((String) row.get("month")));
+    public void processElement(@Element TableRow element, OutputReceiver<Integer> out) {
+      if ((Boolean) element.get("tornado")) {
+        out.output(Integer.parseInt((String) element.get("month")));
       }
     }
   }
@@ -89,12 +88,10 @@ public class BigQueryTornadoes {
    */
   static class FormatCountsFn extends DoFn<KV<Integer, Long>, TableRow> {
     @ProcessElement
-    public void processElement(ProcessContext c) {
+    public void processElement(@Element KV<Integer, Long> element, OutputReceiver<TableRow> out) {
       TableRow row =
-          new TableRow()
-              .set("month", c.element().getKey())
-              .set("tornado_count", c.element().getValue());
-      c.output(row);
+          new TableRow().set("month", element.getKey()).set("tornado_count", element.getValue());
+      out.output(row);
     }
   }
 

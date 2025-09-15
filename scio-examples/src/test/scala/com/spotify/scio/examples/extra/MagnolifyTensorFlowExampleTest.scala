@@ -62,7 +62,7 @@ class MagnolifyTensorFlowExampleTest extends PipelineSpec {
   }
 
   "MagnolifyTensorFlowReadExample" should "work" in {
-    JobTest[com.spotify.scio.examples.extra.Magnolify.type]
+    JobTest[com.spotify.scio.examples.extra.MagnolifyTensorFlowReadExample.type]
       .args("--input=wc.tfrecords", "--output=out.txt")
       .input(TFRecordIO("wc.tfrecords"), examples.map(_.toByteArray))
       .output(TextIO("out.txt"))(coll => coll should containInAnyOrder(textOut))

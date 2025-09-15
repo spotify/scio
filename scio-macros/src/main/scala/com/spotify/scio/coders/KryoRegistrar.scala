@@ -33,6 +33,7 @@ class KryoRegistrar extends StaticAnnotation {
 }
 
 private object KryoRegistrarMacro {
+
   def impl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 

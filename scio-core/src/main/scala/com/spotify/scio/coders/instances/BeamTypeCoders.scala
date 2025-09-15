@@ -18,45 +18,56 @@
 package com.spotify.scio.coders.instances
 
 import com.google.api.client.json.GenericJson
-import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.client.json.JsonObjectParser
-import com.spotify.scio.coders.Coder
+import com.google.api.client.json.gson.GsonFactory
+import com.spotify.scio.coders.{Coder, CoderGrammar}
 import com.spotify.scio.util.ScioUtil
+
 import java.io.StringReader
 import org.apache.beam.sdk.coders.RowCoder
 import org.apache.beam.sdk.io.FileIO.ReadableFile
-import org.apache.beam.sdk.io.fs.{MatchResult, MetadataCoderV2}
+import org.apache.beam.sdk.io.fs.{MatchResult, MetadataCoderV2, ResourceId, ResourceIdCoder}
 import org.apache.beam.sdk.io.ReadableFileCoder
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
-import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
+import org.apache.beam.sdk.transforms.windowing.{
+  BoundedWindow,
+  GlobalWindow,
+  IntervalWindow,
+  PaneInfo
+}
 import org.apache.beam.sdk.values.{KV, Row}
+
 import scala.reflect.ClassTag
 
-trait BeamTypeCoders {
+trait BeamTypeCoders extends CoderGrammar {
   import BeamTypeCoders._
 
-  implicit def intervalWindowCoder: Coder[IntervalWindow] = Coder.beam(IntervalWindow.getCoder)
+  implicit lazy val intervalWindowCoder: Coder[IntervalWindow] = beam(IntervalWindow.getCoder)
 
-  implicit def boundedWindowCoder: Coder[BoundedWindow] = Coder.kryo[BoundedWindow]
+  implicit lazy val globalWindowCoder: Coder[GlobalWindow] = beam(GlobalWindow.Coder.INSTANCE)
 
-  implicit def paneInfoCoder: Coder[PaneInfo] = Coder.beam(PaneInfo.PaneInfoCoder.of())
+  implicit lazy val boundedWindowCoder: Coder[BoundedWindow] = kryo[BoundedWindow]
 
-  def row(schema: BSchema): Coder[Row] = Coder.beam(RowCoder.of(schema))
+  implicit lazy val paneInfoCoder: Coder[PaneInfo] = beam(PaneInfo.PaneInfoCoder.of())
 
-  implicit def beamKVCoder[K: Coder, V: Coder]: Coder[KV[K, V]] = Coder.kv(Coder[K], Coder[V])
+  def row(schema: BSchema): Coder[Row] = beam(RowCoder.of(schema))
 
-  implicit def readableFileCoder: Coder[ReadableFile] = Coder.beam(new ReadableFileCoder())
+  implicit def beamKVCoder[K: Coder, V: Coder]: Coder[KV[K, V]] = kv(Coder[K], Coder[V])
 
-  implicit def matchResultMetadataCoder: Coder[MatchResult.Metadata] =
-    Coder.beam(MetadataCoderV2.of())
+  implicit lazy val readableFileCoder: Coder[ReadableFile] = beam(ReadableFileCoder.of())
+
+  implicit lazy val resourceIdCoder: Coder[ResourceId] = beam(ResourceIdCoder.of())
+
+  implicit lazy val matchResultMetadataCoder: Coder[MatchResult.Metadata] =
+    beam(MetadataCoderV2.of())
 
   implicit def genericJsonCoder[T <: GenericJson: ClassTag]: Coder[T] =
-    Coder.xmap(Coder[String])(
+    xmap(Coder[String])(
       str => DefaultJsonObjectParser.parseAndClose(new StringReader(str), ScioUtil.classOf[T]),
       DefaultJsonObjectParser.getJsonFactory().toString(_)
     )
 }
 
 private[coders] object BeamTypeCoders extends BeamTypeCoders {
-  private lazy val DefaultJsonObjectParser = new JsonObjectParser(new JacksonFactory)
+  private lazy val DefaultJsonObjectParser = new JsonObjectParser(GsonFactory.getDefaultInstance)
 }

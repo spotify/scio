@@ -29,20 +29,20 @@ class ConverterProviderTest extends AnyFlatSpec with Matchers {
   import ConverterProviderTest._
 
   "ConverterProvider" should "#1831: handle Avro map" in {
-    val dir = Files.createTempDirectory("avro-")
+    val dir = Files.createTempDirectory("avro-").toFile
     val data = Seq(Record(Map("a" -> 1), Some(Map("b" -> 2)), List(Map("c" -> 3))))
 
     val sc1 = ScioContext()
-    sc1.parallelize(data).saveAsTypedAvroFile(dir.toString)
+    sc1.parallelize(data).saveAsTypedAvroFile(dir.getAbsolutePath)
     sc1.run()
 
     val sc2 = ScioContext()
-    val t = sc2.typedAvroFile[Record](s"$dir/*.avro").materialize
+    val t = sc2.typedAvroFile[Record](dir.getAbsolutePath, ".avro").materialize
     sc2.run()
 
     t.underlying.value.toSeq should contain theSameElementsAs data
 
-    FileUtils.deleteDirectory(dir.toFile)
+    FileUtils.deleteDirectory(dir)
   }
 }
 

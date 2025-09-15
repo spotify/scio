@@ -31,6 +31,9 @@ private[scio] object TupleFunctions {
   def klToTuple[K](kv: KV[K, java.lang.Long]): (K, Long) =
     (kv.getKey, kv.getValue)
 
+  def kdToTuple[K](kv: KV[K, java.lang.Double]): (K, Double) =
+    (kv.getKey, kv.getValue)
+
   def kvIterableToTuple[K, V](kv: KV[K, JIterable[V]]): (K, Iterable[V]) =
     (kv.getKey, kv.getValue.asScala)
 

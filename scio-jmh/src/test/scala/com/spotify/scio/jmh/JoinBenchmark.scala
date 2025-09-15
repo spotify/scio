@@ -20,11 +20,13 @@ package com.spotify.scio.jmh
 import java.lang.{Iterable => JIterable}
 import java.util.concurrent.TimeUnit
 
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.AbstractIterator
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.AbstractIterator
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
 
 import scala.jdk.CollectionConverters._
+import scala.collection.compat._
+
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Thread)
@@ -70,7 +72,7 @@ class JoinBenchmark {
         a <- as.asScala.iterator
         b <- bs.asScala.iterator
       } yield (a, b)
-    val i = xs.toIterator
+    val i = xs.iterator
     while (i.hasNext) c.output(i.next())
   }
 

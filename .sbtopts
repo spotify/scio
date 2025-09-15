@@ -1,0 +1,7 @@
+-J-Xms1G
+-J-Xmx5G
+-J-XX:+UseParallelGC
+-Dfile.encoding=UTF8
+-Dscio.ignoreVersionWarning=true
+-Dorg.slf4j.simpleLogger.defaultLogLevel=info
+-Dorg.slf4j.simpleLogger.logFile=scio.log

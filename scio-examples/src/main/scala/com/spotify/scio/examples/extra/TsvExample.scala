@@ -26,7 +26,7 @@ import org.apache.beam.sdk.{io => beam}
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.TsvExampleWrite
-//   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+//   --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 //   --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 //   --output=gs://[BUCKET]/[PATH]/wordcount"`
 object TsvExampleWrite {
@@ -71,7 +71,7 @@ object TsvExampleWrite {
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.TsvExampleRead
-//   --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+//   --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 //   --input=gs://[BUCKET]/word_count_data.tsv
 //   --output=gs://[BUCKET]/[PATH]/word_count_sum"`
 object TsvExampleRead {

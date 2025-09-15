@@ -22,9 +22,10 @@ import static org.apache.avro.file.DataFileConstants.DEFLATE_CODEC;
 import static org.apache.avro.file.DataFileConstants.NULL_CODEC;
 import static org.apache.avro.file.DataFileConstants.SNAPPY_CODEC;
 import static org.apache.avro.file.DataFileConstants.XZ_CODEC;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkNotNull;
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkState;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkState;
 
+import com.spotify.scio.smb.annotations.PatchedFromBeam;
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -35,7 +36,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.apache.avro.file.CodecFactory;
-import com.spotify.scio.smb.annotations.PatchedFromBeam;
 
 /**
  * A wrapper that allows {@link org.apache.avro.file.CodecFactory}s to be serialized using Java's

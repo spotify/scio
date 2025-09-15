@@ -19,7 +19,7 @@
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.complete.TrafficMaxLaneFlow
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --input=gs://apache-beam-samples/traffic_sensor/Freeways-5Minaa2010-01-01_to_2010-02-15_test2.csv
 // --output=[DATASET].traffic_max_lane_flow"`
 package com.spotify.scio.examples.complete
@@ -68,8 +68,8 @@ object TrafficMaxLaneFlow {
 
     // arguments
     val input = args.getOrElse("input", ExampleData.TRAFFIC)
-    val windowDuration = args.getOrElse("windowDuration", "60").toInt
-    val windowSlideEvery = args.getOrElse("windowSlideEvery", "5").toInt
+    val windowDuration = args.long("windowDuration", 60)
+    val windowSlideEvery = args.long("windowSlideEvery", 5)
 
     val sc = ScioContext(opts)
 
@@ -112,19 +112,20 @@ object TrafficMaxLaneFlow {
       .maxByKey(Ordering.by(_.flow))
       .values
       .withTimestamp
-      .map { case (l, ts) => // (lane flow, timestamp)
-        Record(
-          l.stationId,
-          l.direction,
-          l.freeway,
-          l.flow,
-          l.lane,
-          l.avgOcc,
-          l.avgSpeed,
-          l.totalFlow,
-          l.recordedTimestamp,
-          ts
-        )
+      .map {
+        case (l, ts) => // (lane flow, timestamp)
+          Record(
+            l.stationId,
+            l.direction,
+            l.freeway,
+            l.flow,
+            l.lane,
+            l.avgOcc,
+            l.avgSpeed,
+            l.totalFlow,
+            l.recordedTimestamp,
+            ts
+          )
       }
       .saveAsTypedBigQueryTable(Table.Spec(args("output")))
 

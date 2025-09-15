@@ -17,7 +17,8 @@
 
 package com.spotify.scio
 
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Splitter
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Splitter
+import org.typelevel.scalaccompat.annotation.nowarn
 
 import scala.jdk.CollectionConverters._
 import scala.util.control.NonFatal
@@ -42,7 +43,7 @@ object Args {
 
     val propertyMap = properties
       .map { s =>
-        val Array(k, v) = s.split("=", 2)
+        val Array(k, v) = s.split("=", 2): @nowarn
         (k, Splitter.onPattern(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)").split(v).asScala)
       }
       .groupBy(_._1)
@@ -104,7 +105,7 @@ class Args private (private val m: Map[String, List[String]]) extends Serializab
   def optional(key: String): Option[String] = list(key) match {
     case Nil     => None
     case List(v) => Some(v)
-    case _ =>
+    case _       =>
       throw new IllegalArgumentException(s"Multiple values for property '$key'")
   }
 
@@ -113,7 +114,7 @@ class Args private (private val m: Map[String, List[String]]) extends Serializab
     case Nil =>
       throw new IllegalArgumentException(s"Missing value for property '$key'")
     case List(v) => v
-    case _ =>
+    case _       =>
       throw new IllegalArgumentException(s"Multiple values for property '$key'")
   }
 

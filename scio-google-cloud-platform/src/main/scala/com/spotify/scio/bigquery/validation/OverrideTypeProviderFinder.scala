@@ -38,6 +38,7 @@ object OverrideTypeProviderFinder {
     classInstance match {
       case Success(value)       => value
       case Failure(NonFatal(_)) => new DummyOverrideTypeProvider
+      case Failure(e)           => throw e
     }
   }
 

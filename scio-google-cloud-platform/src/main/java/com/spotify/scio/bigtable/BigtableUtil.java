@@ -25,17 +25,18 @@ import com.google.cloud.bigtable.grpc.BigtableClusterUtilities;
 import com.google.cloud.bigtable.grpc.BigtableInstanceClient;
 import com.google.cloud.bigtable.grpc.BigtableInstanceGrpcClient;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.joda.time.Duration;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.util.Collections;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /** Utilities to deal with Bigtable. */
 public final class BigtableUtil {
@@ -71,6 +72,29 @@ public final class BigtableUtil {
   public static void updateNumberOfBigtableNodes(
       final BigtableOptions bigtableOptions, final int numberOfNodes, final Duration sleepDuration)
       throws IOException, InterruptedException {
+    updateNumberOfBigtableNodes(
+        bigtableOptions, numberOfNodes, sleepDuration, Collections.emptySet());
+  }
+
+  /**
+   * Updates all clusters within the specified Bigtable instance to a specified number of nodes.
+   * Useful for increasing the number of nodes at the beginning of a job and decreasing it at the
+   * end to lower costs yet still get high throughput during bulk ingests/dumps.
+   *
+   * @param bigtableOptions Bigtable Options
+   * @param numberOfNodes New number of nodes in the cluster
+   * @param sleepDuration How long to sleep after updating the number of nodes. Google recommends at
+   *     least 20 minutes before the new nodes are fully functional
+   * @param clusterNames Names of clusters to be updated, all if empty
+   * @throws IOException If setting up channel pool fails
+   * @throws InterruptedException If sleep fails
+   */
+  public static void updateNumberOfBigtableNodes(
+      final BigtableOptions bigtableOptions,
+      final int numberOfNodes,
+      final Duration sleepDuration,
+      final Set<String> clusterNames)
+      throws IOException, InterruptedException {
     final ChannelPool channelPool = ChannelPoolCreator.createPool(bigtableOptions);
 
     try {
@@ -84,9 +108,15 @@ public final class BigtableUtil {
           ListClustersRequest.newBuilder().setParent(instanceName).build();
       final ListClustersResponse clustersResponse =
           bigtableInstanceClient.listCluster(clustersRequest);
+      final List<Cluster> clustersToUpdate =
+          clusterNames.isEmpty()
+              ? clustersResponse.getClustersList()
+              : clustersResponse.getClustersList().stream()
+                  .filter(c -> clusterNames.contains(shorterName(c.getName())))
+                  .collect(Collectors.toList());
 
       // For each cluster update the number of nodes
-      for (Cluster cluster : clustersResponse.getClustersList()) {
+      for (Cluster cluster : clustersToUpdate) {
         final Cluster updatedCluster =
             Cluster.newBuilder().setName(cluster.getName()).setServeNodes(numberOfNodes).build();
         LOG.info("Updating number of nodes to {} for cluster {}", numberOfNodes, cluster.getName());
@@ -123,6 +153,14 @@ public final class BigtableUtil {
                   Collectors.toMap(
                       cn -> cn.getName().substring(cn.getName().indexOf("/clusters/") + 10),
                       Cluster::getServeNodes)));
+    }
+  }
+
+  static String shorterName(String name) {
+    if (name.lastIndexOf('/') != -1) {
+      return name.substring(name.lastIndexOf('/') + 1, name.length());
+    } else {
+      return name;
     }
   }
 }

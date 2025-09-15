@@ -19,7 +19,7 @@
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.DebuggingWordCount
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=gs://[BUCKET]/[PATH]/wordcount"`
 package com.spotify.scio.examples
@@ -74,7 +74,7 @@ object DebuggingWordCount {
       .containsInAnyOrder(List(("Flourish", 3L), ("stomach", 1L)).asJava)
 
     // Execute the pipeline and block until it finishes
-    val result = sc.run().waitUntilFinish()
+    val result = sc.run().waitUntilDone()
 
     // Retrieve metric values
     require(result.counter(matchedWords).committed.get == 2)

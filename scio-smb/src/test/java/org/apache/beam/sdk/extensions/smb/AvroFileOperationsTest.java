@@ -20,6 +20,8 @@ package org.apache.beam.sdk.extensions.smb;
 import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
 import static org.apache.beam.sdk.transforms.display.DisplayDataMatchers.hasDisplayItem;
 
+import com.spotify.scio.avro.GenericRecordDatumFactory$;
+import com.spotify.scio.avro.SpecificRecordDatumFactory;
 import java.nio.channels.Channels;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,16 +29,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import org.apache.avro.JsonProperties;
 import org.apache.avro.Schema;
+import org.apache.avro.SchemaBuilder;
 import org.apache.avro.file.CodecFactory;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
-import org.apache.beam.sdk.coders.AvroCoder;
-import org.apache.beam.sdk.io.AvroGeneratedUser;
+import org.apache.beam.sdk.extensions.avro.coders.AvroCoder;
+import org.apache.beam.sdk.extensions.avro.io.AvroGeneratedUser;
 import org.apache.beam.sdk.io.Compression;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
@@ -44,8 +45,7 @@ import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.util.CoderUtils;
 import org.apache.beam.sdk.util.MimeTypes;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableMap;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -57,21 +57,21 @@ public class AvroFileOperationsTest {
   @Rule public final TemporaryFolder output = new TemporaryFolder();
 
   private static final Schema USER_SCHEMA =
-      Schema.createRecord(
-          "User",
-          "",
-          "org.apache.beam.sdk.extensions.smb.avro",
-          false,
-          Lists.newArrayList(
-              new Schema.Field("name", Schema.create(Schema.Type.STRING), "", ""),
-              new Schema.Field("age", Schema.create(Schema.Type.INT), "", 0)));
+      SchemaBuilder.record("User")
+          .namespace("org.apache.beam.sdk.extensions.smb.avro")
+          .fields()
+          .requiredString("name")
+          .requiredInt("age")
+          .endRecord();
 
   private static final Map<String, Object> TEST_METADATA = ImmutableMap.of("foo", "bar");
 
   @Test
   public void testGenericRecord() throws Exception {
     final AvroFileOperations<GenericRecord> fileOperations =
-        AvroFileOperations.of(USER_SCHEMA, CodecFactory.snappyCodec(), TEST_METADATA);
+        AvroFileOperations.of(GenericRecordDatumFactory$.INSTANCE, USER_SCHEMA)
+            .withCodec(CodecFactory.snappyCodec())
+            .withMetadata(TEST_METADATA);
     final ResourceId file =
         fromFolder(output).resolve("file.avro", StandardResolveOptions.RESOLVE_FILE);
 
@@ -100,8 +100,11 @@ public class AvroFileOperationsTest {
 
   @Test
   public void testSpecificRecord() throws Exception {
+    final Schema schema = AvroGeneratedUser.getClassSchema();
     final AvroFileOperations<AvroGeneratedUser> fileOperations =
-        AvroFileOperations.of(AvroGeneratedUser.class, CodecFactory.snappyCodec(), TEST_METADATA);
+        AvroFileOperations.of(new SpecificRecordDatumFactory<>(AvroGeneratedUser.class), schema)
+            .withCodec(CodecFactory.snappyCodec())
+            .withMetadata(TEST_METADATA);
     final ResourceId file =
         fromFolder(output).resolve("file.avro", StandardResolveOptions.RESOLVE_FILE);
 
@@ -132,7 +135,9 @@ public class AvroFileOperationsTest {
   @Test
   public void testDisplayData() {
     final AvroFileOperations<AvroGeneratedUser> fileOperations =
-        AvroFileOperations.of(AvroGeneratedUser.class);
+        AvroFileOperations.of(
+            new SpecificRecordDatumFactory<>(AvroGeneratedUser.class),
+            AvroGeneratedUser.getClassSchema());
 
     final DisplayData displayData = DisplayData.from(fileOperations);
     MatcherAssert.assertThat(
@@ -150,21 +155,19 @@ public class AvroFileOperationsTest {
   @Test
   public void testMap2649() throws Exception {
     final Schema schema =
-        Schema.createRecord(
-            "Record",
-            "",
-            "org.apache.beam.sdk.extensions.smb.avro",
-            false,
-            Lists.newArrayList(
-                new Schema.Field(
-                    "map",
-                    Schema.createUnion(
-                        Schema.create(Schema.Type.NULL),
-                        Schema.createMap(Schema.create(Schema.Type.STRING))),
-                    "",
-                    JsonProperties.NULL_VALUE)));
+        SchemaBuilder.record("Record")
+            .namespace("org.apache.beam.sdk.extensions.smb.avro")
+            .fields()
+            .name("map")
+            .type()
+            .optional()
+            .map()
+            .values()
+            .stringType()
+            .endRecord();
 
-    final AvroFileOperations<GenericRecord> fileOperations = AvroFileOperations.of(schema);
+    final AvroFileOperations<GenericRecord> fileOperations =
+        AvroFileOperations.of(GenericRecordDatumFactory$.INSTANCE, schema);
     final ResourceId file =
         fromFolder(output).resolve("map2649.avro", StandardResolveOptions.RESOLVE_FILE);
 

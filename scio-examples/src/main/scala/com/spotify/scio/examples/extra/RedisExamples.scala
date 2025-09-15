@@ -25,7 +25,11 @@ import com.spotify.scio.redis.types._
 import com.spotify.scio.redis.coders._
 import org.apache.beam.examples.common.ExampleUtils
 import org.apache.beam.sdk.options.{PipelineOptions, StreamingOptions}
-import scala.concurrent.Future
+import org.apache.beam.sdk.transforms.ParDo
+
+import scala.concurrent.{ExecutionContext, Future}
+
+// Example: Redis Examples
 
 // ## Redis Read Strings example
 // Read strings from Redis by a key pattern
@@ -33,7 +37,7 @@ import scala.concurrent.Future
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.RedisReadStringsExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --redisHost=[REDIS_HOST]
 // --redisPort=[REDIS_PORT]
 // --keyPattern=[KEY_PATTERN]
@@ -64,7 +68,7 @@ object RedisReadStringsExample {
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.RedisWriteBatchExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --redisHost=[REDIS_HOST]
 // --redisPort=[REDIS_PORT]`
 object RedisWriteBatchExample {
@@ -95,7 +99,7 @@ object RedisWriteBatchExample {
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.RedisWriteStreamingExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --subscription=[PUBSUB_SUBSCRIPTION]
 // --redisHost=[REDIS_HOST]
 // --redisPort=[REDIS_PORT]`
@@ -133,11 +137,10 @@ object RedisWriteStreamingExample {
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.RedisLookUpStringsExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --redisHost=[REDIS_HOST]
-// --redisPort=[REDIS_PORT]
+// --redisPort=[REDIS_PORT]`
 object RedisLookUpStringsExample {
-  import scala.concurrent.ExecutionContext.Implicits.global
 
   def main(cmdlineArgs: Array[String]): Unit = {
 
@@ -147,13 +150,17 @@ object RedisLookUpStringsExample {
     val connectionOptions = RedisConnectionOptions(redisHost, redisPort)
 
     sc.parallelize(Seq("key1", "key2", "unknownKey"))
-      .parDo(
-        new RedisDoFn[String, (String, Option[String])](connectionOptions, 1000) {
-          override def request(value: String, client: Client): Future[(String, Option[String])] =
-            client
-              .request(p => p.get(value) :: Nil)
-              .map { case r: List[String @unchecked] => (value, r.headOption) }
-        }
+      .applyTransform(
+        ParDo.of(
+          new RedisDoFn[String, (String, Option[String])](connectionOptions, 1000) {
+            override def request(value: String, client: Client)(implicit
+              ec: ExecutionContext
+            ): Future[(String, Option[String])] =
+              client
+                .request(p => p.get(value) :: Nil)
+                .map { case r: List[String @unchecked] => (value, r.headOption) }
+          }
+        )
       )
       .debug()
 

@@ -17,14 +17,17 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
+import static com.google.common.base.Verify.verify;
+import static com.google.common.base.Verify.verifyNotNull;
 import static org.apache.beam.sdk.coders.Coder.NonDeterministicException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.api.services.bigquery.model.TableRow;
-import java.util.Arrays;
 import java.util.Objects;
+import javax.annotation.Nullable;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
@@ -33,27 +36,59 @@ import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
  * {@link org.apache.beam.sdk.extensions.smb.BucketMetadata} for BigQuery {@link TableRow} JSON
  * records.
  */
-public class JsonBucketMetadata<K> extends BucketMetadata<K, TableRow> {
+public class JsonBucketMetadata<K1, K2> extends BucketMetadata<K1, K2, TableRow> {
 
   @JsonProperty private final String keyField;
 
-  @JsonIgnore private String[] keyPath;
+  @JsonProperty
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private final String keyFieldSecondary;
+
+  @JsonIgnore private final String[] keyPath;
+  @JsonIgnore private final String[] keyPathSecondary;
 
   public JsonBucketMetadata(
       int numBuckets,
       int numShards,
-      Class<K> keyClass,
-      BucketMetadata.HashType hashType,
+      Class<K1> keyClassPrimary,
       String keyField,
+      Class<K2> keyClassSecondary,
+      String keyFieldSecondary,
+      HashType hashType,
       String filenamePrefix)
       throws CannotProvideCoderException, NonDeterministicException {
     this(
         BucketMetadata.CURRENT_VERSION,
         numBuckets,
         numShards,
-        keyClass,
-        hashType,
+        keyClassPrimary,
         keyField,
+        keyClassSecondary,
+        keyFieldSecondary,
+        hashType,
+        filenamePrefix);
+  }
+
+  public JsonBucketMetadata(
+      int version,
+      int numBuckets,
+      int numShards,
+      Class<K1> keyClassPrimary,
+      String keyField,
+      Class<K2> keyClassSecondary,
+      String keyFieldSecondary,
+      HashType hashType,
+      String filenamePrefix)
+      throws CannotProvideCoderException, NonDeterministicException {
+    this(
+        version,
+        numBuckets,
+        numShards,
+        keyClassPrimary,
+        keyField,
+        keyClassSecondary,
+        keyFieldSecondary,
+        BucketMetadata.serializeHashType(hashType),
         filenamePrefix);
   }
 
@@ -62,18 +97,31 @@ public class JsonBucketMetadata<K> extends BucketMetadata<K, TableRow> {
       @JsonProperty("version") int version,
       @JsonProperty("numBuckets") int numBuckets,
       @JsonProperty("numShards") int numShards,
-      @JsonProperty("keyClass") Class<K> keyClass,
-      @JsonProperty("hashType") BucketMetadata.HashType hashType,
+      @JsonProperty("keyClass") Class<K1> keyClassPrimary,
       @JsonProperty("keyField") String keyField,
+      @Nullable @JsonProperty("keyClassSecondary") Class<K2> keyClassSecondary,
+      @Nullable @JsonProperty("keyFieldSecondary") String keyFieldSecondary,
+      @JsonProperty("hashType") String hashType,
       @JsonProperty(value = "filenamePrefix", required = false) String filenamePrefix)
       throws CannotProvideCoderException, NonDeterministicException {
-    super(version, numBuckets, numShards, keyClass, hashType, filenamePrefix);
+    super(
+        version,
+        numBuckets,
+        numShards,
+        keyClassPrimary,
+        keyClassSecondary,
+        hashType,
+        filenamePrefix);
+    verify(
+        (keyClassSecondary != null && keyFieldSecondary != null)
+            || (keyClassSecondary == null && keyFieldSecondary == null));
     this.keyField = keyField;
+    this.keyFieldSecondary = keyFieldSecondary;
     this.keyPath = keyField.split("\\.");
+    this.keyPathSecondary = keyFieldSecondary == null ? null : keyFieldSecondary.split("\\.");
   }
 
-  @Override
-  public K extractKey(TableRow value) {
+  private <K> K extractKey(String[] keyPath, TableRow value) {
     TableRow node = value;
     for (int i = 0; i < keyPath.length - 1; i++) {
       node = (TableRow) node.get(keyPath[i]);
@@ -84,19 +132,31 @@ public class JsonBucketMetadata<K> extends BucketMetadata<K, TableRow> {
   }
 
   @Override
-  public void populateDisplayData(Builder builder) {
-    super.populateDisplayData(builder);
-    builder.add(DisplayData.item("keyField", keyField));
+  public K1 extractKeyPrimary(TableRow value) {
+    return extractKey(keyPath, value);
   }
 
   @Override
-  public boolean isPartitionCompatible(BucketMetadata o) {
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    JsonBucketMetadata<?> that = (JsonBucketMetadata<?>) o;
-    return getKeyClass() == that.getKeyClass()
-        && keyField.equals(that.keyField)
-        && Arrays.equals(keyPath, that.keyPath);
+  public K2 extractKeySecondary(TableRow value) {
+    verifyNotNull(keyPathSecondary);
+    return extractKey(keyPathSecondary, value);
+  }
+
+  @Override
+  public void populateDisplayData(Builder builder) {
+    super.populateDisplayData(builder);
+    builder.add(DisplayData.item("keyFieldPrimary", keyField));
+    if (keyFieldSecondary != null)
+      builder.add(DisplayData.item("keyFieldSecondary", keyFieldSecondary));
+  }
+
+  @Override
+  int hashPrimaryKeyMetadata() {
+    return Objects.hash(keyField, getKeyClass());
+  }
+
+  @Override
+  int hashSecondaryKeyMetadata() {
+    return Objects.hash(keyFieldSecondary, getKeyClassSecondary());
   }
 }

@@ -17,27 +17,28 @@
 
 package com.spotify.scio.extra.csv
 
-import java.io.{Reader, Writer}
-import java.nio.channels.{Channels, WritableByteChannel}
-import java.nio.charset.StandardCharsets
-
+import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io._
-import com.spotify.scio.ScioContext
-import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.util.{FilenamePolicySupplier, ScioUtil}
 import com.spotify.scio.values.SCollection
-import kantan.csv._
-import kantan.codecs.compat._ // scalafix:ok
+
+import kantan.codecs.compat._
 import kantan.csv.CsvConfiguration.{Header, QuotePolicy}
 import kantan.csv.engine.ReaderEngine
 import kantan.csv.ops._
-import org.apache.beam.sdk.{io => beam}
-import org.apache.beam.sdk.io.FileIO
-import org.apache.beam.sdk.io.FileIO.ReadableFile
+import kantan.csv.{CsvConfiguration, HeaderCodec, HeaderDecoder, HeaderEncoder}
 import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
+import org.apache.beam.sdk.io.FileIO.ReadableFile
+import org.apache.beam.sdk.io.{Compression, FileIO}
+import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 import org.apache.beam.sdk.transforms.{DoFn, PTransform, ParDo}
-import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.values.PCollection
+import org.apache.beam.sdk.{io => beam}
+
+import java.io.Reader
+import java.nio.channels.Channels
+import java.nio.charset.StandardCharsets
 
 /**
  * This package uses a CSV mapper called [[https://nrinaudo.github.io/kantan.csv/ Kantan]].
@@ -49,25 +50,25 @@ import org.apache.beam.sdk.values.PCollection
  * }}}
  *
  * =Reading=
- * == with a header ==
+ * ==with a header==
  * [[https://nrinaudo.github.io/kantan.csv/headers.html Kantan docs]]
  * {{{
- *  case class User(name: String, age: Int)
- *  implicit val decoder = HeaderDecoder.decoder("fullName", "userAge")(User.apply _)
- *  val users: SCollection[User] = scioContext.csvFile(path)
+ *   case class User(name: String, age: Int)
+ *   implicit val decoder = HeaderDecoder.decoder("fullName", "userAge")(User.apply _)
+ *   val users: SCollection[User] = scioContext.csvFile(path)
  * }}}
  *
- * == without a header ==
+ * ==without a header==
  * [[https://nrinaudo.github.io/kantan.csv/rows_as_arbitrary_types.html Kantan docs]]
  * {{{
- *  case class User(name: String, age: Int)
- *  implicit val decoder = RowDecoder.ordered { (name: String, age: Int) => User(name, age) }
- *  val csvConfiguration = CsvIO.ReadParam(csvConfiguration = CsvIO.DefaultCsvConfig.withoutHeader)
- *  val users: SCollection[User] = scioContext.csvFile(path, csvConfiguration)
+ *   case class User(name: String, age: Int)
+ *   implicit val decoder = RowDecoder.ordered { (name: String, age: Int) => User(name, age) }
+ *   val csvConfiguration = CsvIO.ReadParam(csvConfiguration = CsvIO.DefaultCsvConfiguration.withoutHeader)
+ *   val users: SCollection[User] = scioContext.csvFile(path, csvConfiguration)
  * }}}
  *
  * =Writing=
- * == with a header ==
+ * ==with a header==
  * [[https://nrinaudo.github.io/kantan.csv/headers.html Kantan docs]]
  * {{{
  *   case class User(name: String, age: Int)
@@ -76,7 +77,7 @@ import org.apache.beam.sdk.values.PCollection
  *   val users: SCollection[User] = ???
  *   users.saveAsCsvFile(path)
  * }}}
- * == without a header ==
+ * ==without a header==
  * [[https://nrinaudo.github.io/kantan.csv/arbitrary_types_as_rows.html Kantan docs]]
  * {{{
  *   case class User(name: String, age: Int)
@@ -88,31 +89,56 @@ import org.apache.beam.sdk.values.PCollection
  */
 object CsvIO {
 
-  final val DefaultCsvConfig: CsvConfiguration = CsvConfiguration(
+  val DefaultCsvConfiguration: CsvConfiguration = CsvConfiguration(
     cellSeparator = ',',
     quote = '"',
     quotePolicy = QuotePolicy.WhenNeeded,
     header = Header.Implicit
   )
-  final val DefaultReadParams: ReadParam = CsvIO.ReadParam(compression = beam.Compression.AUTO)
-  final val DefaultWriteParams: WriteParam =
-    CsvIO.WriteParam(compression = beam.Compression.UNCOMPRESSED)
-  final val DefaultFileSuffix = ".csv"
 
-  final case class ReadParam(
-    compression: beam.Compression = beam.Compression.AUTO,
-    csvConfiguration: CsvConfiguration = DefaultCsvConfig
+  val DefaultReadParams: ReadParam = CsvIO.ReadParam()
+  val DefaultWriteParams: WriteParam = CsvIO.WriteParam()
+
+  object ReadParam {
+    val DefaultCompression: Compression = beam.Compression.AUTO
+    val DefaultCsvConfiguration: CsvConfiguration = CsvIO.DefaultCsvConfiguration
+    val DefaultSuffix: String = null
+
+    private[scio] def apply(params: WriteParam): ReadParam =
+      new ReadParam(
+        compression = params.compression,
+        csvConfiguration = params.csvConfiguration,
+        suffix = params.suffix + params.compression.getSuggestedSuffix
+      )
+  }
+
+  final case class ReadParam private (
+    compression: beam.Compression = ReadParam.DefaultCompression,
+    csvConfiguration: CsvConfiguration = ReadParam.DefaultCsvConfiguration,
+    suffix: String = ReadParam.DefaultSuffix
   )
 
-  final case class WriteParam(
-    compression: beam.Compression = beam.Compression.UNCOMPRESSED,
-    csvConfiguration: CsvConfiguration = DefaultCsvConfig,
-    suffix: String = DefaultFileSuffix,
-    numShards: Int = 1
-  ) {
-    def toReadParam: ReadParam =
-      ReadParam(compression = compression, csvConfiguration = csvConfiguration)
+  object WriteParam {
+    val DefaultSuffix: String = ".csv"
+    val DefaultCsvConfig: CsvConfiguration = CsvIO.DefaultCsvConfiguration
+    val DefaultNumShards: Int = 1 // put everything in a single file
+    val DefaultCompression: Compression = Compression.UNCOMPRESSED
+    val DefaultFilenamePolicySupplier: Null = null
+    val DefaultPrefix: String = null
+    val DefaultShardNameTemplate: String = null
+    val DefaultTempDirectory: String = null
   }
+
+  final case class WriteParam private (
+    compression: beam.Compression = WriteParam.DefaultCompression,
+    csvConfiguration: CsvConfiguration = WriteParam.DefaultCsvConfig,
+    suffix: String = WriteParam.DefaultSuffix,
+    numShards: Int = WriteParam.DefaultNumShards,
+    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = WriteParam.DefaultPrefix,
+    shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = WriteParam.DefaultTempDirectory
+  )
 
   final case class Read[T: HeaderDecoder: Coder](path: String) extends ScioIO[T] {
     override type ReadP = CsvIO.ReadParam
@@ -156,7 +182,7 @@ object CsvIO {
 
     override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
       data.applyInternal(csvOut(path, params))
-      tap(params.toReadParam)
+      tap(ReadParam(params))
     }
 
     override def tap(params: ReadP): Tap[T] = new CsvIO.CsvTap[T](path, params)
@@ -171,25 +197,32 @@ object CsvIO {
       .withCompression(params.compression)
       .via(new CsvSink(params.csvConfiguration))
 
-  private def read[T: HeaderDecoder: Coder](sc: ScioContext, path: String, params: ReadParam) =
-    sc.parallelize(Seq(path))
+  private def read[T: HeaderDecoder: Coder](sc: ScioContext, path: String, params: ReadParam) = {
+    val filePattern = ScioUtil.filePattern(path, params.suffix)
+    val read = ParDo
+      .of(CsvIO.ReadDoFn[T](params.csvConfiguration))
+      .asInstanceOf[PTransform[PCollection[beam.FileIO.ReadableFile], PCollection[T]]]
+
+    sc.parallelize(Seq(filePattern))
       .withName("Read CSV")
       .readFiles(
-        ParDo
-          .of(CsvIO.ReadDoFn[T](params.csvConfiguration))
-          .asInstanceOf[PTransform[PCollection[beam.FileIO.ReadableFile], PCollection[T]]],
-        DirectoryTreatment.PROHIBIT,
-        params.compression
+        filesTransform = read,
+        directoryTreatment = DirectoryTreatment.PROHIBIT,
+        compression = params.compression
       )
+  }
 
-  final private class CsvTap[T: HeaderDecoder: Coder](path: String, params: ReadParam)
+  final private case class CsvTap[T: HeaderDecoder: Coder](path: String, params: ReadParam)
       extends Tap[T] {
-    override def value: Iterator[T] =
+    override def value: Iterator[T] = {
+      val filePattern = ScioUtil.filePattern(path, params.suffix)
       BinaryIO
-        .openInputStreamsFor(ScioUtil.addPartSuffix(path))
+        .openInputStreamsFor(filePattern)
         .flatMap(_.asUnsafeCsvReader[T](params.csvConfiguration).iterator)
+    }
 
-    override def open(sc: ScioContext): SCollection[T] = CsvIO.read(sc, path, params)
+    override def open(sc: ScioContext): SCollection[T] =
+      CsvIO.read(sc, path, params)
   }
 
   final private[scio] case class ReadDoFn[T: HeaderDecoder](
@@ -198,32 +231,12 @@ object CsvIO {
   ) extends DoFn[ReadableFile, T] {
 
     @ProcessElement
-    def process(pc: ProcessContext): Unit = {
-      val reader: Reader = Channels.newReader(pc.element().open(), charSet)
+    def process(@Element element: ReadableFile, out: OutputReceiver[T]): Unit = {
+      val reader: Reader = Channels.newReader(element.open(), charSet)
       implicit val engine: ReaderEngine = ReaderEngine.internalCsvReaderEngine
       reader
         .asUnsafeCsvReader[T](config)
-        .foreach(pc.output)
+        .foreach(out.output)
     }
   }
-
-  final private class CsvSink[T: HeaderEncoder](csvConfig: CsvConfiguration)
-      extends FileIO.Sink[T] {
-    var csvWriter: CsvWriter[T] = _
-    var byteChannelWriter: Writer = _
-
-    override def open(channel: WritableByteChannel): Unit = {
-      byteChannelWriter = Channels.newWriter(channel, StandardCharsets.UTF_8.name())
-      csvWriter = byteChannelWriter.asCsvWriter[T](csvConfig)
-    }
-
-    override def write(element: T): Unit = {
-      csvWriter.write(element)
-      ()
-    }
-
-    override def flush(): Unit =
-      byteChannelWriter.flush()
-  }
-
 }

@@ -19,8 +19,8 @@ package com.spotify.scio.redis.types
 import org.joda.time.Duration
 
 /**
- * Represents an abstract Redis command.
- * See Redis commands documentation for the description of commands: https://redis.io/commands
+ * Represents an abstract Redis command. See Redis commands documentation for the description of
+ * commands: https://redis.io/commands
  */
 sealed abstract class RedisMutation extends Serializable {
   def rt: RedisType[_]
@@ -54,3 +54,13 @@ final case class RPush[T](key: T, value: Seq[T], ttl: Option[Duration] = None)(i
 final case class PFAdd[T](key: T, value: Seq[T], ttl: Option[Duration] = None)(implicit
   val rt: RedisType[T]
 ) extends RedisMutation
+final case class ZAdd[T](key: T, scoreMembers: Map[T, Double], ttl: Option[Duration] = None)(
+  implicit val rt: RedisType[T]
+) extends RedisMutation
+object ZAdd {
+  final def apply[T: RedisType](key: T, score: Double, member: T): ZAdd[T] =
+    ZAdd(key, Map(member -> score))
+
+  final def apply[T: RedisType](key: T, score: Double, member: T, ttl: Option[Duration]): ZAdd[T] =
+    ZAdd(key, Map(member -> score), ttl)
+}

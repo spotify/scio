@@ -26,8 +26,8 @@ import org.apache.beam.sdk.options.PipelineOptions
 import scala.jdk.CollectionConverters._
 
 /**
- * Encapsulate arbitrary data that can be distributed to all workers. Similar to Hadoop
- * distributed cache.
+ * Encapsulate arbitrary data that can be distributed to all workers. Similar to Hadoop distributed
+ * cache.
  */
 sealed trait DistCache[F] extends Serializable {
 
@@ -67,14 +67,16 @@ object MockDistCache {
   /**
    * Mock distCache by returning given value.
    *
-   * @param value mock value, must be serializable.
+   * @param value
+   *   mock value, must be serializable.
    */
   def apply[F](value: F): DistCache[F] = new MockDistCache(value)
 
   /**
    * Mock distCache by returning result of given init function.
    *
-   * @param initFn init function, must be serializable.
+   * @param initFn
+   *   init function, must be serializable.
    */
   def apply[F](initFn: () => F): DistCache[F] = new MockDistCacheFunc[F](initFn)
 }

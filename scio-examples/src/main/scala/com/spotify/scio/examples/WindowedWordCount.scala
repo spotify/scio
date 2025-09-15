@@ -19,7 +19,7 @@
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.WindowedWordCount
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=gs://[BUCKET]/[PATH]/wordcount"`
 package com.spotify.scio.examples
@@ -29,8 +29,15 @@ import java.util.concurrent.ThreadLocalRandom
 
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
+import com.spotify.scio.streaming.DISCARDING_FIRED_PANES
+import com.spotify.scio.values.WindowOptions
 import org.apache.beam.sdk.io.FileSystems
-import org.apache.beam.sdk.transforms.windowing.{GlobalWindow, IntervalWindow}
+import org.apache.beam.sdk.transforms.windowing.{
+  AfterWatermark,
+  GlobalWindow,
+  IntervalWindow,
+  Repeatedly
+}
 import org.apache.beam.sdk.util.MimeTypes
 import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.{Duration, Instant}
@@ -68,7 +75,7 @@ object WindowedWordCount {
       .transform("windowed counter") {
         // Apply windowing logic
         _.withFixedWindows(windowSize)
-        // Split input lines, filter out empty tokens and expand into a collection of tokens
+          // Split input lines, filter out empty tokens and expand into a collection of tokens
           .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
           // Count occurrences of each unique `String` within each window to get `(String, Long)`
           .countByValue
@@ -83,6 +90,13 @@ object WindowedWordCount {
 
     if (outputGlobalWindow) {
       wordCounts
+        .withGlobalWindow(
+          WindowOptions(
+            allowedLateness = Duration.ZERO,
+            trigger = Repeatedly.forever(AfterWatermark.pastEndOfWindow()),
+            accumulationMode = DISCARDING_FIRED_PANES
+          )
+        )
         .withWindow[GlobalWindow]
         .flatMap { case ((_, counts), _) => counts }
         .saveAsTextFile("output.txt")

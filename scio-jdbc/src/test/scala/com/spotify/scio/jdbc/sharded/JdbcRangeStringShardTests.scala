@@ -79,8 +79,8 @@ class JdbcRangeStringShardTests extends AnyFlatSpec {
     val shard = Shard.range[UuidLowerString]
     val queries = shard.partition(
       Range(
-        UuidLowerString("a2c9cba1-eaa5-4c3d-b099-896730eb6310"),
-        UuidLowerString("a2c9cba1-eaa5-4c3d-b099-896730eb6337")
+        UuidLowerString("02c9cba1-eaa5-4c3d-b099-896730eb6310"),
+        UuidLowerString("02c9cba1-eaa5-4c3d-b099-896730eb6337")
       ),
       3
     )
@@ -89,24 +89,24 @@ class JdbcRangeStringShardTests extends AnyFlatSpec {
       Seq(
         RangeShardQuery(
           Range(
-            UuidLowerString("a2c9cba1-eaa5-4c3d-b099-896730eb6310"),
-            UuidLowerString("a2c9cba1-eaa5-4c3d-b099-896730eb631d")
+            UuidLowerString("02c9cba1-eaa5-4c3d-b099-896730eb6310"),
+            UuidLowerString("02c9cba1-eaa5-4c3d-b099-896730eb631d")
           ),
           upperBoundInclusive = false,
           quoteValues = true
         ),
         RangeShardQuery(
           Range(
-            UuidLowerString("a2c9cba1-eaa5-4c3d-b099-896730eb631d"),
-            UuidLowerString("a2c9cba1-eaa5-4c3d-b099-896730eb632a")
+            UuidLowerString("02c9cba1-eaa5-4c3d-b099-896730eb631d"),
+            UuidLowerString("02c9cba1-eaa5-4c3d-b099-896730eb632a")
           ),
           upperBoundInclusive = false,
           quoteValues = true
         ),
         RangeShardQuery(
           Range(
-            UuidLowerString("a2c9cba1-eaa5-4c3d-b099-896730eb632a"),
-            UuidLowerString("a2c9cba1-eaa5-4c3d-b099-896730eb6337")
+            UuidLowerString("02c9cba1-eaa5-4c3d-b099-896730eb632a"),
+            UuidLowerString("02c9cba1-eaa5-4c3d-b099-896730eb6337")
           ),
           upperBoundInclusive = true,
           quoteValues = true
@@ -119,8 +119,8 @@ class JdbcRangeStringShardTests extends AnyFlatSpec {
     val shard = Shard.range[UuidUpperString]
     val queries = shard.partition(
       Range(
-        UuidUpperString("A2C9CBA1-EAA5-4C3D-B099-896730EB6310"),
-        UuidUpperString("A2C9CBA1-EAA5-4C3D-B099-896730EB6337")
+        UuidUpperString("02C9CBA1-EAA5-4C3D-B099-896730EB6310"),
+        UuidUpperString("02C9CBA1-EAA5-4C3D-B099-896730EB6337")
       ),
       3
     )
@@ -129,24 +129,104 @@ class JdbcRangeStringShardTests extends AnyFlatSpec {
       Seq(
         RangeShardQuery(
           Range(
-            UuidUpperString("A2C9CBA1-EAA5-4C3D-B099-896730EB6310"),
-            UuidUpperString("A2C9CBA1-EAA5-4C3D-B099-896730EB631D")
+            UuidUpperString("02C9CBA1-EAA5-4C3D-B099-896730EB6310"),
+            UuidUpperString("02C9CBA1-EAA5-4C3D-B099-896730EB631D")
           ),
           upperBoundInclusive = false,
           quoteValues = true
         ),
         RangeShardQuery(
           Range(
-            UuidUpperString("A2C9CBA1-EAA5-4C3D-B099-896730EB631D"),
-            UuidUpperString("A2C9CBA1-EAA5-4C3D-B099-896730EB632A")
+            UuidUpperString("02C9CBA1-EAA5-4C3D-B099-896730EB631D"),
+            UuidUpperString("02C9CBA1-EAA5-4C3D-B099-896730EB632A")
           ),
           upperBoundInclusive = false,
           quoteValues = true
         ),
         RangeShardQuery(
           Range(
-            UuidUpperString("A2C9CBA1-EAA5-4C3D-B099-896730EB632A"),
-            UuidUpperString("A2C9CBA1-EAA5-4C3D-B099-896730EB6337")
+            UuidUpperString("02C9CBA1-EAA5-4C3D-B099-896730EB632A"),
+            UuidUpperString("02C9CBA1-EAA5-4C3D-B099-896730EB6337")
+          ),
+          upperBoundInclusive = true,
+          quoteValues = true
+        )
+      )
+    )
+  }
+
+  "hex sqlserver uuid upper shardable" must "partition a range of uuid strings in the upper case" in {
+    val shard = Shard.range[SqlServerUuidUpperString]
+    val queries = shard.partition(
+      Range(
+        SqlServerUuidUpperString("00000000-0000-0000-0000-000000000000"),
+        SqlServerUuidUpperString("00000000-0000-0000-0000-000000000001")
+      ),
+      3
+    )
+
+    queries must contain theSameElementsAs (
+      Seq(
+        RangeShardQuery(
+          Range(
+            SqlServerUuidUpperString("00000000-0000-0000-0000-000000000000"),
+            SqlServerUuidUpperString("55555555-5555-5555-5555-000000000000")
+          ),
+          upperBoundInclusive = false,
+          quoteValues = true
+        ),
+        RangeShardQuery(
+          Range(
+            SqlServerUuidUpperString("55555555-5555-5555-5555-000000000000"),
+            SqlServerUuidUpperString("AAAAAAAA-AAAA-AAAA-AAAA-000000000000")
+          ),
+          upperBoundInclusive = false,
+          quoteValues = true
+        ),
+        RangeShardQuery(
+          Range(
+            SqlServerUuidUpperString("AAAAAAAA-AAAA-AAAA-AAAA-000000000000"),
+            SqlServerUuidUpperString("00000000-0000-0000-0000-000000000001")
+          ),
+          upperBoundInclusive = true,
+          quoteValues = true
+        )
+      )
+    )
+  }
+
+  "hex sqlserver uuid lower shardable" must "partition a range of uuid strings in the upper case" in {
+    val shard = Shard.range[SqlServerUuidLowerString]
+    val queries = shard.partition(
+      Range(
+        SqlServerUuidLowerString("00000000-0000-0000-0000-000000000001"),
+        SqlServerUuidLowerString("00000000-0000-0000-0000-100000000000")
+      ),
+      3
+    )
+
+    queries must contain theSameElementsAs (
+      Seq(
+        RangeShardQuery(
+          Range(
+            SqlServerUuidLowerString("00000000-0000-0000-0000-000000000001"),
+            SqlServerUuidLowerString("00000000-0000-0000-0000-055555555556")
+          ),
+          upperBoundInclusive = false,
+          quoteValues = true
+        ),
+        RangeShardQuery(
+          Range(
+            SqlServerUuidLowerString("00000000-0000-0000-0000-055555555556"),
+            SqlServerUuidLowerString("00000000-0000-0000-0000-0aaaaaaaaaab")
+          ),
+          upperBoundInclusive = false,
+          quoteValues = true
+        ),
+        RangeShardQuery(
+          Range(
+            SqlServerUuidLowerString("00000000-0000-0000-0000-0aaaaaaaaaab"),
+            SqlServerUuidLowerString("00000000-0000-0000-0000-100000000000")
           ),
           upperBoundInclusive = true,
           quoteValues = true

@@ -43,7 +43,7 @@ object MagnolifyDatastoreExample {
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.MagnolifyDatastoreWriteExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=[PROJECT]"`
 object MagnolifyDatastoreWriteExample {
@@ -74,7 +74,7 @@ object MagnolifyDatastoreWriteExample {
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.MagnolifyDatastoreReadExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --input=[PROJECT]
 // --output=gs://[BUCKET]/[PATH]/wordcount"`
 object MagnolifyDatastoreReadExample {

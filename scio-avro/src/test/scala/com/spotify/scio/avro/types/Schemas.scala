@@ -168,6 +168,7 @@ object Schemas {
       case OPTIONAL => s"""["null", $basicType]"""
       case ARRAY    => s"""{ "type" : "array", "items" : $basicType }"""
       case MAP      => s"""{ "type" : "map", "values" : $basicType }"""
+      case _        => throw new IllegalArgumentException(s"Unsupported mode $mode")
     }
 
   private def setDefaultValue(mode: FieldMode): String =
@@ -176,6 +177,7 @@ object Schemas {
       case OPTIONAL => s""", "default": null"""
       case ARRAY    => s""", "default": []"""
       case MAP      => s""", "default": {}"""
+      case _        => throw new IllegalArgumentException(s"Unsupported mode $mode")
     }
 
   private def basicRecordName(mode: FieldMode): String =
@@ -184,6 +186,7 @@ object Schemas {
       case OPTIONAL => "OptionalFields"
       case ARRAY    => "ArrayFields"
       case MAP      => "MapFields"
+      case _        => throw new IllegalArgumentException(s"Unsupported mode $mode")
     }
 
   private def nestedRecordName(mode: FieldMode): String =
@@ -192,5 +195,6 @@ object Schemas {
       case OPTIONAL => "OptionalNestedFields"
       case ARRAY    => "ArrayNestedFields"
       case MAP      => "MapNestedFields"
+      case _        => throw new IllegalArgumentException(s"Unsupported mode $mode")
     }
 }

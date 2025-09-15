@@ -17,12 +17,11 @@
 
 package org.apache.cassandra.hadoop.cql3;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.hadoop.ConfigHelper;
 import org.apache.hadoop.conf.Configuration;
-
-import java.io.IOException;
-import java.nio.file.Files;
 
 public class CqlBulkRecordWriterUtil {
   /** Workaround to expose package private constructor. */

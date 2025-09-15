@@ -23,35 +23,36 @@ import com.spotify.scio.values.{SCollection, SideInput}
 import com.spotify.sparkey.CompressionType
 
 /**
- * Extra functions available on SCollections of (key, value) pairs for hash based joins
- * through an implicit conversion, using the Sparkey-backed LargeMapSideInput for dramatic speed
- * increases over the in-memory versions for datasets >100MB. As long as the RHS fits on disk,
- * these functions are usually much much faster than regular joins and save on shuffling.
+ * Extra functions available on SCollections of (key, value) pairs for hash based joins through an
+ * implicit conversion, using the Sparkey-backed LargeMapSideInput for dramatic speed increases over
+ * the in-memory versions for datasets >100MB. As long as the RHS fits on disk, these functions are
+ * usually much much faster than regular joins and save on shuffling.
  *
- * Note that these are nearly identical to the functions in PairHashSCollectionFunctions.scala,
- * but we can't reuse the implementations there as SideInput[T] is not covariant over T.
+ * Note that these are nearly identical to the functions in PairHashSCollectionFunctions.scala, but
+ * we can't reuse the implementations there as SideInput[T] is not covariant over T.
  *
- * @groupname join Join Operations
+ * @groupname join
+ * Join Operations
  */
 class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, V)]) {
 
-  implicit private[this] val (keyCoder, valueCoder): (Coder[K], Coder[V]) =
-    (self.keyCoder, self.valueCoder)
+  implicit private val keyCoder: Coder[K] = self.keyCoder
+  implicit private val valueCoder: Coder[V] = self.valueCoder
 
   /**
-   * Perform an inner join by replicating `rhs` to all workers.
-   * The right side should be <<10x smaller than the left side, and must fit on disk.
+   * Perform an inner join by replicating `rhs` to all workers. The right side should be <<10x
+   * smaller than the left side, and must fit on disk.
    *
    * @group join
    */
   def largeHashJoin[W](
     rhs: SCollection[(K, W)],
-    numShards: Short = DefaultSideInputNumShards,
-    compressionType: CompressionType = DefaultCompressionType,
-    compressionBlockSize: Int = DefaultCompressionBlockSize
+    numShards: Short = SparkeyIO.DefaultSideInputNumShards,
+    compressionType: CompressionType = SparkeyIO.DefaultCompressionType,
+    compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize
   ): SCollection[(K, (V, W))] = {
     implicit val wCoder: Coder[W] = rhs.valueCoder
-    hashJoin(rhs.asLargeMultiMapSideInput(numShards, compressionType, compressionBlockSize))
+    largeHashJoin(rhs.asLargeMultiMapSideInput(numShards, compressionType, compressionBlockSize))
   }
 
   /**
@@ -60,15 +61,15 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    * The right side must fit on disk. The SideInput can be used reused for multiple joins.
    *
    * @example
-   * {{{
+   *   {{{
    *   val si = pairSCollRight.asLargeMultiMapSideInput
    *   val joined1 = pairSColl1Left.hashJoin(si)
    *   val joined2 = pairSColl2Left.hashJoin(si)
-   * }}}
+   *   }}}
    *
    * @group join
    */
-  def hashJoin[W: Coder](
+  def largeHashJoin[W: Coder](
     sideInput: SideInput[SparkeyMap[K, Iterable[W]]]
   ): SCollection[(K, (V, W))] =
     self.transform { in =>
@@ -83,25 +84,25 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
     }
 
   /**
-   * Perform a left outer join by replicating `rhs` to all workers.
-   * The right side must fit on disk.
+   * Perform a left outer join by replicating `rhs` to all workers. The right side must fit on disk.
    *
    * @example
-   * {{{
+   *   {{{
    *   val si = pairSCollRight
    *   val joined = pairSColl1Left.largeHashLeftOuterJoin(pairSCollRight)
-   * }}}
+   *   }}}
    * @group join
-   * @param rhs The SCollection[(K, W)] treated as right side of the join.
+   * @param rhs
+   *   The SCollection[(K, W)] treated as right side of the join.
    */
   def largeHashLeftOuterJoin[W](
     rhs: SCollection[(K, W)],
-    numShards: Short = DefaultSideInputNumShards,
-    compressionType: CompressionType = DefaultCompressionType,
-    compressionBlockSize: Int = DefaultCompressionBlockSize
+    numShards: Short = SparkeyIO.DefaultSideInputNumShards,
+    compressionType: CompressionType = SparkeyIO.DefaultCompressionType,
+    compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize
   ): SCollection[(K, (V, Option[W]))] = {
     implicit val wCoder: Coder[W] = rhs.valueCoder
-    hashLeftOuterJoin(
+    largeHashLeftOuterJoin(
       rhs.asLargeMultiMapSideInput(numShards, compressionType, compressionBlockSize)
     )
   }
@@ -110,14 +111,14 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    * Perform a left outer join with a MultiMap `SideInput[SparkeyMap[K, Iterable[V]]`
    *
    * @example
-   * {{{
+   *   {{{
    *   val si = pairSCollRight.asLargeMultiMapSideInput
    *   val joined1 = pairSColl1Left.hashLeftOuterJoin(si)
    *   val joined2 = pairSColl2Left.hashLeftOuterJoin(si)
-   * }}}
+   *   }}}
    * @group join
    */
-  def hashLeftOuterJoin[W: Coder](
+  def largeHashLeftOuterJoin[W: Coder](
     sideInput: SideInput[SparkeyMap[K, Iterable[W]]]
   ): SCollection[(K, (V, Option[W]))] = {
     self.transform { in =>
@@ -140,12 +141,12 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    */
   def largeHashFullOuterJoin[W](
     rhs: SCollection[(K, W)],
-    numShards: Short = DefaultSideInputNumShards,
-    compressionType: CompressionType = DefaultCompressionType,
-    compressionBlockSize: Int = DefaultCompressionBlockSize
+    numShards: Short = SparkeyIO.DefaultSideInputNumShards,
+    compressionType: CompressionType = SparkeyIO.DefaultCompressionType,
+    compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize
   ): SCollection[(K, (Option[V], Option[W]))] = {
     implicit val wCoder = rhs.valueCoder
-    hashFullOuterJoin(
+    largeHashFullOuterJoin(
       rhs.asLargeMultiMapSideInput(numShards, compressionType, compressionBlockSize)
     )
   }
@@ -154,15 +155,15 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    * Perform a full outer join with a `SideInput[SparkeyMap[K, Iterable[W]]]`.
    *
    * @example
-   * {{{
+   *   {{{
    *   val si = pairSCollRight.asLargeMultiMapSideInput
    *   val joined1 = pairSColl1Left.hashFullOuterJoin(si)
    *   val joined2 = pairSColl2Left.hashFullOuterJoin(si)
-   * }}}
+   *   }}}
    *
    * @group join
    */
-  def hashFullOuterJoin[W: Coder](
+  def largeHashFullOuterJoin[W: Coder](
     sideInput: SideInput[SparkeyMap[K, Iterable[W]]]
   ): SCollection[(K, (Option[V], Option[W]))] =
     self.transform { in =>
@@ -195,29 +196,33 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
     }
 
   /**
-   * Return an SCollection with the pairs from `this` whose keys are in `rhs`
-   * given `rhs` is small enough to fit on disk.
+   * Return an SCollection with the pairs from `this` whose keys are in `rhs` given `rhs` is small
+   * enough to fit on disk.
    *
    * Unlike [[SCollection.intersection]] this preserves duplicates in `this`.
    *
-   * @group per key
+   * @group per
+   * key
    */
   def largeHashIntersectByKey(
     rhs: SCollection[K],
-    numShards: Short = DefaultSideInputNumShards,
-    compressionType: CompressionType = DefaultCompressionType,
-    compressionBlockSize: Int = DefaultCompressionBlockSize
+    numShards: Short = SparkeyIO.DefaultSideInputNumShards,
+    compressionType: CompressionType = SparkeyIO.DefaultCompressionType,
+    compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize
   ): SCollection[(K, V)] =
-    hashIntersectByKey(rhs.asLargeSetSideInput(numShards, compressionType, compressionBlockSize))
+    largeHashIntersectByKey(
+      rhs.asLargeSetSideInput(numShards, compressionType, compressionBlockSize)
+    )
 
   /**
    * Return an SCollection with the pairs from `this` whose keys are in the SideSet `rhs`.
    *
    * Unlike [[SCollection.intersection]] this preserves duplicates in `this`.
    *
-   * @group per key
+   * @group per
+   * key
    */
-  def hashIntersectByKey(sideInput: SideInput[SparkeySet[K]]): SCollection[(K, V)] =
+  def largeHashIntersectByKey(sideInput: SideInput[SparkeySet[K]]): SCollection[(K, V)] =
     self
       .withSideInputs(sideInput)
       .filter { case ((k, _), sideInputCtx) => sideInputCtx(sideInput).contains(k) }
@@ -228,22 +233,26 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    *
    * Rhs must be small enough to fit on disk.
    *
-   * @group per key
+   * @group per
+   * key
    */
   def largeHashSubtractByKey(
     rhs: SCollection[K],
-    numShards: Short = DefaultSideInputNumShards,
-    compressionType: CompressionType = DefaultCompressionType,
-    compressionBlockSize: Int = DefaultCompressionBlockSize
+    numShards: Short = SparkeyIO.DefaultSideInputNumShards,
+    compressionType: CompressionType = SparkeyIO.DefaultCompressionType,
+    compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize
   ): SCollection[(K, V)] =
-    hashSubtractByKey(rhs.asLargeSetSideInput(numShards, compressionType, compressionBlockSize))
+    largeHashSubtractByKey(
+      rhs.asLargeSetSideInput(numShards, compressionType, compressionBlockSize)
+    )
 
   /**
    * Return an SCollection with the pairs from `this` whose keys are not in SideInput[Set] `rhs`.
    *
-   * @group per key
+   * @group per
+   * key
    */
-  def hashSubtractByKey(sideInput: SideInput[SparkeySet[K]]): SCollection[(K, V)] =
+  def largeHashSubtractByKey(sideInput: SideInput[SparkeySet[K]]): SCollection[(K, V)] =
     self
       .withSideInputs(sideInput)
       .filter { case ((k, _), sideInputCtx) => !sideInputCtx(sideInput).contains(k) }

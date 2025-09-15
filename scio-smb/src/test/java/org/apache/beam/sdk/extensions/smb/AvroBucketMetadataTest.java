@@ -19,6 +19,8 @@ package org.apache.beam.sdk.extensions.smb;
 
 import static org.apache.beam.sdk.transforms.display.DisplayDataMatchers.hasDisplayItem;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -27,15 +29,16 @@ import java.util.Collections;
 import java.util.List;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Type;
+import org.apache.avro.SchemaBuilder;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
+import org.apache.beam.sdk.coders.VarIntCoder;
+import org.apache.beam.sdk.extensions.avro.io.AvroGeneratedUser;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
-import org.apache.beam.sdk.io.AvroGeneratedUser;
 import org.apache.beam.sdk.transforms.display.DisplayData;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Test;
@@ -44,42 +47,43 @@ import org.junit.Test;
 public class AvroBucketMetadataTest {
 
   static final Schema LOCATION_SCHEMA =
-      Schema.createRecord(
-          "Location",
-          "",
-          "org.apache.beam.sdk.extensions.smb.avro",
-          false,
-          Lists.newArrayList(
-              new Schema.Field("countryId", Schema.create(Type.BYTES), "", ""),
-              new Schema.Field(
-                  "postalCode",
-                  Schema.createUnion(Schema.create(Type.NULL), Schema.create(Type.BYTES)),
-                  "",
-                  ""),
-              new Schema.Field(
-                  "prevCountries",
-                  Schema.createArray(Schema.create(Schema.Type.STRING)),
-                  "",
-                  Collections.<String>emptyList())));
-
-  static final Schema LOCATION_UNION_SCHEMA =
-      Schema.createUnion(Schema.create(Type.NULL), LOCATION_SCHEMA);
-
+      SchemaBuilder.record("Location")
+          .namespace("org.apache.beam.sdk.extensions.smb.avro")
+          .fields()
+          .requiredBytes("countryId")
+          .optionalBytes("postalCode")
+          .name("prevCountries")
+          .type()
+          .array()
+          .items()
+          .stringType()
+          .arrayDefault(Collections.emptyList())
+          .endRecord();
   static final Schema RECORD_SCHEMA =
-      Schema.createRecord(
-          "Record",
-          "",
-          "org.apache.beam.sdk.extensions.smb.avro",
-          false,
-          Lists.newArrayList(
-              new Schema.Field("id", Schema.create(Schema.Type.LONG), "", 0L),
-              new Schema.Field("location", LOCATION_SCHEMA, "", Collections.emptyList()),
-              new Schema.Field("locationUnion", LOCATION_UNION_SCHEMA, "", Collections.emptyList()),
-              new Schema.Field(
-                  "suffix",
-                  Schema.createEnum("Suffix", "", "", Lists.newArrayList("Jr", "Sr", "None")),
-                  "",
-                  "None")));
+      SchemaBuilder.record("Record")
+          .namespace("org.apache.beam.sdk.extensions.smb.avro")
+          .fields()
+          .name("id")
+          .type()
+          .longType()
+          .longDefault(0L)
+          .name("location")
+          .type(LOCATION_SCHEMA)
+          .noDefault()
+          .name("locationUnion")
+          .type()
+          .unionOf()
+          .nullType()
+          .and()
+          .type(LOCATION_SCHEMA)
+          .endUnion()
+          .noDefault()
+          .name("suffix")
+          .type()
+          .enumeration("Suffix")
+          .symbols("Jr", "Sr", "None")
+          .enumDefault("None")
+          .endRecord();
 
   @Test
   public void testGenericRecord() throws Exception {
@@ -106,11 +110,13 @@ public class AvroBucketMetadataTest {
                 1,
                 1,
                 Long.class,
-                HashType.MURMUR3_32,
                 "id",
+                null,
+                null,
+                HashType.MURMUR3_32,
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX,
                 RECORD_SCHEMA)
-            .extractKey(user));
+            .extractKeyPrimary(user));
 
     Assert.assertEquals(
         countryIdAsBytes,
@@ -118,11 +124,13 @@ public class AvroBucketMetadataTest {
                 1,
                 1,
                 ByteBuffer.class,
-                HashType.MURMUR3_32,
                 "location.countryId",
+                null,
+                null,
+                HashType.MURMUR3_32,
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX,
                 RECORD_SCHEMA)
-            .extractKey(user));
+            .extractKeyPrimary(user));
 
     Assert.assertEquals(
         countryIdAsBytes,
@@ -130,11 +138,13 @@ public class AvroBucketMetadataTest {
                 1,
                 1,
                 ByteBuffer.class,
-                HashType.MURMUR3_32,
                 "locationUnion.countryId",
+                null,
+                null,
+                HashType.MURMUR3_32,
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX,
                 RECORD_SCHEMA)
-            .extractKey(user));
+            .extractKeyPrimary(user));
 
     Assert.assertEquals(
         postalCodeBytes,
@@ -142,11 +152,13 @@ public class AvroBucketMetadataTest {
                 1,
                 1,
                 ByteBuffer.class,
-                HashType.MURMUR3_32,
                 "locationUnion.postalCode",
+                null,
+                null,
+                HashType.MURMUR3_32,
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX,
                 RECORD_SCHEMA)
-            .extractKey(user));
+            .extractKeyPrimary(user));
 
     Assert.assertEquals(
         "Jr",
@@ -154,11 +166,13 @@ public class AvroBucketMetadataTest {
                 1,
                 1,
                 String.class,
-                HashType.MURMUR3_32,
                 "suffix",
+                null,
+                null,
+                HashType.MURMUR3_32,
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX,
                 RECORD_SCHEMA)
-            .extractKey(user));
+            .extractKeyPrimary(user));
 
     /*
     FIXME: BucketMetadata should allow custom coder?
@@ -166,7 +180,7 @@ public class AvroBucketMetadataTest {
         Arrays.asList("CN", "MX"),
         new AvroBucketMetadata<>(
                 1, 1, ArrayList.class, HashType.MURMUR3_32, "location.prevCountries")
-            .extractKey(user));
+            .extractKeyPrimary(user));
      */
   }
 
@@ -174,60 +188,71 @@ public class AvroBucketMetadataTest {
   public void testSpecificRecord() throws Exception {
     final AvroGeneratedUser user = new AvroGeneratedUser("foo", 50, "green");
 
-    Assert.assertEquals(
-        "green",
+    final AvroBucketMetadata<String, Integer, AvroGeneratedUser> metadata1 =
         new AvroBucketMetadata<>(
-                1,
-                1,
-                String.class,
-                HashType.MURMUR3_32,
-                "favorite_color",
-                SortedBucketIO.DEFAULT_FILENAME_PREFIX,
-                AvroGeneratedUser.class)
-            .extractKey(user));
+            1,
+            1,
+            String.class,
+            "favorite_color",
+            Integer.class,
+            "favorite_number",
+            HashType.MURMUR3_32,
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX,
+            AvroGeneratedUser.getClassSchema());
+    final AvroBucketMetadata<Integer, String, AvroGeneratedUser> metadata2 =
+        new AvroBucketMetadata<>(
+            1,
+            1,
+            Integer.class,
+            "favorite_number",
+            String.class,
+            "favorite_color",
+            HashType.MURMUR3_32,
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX,
+            AvroGeneratedUser.getClassSchema());
 
-    Assert.assertEquals(
-        (Integer) 50,
-        new AvroBucketMetadata<>(
-                1,
-                1,
-                Integer.class,
-                HashType.MURMUR3_32,
-                "favorite_number",
-                SortedBucketIO.DEFAULT_FILENAME_PREFIX,
-                AvroGeneratedUser.class)
-            .extractKey(user));
+    Assert.assertEquals("green", metadata1.extractKeyPrimary(user));
+    Assert.assertEquals((Integer) 50, metadata1.extractKeySecondary(user));
+
+    Assert.assertEquals((Integer) 50, metadata2.extractKeyPrimary(user));
+    Assert.assertEquals("green", metadata2.extractKeySecondary(user));
   }
 
   @Test
   public void testCoding() throws Exception {
-    final AvroBucketMetadata<String, GenericRecord> metadata =
+    final AvroBucketMetadata<String, Integer, GenericRecord> metadata =
         new AvroBucketMetadata<>(
             1,
             1,
             1,
             String.class,
-            HashType.MURMUR3_32,
             "favorite_color",
+            Integer.class,
+            "favorite_number",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
-    final BucketMetadata<String, GenericRecord> copy = BucketMetadata.from(metadata.toString());
+    final BucketMetadata<String, Integer, GenericRecord> copy =
+        BucketMetadata.from(metadata.toString());
     Assert.assertEquals(metadata.getVersion(), copy.getVersion());
     Assert.assertEquals(metadata.getNumBuckets(), copy.getNumBuckets());
     Assert.assertEquals(metadata.getNumShards(), copy.getNumShards());
     Assert.assertEquals(metadata.getKeyClass(), copy.getKeyClass());
+    Assert.assertEquals(metadata.getKeyClassSecondary(), copy.getKeyClassSecondary());
     Assert.assertEquals(metadata.getHashType(), copy.getHashType());
   }
 
   @Test
   public void testVersionDefault() throws Exception {
-    final AvroBucketMetadata<String, GenericRecord> metadata =
+    final AvroBucketMetadata<String, Void, GenericRecord> metadata =
         new AvroBucketMetadata<>(
             1,
             1,
             String.class,
-            HashType.MURMUR3_32,
             "favorite_color",
+            null,
+            null,
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX,
             AvroGeneratedUser.SCHEMA$);
 
@@ -236,13 +261,15 @@ public class AvroBucketMetadataTest {
 
   @Test
   public void testDisplayData() throws Exception {
-    final AvroBucketMetadata<String, GenericRecord> metadata =
+    final AvroBucketMetadata<String, Integer, GenericRecord> metadata =
         new AvroBucketMetadata<>(
             2,
             1,
             String.class,
-            HashType.MURMUR3_32,
             "favorite_color",
+            Integer.class,
+            "favorite_number",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX,
             AvroGeneratedUser.SCHEMA$);
 
@@ -251,58 +278,134 @@ public class AvroBucketMetadataTest {
     MatcherAssert.assertThat(displayData, hasDisplayItem("numShards", 1));
     MatcherAssert.assertThat(
         displayData, hasDisplayItem("version", BucketMetadata.CURRENT_VERSION));
-    MatcherAssert.assertThat(displayData, hasDisplayItem("keyField", "favorite_color"));
-    MatcherAssert.assertThat(displayData, hasDisplayItem("keyClass", String.class));
+    MatcherAssert.assertThat(displayData, hasDisplayItem("keyFieldPrimary", "favorite_color"));
+    MatcherAssert.assertThat(displayData, hasDisplayItem("keyClassPrimary", String.class));
+    MatcherAssert.assertThat(displayData, hasDisplayItem("keyCoderPrimary", StringUtf8Coder.class));
+    MatcherAssert.assertThat(displayData, hasDisplayItem("keyFieldSecondary", "favorite_number"));
+    MatcherAssert.assertThat(displayData, hasDisplayItem("keyClassSecondary", Integer.class));
+    MatcherAssert.assertThat(displayData, hasDisplayItem("keyCoderSecondary", VarIntCoder.class));
     MatcherAssert.assertThat(
         displayData, hasDisplayItem("hashType", HashType.MURMUR3_32.toString()));
-    MatcherAssert.assertThat(displayData, hasDisplayItem("keyCoder", StringUtf8Coder.class));
   }
 
   @Test
   public void testSameSourceCompatibility() throws Exception {
-    final AvroBucketMetadata<String, GenericRecord> metadata1 =
+    final AvroBucketMetadata<String, Integer, GenericRecord> metadata1 =
         new AvroBucketMetadata<>(
             2,
             1,
             String.class,
-            HashType.MURMUR3_32,
             "name",
+            Integer.class,
+            "favorite_number",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX,
             AvroGeneratedUser.SCHEMA$);
 
-    final AvroBucketMetadata<String, GenericRecord> metadata2 =
+    final AvroBucketMetadata<String, Integer, GenericRecord> metadata2 =
         new AvroBucketMetadata<>(
             2,
             1,
             String.class,
-            HashType.MURMUR3_32,
             "favorite_color",
+            Integer.class,
+            "favorite_number",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX,
             AvroGeneratedUser.SCHEMA$);
 
-    final AvroBucketMetadata<String, GenericRecord> metadata3 =
+    final AvroBucketMetadata<String, Integer, GenericRecord> metadata3 =
         new AvroBucketMetadata<>(
             4,
             1,
             String.class,
-            HashType.MURMUR3_32,
             "favorite_color",
+            Integer.class,
+            "favorite_number",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX,
             AvroGeneratedUser.SCHEMA$);
 
-    final AvroBucketMetadata<Integer, GenericRecord> metadata4 =
+    final AvroBucketMetadata<Integer, String, GenericRecord> metadata4 =
         new AvroBucketMetadata<>(
             4,
             1,
             Integer.class,
-            HashType.MURMUR3_32,
             "favorite_number",
+            String.class,
+            "favorite_color",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX,
             AvroGeneratedUser.SCHEMA$);
 
-    Assert.assertFalse(metadata1.isPartitionCompatible(metadata2));
-    Assert.assertTrue(metadata2.isPartitionCompatible(metadata3));
-    Assert.assertFalse(metadata3.isPartitionCompatible(metadata4));
+    final AvroBucketMetadata<Integer, String, GenericRecord> metadata5 =
+        new AvroBucketMetadata<>(
+            4,
+            1,
+            Integer.class,
+            "favorite_number",
+            String.class,
+            "name",
+            HashType.MURMUR3_32,
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX,
+            AvroGeneratedUser.SCHEMA$);
+
+    Assert.assertFalse(metadata1.isPartitionCompatibleForPrimaryKey(metadata2));
+    Assert.assertFalse(metadata1.isPartitionCompatibleForPrimaryAndSecondaryKey(metadata2));
+
+    Assert.assertTrue(metadata2.isPartitionCompatibleForPrimaryKey(metadata3));
+    Assert.assertTrue(metadata2.isPartitionCompatibleForPrimaryAndSecondaryKey(metadata3));
+
+    Assert.assertFalse(metadata3.isPartitionCompatibleForPrimaryKey(metadata4));
+    Assert.assertFalse(metadata3.isPartitionCompatibleForPrimaryAndSecondaryKey(metadata4));
+
+    Assert.assertTrue(metadata4.isPartitionCompatibleForPrimaryKey(metadata5));
+    Assert.assertFalse(metadata4.isPartitionCompatibleForPrimaryAndSecondaryKey(metadata5));
+  }
+
+  @Test
+  public void testParquetMetadataCompatibility() throws Exception {
+    final AvroBucketMetadata<String, Integer, GenericRecord> metadata1 =
+        new AvroBucketMetadata<>(
+            2,
+            1,
+            String.class,
+            "name",
+            Integer.class,
+            "favorite_number",
+            HashType.MURMUR3_32,
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX,
+            AvroGeneratedUser.SCHEMA$);
+
+    final ParquetBucketMetadata<String, Integer, GenericRecord> metadata2 =
+        new ParquetBucketMetadata<>(
+            2,
+            1,
+            String.class,
+            "favorite_color",
+            Integer.class,
+            "favorite_number",
+            HashType.MURMUR3_32,
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX,
+            AvroGeneratedUser.SCHEMA$);
+
+    final ParquetBucketMetadata<String, Integer, GenericRecord> metadata3 =
+        new ParquetBucketMetadata<>(
+            4,
+            1,
+            String.class,
+            "favorite_color",
+            Integer.class,
+            "favorite_number",
+            HashType.MURMUR3_32,
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX,
+            AvroGeneratedUser.SCHEMA$);
+
+    Assert.assertFalse(metadata1.isPartitionCompatibleForPrimaryKey(metadata2));
+    Assert.assertFalse(metadata1.isPartitionCompatibleForPrimaryAndSecondaryKey(metadata2));
+
+    Assert.assertTrue(metadata2.isPartitionCompatibleForPrimaryKey(metadata3));
+    Assert.assertTrue(metadata2.isPartitionCompatibleForPrimaryAndSecondaryKey(metadata3));
   }
 
   @Test
@@ -312,8 +415,10 @@ public class AvroBucketMetadataTest {
         1,
         1,
         ByteBuffer.class,
-        HashType.MURMUR3_32,
         "location.countryId",
+        ByteBuffer.class,
+        "location.postalCode",
+        HashType.MURMUR3_32,
         SortedBucketIO.DEFAULT_FILENAME_PREFIX,
         RECORD_SCHEMA);
 
@@ -324,8 +429,24 @@ public class AvroBucketMetadataTest {
                 1,
                 1,
                 String.class,
-                HashType.MURMUR3_32,
                 "location.countryId",
+                null,
+                null,
+                HashType.MURMUR3_32,
+                SortedBucketIO.DEFAULT_FILENAME_PREFIX,
+                RECORD_SCHEMA));
+
+    Assert.assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            new AvroBucketMetadata<>(
+                1,
+                1,
+                ByteBuffer.class,
+                "location.countryId",
+                String.class,
+                "location.postalCode",
+                HashType.MURMUR3_32,
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX,
                 RECORD_SCHEMA));
   }
@@ -343,8 +464,10 @@ public class AvroBucketMetadataTest {
         1,
         1,
         String.class,
-        HashType.MURMUR3_32,
         "unionField",
+        null,
+        null,
+        HashType.MURMUR3_32,
         SortedBucketIO.DEFAULT_FILENAME_PREFIX,
         legalUnionSchema);
 
@@ -355,8 +478,10 @@ public class AvroBucketMetadataTest {
                 1,
                 1,
                 String.class,
-                HashType.MURMUR3_32,
                 "unionField",
+                null,
+                null,
+                HashType.MURMUR3_32,
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX,
                 illegalUnionSchema1));
 
@@ -367,21 +492,46 @@ public class AvroBucketMetadataTest {
                 1,
                 1,
                 String.class,
-                HashType.MURMUR3_32,
                 "unionField",
+                null,
+                null,
+                HashType.MURMUR3_32,
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX,
                 illegalUnionSchema2));
+  }
+
+  @Test
+  public void skipsNullSecondaryKeys()
+      throws CannotProvideCoderException, NonDeterministicException, IOException {
+    final AvroBucketMetadata<String, Void, GenericRecord> metadata =
+        new AvroBucketMetadata<>(
+            4,
+            1,
+            String.class,
+            "favorite_color",
+            null,
+            null,
+            HashType.MURMUR3_32,
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX,
+            AvroGeneratedUser.SCHEMA$);
+
+    final ByteArrayOutputStream os = new ByteArrayOutputStream();
+    BucketMetadata.to(metadata, os);
+
+    Assert.assertFalse(os.toString().contains("keyFieldSecondary"));
+    Assert.assertNull(
+        ((AvroBucketMetadata) BucketMetadata.from(os.toString())).getKeyClassSecondary());
   }
 
   private static Schema createUnionRecordOfTypes(Schema.Type... types) {
     final List<Schema> typeSchemas = new ArrayList<>();
     Arrays.asList(types).forEach(t -> typeSchemas.add(Schema.create(t)));
-    return Schema.createRecord(
-        "Record",
-        "",
-        "org.apache.beam.sdk.extensions.smb.avro",
-        false,
-        Lists.newArrayList(
-            new Schema.Field("unionField", Schema.createUnion(typeSchemas), "", "")));
+    return SchemaBuilder.record("Record")
+        .namespace("org.apache.beam.sdk.extensions.smb.avro")
+        .fields()
+        .name("unionField")
+        .type(Schema.createUnion(typeSchemas))
+        .noDefault()
+        .endRecord();
   }
 }

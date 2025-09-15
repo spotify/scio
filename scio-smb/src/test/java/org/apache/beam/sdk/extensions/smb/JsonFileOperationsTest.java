@@ -47,7 +47,7 @@ public class JsonFileOperationsTest {
 
   @Test
   public void testCompression() throws Exception {
-    test(Compression.GZIP);
+    test(Compression.ZSTD);
   }
 
   private void test(Compression compression) throws Exception {

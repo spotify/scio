@@ -19,14 +19,17 @@ package com.spotify.scio.bigquery
 
 import java.io.StringReader
 import java.util.UUID
-
 import com.google.api.client.json.JsonObjectParser
-import com.google.api.client.json.jackson2.JacksonFactory
-import com.google.api.services.bigquery.model.TableSchema
+import com.google.api.client.json.gson.GsonFactory
+import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
+import com.spotify.scio.bigquery.BigQueryTypedTable.Format
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.Method
+
+import scala.jdk.CollectionConverters._
 
 /** Utility for BigQuery data types. */
 object BigQueryUtil {
-  private lazy val jsonObjectParser = new JsonObjectParser(new JacksonFactory)
+  private lazy val jsonObjectParser = new JsonObjectParser(GsonFactory.getDefaultInstance)
 
   /** Parse a schema string. */
   def parseSchema(schemaString: String): TableSchema =
@@ -36,4 +39,26 @@ object BigQueryUtil {
   /* Generates job ID */
   def generateJobId(projectId: String): String =
     projectId + "-" + UUID.randomUUID().toString
+
+  private[bigquery] def isAvroFormat(format: Format[_]): Boolean =
+    format == Format.GenericRecord || format == Format.GenericRecordWithLogicalTypes
+
+  private[bigquery] def isStorageApiWrite(method: Method): Boolean =
+    method == Method.STORAGE_WRITE_API || method == Method.STORAGE_API_AT_LEAST_ONCE
+
+  private[bigquery] def containsType(schema: TableSchema, typeName: String): Boolean =
+    containsType(schema.getFields.asScala, typeName)
+
+  private[bigquery] def containsType(
+    fields: Iterable[TableFieldSchema],
+    typeName: String
+  ): Boolean = {
+    fields.exists(field =>
+      field.getType match {
+        case t if t == typeName  => true
+        case "RECORD" | "STRUCT" => containsType(field.getFields.asScala, typeName)
+        case _                   => false
+      }
+    )
+  }
 }

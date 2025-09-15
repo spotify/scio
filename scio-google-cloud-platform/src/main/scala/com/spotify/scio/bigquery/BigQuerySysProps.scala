@@ -38,6 +38,11 @@ object BigQuerySysProps {
 
   val Project: SysProp = SysProp("bigquery.project", "System property key for billing project.")
 
+  val StagingDatasetPrefix: SysProp = SysProp(
+    "bigquery.staging_dataset_prefix",
+    "System property key for setting the prefix for staging table"
+  )
+
   val Secret: SysProp = SysProp("bigquery.secret", "")
 
   val Priority: SysProp = SysProp("bigquery.priority", "\"BATCH\" or \"INTERACTIVE\"")
@@ -52,5 +57,20 @@ object BigQuerySysProps {
     "bigquery.read_timeout",
     "Timeout in milliseconds to read data from an established connection. " +
       "Default is 20000 (20 seconds). 0 for an infinite timeout."
+  )
+
+  val DebugAuth: SysProp = SysProp(
+    "bigquery.debug_auth",
+    "System property key to enable logging active BigQuery user information on auth errors"
+  )
+
+  val ActAs: SysProp = SysProp(
+    "bigquery.act_as",
+    "System property key for a target SA principal to impersonate current auth"
+  )
+
+  val ImpersonationLifetimeSec: SysProp = SysProp(
+    "bigquery.act_as_lifetime",
+    "System property key for a duration in seconds of a target SA temporary credentials lifetime"
   )
 }

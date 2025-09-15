@@ -69,8 +69,10 @@ object PubSubAdmin {
   /**
    * Ensure PubSub topic exists.
    *
-   * @param name Topic path. Needs to follow `projects/projectId/topics/topicName`
-   * @return a Topic if it alreadys exists or has been successfully created, a failure otherwise
+   * @param name
+   *   Topic path. Needs to follow `projects/projectId/topics/topicName`
+   * @return
+   *   a Topic if it alreadys exists or has been successfully created, a failure otherwise
    */
   def ensureTopic(pubsubOptions: PubsubOptions, name: String): Try[Topic] =
     GrpcClient.publisher(pubsubOptions) { client =>
@@ -81,8 +83,10 @@ object PubSubAdmin {
   /**
    * Get the configuration of a topic.
    *
-   * @param name Topic path. Needs to follow `projects/projectId/topics/topicName`
-   * @return a Topic if it exists, a failure otherwise
+   * @param name
+   *   Topic path. Needs to follow `projects/projectId/topics/topicName`
+   * @return
+   *   a Topic if it exists, a failure otherwise
    */
   def topic(pubsubOptions: PubsubOptions, name: String): Try[Topic] =
     GrpcClient.publisher(pubsubOptions) { client =>
@@ -93,10 +97,12 @@ object PubSubAdmin {
   /**
    * Ensure PubSub subscription exists.
    *
-   * @param topic Topic path. Needs to follow `projects/projectId/topics/topicName`
-   * @param name  Subscription path. Needs to follow `projects/projectId/topics/topicName`
-   * @return a Subscription if it alreadys exists or has been successfully created, a failure
-   * otherwise
+   * @param topic
+   *   Topic path. Needs to follow `projects/projectId/topics/topicName`
+   * @param name
+   *   Subscription path. Needs to follow `projects/projectId/topics/topicName`
+   * @return
+   *   a Subscription if it alreadys exists or has been successfully created, a failure otherwise
    */
   def ensureSubscription(
     pubsubOptions: PubsubOptions,
@@ -111,8 +117,10 @@ object PubSubAdmin {
   /**
    * Get the configuration of a subscription.
    *
-   * @param name Subscription path. Needs to follow `projects/projectId/subscriptions/subscription`
-   * @return a Subscription if it exists, a failure otherwise
+   * @param name
+   *   Subscription path. Needs to follow `projects/projectId/subscriptions/subscription`
+   * @return
+   *   a Subscription if it exists, a failure otherwise
    */
   def subscription(pubsubOptions: PubsubOptions, name: String): Try[Subscription] =
     GrpcClient.subscriber(pubsubOptions) { client =>

@@ -22,6 +22,7 @@ import com.google.api.services.bigquery.model.TableRow;
 import java.io.IOException;
 import java.util.List;
 import org.apache.beam.sdk.Pipeline;
+import org.apache.beam.sdk.extensions.gcp.util.Transport;
 import org.apache.beam.sdk.io.TextIO;
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
@@ -41,7 +42,6 @@ import org.apache.beam.sdk.transforms.windowing.CalendarWindows;
 import org.apache.beam.sdk.transforms.windowing.IntervalWindow;
 import org.apache.beam.sdk.transforms.windowing.Sessions;
 import org.apache.beam.sdk.transforms.windowing.Window;
-import org.apache.beam.sdk.extensions.gcp.util.Transport;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.joda.time.Duration;
@@ -75,13 +75,12 @@ public class TopWikipediaSessions {
   /** Extracts user and timestamp from a TableRow representing a Wikipedia edit. */
   static class ExtractUserAndTimestamp extends DoFn<TableRow, String> {
     @ProcessElement
-    public void processElement(ProcessContext c) {
-      TableRow row = c.element();
-      int timestamp = (Integer) row.get("timestamp");
-      String userName = (String) row.get("contributor_username");
+    public void processElement(@Element TableRow element, OutputReceiver<String> out) {
+      int timestamp = (Integer) element.get("timestamp");
+      String userName = (String) element.get("contributor_username");
       if (userName != null) {
         // Sets the implicit timestamp field to be used in windowing.
-        c.outputWithTimestamp(userName, new Instant(timestamp * 1000L));
+        out.outputWithTimestamp(userName, new Instant(timestamp * 1000L));
       }
     }
   }
@@ -115,18 +114,22 @@ public class TopWikipediaSessions {
 
   static class SessionsToStringsDoFn extends DoFn<KV<String, Long>, KV<String, Long>> {
     @ProcessElement
-    public void processElement(ProcessContext c, BoundedWindow window) {
-      c.output(KV.of(c.element().getKey() + " : " + window, c.element().getValue()));
+    public void processElement(
+        @Element KV<String, Long> element,
+        OutputReceiver<KV<String, Long>> out,
+        BoundedWindow window) {
+      out.output(KV.of(element.getKey() + " : " + window, element.getValue()));
     }
   }
 
   static class FormatOutputDoFn extends DoFn<List<KV<String, Long>>, String> {
     @ProcessElement
-    public void processElement(ProcessContext c, BoundedWindow window) {
-      for (KV<String, Long> item : c.element()) {
+    public void processElement(
+        @Element List<KV<String, Long>> element, OutputReceiver<String> out, BoundedWindow window) {
+      for (KV<String, Long> item : element) {
         String session = item.getKey();
         long count = item.getValue();
-        c.output(session + " : " + count + " : " + ((IntervalWindow) window).start());
+        out.output(session + " : " + count + " : " + ((IntervalWindow) window).start());
       }
     }
   }
@@ -159,10 +162,11 @@ public class TopWikipediaSessions {
               ParDo.of(
                   new DoFn<String, String>() {
                     @ProcessElement
-                    public void processElement(ProcessContext c) {
-                      if (Math.abs((long) c.element().hashCode())
+                    public void processElement(
+                        @Element String element, OutputReceiver<String> out) {
+                      if (Math.abs((long) element.hashCode())
                           <= Integer.MAX_VALUE * samplingThreshold) {
-                        c.output(c.element());
+                        out.output(element);
                       }
                     }
                   }))

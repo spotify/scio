@@ -19,7 +19,7 @@
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.MinimalWordCount
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=gs://[BUCKET]/[PATH]/minimal_wordcount"`
 package com.spotify.scio.examples
@@ -40,7 +40,7 @@ object MinimalWordCount {
       .transform("counter") {
         // Split input lines, filter out empty tokens and expand into a collection of tokens
         _.flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
-        // Count occurrences of each unique `String` to get `(String, Long)`
+          // Count occurrences of each unique `String` to get `(String, Long)`
           .countByValue
       }
       // Map `(String, Long)` tuples into strings

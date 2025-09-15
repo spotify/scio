@@ -91,11 +91,11 @@ final private[client] class JobOps(client: Client) {
       val remainingJobs = pendingJobs.filter { case (bqJob, jobReference) =>
         val jobId = jobReference.getJobId
         try {
-          val poll = client.underlying
-            .jobs()
-            .get(client.project, jobId)
-            .setLocation(jobReference.getLocation)
-            .execute()
+          val poll = client.execute(
+            _.jobs()
+              .get(client.project, jobId)
+              .setLocation(jobReference.getLocation)
+          )
           val error = poll.getStatus.getErrorResult
           if (error != null) {
             throw new RuntimeException(s"${bqJob.show} failed with error: $error")

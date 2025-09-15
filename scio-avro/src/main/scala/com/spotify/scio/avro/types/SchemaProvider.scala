@@ -20,11 +20,11 @@ package com.spotify.scio.avro.types
 import java.util.Collections.{emptyList, emptyMap}
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function
-
 import com.google.protobuf.ByteString
 import com.spotify.scio.avro.types.MacroUtil._
 import org.apache.avro.{JsonProperties, Schema}
 import org.apache.avro.Schema.Field
+import org.typelevel.scalaccompat.annotation.nowarn
 
 import scala.jdk.CollectionConverters._
 import scala.reflect.runtime.universe
@@ -52,11 +52,11 @@ private[types] object SchemaProvider {
   private def toSchema(tpe: Type): (Schema, Any) = tpe match {
     case t if t =:= typeOf[Boolean] =>
       (Schema.create(Schema.Type.BOOLEAN), null)
-    case t if t =:= typeOf[Int]    => (Schema.create(Schema.Type.INT), null)
-    case t if t =:= typeOf[Long]   => (Schema.create(Schema.Type.LONG), null)
-    case t if t =:= typeOf[Float]  => (Schema.create(Schema.Type.FLOAT), null)
-    case t if t =:= typeOf[Double] => (Schema.create(Schema.Type.DOUBLE), null)
-    case t if t =:= typeOf[String] => (Schema.create(Schema.Type.STRING), null)
+    case t if t =:= typeOf[Int]        => (Schema.create(Schema.Type.INT), null)
+    case t if t =:= typeOf[Long]       => (Schema.create(Schema.Type.LONG), null)
+    case t if t =:= typeOf[Float]      => (Schema.create(Schema.Type.FLOAT), null)
+    case t if t =:= typeOf[Double]     => (Schema.create(Schema.Type.DOUBLE), null)
+    case t if t =:= typeOf[String]     => (Schema.create(Schema.Type.STRING), null)
     case t if t =:= typeOf[ByteString] =>
       (Schema.create(Schema.Type.BYTES), null)
     case t if t =:= typeOf[Array[Byte]] =>
@@ -103,8 +103,8 @@ private[types] object SchemaProvider {
     t.typeSymbol.annotations
       .find(_.tree.tpe.toString == tpe)
       .map { a =>
-        val q"new $t($v)" = a.tree
-        val Literal(Constant(s)) = v
+        val q"new $_($v)" = a.tree: @nowarn
+        val Literal(Constant(s)) = v: @nowarn
         s.toString
       }
   }
@@ -115,8 +115,8 @@ private[types] object SchemaProvider {
       _.annotations
         .find(_.tree.tpe.toString == tpe)
         .map { a =>
-          val q"new $t($v)" = a.tree
-          val Literal(Constant(s)) = v
+          val q"new $_($v)" = a.tree: @nowarn
+          val Literal(Constant(s)) = v: @nowarn
           s.toString
         }
     }

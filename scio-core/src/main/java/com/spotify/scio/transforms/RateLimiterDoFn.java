@@ -17,7 +17,7 @@
 
 package com.spotify.scio.transforms;
 
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.util.concurrent.RateLimiter;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.util.concurrent.RateLimiter;
 
 /**
  * DoFn which will rate limit the number of elements processed per second.
@@ -35,9 +35,9 @@ public class RateLimiterDoFn<InputT> extends DoFnWithResource<InputT, InputT, Ra
   }
 
   @ProcessElement
-  public void processElement(ProcessContext c) {
+  public void processElement(@Element InputT element, OutputReceiver<InputT> out) {
     getResource().acquire();
-    c.output(c.element());
+    out.output(element);
   }
 
   @Override

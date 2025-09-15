@@ -19,7 +19,7 @@
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.BeamExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --inputTopic=[TOPIC] --outputTopic=[TOPIC]"`
 package com.spotify.scio.examples.extra
 
@@ -90,13 +90,13 @@ object BeamExample {
       sc.customInput("Input", pubsubIn(args("inputTopic")))
 
     // Underlying Beam `PCollection[Account]`
-    val p: PCollection[Account] = accounts.internal // scalafix:ok
+    val p: PCollection[Account] = accounts.internal
 
     accounts
       // Beam `PTransform`
       .applyTransform(window)
       // Scio `map` transform
-      .map(a => KV.of(a.getName.toString, a.getAmount))
+      .map(a => KV.of(a.getName.toString, Double.box(a.getAmount)))
       // Beam `PTransform`
       .applyTransform(sumByKey)
       // Scio `map` transform

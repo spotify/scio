@@ -17,10 +17,10 @@
 
 package com.spotify.scio.bigquery.types
 
+import com.google.api.client.json.gson.GsonFactory
+
 import java.nio.file.{Path, Paths}
 import java.util.{List => JList}
-
-import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.spotify.scio.CoreSysProps
 import com.spotify.scio.bigquery.client.BigQuery
@@ -32,10 +32,11 @@ import com.spotify.scio.bigquery.{
   BigQueryUtil,
   StorageUtil
 }
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Charsets
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.hash.Hashing
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.Files
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Charsets
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.hash.Hashing
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.io.Files
 import org.slf4j.LoggerFactory
+import org.typelevel.scalaccompat.annotation.nowarn
 
 import scala.jdk.CollectionConverters._
 import scala.collection.mutable.{Buffer => MBuffer, Map => MMap}
@@ -52,7 +53,7 @@ private[types] object TypeProvider {
       case Nil => c.abort(c.enclosingPosition, "Missing table specification")
       case l   => l
     }
-    val (table: String, _) :: _ = args
+    val (table: String, _) :: _ = args: @nowarn
     val tableSpec =
       BigQueryPartitionUtil.latestTable(bigquery, formatString(args.map(_._1)))
     val schema = bigquery.tables.schema(tableSpec)
@@ -78,10 +79,11 @@ private[types] object TypeProvider {
   }
 
   def schemaImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
-    val (schemaString: String, _) :: _ = extractArgs(c) match {
+    val args = extractArgs(c) match {
       case Nil => c.abort(c.enclosingPosition, "Missing schema")
       case l   => l
     }
+    val (schemaString: String, _) :: _ = args: @nowarn
     val schema = BigQueryUtil.parseSchema(schemaString)
     schemaToType(c)(schema, annottees, Nil, Nil)
   }
@@ -123,13 +125,10 @@ private[types] object TypeProvider {
       case Nil => c.abort(c.enclosingPosition, "Missing query")
       case l   => l
     }
-    val (queryFormat: String, _) :: queryArgs = extractedArgs
+    val (queryFormat: String, _) :: queryArgs = extractedArgs: @nowarn
     val query = BigQueryPartitionUtil.latestQuery(bigquery, formatString(extractedArgs.map(_._1)))
     val schema = bigquery.query.schema(query)
     val traits = List(tq"${p(c, SType)}.HasQuery")
-
-    val queryDef =
-      q"override def query: _root_.java.lang.String = $queryFormat"
 
     val queryRawDef =
       q"override def queryRaw: _root_.java.lang.String = $queryFormat"
@@ -156,14 +155,13 @@ private[types] object TypeProvider {
           List(q"""
             implicit def bqQuery: ${p(c, SType)}.Query[$cName] =
               new ${p(c, SType)}.Query[$cName]{
-                $queryDef
                 $queryRawDef
               }
           """)
         case _ =>
           Nil
       }
-    val overrides = queryFnDef ::: queryDef :: queryRawDef :: qa
+    val overrides = queryFnDef ::: queryRawDef :: qa
 
     schemaToType(c)(schema, annottees, traits, overrides)
   }
@@ -175,6 +173,7 @@ private[types] object TypeProvider {
       .filter(_.children.head.toString.matches("^new description$"))
       .map(_.children.tail.head)
 
+  @nowarn("msg=match may not be exhaustive")
   def toTableImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
     checkMacroEnclosed(c)
@@ -195,27 +194,25 @@ private[types] object TypeProvider {
           desc.headOption.map(d => q"override def tableDescription: _root_.java.lang.String = $d")
         val defToPrettyString =
           q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${cName.toString}, indent)"
+
+        val defSelectedFields =
+          q"def selectedFields: _root_.scala.List[_root_.java.lang.String] = ${fields.map {
+              case ValDef(_, fname, _, _) =>
+                fname.toString
+            }.toList}"
+
         val fnTrait =
           tq"${TypeName(s"Function${fields.size}")}[..${fields.map(_.children.head)}, $cName]"
         val traits = (if (fields.size <= 22) Seq(fnTrait) else Seq()) ++ defTblDesc
           .map(_ => tq"${p(c, SType)}.HasTableDescription")
-        val taggedFields = fields.map {
-          case q"$m val $n: _root_.com.spotify.scio.bigquery.types.Geography = $rhs" =>
-            provider.initializeToTable(c)(m, n, tq"_root_.java.lang.String")
-            c.universe.ValDef(
-              c.universe.Modifiers(m.flags, m.privateWithin, m.annotations),
-              n,
-              tq"_root_.java.lang.String @${typeOf[BigQueryTag]}",
-              q"{$rhs}.wkt"
-            )
-          case ValDef(m, n, tpt, rhs) =>
-            provider.initializeToTable(c)(m, n, tpt)
-            c.universe.ValDef(
-              c.universe.Modifiers(m.flags, m.privateWithin, m.annotations),
-              n,
-              tq"$tpt @${typeOf[BigQueryTag]}",
-              rhs
-            )
+        val taggedFields = fields.map { case ValDef(m, n, tpt, rhs) =>
+          provider.initializeToTable(c)(m, n, tpt)
+          c.universe.ValDef(
+            c.universe.Modifiers(m.flags, m.privateWithin, m.annotations),
+            n,
+            tq"$tpt @${typeOf[BigQueryTag]}",
+            rhs
+          )
         }
         val caseClassTree =
           q"""${caseClass(c)(mods, cName, taggedFields, body)}"""
@@ -223,12 +220,12 @@ private[types] object TypeProvider {
         (
           q"""$caseClassTree
             ${companion(c)(
-            cName,
-            traits,
-            Seq(defSchema, defAvroSchema, defToPrettyString) ++ defTblDesc,
-            taggedFields.asInstanceOf[Seq[Tree]].size,
-            maybeCompanion
-          )}
+              cName,
+              traits,
+              Seq(defSchema, defAvroSchema, defToPrettyString, defSelectedFields) ++ defTblDesc,
+              taggedFields.asInstanceOf[Seq[Tree]].size,
+              maybeCompanion
+            )}
         """,
           caseClassTree,
           cName.toString
@@ -245,8 +242,7 @@ private[types] object TypeProvider {
 
         c.abort(c.enclosingPosition, error)
     }
-    debug(s"TypeProvider.toTableImpl:")
-    debug(r)
+    debug(c)(s"TypeProvider.toTableImpl", r)
 
     if (shouldDumpClassesForPlugin) {
       dumpCodeForScalaPlugin(c)(Seq.empty, caseClassTree, name)
@@ -267,28 +263,31 @@ private[types] object TypeProvider {
     val provider: OverrideTypeProvider = OverrideTypeProviderFinder.getProvider
 
     // Returns: (raw type, e.g. Int, String, NestedRecord, nested case class definitions)
-    def getRawType(tfs: TableFieldSchema): (Tree, Seq[Tree]) =
+    def getRawType(tfs: TableFieldSchema): (Tree, Seq[Tree]) = {
+      // format: off
       tfs.getType match {
-        case _ if provider.shouldOverrideType(tfs) =>
-          (provider.getScalaType(c)(tfs), Nil)
-        case "BOOLEAN" | "BOOL"  => (tq"_root_.scala.Boolean", Nil)
-        case "INTEGER" | "INT64" => (tq"_root_.scala.Long", Nil)
-        case "FLOAT" | "FLOAT64" => (tq"_root_.scala.Double", Nil)
-        case "STRING"            => (tq"_root_.java.lang.String", Nil)
-        case "NUMERIC"           => (tq"_root_.scala.BigDecimal", Nil)
-        case "BYTES"             => (tq"_root_.com.google.protobuf.ByteString", Nil)
-        case "TIMESTAMP"         => (tq"_root_.org.joda.time.Instant", Nil)
-        case "DATE"              => (tq"_root_.org.joda.time.LocalDate", Nil)
-        case "TIME"              => (tq"_root_.org.joda.time.LocalTime", Nil)
-        case "DATETIME"          => (tq"_root_.org.joda.time.LocalDateTime", Nil)
-        case "GEOGRAPHY" =>
-          (tq"_root_.com.spotify.scio.bigquery.types.Geography", Nil)
+        case _ if provider.shouldOverrideType(tfs) => (provider.getScalaType(c)(tfs), Nil)
+        case "BOOLEAN" | "BOOL"                    => (tq"_root_.scala.Boolean", Nil)
+        case "INTEGER" | "INT64"                   => (tq"_root_.scala.Long", Nil)
+        case "FLOAT" | "FLOAT64"                   => (tq"_root_.scala.Double", Nil)
+        case "STRING"                              => (tq"_root_.java.lang.String", Nil)
+        case "NUMERIC"                             => (tq"_root_.scala.BigDecimal", Nil)
+        case "BYTES"                               => (tq"_root_.com.google.protobuf.ByteString", Nil)
+        case "TIMESTAMP"                           => (tq"_root_.org.joda.time.Instant", Nil)
+        case "DATE"                                => (tq"_root_.org.joda.time.LocalDate", Nil)
+        case "TIME"                                => (tq"_root_.org.joda.time.LocalTime", Nil)
+        case "DATETIME"                            => (tq"_root_.org.joda.time.LocalDateTime", Nil)
+        case "GEOGRAPHY"                           => (tq"_root_.com.spotify.scio.bigquery.types.Geography", Nil)
+        case "JSON"                                => (tq"_root_.com.spotify.scio.bigquery.types.Json", Nil)
+        case "BIGNUMERIC"                          => (tq"_root_.com.spotify.scio.bigquery.types.BigNumeric", Nil)
         case "RECORD" | "STRUCT" =>
           val name = NameProvider.getUniqueName(tfs.getName)
           val (fields, records) = toFields(tfs.getFields)
           (q"${Ident(TypeName(name))}", Seq(q"case class ${TypeName(name)}(..$fields)") ++ records)
         case t => c.abort(c.enclosingPosition, s"type: $t not supported")
       }
+      // format: on
+    }
 
     // Returns: (field type, e.g. T/Option[T]/List[T], nested case class definitions)
     def getFieldType(tfs: TableFieldSchema): (Tree, Seq[Tree]) = {
@@ -332,11 +331,11 @@ private[types] object TypeProvider {
         val defTblTrait =
           defTblDesc.map(_ => tq"${p(c, SType)}.HasTableDescription").toSeq
         val defSchema = {
-          schema.setFactory(new JacksonFactory)
+          schema.setFactory(GsonFactory.getDefaultInstance)
           q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SUtil)}.parseSchema(${schema.toString})"
         }
         val defAvroSchema =
-          q"override def avroSchema: org.apache.avro.Schema = ${p(c, BigQueryUtils)}.toGenericAvroSchema(${cName.toString}, this.schema.getFields)"
+          q"override def avroSchema: org.apache.avro.Schema = ${p(c, BigQueryUtils)}.toGenericAvroSchema(this.schema, true)"
         val defToPrettyString =
           q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${cName.toString}, indent)"
 
@@ -345,12 +344,12 @@ private[types] object TypeProvider {
         (
           q"""$caseClassTree
             ${companion(c)(
-            cName,
-            traits ++ defTblTrait,
-            Seq(defSchema, defAvroSchema, defToPrettyString) ++ overrides ++ defTblDesc,
-            fields.size,
-            maybeCompanion
-          )}
+              cName,
+              traits ++ defTblTrait,
+              Seq(defSchema, defAvroSchema, defToPrettyString) ++ overrides ++ defTblDesc,
+              fields.size,
+              maybeCompanion
+            )}
             ..$records
         """,
           caseClassTree,
@@ -358,8 +357,7 @@ private[types] object TypeProvider {
         )
       case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
     }
-    debug(s"TypeProvider.schemaToType[$schema]:")
-    debug(r)
+    debug(c)(s"TypeProvider.schemaToType[$schema]:", r)
 
     if (shouldDumpClassesForPlugin) {
       dumpCodeForScalaPlugin(c)(records, caseClassTree, name)
@@ -401,7 +399,7 @@ private[types] object TypeProvider {
       case Literal(Constant(arg @ (_: String))) => arg
       // "string literal".stripMargin
       case Select(Literal(Constant(s: String)), TermName("stripMargin")) => s.stripMargin
-      case arg                                                           => c.abort(c.enclosingPosition, s"Unsupported argument $arg")
+      case arg => c.abort(c.enclosingPosition, s"Unsupported argument $arg")
     }
 
     val posList = MBuffer.empty[List[String]]
@@ -415,7 +413,7 @@ private[types] object TypeProvider {
           case q"selectedFields = List(..$xs)" => namedArgs("selectedFields") = xs.map(str)
           case q"rowRestriction = $s"          => namedArgs("rowRestriction") = List(str(s))
           case q"List(..$xs)"                  => posList += xs.map(str)
-          case q"$s"                           => posList += List(str(s))
+          case s                               => posList += List(str(s))
         }
         val posArgs = List("args", "selectedFields", "rowRestriction").zip(posList).toMap
         val dups = posArgs.keySet intersect namedArgs.keySet
@@ -427,6 +425,7 @@ private[types] object TypeProvider {
         val selectedFields = argMap.getOrElse("selectedFields", Nil)
         val rowRestriction = argMap.getOrElse("rowRestriction", Nil).headOption
         (table, args, selectedFields, rowRestriction)
+      case _ => throw new Exception("Invalid macro application")
     }
   }
 
@@ -471,7 +470,7 @@ private[types] object TypeProvider {
 
     if (originalCompanion.isDefined) {
       val q"$mods object $cName extends { ..$_ } with ..$parents { $_ => ..$body }" =
-        originalCompanion.get
+        originalCompanion.get: @nowarn
       // need to filter out Object, otherwise get duplicate Object error
       // also can't get a FQN of scala.AnyRef which gets erased to java.lang.Object, can't find a
       // sane way to =:= scala.AnyRef
@@ -523,6 +522,7 @@ private[types] object TypeProvider {
         .resolve("generated-classes")
     }
 
+  @nowarn
   private def pShowCode(
     c: blackbox.Context
   )(records: Seq[c.Tree], caseClass: c.Tree): Seq[String] = {
@@ -540,7 +540,7 @@ private[types] object TypeProvider {
           .replaceAll(
             s"@${classOf[BigQueryTag].getName}",
             ""
-          ) //BQ plugin does not need to know about BQTag
+          ) // BQ plugin does not need to know about BQTag
         parents match {
           case Nil =>
             s"case class $name($f)"
@@ -584,9 +584,8 @@ private[types] object NameProvider {
   private val m = MMap.empty[String, Int].withDefaultValue(0)
 
   /**
-   * Generate a unique name for a nested record.
-   * This is necessary since we create case classes for nested records and name them with their
-   * field names.
+   * Generate a unique name for a nested record. This is necessary since we create case classes for
+   * nested records and name them with their field names.
    */
   def getUniqueName(name: String): String = m.synchronized {
     val cName = toPascalCase(name) + '$'

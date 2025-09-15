@@ -28,8 +28,8 @@ class LargeHashSCollectionFunctions[T](private val self: SCollection[T]) {
    *
    * @group transform
    */
-  def hashFilter(sideInput: SideInput[SparkeySet[T]]): SCollection[T] = {
+  def largeHashFilter(sideInput: SideInput[SparkeySet[T]]): SCollection[T] = {
     implicit val coder = self.coder
-    self.map((_, ())).hashIntersectByKey(sideInput).keys
+    self.map((_, ())).largeHashIntersectByKey(sideInput).keys
   }
 }

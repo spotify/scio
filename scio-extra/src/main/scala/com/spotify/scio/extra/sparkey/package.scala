@@ -17,22 +17,21 @@
 
 package com.spotify.scio.extra
 
-import java.lang.Math.floorMod
-import java.util.UUID
 import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
+import com.spotify.scio.coders.extra.sparkey.SparkeyCoders
 import com.spotify.scio.coders.{BeamCoders, Coder, CoderMaterializer}
 import com.spotify.scio.extra.sparkey.instances._
-import com.spotify.scio.util.Cache
+import com.spotify.scio.io.{ClosedTap, EmptyTap}
+import com.spotify.scio.testing.TestDataManager
+import com.spotify.scio.util.{Cache, RemoteFileUtil}
 import com.spotify.scio.values.{SCollection, SideInput}
 import com.spotify.sparkey.{CompressionType, SparkeyReader}
-import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.transforms.{DoFn, View}
 import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.values.PCollectionView
 import org.slf4j.LoggerFactory
 
-import scala.jdk.CollectionConverters._
 import scala.util.hashing.MurmurHash3
 
 /**
@@ -45,32 +44,13 @@ import scala.util.hashing.MurmurHash3
  * To save an `SCollection[(String, String)]` to a Sparkey fileset:
  * {{{
  * val s = sc.parallelize(Seq("a" -> "one", "b" -> "two"))
- *
- * // temporary location
- * val s1: SCollection[SparkeyUri] = s.asSparkey
- *
- * // specific location
- * val s1: SCollection[SparkeyUri] = s.asSparkey("gs://<bucket>/<path>/<sparkey-prefix>")
- * }}}
+ * s.saveAsSparkey("gs://<bucket>/<path>/<sparkey-prefix>")
  *
  * // with multiple shards, sharded by MurmurHash3 of the key
- * val s1: SCollection[SparkeyUri] = s.asSparkey("gs://<bucket>/<path>/<sparkey-dir>", numShards=2)
+ * s.saveAsSparkey("gs://<bucket>/<path>/<sparkey-dir>", numShards=2)
  * }}}
  *
- * The result `SCollection[SparkeyUri]` can be converted to a side input:
- * {{{
- * val s: SCollection[SparkeyUri] = sc.parallelize(Seq("a" -> "one", "b" -> "two")).asSparkey
- * val side: SideInput[SparkeyReader] = s.asSparkeySideInput
- * }}}
- *
- * These two steps can be done with a syntactic sugar:
- * {{{
- * val side: SideInput[SparkeyReader] = sc
- *   .parallelize(Seq("a" -> "one", "b" -> "two"))
- *   .asSparkeySideInput
- * }}}
- *
- * An existing Sparkey file can also be converted to a side input directly:
+ * A previously-saved sparkey can be loaded as a side input:
  * {{{
  * sc.sparkeySideInput("gs://<bucket>/<path>/<sparkey-prefix>")
  * }}}
@@ -78,6 +58,13 @@ import scala.util.hashing.MurmurHash3
  * A sharded collection of Sparkey files can also be used as a side input by specifying a glob path:
  * {{{
  * sc.sparkeySideInput("gs://<bucket>/<path>/<sparkey-dir>/part-*")
+ * }}}
+ *
+ * When the sparkey is needed only temporarily, the save step can be elided:
+ * {{{
+ * val side: SideInput[SparkeyReader] = sc
+ *   .parallelize(Seq("a" -> "one", "b" -> "two"))
+ *   .asSparkeySideInput
  * }}}
  *
  * `SparkeyReader` can be used like a lookup table in a side input operation:
@@ -121,41 +108,43 @@ import scala.util.hashing.MurmurHash3
  *   .toSCollection
  * }}}
  */
-package object sparkey extends SparkeyReaderInstances {
+package object sparkey extends SparkeyReaderInstances with SparkeyCoders {
 
   /** Enhanced version of [[ScioContext]] with Sparkey methods. */
   implicit class SparkeyScioContext(private val self: ScioContext) extends AnyVal {
-    private def singleViewOf(basePath: String): PCollectionView[SparkeyUri] =
-      self.parallelize(Seq(SparkeyUri(basePath, self.options))).applyInternal(View.asSingleton())
 
-    private def shardedViewOf(basePath: String): PCollectionView[SparkeyUri] =
-      self
-        .parallelize(Seq[SparkeyUri](ShardedSparkeyUri(basePath, self.options)))
-        .applyInternal(View.asSingleton())
-
-    /**
-     * Create a SideInput of `SparkeyReader` from a [[SparkeyUri]] base path, to be used with
-     * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]].
-     * If the provided base path ends with "*", it will be treated as a sharded collection of
-     * Sparkey files.
-     */
-    @experimental
-    def sparkeySideInput(basePath: String): SideInput[SparkeyReader] = {
-      val view = if (basePath.endsWith("*")) {
-        val basePathWithoutGlobPart = basePath.split("/").dropRight(1).mkString("/")
-        shardedViewOf(basePathWithoutGlobPart)
+    private def sparkeySideInput[T](basePath: String, mapFn: SparkeyReader => T): SideInput[T] = {
+      if (self.isTest) {
+        val id = self.testId.get
+        val view = TestDataManager
+          .getInput(id)(SparkeyIO(basePath))
+          .toSCollection(self)
+          .applyInternal(View.asSingleton())
+        new SparkeyReaderSideInput(view, mapFn)
       } else {
-        singleViewOf(basePath)
+        val paths = Seq[SparkeyUri](SparkeyUri(basePath))
+        val view: PCollectionView[SparkeyUri] = self
+          .parallelize(paths)
+          .applyInternal(View.asSingleton())
+        new SparkeySideInput(view, mapFn)
       }
-
-      new SparkeySideInput(view)
     }
 
     /**
+     * Create a SideInput of `SparkeyReader` from a [[SparkeyUri]] base path, to be used with
+     * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. If the
+     * provided base path ends with "*", it will be treated as a sharded collection of Sparkey
+     * files.
+     */
+    @experimental
+    def sparkeySideInput(basePath: String): SideInput[SparkeyReader] =
+      sparkeySideInput(basePath, identity)
+
+    /**
      * Create a SideInput of `TypedSparkeyReader` from a [[SparkeyUri]] base path, to be used with
-     * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]].
-     * The provided decoder function will map from the underlying byte array to a JVM type, and
-     * the optional [[Cache]] object can be used to cache reads in memory after decoding.
+     * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. The
+     * provided decoder function will map from the underlying byte array to a JVM type, and the
+     * optional [[Cache]] object can be used to cache reads in memory after decoding.
      */
     @experimental
     def typedSparkeySideInput[T](
@@ -163,7 +152,15 @@ package object sparkey extends SparkeyReaderInstances {
       decoder: Array[Byte] => T,
       cache: Cache[String, T] = null
     ): SideInput[TypedSparkeyReader[T]] =
-      sparkeySideInput(basePath).map(reader => new TypedSparkeyReader[T](reader, decoder, cache))
+      sparkeySideInput(
+        basePath,
+        reader =>
+          new TypedSparkeyReader[T](
+            reader,
+            decoder,
+            Option(cache).getOrElse(Cache.noOp[String, T])
+          )
+      )
 
     /**
      * Create a SideInput of `CachedStringSparkeyReader` from a [[SparkeyUri]] base path, to be used
@@ -174,143 +171,104 @@ package object sparkey extends SparkeyReaderInstances {
       basePath: String,
       cache: Cache[String, String]
     ): SideInput[CachedStringSparkeyReader] =
-      sparkeySideInput(basePath).map(reader => new CachedStringSparkeyReader(reader, cache))
-  }
-
-  private[sparkey] val DefaultNumShards: Short = 1
-  private[sparkey] val DefaultSideInputNumShards: Short = 64
-  private[sparkey] val DefaultCompressionType: CompressionType = CompressionType.NONE
-  private[sparkey] val DefaultCompressionBlockSize: Int = 0
-
-  private def writeToSparkey[K, V](
-    uri: SparkeyUri,
-    maxMemoryUsage: Long,
-    compressionType: CompressionType,
-    compressionBlockSize: Int,
-    elements: Iterable[(K, V)]
-  )(implicit w: SparkeyWritable[K, V], koder: Coder[K], voder: Coder[V]): SparkeyUri = {
-    val writer = new SparkeyWriter(uri, compressionType, compressionBlockSize, maxMemoryUsage)
-    val it = elements.iterator
-    while (it.hasNext) {
-      val kv = it.next()
-      w.put(writer, kv._1, kv._2)
-    }
-    writer.close()
-    uri
-  }
-
-  private object SparkeyPairSCollection {
-    private val logger = LoggerFactory.getLogger(this.getClass)
+      sparkeySideInput(basePath, reader => new CachedStringSparkeyReader(reader, cache))
   }
 
   /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods. */
   implicit class SparkeyPairSCollection[K, V](@transient private val self: SCollection[(K, V)])
       extends Serializable {
 
-    import SparkeyPairSCollection._
-
-    implicit val (keyCoder, valueCoder): (Coder[K], Coder[V]) = BeamCoders.getTupleCoders(self)
+    // set as private to avoid conflict with PairSCollectionFunctions keyCoder/valueCoder
+    implicit private lazy val keyCoder: Coder[K] = BeamCoders.getKeyCoder(self)
+    implicit private lazy val valueCoder: Coder[V] = BeamCoders.getValueCoder(self)
 
     /**
      * Write the key-value pairs of this SCollection as a Sparkey file to a specific location.
      *
-     * @param path where to write the sparkey files. Defaults to a temporary location.
-     * @param maxMemoryUsage (optional) how much memory (in bytes) is allowed for writing
-     *                       the index file
-     * @param numShards (optional) the number of shards to split this dataset into before writing.
-     *                  One pair of Sparkey files will be written for each shard, sharded
-     *                  by MurmurHash3 of the key mod the number of shards.
-     * @return A singleton SCollection containing the [[SparkeyUri]] of the saved files.
+     * @param path
+     *   where to write the sparkey files
+     * @param maxMemoryUsage
+     *   (optional) how much memory (in bytes) is allowed for writing the index file
+     * @param numShards
+     *   (optional) the number of shards to split this dataset into before writing. One pair of
+     *   Sparkey files will be written for each shard, sharded by MurmurHash3 of the key mod the
+     *   number of shards.
      */
-    @experimental
+    def saveAsSparkey(
+      path: String,
+      maxMemoryUsage: Long = -1,
+      numShards: Short = SparkeyIO.DefaultNumShards,
+      compressionType: CompressionType = SparkeyIO.DefaultCompressionType,
+      compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize
+    )(implicit writable: SparkeyWritable[K, V]): ClosedTap[Nothing] = {
+      if (self.context.isTest) {
+        TestDataManager.getOutput(self.context.testId.get)(SparkeyIO.output[K, V](path))(self)
+      } else {
+        val baseUri = SparkeyUri.baseUri(Some(path), self.context.options)
+        SparkeyIO.writeSparkey(
+          baseUri,
+          writable,
+          self,
+          maxMemoryUsage,
+          numShards,
+          compressionType,
+          compressionBlockSize
+        )
+      }
+      ClosedTap[Nothing](EmptyTap)
+    }
+
+    // TODO for 0.15: make private, remove deprecation
+    /**
+     * Write the key-value pairs of this SCollection as a Sparkey file to a specific location.
+     *
+     * @param path
+     *   where to write the sparkey files. Defaults to a temporary location.
+     * @param maxMemoryUsage
+     *   (optional) how much memory (in bytes) is allowed for writing the index file
+     * @param numShards
+     *   (optional) the number of shards to split this dataset into before writing. One pair of
+     *   Sparkey files will be written for each shard, sharded by MurmurHash3 of the key mod the
+     *   number of shards.
+     * @return
+     *   A singleton SCollection containing the [[SparkeyUri]] of the saved files.
+     */
+    @deprecated("Use saveAsSparkey instead", since = "0.14.0")
     def asSparkey(
       path: String = null,
       maxMemoryUsage: Long = -1,
-      numShards: Short = DefaultNumShards,
-      compressionType: CompressionType = DefaultCompressionType,
-      compressionBlockSize: Int = DefaultCompressionBlockSize
+      numShards: Short = SparkeyIO.DefaultNumShards,
+      compressionType: CompressionType = SparkeyIO.DefaultCompressionType,
+      compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize
     )(implicit w: SparkeyWritable[K, V]): SCollection[SparkeyUri] = {
-      require(numShards > 0, s"numShards must be greater than 0, found $numShards")
-      if (compressionType != CompressionType.NONE) {
-        require(
-          compressionBlockSize > 0,
-          s"Compression block size must be > 0 for $compressionType"
-        )
+      // when testing, we don't know if this sparkey is read back during the pipeline,
+      // so we _both_ need to save the input data for test assertions _and_ actually write this
+      // data to a temporary location, even if a path is provided
+      if (self.context.isTest && path != null) {
+        TestDataManager.getOutput(self.context.testId.get)(SparkeyIO.output[K, V](path))(self)
       }
-
-      val tempLocation = self.context.options.getTempLocation()
-      val tempPath = s"$tempLocation/sparkey-${UUID.randomUUID}"
-      val basePath = if (path == null) tempPath else path
-      val nonShardedUri = SparkeyUri(basePath, self.context.options)
-      require(!nonShardedUri.exists, s"Sparkey URI $nonShardedUri already exists")
-      val uri = ShardedSparkeyUri(basePath, self.context.options)
-      require(!uri.exists, s"Sparkey URI $uri already exists")
-
-      logger.info(s"Saving as Sparkey with $numShards shards: $basePath")
-
-      self.transform { collection =>
-        val shards = collection
-          .groupBy { case (k, _) => floorMod(w.shardHash(k), numShards).toShort }
-          .map { case (shard, xs) =>
-            shard -> writeToSparkey(
-              uri.sparkeyUriForShard(shard, numShards),
-              maxMemoryUsage,
-              compressionType,
-              compressionBlockSize,
-              xs
-            )
-          }
-
-        val shardsMap = shards.asMapSideInput
-
-        val uris = shards.context
-          .parallelize((0 until numShards).map(_.toShort))
-          .withSideInputs(shardsMap)
-          .map { case (shard, sideContext) =>
-            sideContext(shardsMap).getOrElse(
-              shard,
-              writeToSparkey(
-                uri.sparkeyUriForShard(shard, numShards),
-                maxMemoryUsage,
-                compressionType,
-                compressionBlockSize,
-                Iterable.empty[(K, V)]
-              )
-            )
-          }
-          .toSCollection
-
-        uris.reifyAsListInGlobalWindow
-          .map { _ =>
-            if (numShards == 1) {
-              val src = FileSystems
-                .`match`(basePath + "/*")
-                .metadata()
-                .asScala
-                .map(_.resourceId())
-                .sortWith(_.getFilename < _.getFilename)
-                .asJava
-              val dst = SparkeyUri.extensions
-                .map(ext => FileSystems.matchNewResource(s"$basePath$ext", false))
-                .asJava
-
-              FileSystems.rename(src, dst)
-
-              nonShardedUri
-            } else {
-              uri
-            }
-
-          }
-      }
+      // force a write to a temporary location during test
+      val optPath = if (self.context.isTest) None else Option(path)
+      val baseUri = SparkeyUri.baseUri(optPath, self.context.options)
+      SparkeyIO.writeSparkey(
+        baseUri,
+        w,
+        self,
+        maxMemoryUsage,
+        numShards,
+        compressionType,
+        compressionBlockSize
+      )
     }
 
+    // TODO for 0.15: make private, remove deprecation
     /**
      * Write the key-value pairs of this SCollection as a Sparkey file to a temporary location.
      *
-     * @return A singleton SCollection containing the [[SparkeyUri]] of the saved files.
+     * @return
+     *   A singleton SCollection containing the [[SparkeyUri]] of the saved files.
      */
-    @experimental
+    @deprecated("Use saveAsSparkey instead", since = "0.14.0")
     def asSparkey(implicit w: SparkeyWritable[K, V]): SCollection[SparkeyUri] = this.asSparkey()
 
     /**
@@ -319,13 +277,14 @@ package object sparkey extends SparkeyReaderInstances {
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. It is
      * required that each key of the input be associated with a single value.
      *
-     * @param numShards the number of shards to use when writing the Sparkey file(s).
+     * @param numShards
+     *   the number of shards to use when writing the Sparkey file(s).
      */
     @experimental
     def asSparkeySideInput(
-      numShards: Short = DefaultSideInputNumShards,
-      compressionType: CompressionType = DefaultCompressionType,
-      compressionBlockSize: Int = DefaultCompressionBlockSize
+      numShards: Short = SparkeyIO.DefaultSideInputNumShards,
+      compressionType: CompressionType = SparkeyIO.DefaultCompressionType,
+      compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize
     )(implicit w: SparkeyWritable[K, V]): SideInput[SparkeyReader] =
       self
         .asSparkey(
@@ -349,29 +308,15 @@ package object sparkey extends SparkeyReaderInstances {
      * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
      * `SparkeyReader`, to be used with
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. It is
-     * required that each key of the input be associated with a single value. The provided
-     * [[Cache]] will be used to cache reads from the resulting [[SparkeyReader]].
-     */
-    @experimental
-    @deprecated("Use asLargeMapSideInput if no cache is required.", since = "0.10.1")
-    def asTypedSparkeySideInput[T](decoder: Array[Byte] => T)(implicit
-      w: SparkeyWritable[K, V]
-    ): SideInput[TypedSparkeyReader[T]] =
-      self.asSparkey.asTypedSparkeySideInput[T](decoder)
-
-    /**
-     * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
-     * `SparkeyReader`, to be used with
-     * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. It is
-     * required that each key of the input be associated with a single value. The provided
-     * [[Cache]] will be used to cache reads from the resulting [[SparkeyReader]].
+     * required that each key of the input be associated with a single value. The provided [[Cache]]
+     * will be used to cache reads from the resulting [[SparkeyReader]].
      */
     @experimental
     def asTypedSparkeySideInput[T](
       cache: Cache[String, T],
-      numShards: Short = DefaultSideInputNumShards,
-      compressionType: CompressionType = DefaultCompressionType,
-      compressionBlockSize: Int = DefaultCompressionBlockSize
+      numShards: Short = SparkeyIO.DefaultSideInputNumShards,
+      compressionType: CompressionType = SparkeyIO.DefaultCompressionType,
+      compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize
     )(
       decoder: Array[Byte] => T
     )(implicit w: SparkeyWritable[K, V]): SideInput[TypedSparkeyReader[T]] =
@@ -388,8 +333,8 @@ package object sparkey extends SparkeyReaderInstances {
      * `SparkeyMap`, to be used with
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. It is
      * required that each key of the input be associated with a single value. The resulting
-     * SideInput must fit on disk on each worker that reads it. This is strongly recommended
-     * over a regular MapSideInput if the data in the side input exceeds 100MB.
+     * SideInput must fit on disk on each worker that reads it. This is strongly recommended over a
+     * regular MapSideInput if the data in the side input exceeds 100MB.
      */
     @experimental
     def asLargeMapSideInput: SideInput[SparkeyMap[K, V]] = self.asLargeMapSideInput()
@@ -399,14 +344,14 @@ package object sparkey extends SparkeyReaderInstances {
      * `SparkeyMap`, to be used with
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. It is
      * required that each key of the input be associated with a single value. The resulting
-     * SideInput must fit on disk on each worker that reads it. This is strongly recommended
-     * over a regular MapSideInput if the data in the side input exceeds 100MB.
+     * SideInput must fit on disk on each worker that reads it. This is strongly recommended over a
+     * regular MapSideInput if the data in the side input exceeds 100MB.
      */
     @experimental
     def asLargeMapSideInput(
-      numShards: Short = DefaultSideInputNumShards,
-      compressionType: CompressionType = DefaultCompressionType,
-      compressionBlockSize: Int = DefaultCompressionBlockSize
+      numShards: Short = SparkeyIO.DefaultSideInputNumShards,
+      compressionType: CompressionType = SparkeyIO.DefaultCompressionType,
+      compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize
     ): SideInput[SparkeyMap[K, V]] = {
       val beamKoder = CoderMaterializer.beam(self.context.options, Coder[K])
       val beamVoder = CoderMaterializer.beam(self.context.options, Coder[V])
@@ -432,9 +377,9 @@ package object sparkey extends SparkeyReaderInstances {
     /**
      * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
      * `Map[key, Iterable[value]]`, to be used with [[SCollection.withSideInputs]]. In contrast to
-     * [[asLargeMapSideInput]], it is not required that the keys in the input collection be
-     * unique. The resulting map is required to fit on disk on each worker. This is strongly
-     * recommended over a regular MultiMapSideInput if the data in the side input exceeds 100MB.
+     * [[asLargeMapSideInput]], it is not required that the keys in the input collection be unique.
+     * The resulting map is required to fit on disk on each worker. This is strongly recommended
+     * over a regular MultiMapSideInput if the data in the side input exceeds 100MB.
      */
     @experimental
     def asLargeMultiMapSideInput: SideInput[SparkeyMap[K, Iterable[V]]] =
@@ -443,14 +388,14 @@ package object sparkey extends SparkeyReaderInstances {
     /**
      * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
      * `Map[key, Iterable[value]]`, to be used with [[SCollection.withSideInputs]]. In contrast to
-     * [[asLargeMapSideInput]], it is not required that the keys in the input collection be
-     * unique. The resulting map is required to fit on disk on each worker. This is strongly
-     * recommended over a regular MultiMapSideInput if the data in the side input exceeds 100MB.
+     * [[asLargeMapSideInput]], it is not required that the keys in the input collection be unique.
+     * The resulting map is required to fit on disk on each worker. This is strongly recommended
+     * over a regular MultiMapSideInput if the data in the side input exceeds 100MB.
      */
     def asLargeMultiMapSideInput(
-      numShards: Short = DefaultSideInputNumShards,
-      compressionType: CompressionType = DefaultCompressionType,
-      compressionBlockSize: Int = DefaultCompressionBlockSize
+      numShards: Short = SparkeyIO.DefaultSideInputNumShards,
+      compressionType: CompressionType = SparkeyIO.DefaultCompressionType,
+      compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize
     ): SideInput[SparkeyMap[K, Iterable[V]]] =
       self.groupByKey.asLargeMapSideInput(numShards, compressionType, compressionBlockSize)
 
@@ -462,9 +407,9 @@ package object sparkey extends SparkeyReaderInstances {
     @experimental
     def asCachedStringSparkeySideInput(
       cache: Cache[String, String],
-      numShards: Short = DefaultSideInputNumShards,
-      compressionType: CompressionType = DefaultCompressionType,
-      compressionBlockSize: Int = DefaultCompressionBlockSize
+      numShards: Short = SparkeyIO.DefaultSideInputNumShards,
+      compressionType: CompressionType = SparkeyIO.DefaultCompressionType,
+      compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize
     )(implicit w: SparkeyWritable[K, V]): SideInput[CachedStringSparkeyReader] =
       self
         .asSparkey(
@@ -477,15 +422,15 @@ package object sparkey extends SparkeyReaderInstances {
 
   /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods. */
   implicit class SparkeySetSCollection[T](private val self: SCollection[T]) {
-    implicit val coder: Coder[T] = self.coder
+    implicit private lazy val coder: Coder[T] = BeamCoders.getCoder(self)
 
     /**
      * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
      * `SparkeySet`, to be used with
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. It is
-     * required that each element of the input be unique. The resulting
-     * SideInput must fit on disk on each worker that reads it. This is strongly recommended
-     * over a regular SetSideInput if the data in the side input exceeds 100MB.
+     * required that each element of the input be unique. The resulting SideInput must fit on disk
+     * on each worker that reads it. This is strongly recommended over a regular SetSideInput if the
+     * data in the side input exceeds 100MB.
      */
     @experimental
     def asLargeSetSideInput: SideInput[SparkeySet[T]] =
@@ -495,15 +440,15 @@ package object sparkey extends SparkeyReaderInstances {
      * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
      * `SparkeySet`, to be used with
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. It is
-     * required that each element of the input be unique. The resulting
-     * SideInput must fit on disk on each worker that reads it. This is strongly recommended
-     * over a regular SetSideInput if the data in the side input exceeds 100MB.
+     * required that each element of the input be unique. The resulting SideInput must fit on disk
+     * on each worker that reads it. This is strongly recommended over a regular SetSideInput if the
+     * data in the side input exceeds 100MB.
      */
     @experimental
     def asLargeSetSideInput(
-      numShards: Short = DefaultSideInputNumShards,
-      compressionType: CompressionType = DefaultCompressionType,
-      compressionBlockSize: Int = DefaultCompressionBlockSize
+      numShards: Short = SparkeyIO.DefaultSideInputNumShards,
+      compressionType: CompressionType = SparkeyIO.DefaultCompressionType,
+      compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize
     ): SideInput[SparkeySet[T]] = {
       val beamKoder = CoderMaterializer.beam(self.context.options, Coder[T])
 
@@ -525,6 +470,7 @@ package object sparkey extends SparkeyReaderInstances {
   }
 
   /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods. */
+  @deprecated(since = "0.14.0")
   implicit class SparkeySCollection(private val self: SCollection[SparkeyUri]) extends AnyVal {
 
     /**
@@ -532,34 +478,37 @@ package object sparkey extends SparkeyReaderInstances {
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]].
      */
     @experimental
-    def asSparkeySideInput: SideInput[SparkeyReader] = {
-      val view = self.applyInternal(View.asSingleton())
-      new SparkeySideInput(view)
-    }
+    def asSparkeySideInput: SideInput[SparkeyReader] =
+      new SparkeySideInput(self.applyInternal(View.asSingleton()), identity)
 
     /**
      * Convert this SCollection to a SideInput of `SparkeyReader`, to be used with
-     * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]].
-     * The provided decoder function will map from the underlying byte array to a JVM type, and
-     * the optional [[Cache]] object can be used to cache reads in memory after decoding.
+     * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. The
+     * provided decoder function will map from the underlying byte array to a JVM type, and the
+     * optional [[Cache]] object can be used to cache reads in memory after decoding.
      */
     @experimental
     def asTypedSparkeySideInput[T](cache: Cache[String, T])(
       decoder: Array[Byte] => T
-    ): SideInput[TypedSparkeyReader[T]] =
-      asSparkeySideInput
-        .map(reader => new TypedSparkeyReader[T](reader, decoder, cache))
+    ): SideInput[TypedSparkeyReader[T]] = {
+      new SparkeySideInput(
+        self.applyInternal(View.asSingleton()),
+        reader => new TypedSparkeyReader[T](reader, decoder, cache)
+      )
+    }
 
     /**
      * Convert this SCollection to a SideInput of `SparkeyReader`, to be used with
-     * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]].
-     * The provided decoder function will map from the underlying byte array to a JVM type, and
-     * the optional [[Cache]] object can be used to cache reads in memory after decoding.
+     * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. The
+     * provided decoder function will map from the underlying byte array to a JVM type, and the
+     * optional [[Cache]] object can be used to cache reads in memory after decoding.
      */
     @experimental
     def asTypedSparkeySideInput[T](decoder: Array[Byte] => T): SideInput[TypedSparkeyReader[T]] =
-      asSparkeySideInput
-        .map(reader => new TypedSparkeyReader[T](reader, decoder, Cache.noOp))
+      new SparkeySideInput(
+        self.applyInternal(View.asSingleton()),
+        reader => new TypedSparkeyReader[T](reader, decoder, Cache.noOp)
+      )
 
     /**
      * Convert this SCollection to a SideInput of `CachedStringSparkeyReader`, to be used with
@@ -569,8 +518,10 @@ package object sparkey extends SparkeyReaderInstances {
     def asCachedStringSparkeySideInput(
       cache: Cache[String, String]
     ): SideInput[CachedStringSparkeyReader] =
-      asSparkeySideInput
-        .map(reader => new CachedStringSparkeyReader(reader, cache))
+      new SparkeySideInput(
+        self.applyInternal(View.asSingleton()),
+        reader => new CachedStringSparkeyReader(reader, cache)
+      )
   }
 
   implicit def makeLargeHashSCollectionFunctions[T](
@@ -583,38 +534,54 @@ package object sparkey extends SparkeyReaderInstances {
   ): PairLargeHashSCollectionFunctions[K, V] =
     new PairLargeHashSCollectionFunctions(s)
 
-  private class SparkeySideInput(val view: PCollectionView[SparkeyUri])
-      extends SideInput[SparkeyReader] {
+  private class SparkeyReaderSideInput[T](
+    val view: PCollectionView[SparkeyReader],
+    mapFn: SparkeyReader => T
+  ) extends SideInput[T] {
     override def updateCacheOnGlobalWindow: Boolean = false
-    override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeyReader =
-      SparkeySideInput.checkMemory(context.sideInput(view).getReader)
+    override def get[I, O](context: DoFn[I, O]#ProcessContext): T =
+      mapFn(context.sideInput(view))
   }
 
-  /**
-   * A Sparkey-backed MapSideInput, named "Large" to help discovery and usability.
-   * For most MapSideInput use cases >100MB or so, this performs dramatically faster.(100-1000x)
-   */
-  private class LargeMapSideInput[K: Coder, V: Coder](val view: PCollectionView[SparkeyUri])
-      extends SideInput[SparkeyMap[K, V]] {
+  private class SparkeySideInput[T](
+    val view: PCollectionView[SparkeyUri],
+    mapFn: SparkeyReader => T
+  ) extends SideInput[T] {
     override def updateCacheOnGlobalWindow: Boolean = false
-    override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeyMap[K, V] =
-      new SparkeyMap(
-        context.sideInput(view).getReader,
-        CoderMaterializer.beam(context.getPipelineOptions, Coder[K]),
-        CoderMaterializer.beam(context.getPipelineOptions, Coder[V])
+    override def get[I, O](context: DoFn[I, O]#ProcessContext): T =
+      mapFn(
+        SparkeySideInput.checkMemory(
+          context.sideInput(view).getReader(RemoteFileUtil.create(context.getPipelineOptions))
+        )
       )
   }
 
   /**
-   * A Sparkey-backed SetSideInput, named as such to help discovery and usability.
-   * For most SetSideInput use cases >100MB or so, this performs dramatically faster.(100-1000x)
+   * A Sparkey-backed MapSideInput, named "Large" to help discovery and usability. For most
+   * MapSideInput use cases >100MB or so, this performs dramatically faster.(100-1000x)
+   */
+  private class LargeMapSideInput[K: Coder, V: Coder](val view: PCollectionView[SparkeyUri])
+      extends SideInput[SparkeyMap[K, V]] {
+    override def updateCacheOnGlobalWindow: Boolean = false
+    override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeyMap[K, V] = {
+      new SparkeyMap(
+        context.sideInput(view).getReader(RemoteFileUtil.create(context.getPipelineOptions)),
+        CoderMaterializer.beam(context.getPipelineOptions, Coder[K]),
+        CoderMaterializer.beam(context.getPipelineOptions, Coder[V])
+      )
+    }
+  }
+
+  /**
+   * A Sparkey-backed SetSideInput, named as such to help discovery and usability. For most
+   * SetSideInput use cases >100MB or so, this performs dramatically faster.(100-1000x)
    */
   private class LargeSetSideInput[K: Coder](val view: PCollectionView[SparkeyUri])
       extends SideInput[SparkeySet[K]] {
     override def updateCacheOnGlobalWindow: Boolean = false
     override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeySet[K] =
       new SparkeySet(
-        context.sideInput(view).getReader,
+        context.sideInput(view).getReader(RemoteFileUtil.create(context.getPipelineOptions)),
         CoderMaterializer.beam(context.getPipelineOptions, Coder[K])
       )
   }

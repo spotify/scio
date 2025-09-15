@@ -6,16 +6,16 @@
 
 ### TableRow
 
-BigQuery rows are represented as [`TableRow`](https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest/com/google/api/services/bigquery/model/TableRow.html) in the BigQuery Java API which is basically a `Map<String, Object>`. Fields are accessed by name strings and values must be cast or converted to the desired type, both of which are error prone process.
+BigQuery rows are represented as @javadoc[TableRow](com.google.api.services.bigquery.model.TableRow) in the BigQuery Java API which is basically a `Map<String, Object>`. Fields are accessed by name strings and values must be cast or converted to the desired type, both of which are error prone process.
 
 ### Type safe BigQuery
 
-The type safe BigQuery API in Scio represents rows as case classes and generates [`TableSchema`](https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest/com/google/api/services/bigquery/model/TableSchema.html) converters automatically at compile time with the following mapping logic:
+The type safe BigQuery API in Scio represents rows as case classes and generates @javadoc[TableSchema](com.google.api.services.bigquery.model.TableSchema) converters automatically at compile time with the following mapping logic:
 
 - Nullable fields are mapped to `Option[T]`s
 - Repeated fields are mapped to `List[T]`s
 - Records are mapped to nested case classes
-- Timestamps are mapped to Joda Time [`Instant`](http://www.joda.org/joda-time/apidocs/org/joda/time/class-use/Instant.html)
+- Timestamps are mapped to Joda Time @javadoc[Instant](org.joda.time.Instant)
 
 See documentation for @scaladoc[BigQueryType](com.spotify.scio.bigquery.types.BigQueryType$) for the complete list of supported types.
 
@@ -199,32 +199,6 @@ In addition, `BigQueryType.fromTable` and `BigQueryTable.fromQuery` generate `ta
 
 import com.spotify.scio.bigquery.types.BigQueryTypeUser defined companion objects may interfere with macro code generation so for now do not provide one to a case class annotated with `@BigQueryType.toTable`, i.e. `object Row`.
 
-## BigQuery reads using `Schema`
-Classes generated from `@BigQueryType` annotations extend the @scaladoc[HasAnnotation](com.spotify.scio.bigquery.types.BigQueryType$$HasAnnotation) trait, and most of Scio's @scaladoc[user-facing BigQuery APIs](com.spotify.scio.bigquery.syntax.ScioContextOps) expect a
-parameterized type `T <: HasAnnotation`. However, Scio also offers a typed BigQuery read API that accepts any type `T` with an implicit @github[Schema](/scio-core/src/main/scala/com/spotify/scio/schemas/Schema.scala) instance in scope:
-
-```scala
-def typedBigQueryTable[T: Schema: Coder: ClassTag](table: Table): SCollection[T]
-```
-
-A `Schema` will be implicitly derived at compile time (similar to @ref[Coder](../internals/Coders.md)s) for case classes and certain traits like Lists, Maps, and Options.
-
-
-```scala mdoc:reset
-import com.spotify.scio.bigquery._
-import com.spotify.scio.ContextAndArgs
-
-case class Shakespeare(word: String, word_count: Long, corpus: String, corpus_date: Long)
-
-def main(cmdlineArgs: Array[String]): Unit = {
-  val (sc, args) = ContextAndArgs(cmdlineArgs)
-  sc
-    .typedBigQueryTable[Shakespeare](Table.Spec("bigquery-public-data:samples.shakespeare"))
-}
-```
-
-For more information on Schema materialization, see the @ref:[V0.8.0 Migration Guide](../migrations/v0.8.0-Migration-Guide.md).
-
 ## Using type safe BigQuery
 
 ### Type safe BigQuery with Scio
@@ -252,6 +226,22 @@ def main(cmdlineArgs: Array[String]): Unit = {
   sc.run()
   ()
 }
+```
+
+Note: Between Scio [0.14.11, 0.14.15), typed BigQuery IO used Beam's new `GenericRecord` API for BigQuery, converting
+case classes into Avro records which can be loaded directly into BQ tables. However, due to regressions for certain types as well as
+limited OverrideTypeProvider support, Scio 0.14.15 returns to using Beam's classic `TableRow` API for reads and writes. If you'd prefer to
+use the `GenericRecord` API, which has better support for certain types like `Json`, you can optionally supply a `format` parameter to your write:
+
+```scala mdoc:compile-only
+import com.spotify.scio.values.SCollection
+import com.spotify.scio.bigquery.BigQueryTypedTable.Format
+
+val data: SCollection[Result] = ???
+data.saveAsTypedBigQueryTable(
+  Table.Spec("..."),
+  format = Format.GenericRecordWithLogicalTypes
+)
 ```
 
 ### Type safe BigQueryClient
@@ -307,3 +297,39 @@ See @ref:[the FAQ](../FAQ.md#how-to-make-intellij-idea-work-with-type-safe-bigqu
 ### Custom types and validation
 
 See @ref:[OverrideTypeProvider](../internals/OverrideTypeProvider.md) for details about the custom types and validation mechanism.
+
+## BigQuery authentication
+
+BigQuery authentication works a bit differently than other IO types and can be hard to reason about. File-based IOs, for example, are read from directly on each remote worker node. In contrast,
+for BigQuery reads, Scio will actually launch a [Bigquery export job](https://cloud.google.com/bigquery/docs/exporting-data) from the main class process before submitting a Dataflow job request.
+This export job extracts the requested BQ data to a temporary GCS location, from which the job workers can read directly from. Thus, your launcher code must be credentialed with the [required permissions](https://cloud.google.com/bigquery/docs/exporting-data#required_permissions)
+to export data.
+
+This credential will be picked up from the values of `bigquery.project` and `bigquery.secret`, if set. If they are not, Scio will attempt to find an active
+[Application Default Credential](https://cloud.google.com/docs/authentication/production#automatically) and set the billing project to the value from @javadoc[DefaultProjectFactory](org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory).
+As of Scio 0.11.6, you can set the SBT option `bigquery.debug_auth=true`, which enables Scio to log the active credential used in BigQuery queries that return a 403 FORBIDDEN status.
+
+A [service account impersonation](https://cloud.google.com/iam/docs/impersonating-service-accounts) is available using SBT option `bigquery.act_as=service-account@my-project.iam.gserviceaccount.com`.
+It requires `roles/iam.serviceAccountTokenCreator` to be granted to a source account.
+
+Note that BigQuery Storage APIs don't require an export job as they can read from BigQuery directly.
+
+## BigQuery configurations in SBT
+
+Scio offers several BigQuery options that can be configured as SBT options - either in a root-level `.sbtopts` file or in your SBT process as `sbt -D{$OPT_KEY}=${OPT_VALUE} ...`:
+
+| Option                            | Description                                                                                                                                                                                                                                        |
+|-----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `bigquery.project`                | Specifies the billing project to use for queries. Defaults to the default project associated with the active GCP configuration (see @javadoc[DefaultProjectFactory](org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory)). |
+| `bigquery.secret`                 | Specifies a file path containing a BigQuery credential. Defaults to the [Application Default Credential](https://cloud.google.com/docs/authentication/production#automatically).                                                                   |
+| `bigquery.connect_timeout`        | Timeout in milliseconds to establish a connection. Default is 20000 (20 seconds). 0 for an infinite timeout.                                                                                                                                       |
+| `bigquery.read_timeout`           | Timeout in milliseconds to read data from an established connection. Default is 20000 (20 seconds). 0 for an infinite timeout.                                                                                                                     |
+| `bigquery.priority`               | Determines whether queries are executed in "BATCH" or "INTERACTIVE" mode. Default: BATCH.                                                                                                                                                          |
+| `bigquery.debug_auth`             | Enables logging active BigQuery user information on auth errors. Default: false.                                                                                                                                                                   |
+| `bigquery.types.debug`            | Enables verbose logging of macro generation steps. Default: false.                                                                                                                                                                                 |
+| `bigquery.cache.enabled`          | Enables scio bigquery caching. Default: true.                                                                                                                                                                                                      |
+| `generated.class.cache.directory` | BigQuery generated class cache directory. Defaults to a directory in `java.io.tmpdir`.                                                                                                                                                             |
+| `bigquery.cache.directory`        | BigQuery local schema cache directory. Defaults to a directory in `java.io.tmpdir`.                                                                                                                                                                |
+| `bigquery.plugin.disable.dump`    | Disable macro class dump. Default: false.                                                                                                                                                                                                          |
+| `bigquery.act_as`                 | A target SA principal to impersonate current auth. Optional.                                                                                                                                                                                       |
+| `bigquery.act_as_lifetime`        | A duration in seconds of a target SA temporary credentials lifetime. Default: 3600.                                                                                                                                                                |

@@ -21,7 +21,6 @@ import java.io.InputStream
 import java.net.URL
 import java.nio.channels.Channels
 import java.nio.file.{Path, Paths}
-
 import com.spotify.scio.CoreSysProps
 import com.spotify.scio.avro.AvroSysProps
 import com.spotify.scio.avro.types.MacroUtil._
@@ -33,11 +32,12 @@ import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.io.fs.MatchResult.Status
 import org.apache.beam.sdk.io.fs.{MatchResult, ResourceId}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Charsets
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.hash.Hashing
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.Files
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Charsets
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.hash.Hashing
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.io.Files
 import org.slf4j.LoggerFactory
 
+import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 import scala.reflect.macros._
 import scala.util.Try
@@ -99,7 +99,7 @@ private[types] object TypeProvider {
         }
       val r = matchResult(FileSystems.`match`(p)) match {
         case Some(x) => Some(x)
-        case None =>
+        case None    =>
           matchResult(FileSystems.`match`(p.replaceFirst("/?$", "/*.avro")))
       }
       require(r.isDefined, s"Unable to match Avro file from path '$p'")
@@ -173,11 +173,11 @@ private[types] object TypeProvider {
 
         q"""$caseClassTree
             ${companion(c)(
-          name,
-          docTrait ++ fnTrait,
-          schemaMethod ++ docMethod,
-          fields.asInstanceOf[Seq[c.Tree]]
-        )}
+            name,
+            docTrait ++ fnTrait,
+            schemaMethod ++ docMethod,
+            fields.asInstanceOf[Seq[c.Tree]]
+          )}
         """
       case t =>
         val error =
@@ -350,9 +350,15 @@ private[types] object TypeProvider {
         Seq()
       }
 
-    q"""object ${TermName(name.toString)} extends ${p(c, ScioAvroType)}.HasAvroSchema[$name] with ..$traits {
+    q"""object ${TermName(name.toString)} extends ${p(
+        c,
+        ScioAvroType
+      )}.HasAvroSchema[$name] with ..$traits {
           override def toPrettyString(indent: Int = 0): String =
-            ${p(c, s"$ScioAvro.types.SchemaUtil")}.toPrettyString(this.getClass.getName, this.schema, indent)
+            ${p(
+        c,
+        s"$ScioAvro.types.SchemaUtil"
+      )}.toPrettyString(this.getClass.getName, this.schema, indent)
           override def fromGenericRecord: (${p(c, ApacheAvro)}.generic.GenericRecord => $name) =
             ${p(c, ScioAvroType)}.fromGenericRecord[$name]
           override def toGenericRecord: ($name => ${p(c, ApacheAvro)}.generic.GenericRecord) =
@@ -422,6 +428,7 @@ private[types] object TypeProvider {
         .resolve("generated-classes")
     }
 
+  @nowarn("msg=match may not be exhaustive")
   private def pShowCode(
     c: blackbox.Context
   )(records: Seq[c.Tree], caseClass: c.Tree): Seq[String] = {
@@ -431,16 +438,16 @@ private[types] object TypeProvider {
     (Seq(caseClass) ++ records).map {
       case q"case class $name(..$fields) { ..$_ }" =>
         s"case class $name(${fields
-          .map { case ValDef(_, fname, ftpt, _) =>
-            s"${SchemaUtil.escapeNameIfReserved(fname.toString)} : $ftpt"
-          }
-          .mkString(", ")})"
+            .map { case ValDef(_, fname, ftpt, _) =>
+              s"${SchemaUtil.escapeNameIfReserved(fname.toString)} : $ftpt"
+            }
+            .mkString(", ")})"
       case q"case class $name(..$fields) extends $annotation { ..$_ }" =>
         s"case class $name(${fields
-          .map { case ValDef(_, fname, ftpt, _) =>
-            s"${SchemaUtil.escapeNameIfReserved(fname.toString)} : $ftpt"
-          }
-          .mkString(", ")}) extends $annotation"
+            .map { case ValDef(_, fname, ftpt, _) =>
+              s"${SchemaUtil.escapeNameIfReserved(fname.toString)} : $ftpt"
+            }
+            .mkString(", ")}) extends $annotation"
       case _ => ""
     }
   }

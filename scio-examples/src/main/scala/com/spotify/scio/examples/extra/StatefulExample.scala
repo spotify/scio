@@ -19,16 +19,16 @@
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.StatefulExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]"`
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]"`
 package com.spotify.scio.examples.extra
 
 import java.lang.{Integer => JInt}
-
 import com.spotify.scio._
 import org.apache.beam.sdk.state.{StateSpecs, ValueState}
 import org.apache.beam.sdk.transforms.DoFn
-import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, StateId}
+import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement, StateId}
 import org.apache.beam.sdk.values.KV
+import org.typelevel.scalaccompat.annotation.unused
 
 object StatefulExample {
   // States are persisted on a per-key-and-window basis
@@ -36,24 +36,24 @@ object StatefulExample {
 
   class StatefulDoFn extends DoFnT {
     // Declare mutable state
-    @StateId("count") private val count = StateSpecs.value[JInt]() // scalafix:ok
+    @StateId("count") @unused private val count = StateSpecs.value[JInt]()
 
     @ProcessElement
     def processElement(
-      context: DoFnT#ProcessContext,
+      @Element element: KV[String, Int],
+      out: OutputReceiver[KV[String, (Int, Int)]],
       // Access state declared earlier
       @StateId("count") count: ValueState[JInt]
     ): Unit = {
       // Read and write state
       val c = count.read()
       count.write(c + 1)
-      val kv = context.element()
-      context.output(KV.of(kv.getKey, (kv.getValue, c)))
+      out.output(KV.of(element.getKey, (element.getValue, c)))
     }
   }
 
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val (sc, _) = ContextAndArgs(cmdlineArgs)
 
     val input = for {
       k <- Seq("a", "b")

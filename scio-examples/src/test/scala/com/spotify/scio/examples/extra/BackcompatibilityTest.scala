@@ -19,10 +19,10 @@ package com.spotify.scio.examples.extra
 
 import java.nio.file.Paths
 
-import com.spotify.scio.avro.ProtobufIO
 import com.spotify.scio.ScioContext
 import com.spotify.scio.proto.SimpleV2.SimplePB
 import com.spotify.scio.testing._
+import com.spotify.scio.avro._
 
 class BackcompatibilityTest extends PipelineSpec {
   val input: Seq[SimplePB] = Seq(
@@ -46,14 +46,14 @@ class BackcompatibilityTest extends PipelineSpec {
   // sc.run()
   "saveAsProtobuf" should "read protobuf files written with Scio 0.7 and above" in {
     val sc = ScioContext()
-    val r = sc.read(ProtobufIO[SimplePB](s"$pwd/$path_07/*"))
+    val r = sc.protobufFile[SimplePB](s"$pwd/$path_07", ".protobuf.avro")
     r should containInAnyOrder(input)
     sc.run()
   }
 
   it should "read protobuf files written with Scio 0.6 and below" in {
     val sc = ScioContext()
-    val r = sc.read(ProtobufIO[SimplePB](s"$pwd/$path_06/*"))
+    val r = sc.protobufFile[SimplePB](s"$pwd/$path_06", ".protobuf.avro")
     r should containInAnyOrder(input)
     sc.run()
   }

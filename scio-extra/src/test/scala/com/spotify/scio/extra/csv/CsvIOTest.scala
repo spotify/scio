@@ -19,11 +19,10 @@ package com.spotify.scio.extra.csv
 
 import java.io.{File, FilenameFilter}
 import java.nio.charset.StandardCharsets
-
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.extra.csv.CsvIOTest.TestTuple
-import com.spotify.scio.io.TapSpec
+import com.spotify.scio.io.{ClosedTap, TapSpec}
 import com.spotify.scio.testing.ScioIOSpec
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.util.SerializableUtils
@@ -39,12 +38,7 @@ object CsvIOTest {
 
 class CsvIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterEach {
 
-  var dir: File = _
-  override protected def beforeEach(): Unit = dir = tmpDir
-  override protected def afterEach(): Unit = FileUtils.deleteDirectory(dir)
-
-  "CsvIO.Read" should "read strings" in {
-
+  "CsvIO.Read" should "read strings" in withTempDir { dir =>
     val csv = """header1
                 |data1
                 |data2
@@ -53,10 +47,10 @@ class CsvIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterEach {
     implicit val decoder: HeaderDecoder[String] =
       HeaderDecoder.decoder("header1")((str: String) => str)
 
-    parse(csv) should containInAnyOrder(Seq("data1", "data2"))
+    parse(dir)(csv) should containInAnyOrder(Seq("data1", "data2"))
   }
 
-  it should "read tuples" in {
+  it should "read tuples" in withTempDir { dir =>
     val csv =
       """
         |numericValue, stringValue
@@ -67,7 +61,7 @@ class CsvIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterEach {
     implicit val decoder: HeaderDecoder[TestTuple] =
       HeaderDecoder.decoder("numericValue", "stringValue")(TestTuple.apply)
 
-    parse(csv) should containInAnyOrder(
+    parse(dir)(csv) should containInAnyOrder(
       Seq(
         TestTuple(1, "test1"),
         TestTuple(2, "test2")
@@ -75,7 +69,7 @@ class CsvIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterEach {
     )
   }
 
-  it should "read tuples with reversed headers" in {
+  it should "read tuples with reversed headers" in withTempDir { dir =>
     val csv =
       """
         |stringValue, numericValue
@@ -86,7 +80,7 @@ class CsvIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterEach {
     implicit val decoder: HeaderDecoder[TestTuple] =
       HeaderDecoder.decoder("numericValue", "stringValue")(TestTuple.apply)
 
-    parse(csv) should containInAnyOrder(
+    parse(dir)(csv) should containInAnyOrder(
       Seq(
         TestTuple(1, "test1"),
         TestTuple(2, "test2")
@@ -94,7 +88,7 @@ class CsvIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterEach {
     )
   }
 
-  it should "read ordered items without a header" in {
+  it should "read ordered items without a header" in withTempDir { dir =>
     val csv =
       """
         |test1,1
@@ -105,7 +99,7 @@ class CsvIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterEach {
       TestTuple(i, string)
     }
 
-    parse(csv) should containInAnyOrder(
+    parse(dir)(csv) should containInAnyOrder(
       Seq(
         TestTuple(1, "test1"),
         TestTuple(2, "test2")
@@ -113,16 +107,18 @@ class CsvIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterEach {
     )
   }
 
-  "CsvIO.Write" should "write with headers" in {
+  "CsvIO.Write" should "write with headers" in withTempDir { dir =>
     implicit val encoder: HeaderEncoder[TestTuple] =
       HeaderEncoder.caseEncoder("intValue", "stringValue")(TestTuple.unapply)
 
-    val csvLines = writeAsCsvAndReadLines(
-      Seq(
-        TestTuple(1, "test1"),
-        TestTuple(2, "test2")
-      )
+    val items = Seq(
+      TestTuple(1, "test1"),
+      TestTuple(2, "test2")
     )
+    val csvLines = writeAsCsvAndReadLines(dir) { (sc, path) =>
+      sc.parallelize(items)
+        .saveAsCsvFile(path)
+    }
     csvLines.head should be("intValue,stringValue")
     csvLines.tail should contain allElementsOf Seq(
       "1,test1",
@@ -130,43 +126,46 @@ class CsvIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterEach {
     )
   }
 
-  it should "write without headers" in {
+  it should "write without headers" in withTempDir { dir =>
     implicit val encoder: HeaderEncoder[TestTuple] =
       HeaderEncoder.caseEncoder("intValue", "stringValue")(TestTuple.unapply)
-    val noHeaderConfig = CsvIO.DefaultCsvConfig.copy(header = CsvConfiguration.Header.None)
+    val noHeaderConfig =
+      CsvIO.WriteParam.DefaultCsvConfig.copy(header = CsvConfiguration.Header.None)
 
-    val csvLines = writeAsCsvAndReadLines(
-      Seq(
-        TestTuple(1, "test1"),
-        TestTuple(2, "test2")
-      ),
-      CsvIO.WriteParam(csvConfiguration = noHeaderConfig)
+    val items = Seq(
+      TestTuple(1, "test1"),
+      TestTuple(2, "test2")
     )
+    val csvLines = writeAsCsvAndReadLines(dir) { (sc, path) =>
+      sc.parallelize(items)
+        .saveAsCsvFile(path, csvConfig = noHeaderConfig)
+    }
     csvLines should contain allElementsOf Seq(
       "1,test1",
       "2,test2"
     )
   }
 
-  it should "write with a row encoder" in {
+  it should "write with a row encoder" in withTempDir { dir =>
     implicit val encoder: RowEncoder[TestTuple] =
       RowEncoder.encoder(0, 1)((tup: TestTuple) => (tup.a, tup.string))
-    val noHeaderConfig = CsvIO.DefaultCsvConfig.copy(header = CsvConfiguration.Header.None)
+    val noHeaderConfig =
+      CsvIO.WriteParam.DefaultCsvConfig.copy(header = CsvConfiguration.Header.None)
 
-    val csvLines = writeAsCsvAndReadLines(
-      Seq(
-        TestTuple(1, "test1"),
-        TestTuple(2, "test2")
-      ),
-      CsvIO.WriteParam(csvConfiguration = noHeaderConfig)
+    val items = Seq(
+      TestTuple(1, "test1"),
+      TestTuple(2, "test2")
     )
+    val csvLines = writeAsCsvAndReadLines(dir) { (sc, path) =>
+      sc.parallelize(items).saveAsCsvFile(path, csvConfig = noHeaderConfig)
+    }
     csvLines should contain allElementsOf Seq(
       "1,test1",
       "2,test2"
     )
   }
 
-  "Csvio.ReadWrite" should "read and write csv files" in {
+  "Csvio.ReadWrite" should "read and write csv files" in withTempDir { dir =>
     implicit val codec: HeaderCodec[TestTuple] =
       HeaderCodec.codec("numericValue", "stringValue")(TestTuple.apply)(TestTuple.unapply(_).get)
     val csv = """numericValue, stringValue
@@ -196,36 +195,32 @@ class CsvIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterEach {
     )
   }
 
-  "CsvIO.ReadDoFn" should "be serialisable" in {
+  "CsvIO.ReadDoFn" should "be serializable" in {
     implicit val decoder: HeaderDecoder[TestTuple] =
       HeaderDecoder.decoder("numericValue", "stringValue")(TestTuple.apply)
-    SerializableUtils.serializeToByteArray(CsvIO.ReadDoFn[TestTuple](CsvIO.DefaultCsvConfig))
+    SerializableUtils.serializeToByteArray(
+      CsvIO.ReadDoFn[TestTuple](CsvIO.WriteParam.DefaultCsvConfig)
+    )
   }
 
-  private def writeAsCsvAndReadLines[T: HeaderEncoder: Coder](
-    items: Seq[T],
-    params: CsvIO.WriteParam = CsvIO.DefaultWriteParams
+  private def writeAsCsvAndReadLines(dir: File)(
+    transform: (ScioContext, String) => ClosedTap[Nothing]
   ): List[String] = {
     val sc = ScioContext()
-
-    sc.parallelize(items)
-      .saveAsCsvFile(dir.getPath, params)
-
+    transform(sc, dir.getAbsolutePath)
     sc.run().waitUntilFinish()
-
     val file: File = getFirstCsvFileFrom(dir)
-
     FileUtils.readLines(file, StandardCharsets.UTF_8).asScala.toList
   }
 
-  private def getFirstCsvFileFrom[T: HeaderEncoder: Coder](dir: File) =
+  private def getFirstCsvFileFrom(dir: File) =
     dir
       .listFiles(new FilenameFilter {
         override def accept(dir: File, name: String): Boolean = name.endsWith("csv")
       })
       .head
 
-  private def parse[T: HeaderDecoder: Coder](csv: String): SCollection[T] = {
+  private def parse[T: HeaderDecoder: Coder](dir: File)(csv: String): SCollection[T] = {
     val file = new File(dir, "source.csv")
     FileUtils.write(file, csv, StandardCharsets.UTF_8)
     ScioContext().csvFile(file.getAbsolutePath)

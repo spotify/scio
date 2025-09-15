@@ -26,7 +26,8 @@ import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 
 /**
  * Utility class to limit the number of parallel doFns
- * @param maxDoFns Max number of doFns
+ * @param maxDoFns
+ *   Max number of doFns
  */
 abstract private[scio] class ParallelLimitedFn[T, U](maxDoFns: Int)
     extends DoFnWithResource[T, U, Semaphore]
@@ -37,6 +38,9 @@ abstract private[scio] class ParallelLimitedFn[T, U](maxDoFns: Int)
 
   def parallelProcessElement(x: DoFn[T, U]#ProcessContext): Unit
 
+  /*
+   * ProcessContext is required as an argument because it is passed to public via parallelProcessElement
+   * */
   @ProcessElement def processElement(x: DoFn[T, U]#ProcessContext): Unit = {
     val semaphore = getResource
     try {

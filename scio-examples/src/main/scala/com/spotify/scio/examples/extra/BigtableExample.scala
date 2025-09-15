@@ -55,7 +55,7 @@ object BigtableExample {
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.BigtableWriteExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --bigtableProjectId=[BIG_TABLE_PROJECT_ID]
 // --bigtableInstanceId=[BIG_TABLE_INSTANCE_ID]
@@ -87,7 +87,7 @@ object BigtableWriteExample {
       .map(kv => BigtableExample.toMutation(kv._1, kv._2))
       .saveAsBigtable(btProjectId, btInstanceId, btTableId)
 
-    sc.run()
+    sc.run().waitUntilDone()
 
     // Bring down the number of nodes after the job ends to save cost. There is no need to wait
     // after bumping the nodes down.
@@ -101,7 +101,7 @@ object BigtableWriteExample {
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.BigtableReadExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --bigtableProjectId=[BIG_TABLE_PROJECT_ID]
 // --bigtableInstanceId=[BIG_TABLE_INSTANCE_ID]
 // --bigtableTableId=[BIG_TABLE_TABLE_ID]

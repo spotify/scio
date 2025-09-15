@@ -18,15 +18,14 @@
 package org.apache.beam.sdk.extensions.smb;
 
 import java.io.Serializable;
-import java.util.List;
 import java.util.UUID;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 import org.apache.beam.sdk.transforms.display.HasDisplayData;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.annotations.VisibleForTesting;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.annotations.VisibleForTesting;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions;
 import org.joda.time.Instant;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -136,7 +135,7 @@ public final class SMBFilenamePolicy implements Serializable {
       return directory.resolve(timestamp + filename, StandardResolveOptions.RESOLVE_FILE);
     }
 
-    public ResourceId forBucket(BucketShardId id, BucketMetadata<?, ?> metadata) {
+    public ResourceId forBucket(BucketShardId id, BucketMetadata<?, ?, ?> metadata) {
       return forBucket(id, metadata.getNumBuckets(), metadata.getNumShards());
     }
 

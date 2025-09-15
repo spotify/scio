@@ -23,8 +23,8 @@ import java.util.Map;
 import org.apache.avro.reflect.Nullable;
 import org.apache.beam.examples.complete.game.utils.WriteToText;
 import org.apache.beam.sdk.Pipeline;
-import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.coders.DefaultCoder;
+import org.apache.beam.sdk.extensions.avro.coders.AvroCoder;
 import org.apache.beam.sdk.io.TextIO;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
@@ -127,19 +127,19 @@ public class UserScore {
     private final Counter numParseErrors = Metrics.counter("main", "ParseErrors");
 
     @ProcessElement
-    public void processElement(ProcessContext c) {
-      System.out.println("GOT " + c.element());
-      String[] components = c.element().split(",", -1);
+    public void processElement(@Element String element, OutputReceiver<GameActionInfo> out) {
+      System.out.println("GOT " + element);
+      String[] components = element.split(",", -1);
       try {
         String user = components[0].trim();
         String team = components[1].trim();
         Integer score = Integer.parseInt(components[2].trim());
         Long timestamp = Long.parseLong(components[3].trim());
         GameActionInfo gInfo = new GameActionInfo(user, team, score, timestamp);
-        c.output(gInfo);
+        out.output(gInfo);
       } catch (ArrayIndexOutOfBoundsException | NumberFormatException e) {
         numParseErrors.inc();
-        LOG.info("Parse error on " + c.element() + ", " + e.getMessage());
+        LOG.info("Parse error on " + element + ", " + e.getMessage());
       }
     }
   }

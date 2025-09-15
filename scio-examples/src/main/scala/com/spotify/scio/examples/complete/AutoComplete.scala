@@ -19,7 +19,7 @@
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.complete.AutoComplete
-// --project=[PROJECT] --runner=DataflowPRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowPRunner --region=[REGION NAME]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --outputToBigqueryTable=true --outputToDatastore=false --output=[DATASET].auto_complete"`
 package com.spotify.scio.examples.complete

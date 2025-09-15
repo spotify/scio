@@ -19,7 +19,7 @@
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.JavaConvertersExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --output=gs://[OUTPUT] --converter=[CONVERTER]"`
 package com.spotify.scio.examples.extra
 
@@ -39,7 +39,7 @@ object JavaConvertersExample {
         t.toResource(StaticValueProvider.of(output.toResourceId))
       case "String#toFilenamePolicy"      => t.to(output.toFilenamePolicy)
       case "String#toStaticValueProvider" => t.to(output.toStaticValueProvider)
-      case "FilenamePolicy#toJava" =>
+      case "FilenamePolicy#toJava"        =>
         t.to(FilenamePolicy(output, "-SSSSS-of-NNNNN", ".csv").asJava)
     }
 

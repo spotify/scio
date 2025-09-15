@@ -28,15 +28,28 @@ import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import scala.jdk.CollectionConverters._
 import scala.reflect.runtime.universe._
 import com.spotify.scio.util.Cache
+import org.typelevel.scalaccompat.annotation.nowarn
 
 private[types] object SchemaProvider {
-  private[this] val AvroSchemaCache = Cache.concurrentHashMap[String, Schema]
+  private[this] val AvroSchemaCache = Cache.concurrentHashMap[Type, Schema]
   private[this] val TableSchemaCache = Cache.concurrentHashMap[Type, TableSchema]
 
   def avroSchemaOf[T: TypeTag]: Schema =
     AvroSchemaCache.get(
-      typeTag[T].tpe.toString,
-      BigQueryUtils.toGenericAvroSchema(typeTag[T].tpe.toString, schemaOf[T].getFields)
+      typeTag[T].tpe, {
+        // BigQueryUtils converts nested record namespaces, but not top-level namespace
+        val converted =
+          BigQueryUtils.toGenericAvroSchema(typeTag[T].tpe.toString, schemaOf[T].getFields, true)
+        Schema.createRecord(
+          converted.getName,
+          converted.getDoc,
+          BeamAvroConverterNamespace,
+          converted.isError,
+          converted.getFields.asScala
+            .map(f => new Schema.Field(f.name(), f.schema(), f.doc(), f.defaultVal()))
+            .asJava
+        )
+      }
     )
 
   def schemaOf[T: TypeTag]: TableSchema =
@@ -46,10 +59,7 @@ private[types] object SchemaProvider {
           case t if isCaseClass(t) => toFields(t)
           case t                   => throw new RuntimeException(s"Unsupported type $t")
         }
-        val r = new TableSchema().setFields(fields.toList.asJava)
-        debug(s"SchemaProvider.schemaOf[${typeOf[T]}]:")
-        debug(r)
-        r
+        new TableSchema().setFields(fields.toList.asJava)
       }
     )
 
@@ -81,6 +91,7 @@ private[types] object SchemaProvider {
       case t if t =:= typeOf[Double]     => ("FLOAT", Iterable.empty)
       case t if t =:= typeOf[String]     => ("STRING", Iterable.empty)
       case t if t =:= typeOf[BigDecimal] => ("NUMERIC", Iterable.empty)
+      case t if t =:= typeOf[BigNumeric] => ("BIGNUMERIC", Iterable.empty)
 
       case t if t =:= typeOf[ByteString]  => ("BYTES", Iterable.empty)
       case t if t =:= typeOf[Array[Byte]] => ("BYTES", Iterable.empty)
@@ -90,6 +101,7 @@ private[types] object SchemaProvider {
       case t if t =:= typeOf[LocalTime]     => ("TIME", Iterable.empty)
       case t if t =:= typeOf[LocalDateTime] => ("DATETIME", Iterable.empty)
       case t if t =:= typeOf[Geography]     => ("GEOGRAPHY", Iterable.empty)
+      case t if t =:= typeOf[Json]          => ("JSON", Iterable.empty)
 
       case t if isCaseClass(t) => ("RECORD", toFields(t))
       case _                   => throw new RuntimeException(s"Unsupported type: $tpe")
@@ -123,8 +135,8 @@ private[types] object SchemaProvider {
       _.annotations
         .find(_.tree.tpe.toString == tpe)
         .map { a =>
-          val q"new $_($v)" = a.tree
-          val Literal(Constant(s)) = v
+          val q"new $_($v)" = a.tree: @nowarn
+          val Literal(Constant(s)) = v: @nowarn
           s.toString
         }
     }

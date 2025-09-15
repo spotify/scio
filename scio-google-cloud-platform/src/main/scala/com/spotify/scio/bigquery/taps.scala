@@ -17,9 +17,10 @@
 
 package com.spotify.scio.bigquery
 
-import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
+import com.google.cloud.bigquery.storage.v1.ReadSession.TableReadOptions
 import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.spotify.scio.ScioContext
+import com.spotify.scio.avro._
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{FileStorage, Tap, Taps}
@@ -28,16 +29,17 @@ import org.apache.avro.generic.GenericRecord
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.Future
-import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import com.twitter.chill.Externalizer
 
 /** Tap for BigQuery TableRow JSON files. */
-final case class TableRowJsonTap(path: String) extends Tap[TableRow] {
-  override def value: Iterator[TableRow] = FileStorage(path).tableRowJsonFile
+final case class TableRowJsonTap(path: String, params: TableRowJsonIO.ReadParam)
+    extends Tap[TableRow] {
+  override def value: Iterator[TableRow] =
+    FileStorage(path, params.suffix).tableRowJsonFile
   override def open(sc: ScioContext): SCollection[TableRow] =
-    sc.tableRowJsonFile(path)
+    sc.read(TableRowJsonIO(path))(params)
 }
 
 final case class BigQueryTypedTap[T: Coder](table: Table, fn: (GenericRecord, TableSchema) => T)
@@ -50,7 +52,9 @@ final case class BigQueryTypedTap[T: Coder](table: Table, fn: (GenericRecord, Ta
 
   override def open(sc: ScioContext): SCollection[T] = {
     val ser = Externalizer(ts)
-    sc.bigQueryTable(table, Format.GenericRecord).map(gr => fn(gr, ser.get))
+    // TODO this is inefficient. Migrate to TableRow API ?
+    val coder = avroGenericRecordCoder
+    sc.read(BigQueryTypedTable(table, Format.GenericRecord)(coder)).map(gr => fn(gr, ser.get))
   }
 }
 
@@ -59,7 +63,7 @@ final case class BigQueryTap(table: TableReference) extends Tap[TableRow] {
   override def value: Iterator[TableRow] =
     BigQuery.defaultInstance().tables.rows(Table.Ref(table))
   override def open(sc: ScioContext): SCollection[TableRow] =
-    sc.bigQueryTable(Table.Ref(table))
+    sc.read(BigQueryTypedTable(Table.Ref(table), Format.TableRow))
 }
 
 /** Tap for BigQuery tables using storage api. */
@@ -68,10 +72,12 @@ final case class BigQueryStorageTap(table: Table, readOptions: TableReadOptions)
   override def value: Iterator[TableRow] =
     BigQuery.defaultInstance().tables.storageRows(table, readOptions)
   override def open(sc: ScioContext): SCollection[TableRow] =
-    sc.bigQueryStorage(
-      table,
-      readOptions.getSelectedFieldsList.asScala.toList,
-      readOptions.getRowRestriction
+    sc.read(
+      BigQueryStorage(
+        table,
+        readOptions.getSelectedFieldsList.asScala.toList,
+        Option(readOptions.getRowRestriction)
+      )
     )
 }
 
@@ -104,7 +110,7 @@ final case class BigQueryTaps(self: Taps) {
     bigQueryTable(BigQueryHelpers.parseTableSpec(tableSpec))
 
   /** Get a `Future[Tap[T]]` for typed BigQuery source. */
-  def typedBigQuery[T <: HasAnnotation: TypeTag: ClassTag: Coder](
+  def typedBigQuery[T <: HasAnnotation: TypeTag: Coder](
     newSource: String = null
   ): Future[Tap[T]] = {
     val bqt = BigQueryType[T]
@@ -116,7 +122,7 @@ final case class BigQueryTaps(self: Taps) {
         case null if bqt.isTable =>
           bigQueryTable(bqt.table.get)
         case null if bqt.isQuery =>
-          bigQuerySelect(bqt.query.get)
+          bigQuerySelect(bqt.queryRaw.get)
         case null =>
           throw new IllegalArgumentException(s"Missing table or query field in companion object")
         case _ if table.isDefined =>
@@ -129,8 +135,15 @@ final case class BigQueryTaps(self: Taps) {
   }
 
   /** Get a `Future[Tap[TableRow]]` for a BigQuery TableRow JSON file. */
-  def tableRowJsonFile(path: String): Future[Tap[TableRow]] =
-    mkTap(s"TableRowJson: $path", () => self.isPathDone(path), () => TableRowJsonIO(path).tap(()))
+  def tableRowJsonFile(
+    path: String,
+    params: TableRowJsonIO.ReadParam = TableRowJsonIO.ReadParam()
+  ): Future[Tap[TableRow]] =
+    mkTap(
+      s"TableRowJson: $path",
+      () => self.isPathDone(path, params.suffix),
+      () => TableRowJsonTap(path, params)
+    )
 
   def bigQueryStorage(
     table: TableReference,
@@ -142,7 +155,7 @@ final case class BigQueryTaps(self: Taps) {
       () => {
         val selectedFields = readOptions.getSelectedFieldsList.asScala.toList
         val rowRestriction = Option(readOptions.getRowRestriction)
-        BigQueryStorage(Table.Ref(table), selectedFields, rowRestriction).tap()
+        BigQueryStorage(Table.Ref(table), selectedFields, rowRestriction).tap(())
       }
     )
 
@@ -158,7 +171,7 @@ final case class BigQueryTaps(self: Taps) {
         val selectedFields = readOptions.getSelectedFieldsList.asScala.toList
         val rowRestriction = Option(readOptions.getRowRestriction)
         BigQueryStorage(Table.Ref(table), selectedFields, rowRestriction)
-          .tap()
+          .tap(())
           .map(fn)
       }
     )

@@ -19,7 +19,7 @@
 // Usage:
 
 // `sbt "scio-examples/runMain com.spotify.scio.examples.extra.RefreshingSideInputExample
-// --project=[PROJECT] --runner=[RUNNER] --zone=[ZONE] --input=[PUBSUB_SUBSCRIPTION]"`
+// --project=[PROJECT] --runner=[RUNNER] --region=[REGION NAME] --input=[PUBSUB_SUBSCRIPTION]"`
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
@@ -36,10 +36,10 @@ import org.slf4j.LoggerFactory
 import scala.util.{Random, Success, Try}
 
 /**
- * Streaming job with periodically updating side input, modeled as a basic lottery game.
- * A side input holds a sequence of randomly generated numbers that are the current "winning"
- * numbers, and refreshes every 10 seconds. Meanwhile, a Pub/Sub subscription reads in lottery
- * tickets (represented as Strings) and checks if they match the winning numbers.
+ * Streaming job with periodically updating side input, modeled as a basic lottery game. A side
+ * input holds a sequence of randomly generated numbers that are the current "winning" numbers, and
+ * refreshes every 10 seconds. Meanwhile, a Pub/Sub subscription reads in lottery tickets
+ * (represented as Strings) and checks if they match the winning numbers.
  */
 object RefreshingSideInputExample {
   case class LotteryTicket(numbers: Seq[Int])
@@ -84,7 +84,7 @@ object RefreshingSideInputExample {
 
     // Sample PubSub topic modeling lottery tickets as a comma-separated list of numbers.
     // For example, a message might contain the string "10,7,3,1,9"
-    sc.pubsubTopic[String](args("input"))
+    sc.read(PubsubIO.string(args("input")))(PubsubIO.ReadParam(PubsubIO.Topic))
       .flatMap(toLotteryTicket)
       .withFixedWindows(Duration.standardSeconds(5))
       .withTimestamp
@@ -109,9 +109,9 @@ object RefreshingSideInputExample {
   }
 
   private def toLotteryTicket(message: String): Option[LotteryTicket] =
-    Try(LotteryTicket(message.split(",").map(_.toInt))) match {
+    Try(LotteryTicket(message.split(",").map(_.toInt).toSeq)) match {
       case Success(s) if s.numbers.size == ticketSize => Some(s)
-      case _ =>
+      case _                                          =>
         logger.error(s"Malformed message: $message")
         None
     }

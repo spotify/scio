@@ -1,0 +1,43 @@
+[
+{
+    "type": "record",
+    "name": "TestLogicalTypes",
+    "namespace": "com.spotify.scio.smb",
+    "doc": "Record for testing logical types",
+    "fields": [
+        {
+          "name": "timestamp",
+          "type": {
+            "type": "long", "logicalType": "timestamp-millis"
+          }
+        },
+        {
+          "name": "decimal",
+          "type": {
+            "type": "bytes",
+            "logicalType": "decimal",
+            "precision": 4,
+            "scale": 2
+          }
+        }
+    ]
+},
+{
+    "type": "record",
+    "name": "AvroGeneratedUserProjection",
+    "namespace": "com.spotify.scio.smb",
+    "doc": "Record for testing trimmed projections",
+    "fields": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "optionalFieldWithDefault",
+          "doc": "Not present in original AvroGeneratedUser schema",
+          "type": [ "null", "string" ],
+          "default": null
+        }
+    ]
+}
+]

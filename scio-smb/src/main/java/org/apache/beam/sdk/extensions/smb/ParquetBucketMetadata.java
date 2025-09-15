@@ -14,47 +14,55 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package org.apache.beam.sdk.extensions.smb;
+
+import static com.google.common.base.Verify.verify;
+import static com.google.common.base.Verify.verifyNotNull;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+import javax.annotation.Nullable;
 import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.reflect.ReflectData;
+import org.apache.avro.generic.IndexedRecord;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.transforms.display.DisplayData;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableSet;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Map;
-
-public class ParquetBucketMetadata<K, V> extends BucketMetadata<K, V> {
+public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> {
 
   @JsonProperty private final String keyField;
 
-  @JsonIgnore private final String[] keyPath;
+  @JsonProperty
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private final String keyFieldSecondary;
 
-  // Parquet is a file format only. `V` can be Avro records, Scala case classes, etc.
-  private enum RecordType {
-    SCALA,
-    AVRO
-  }
+  @JsonIgnore
+  private final AtomicReference<Function<V, K1>> keyGettersPrimary = new AtomicReference<>();
 
-  // Lazily initialized in extractKey, after the first record is seen
-  @JsonIgnore private RecordType recordType = null;
-  @JsonIgnore private Method[] getters = null;
+  @JsonIgnore
+  private final AtomicReference<Function<V, K2>> keyGettersSecondary = new AtomicReference<>();
 
   @SuppressWarnings("unchecked")
   public ParquetBucketMetadata(
       int numBuckets,
       int numShards,
-      Class<K> keyClass,
-      BucketMetadata.HashType hashType,
+      Class<K1> keyClassPrimary,
       String keyField,
+      Class<K2> keyClassSecondary,
+      String keyFieldSecondary,
+      HashType hashType,
       String filenamePrefix,
       Class<V> recordClass)
       throws CannotProvideCoderException, Coder.NonDeterministicException {
@@ -62,9 +70,13 @@ public class ParquetBucketMetadata<K, V> extends BucketMetadata<K, V> {
         BucketMetadata.CURRENT_VERSION,
         numBuckets,
         numShards,
-        (Class<K>) toJavaType(keyClass),
-        hashType,
-        validateKeyField(keyField, toJavaType(keyClass), recordClass),
+        (Class<K1>) toJavaType(keyClassPrimary),
+        validateKeyField(keyField, toJavaType(keyClassPrimary), recordClass),
+        keyClassSecondary == null ? null : (Class<K2>) toJavaType(keyClassSecondary),
+        keyFieldSecondary == null
+            ? null
+            : validateKeyField(keyFieldSecondary, toJavaType(keyClassSecondary), recordClass),
+        BucketMetadata.serializeHashType(hashType),
         filenamePrefix);
   }
 
@@ -72,9 +84,11 @@ public class ParquetBucketMetadata<K, V> extends BucketMetadata<K, V> {
   public ParquetBucketMetadata(
       int numBuckets,
       int numShards,
-      Class<K> keyClass,
-      BucketMetadata.HashType hashType,
+      Class<K1> keyClassPrimary,
       String keyField,
+      Class<K2> keyClassSecondary,
+      String keyFieldSecondary,
+      HashType hashType,
       String filenamePrefix,
       Schema schema)
       throws CannotProvideCoderException, Coder.NonDeterministicException {
@@ -82,9 +96,13 @@ public class ParquetBucketMetadata<K, V> extends BucketMetadata<K, V> {
         BucketMetadata.CURRENT_VERSION,
         numBuckets,
         numShards,
-        (Class<K>) toJavaType(keyClass),
-        hashType,
-        AvroUtils.validateKeyField(keyField, toJavaType(keyClass), schema),
+        (Class<K1>) toJavaType(keyClassPrimary),
+        AvroUtils.validateKeyField(keyField, toJavaType(keyClassPrimary), schema),
+        keyClassSecondary == null ? null : (Class<K2>) toJavaType(keyClassSecondary),
+        keyFieldSecondary == null
+            ? null
+            : AvroUtils.validateKeyField(keyFieldSecondary, toJavaType(keyClassSecondary), schema),
+        BucketMetadata.serializeHashType(hashType),
         filenamePrefix);
   }
 
@@ -93,14 +111,26 @@ public class ParquetBucketMetadata<K, V> extends BucketMetadata<K, V> {
       @JsonProperty("version") int version,
       @JsonProperty("numBuckets") int numBuckets,
       @JsonProperty("numShards") int numShards,
-      @JsonProperty("keyClass") Class<K> keyClass,
-      @JsonProperty("hashType") BucketMetadata.HashType hashType,
+      @JsonProperty("keyClass") Class<K1> keyClassPrimary,
       @JsonProperty("keyField") String keyField,
+      @Nullable @JsonProperty("keyClassSecondary") Class<K2> keyClassSecondary,
+      @Nullable @JsonProperty("keyFieldSecondary") String keyFieldSecondary,
+      @JsonProperty("hashType") String hashType,
       @JsonProperty(value = "filenamePrefix", required = false) String filenamePrefix)
       throws CannotProvideCoderException, Coder.NonDeterministicException {
-    super(version, numBuckets, numShards, keyClass, hashType, filenamePrefix);
+    super(
+        version,
+        numBuckets,
+        numShards,
+        keyClassPrimary,
+        keyClassSecondary,
+        hashType,
+        filenamePrefix);
+    verify(
+        (keyClassSecondary != null && keyFieldSecondary != null)
+            || (keyClassSecondary == null && keyFieldSecondary == null));
     this.keyField = keyField;
-    this.keyPath = toKeyPath(keyField);
+    this.keyFieldSecondary = keyFieldSecondary;
   }
 
   @Override
@@ -112,69 +142,81 @@ public class ParquetBucketMetadata<K, V> extends BucketMetadata<K, V> {
   @Override
   public void populateDisplayData(DisplayData.Builder builder) {
     super.populateDisplayData(builder);
-    builder.add(DisplayData.item("keyField", keyField));
+    builder.add(DisplayData.item("keyFieldPrimary", keyField));
+    if (keyFieldSecondary != null)
+      builder.add(DisplayData.item("keyFieldSecondary", keyFieldSecondary));
   }
 
   @Override
-  public boolean isPartitionCompatible(BucketMetadata o) {
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    ParquetBucketMetadata<?, ?> that = (ParquetBucketMetadata<?, ?>) o;
-    return getKeyClass() == that.getKeyClass()
-        && keyField.equals(that.keyField)
-        && Arrays.equals(keyPath, that.keyPath);
+  int hashPrimaryKeyMetadata() {
+    return Objects.hash(keyField, AvroUtils.castToComparableStringClass(getKeyClass()));
   }
 
   @Override
-  public K extractKey(V value) {
-    if (recordType == null) {
-      recordType = getRecordType(value.getClass());
-    }
-    switch (recordType) {
-      case AVRO:
-        return extractAvroKey(value);
-      case SCALA:
-        return extractScalaKey(value);
-      default:
-        throw new IllegalStateException("Unexpected value: " + recordType);
-    }
+  int hashSecondaryKeyMetadata() {
+    return Objects.hash(
+        keyFieldSecondary, AvroUtils.castToComparableStringClass(getKeyClassSecondary()));
   }
 
-  private K extractAvroKey(V value) {
-    GenericRecord node = (GenericRecord) value;
-    for (int i = 0; i < keyPath.length - 1; i++) {
-      node = (GenericRecord) node.get(keyPath[i]);
+  @Override
+  public Set<Class<? extends BucketMetadata>> compatibleMetadataTypes() {
+    return ImmutableSet.of(AvroBucketMetadata.class);
+  }
+
+  @Override
+  public K1 extractKeyPrimary(V value) {
+    Function<V, K1> getter = keyGettersPrimary.get();
+    if (getter == null) {
+      final Class<?> recordClass = value.getClass();
+      final Class<K1> keyClass = getKeyClass();
+      if (IndexedRecord.class.isAssignableFrom(recordClass)) {
+        final IndexedRecord record = (IndexedRecord) value;
+        final int[] path = AvroUtils.toKeyPath(keyField, keyClass, record.getSchema());
+        getter = (v) -> AvroBucketMetadata.extractKey(keyClass, path, (IndexedRecord) v);
+      } else if (scala.Product.class.isAssignableFrom(recordClass)) {
+        final Method[] methods = toKeyGetters(keyField, keyClass, recordClass);
+        getter = (v) -> extractKey(methods, v);
+      } else {
+        throw new IllegalArgumentException(
+            "Unsupported record class "
+                + recordClass.getName()
+                + ". Must be an Avro record or a Scala case class.");
+      }
+      keyGettersPrimary.compareAndSet(null, getter);
     }
-    Object keyObj = node.get(keyPath[keyPath.length - 1]);
-    // Always convert CharSequence to String, in case reader and writer disagree
-    if (getKeyClass() == CharSequence.class || getKeyClass() == String.class) {
-      keyObj = keyObj.toString();
+    return getter.apply(value);
+  }
+
+  @Override
+  public K2 extractKeySecondary(V value) {
+    verifyNotNull(keyFieldSecondary);
+    verifyNotNull(getKeyClassSecondary());
+    Function<V, K2> getter = keyGettersSecondary.get();
+    if (getter == null) {
+      final Class<?> recordClass = value.getClass();
+      final Class<K2> keyClass = getKeyClassSecondary();
+      if (IndexedRecord.class.isAssignableFrom(recordClass)) {
+        final IndexedRecord record = (IndexedRecord) value;
+        final int[] path = AvroUtils.toKeyPath(keyFieldSecondary, keyClass, record.getSchema());
+        getter = (v) -> AvroBucketMetadata.extractKey(keyClass, path, (IndexedRecord) v);
+      } else if (scala.Product.class.isAssignableFrom(recordClass)) {
+        final Method[] methods = toKeyGetters(keyFieldSecondary, keyClass, recordClass);
+        getter = (v) -> extractKey(methods, v);
+      } else {
+        throw new IllegalArgumentException(
+            "Unsupported record class "
+                + recordClass.getName()
+                + ". Must be an Avro record or a Scala case class.");
+      }
+      keyGettersSecondary.compareAndSet(null, getter);
     }
-    @SuppressWarnings("unchecked")
-    K key = (K) keyObj;
-    return key;
+    return getter.apply(value);
   }
 
   // FIXME: what about `Option[T]`
-  private K extractScalaKey(V value) {
-    if (getters == null) {
-      getters = new Method[keyPath.length];
-      Class<?> cls = value.getClass();
-      for (int i = 0; i < keyPath.length; i++) {
-        Method getter = null;
-        try {
-          getter = cls.getMethod(keyPath[i]);
-        } catch (NoSuchMethodException e) {
-          throw new IllegalStateException(
-              String.format("Failed to prepare getter %s for class %s", keyPath[i], cls));
-        }
-        getters[i] = getter;
-        cls = getter.getReturnType();
-      }
-    }
+  static <K> K extractKey(Method[] keyGetters, Object value) {
     Object obj = value;
-    for (Method getter : getters) {
+    for (Method getter : keyGetters) {
       try {
         obj = getter.invoke(obj);
       } catch (IllegalAccessException | InvocationTargetException e) {
@@ -187,19 +229,28 @@ public class ParquetBucketMetadata<K, V> extends BucketMetadata<K, V> {
     return key;
   }
 
-  private static String[] toKeyPath(String keyField) {
-    return keyField.split("\\.");
+  @Override
+  <OtherKeyType> boolean keyClassMatches(Class<OtherKeyType> requestedReadType) {
+    return super.keyClassMatches(requestedReadType)
+        || AvroUtils.castToComparableStringClass(getKeyClass()) == requestedReadType
+        || AvroUtils.castToComparableStringClass(requestedReadType) == getKeyClass();
+  }
+
+  @Override
+  <OtherKeyType> boolean keyClassSecondaryMatches(Class<OtherKeyType> requestedReadType) {
+    return super.keyClassSecondaryMatches(requestedReadType)
+        || AvroUtils.castToComparableStringClass(getKeyClassSecondary()) == requestedReadType
+        || AvroUtils.castToComparableStringClass(requestedReadType) == getKeyClassSecondary();
   }
 
   ////////////////////////////////////////////////////////////////////////////////
   // Logic for dealing with Avro records vs Scala case classes
   ////////////////////////////////////////////////////////////////////////////////
-
-  private static RecordType getRecordType(Class<?> recordClass) {
-    if (GenericRecord.class.isAssignableFrom(recordClass)) {
-      return RecordType.AVRO;
+  private static String validateKeyField(String keyField, Class<?> keyClass, Class<?> recordClass) {
+    if (IndexedRecord.class.isAssignableFrom(recordClass)) {
+      return AvroUtils.validateKeyField(keyField, keyClass, recordClass);
     } else if (scala.Product.class.isAssignableFrom(recordClass)) {
-      return RecordType.SCALA;
+      return validateScalaKeyField(keyField, keyClass, recordClass);
     } else {
       throw new IllegalArgumentException(
           "Unsupported record class "
@@ -208,56 +259,58 @@ public class ParquetBucketMetadata<K, V> extends BucketMetadata<K, V> {
     }
   }
 
-  private static String validateKeyField(String keyField, Class<?> keyClass, Class<?> recordClass) {
-    switch (getRecordType(recordClass)) {
-      case AVRO:
-        return AvroUtils.validateKeyField(
-            keyField,
-            keyClass,
-            new ReflectData(recordClass.getClassLoader()).getSchema(recordClass));
-      case SCALA:
-        return validateScalaKeyField(keyField, keyClass, recordClass);
-      default:
-        throw new IllegalStateException("Unexpected value: " + getRecordType(recordClass));
-    }
-  }
-
-  private static String validateScalaKeyField(
-      String keyField, Class<?> keyClass, Class<?> recordClass) {
-    final String[] keyPath = toKeyPath(keyField);
+  /**
+   * Constructs the sequence of getter methods to access the nested key field from a class
+   *
+   * @param keyField name of the field (joined with '.')
+   * @param keyClass key class to ensure type correctness of the designated keyField
+   * @param recordClass record class type
+   * @return sequence of getter methods to access the keyField
+   */
+  private static Method[] toKeyGetters(String keyField, Class<?> keyClass, Class<?> recordClass) {
+    final String[] fields = keyField.split("\\.");
+    final Method[] getters = new Method[fields.length];
 
     Method getter;
-    Class<?> current = recordClass;
-    for (int i = 0; i < keyPath.length - 1; i++) {
+    Class<?> cursor = recordClass;
+    for (int i = 0; i < fields.length - 1; i++) {
       try {
-        getter = current.getMethod(keyPath[i]);
+        getter = cursor.getMethod(fields[i]);
       } catch (NoSuchMethodException e) {
         throw new IllegalStateException(
-            String.format("Key path %s does not exist in record class %s", keyPath[i], current));
+            String.format("Key path %s does not exist in record class %s", fields[i], cursor));
       }
 
       Preconditions.checkArgument(
           scala.Product.class.isAssignableFrom(getter.getReturnType()),
-          "Non-leaf key field " + keyPath[i] + " is not a Scala type");
-      current = getter.getReturnType();
+          "Non-leaf key field " + fields[i] + " is not a Scala type");
+      getters[i] = getter;
+      cursor = getter.getReturnType();
     }
 
     try {
-      getter = current.getMethod(keyPath[keyPath.length - 1]);
+      getter = cursor.getMethod(fields[fields.length - 1]);
     } catch (NoSuchMethodException e) {
       throw new IllegalStateException(
           String.format(
               "Leaf key field %s does not exist in record class %s",
-              keyPath[keyPath.length - 1], current));
+              fields[fields.length - 1], cursor));
     }
 
     final Class<?> finalKeyFieldClass = toJavaType(getter.getReturnType());
     Preconditions.checkArgument(
-        finalKeyFieldClass.isAssignableFrom(keyClass),
+        finalKeyFieldClass.isAssignableFrom(keyClass)
+            || (finalKeyFieldClass == String.class && keyClass == CharSequence.class),
         String.format(
             "Key class %s did not conform to its Scala type. Must be of class: %s",
             keyClass, finalKeyFieldClass));
+    getters[fields.length - 1] = getter;
+    return getters;
+  }
 
+  private static String validateScalaKeyField(
+      String keyField, Class<?> keyClass, Class<?> recordClass) {
+    toKeyGetters(keyField, keyClass, recordClass);
     return keyField;
   }
 

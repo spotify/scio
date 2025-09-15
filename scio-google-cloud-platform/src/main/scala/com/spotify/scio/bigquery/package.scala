@@ -18,7 +18,9 @@
 package com.spotify.scio
 
 import com.google.api.services.bigquery.model.{TableRow => GTableRow}
+import com.spotify.scio.bigquery.instances.CoderInstances
 import com.spotify.scio.bigquery.syntax.{
+  FileStorageSyntax,
   SCollectionSyntax,
   ScioContextSyntax,
   TableReferenceSyntax,
@@ -35,9 +37,8 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write
  *
  * There are two BigQuery dialects,
  * [[https://cloud.google.com/bigquery/docs/reference/legacy-sql legacy]] and
- * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ standard]].
- * APIs that take a BigQuery query string as argument, e.g.
- * [[com.spotify.scio.bigquery.client.BigQuery.query.rows]],
+ * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ standard]]. APIs that take a
+ * BigQuery query string as argument, e.g. [[com.spotify.scio.bigquery.client.BigQuery.query.rows]],
  * [[com.spotify.scio.bigquery.client.BigQuery.query.schema]],
  * [[com.spotify.scio.bigquery.client.BigQuery.getTypedRows]] and
  * [[com.spotify.scio.bigquery.BigQueryType.fromQuery BigQueryType.fromQuery]], automatically
@@ -48,7 +49,9 @@ package object bigquery
     extends ScioContextSyntax
     with SCollectionSyntax
     with TableRowSyntax
-    with TableReferenceSyntax {
+    with TableReferenceSyntax
+    with FileStorageSyntax
+    with CoderInstances {
 
   /** Alias for BigQuery `CreateDisposition`. */
   val CREATE_IF_NEEDED = Write.CreateDisposition.CREATE_IF_NEEDED

@@ -22,9 +22,12 @@ import com.spotify.scio.annotations.experimental
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.extra.json.JsonIO.ReadParam
+import com.spotify.scio.util.FilenamePolicySupplier
 import io.circe.Printer
 import io.circe.generic.AutoDerivation
 import org.apache.beam.sdk.io.Compression
+import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
 
 /**
  * Main package for JSON APIs. Import all.
@@ -57,12 +60,14 @@ package object json extends AutoDerivation {
     @experimental
     def jsonFile[T: Decoder: Coder](
       path: String,
-      compression: Compression = Compression.AUTO
+      compression: Compression = JsonIO.ReadParam.DefaultCompression,
+      emptyMatchTreatment: EmptyMatchTreatment = ReadParam.DefaultEmptyMatchTreatment,
+      suffix: String = JsonIO.ReadParam.DefaultSuffix
     ): SCollection[T] = {
       implicit val encoder: Encoder[T] = new Encoder[T] {
         final override def apply(a: T): io.circe.Json = ???
       }
-      self.read(JsonIO[T](path))(JsonIO.ReadParam(compression))
+      self.read(JsonIO[T](path))(JsonIO.ReadParam(compression, emptyMatchTreatment, suffix))
     }
   }
 
@@ -72,11 +77,27 @@ package object json extends AutoDerivation {
     @experimental
     def saveAsJsonFile(
       path: String,
-      suffix: String = ".json",
-      numShards: Int = 0,
-      compression: Compression = Compression.UNCOMPRESSED,
-      printer: Printer = Printer.noSpaces
+      suffix: String = JsonIO.WriteParam.DefaultSuffix,
+      numShards: Int = JsonIO.WriteParam.DefaultNumShards,
+      compression: Compression = JsonIO.WriteParam.DefaultCompression,
+      printer: Printer = JsonIO.WriteParam.DefaultPrinter,
+      shardNameTemplate: String = JsonIO.WriteParam.DefaultShardNameTemplate,
+      tempDirectory: String = JsonIO.WriteParam.DefaultTempDirectory,
+      filenamePolicySupplier: FilenamePolicySupplier =
+        JsonIO.WriteParam.DefaultFilenamePolicySupplier,
+      prefix: String = JsonIO.WriteParam.DefaultPrefix
     ): ClosedTap[T] =
-      self.write(JsonIO[T](path))(JsonIO.WriteParam(suffix, numShards, compression, printer))
+      self.write(JsonIO[T](path))(
+        JsonIO.WriteParam(
+          suffix,
+          numShards,
+          compression,
+          printer,
+          filenamePolicySupplier,
+          prefix,
+          shardNameTemplate,
+          tempDirectory
+        )
+      )
   }
 }

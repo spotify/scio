@@ -27,12 +27,28 @@ object SoccoIndex {
   val header =
     """<!DOCTYPE html>
       |<html>
-      |  <title>Scio Examples</title>
-      |  <xmp theme="spacelab" style="display:none;">
+      |  <head>
+      |    <title>Scio Examples</title>
+      |    <link rel="shortcut icon" href="../images/favicon.ico">
+      |    <style>
+      |      body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}
+      |    </style>
+      |  </head>
+      |  <body>
+      |    <textarea hidden id="sourceTA">
     """.stripMargin
   val footer =
-    """  </xmp>
-      |  <script src="https://strapdownjs.com/v/0.2/strapdown.js"></script>
+    """    </textarea>
+      |    <div id="targetDiv" />
+      |    <script src="https://unpkg.com/showdown/dist/showdown.min.js"></script>
+      |    <script>
+      |      const text = document.getElementById('sourceTA').value;
+      |      const target = document.getElementById('targetDiv');
+      |      const converter = new showdown.Converter();
+      |      const html = converter.makeHtml(text);
+      |      target.innerHTML = html;
+      |    </script>
+      |  <body>
       |</html>
     """.stripMargin
 

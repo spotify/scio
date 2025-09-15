@@ -27,30 +27,34 @@ import scala.jdk.CollectionConverters._
 
 object AvroConverters extends ToTableRow with ToTableSchema {
 
+  /**
+   * Converts `record` into a TableRow by traversing the schema and converting each field
+   * @param record
+   * @return
+   *   record converted into a BigQuery TableRow
+   */
   @experimental
   def toTableRow[T <: IndexedRecord](record: T): TableRow = {
     val row = new TableRow
-
     record.getSchema.getFields.asScala.foreach { field =>
       Option(record.get(field.pos)).foreach { fieldValue =>
         row.set(field.name, toTableRowField(fieldValue, field))
       }
     }
-
     row
   }
 
   /**
-   * Traverses all fields of the supplied avroSchema and converts it into
-   * a TableSchema containing TableFieldSchemas.
+   * Traverses all fields of the supplied avroSchema and converts it into a TableSchema containing
+   * TableFieldSchemas.
    *
    * @param avroSchema
-   * @return the equivalent BigQuery schema
+   * @return
+   *   the equivalent BigQuery schema
    */
   @experimental
   def toTableSchema(avroSchema: Schema): TableSchema = {
     val fields = getFieldSchemas(avroSchema)
-
     new TableSchema().setFields(fields.asJava)
   }
 

@@ -73,7 +73,7 @@ abstract private[coders] class JWrapperCBF[T] extends Factory[T, Iterable[T]] {
 
   override def fromSpecific(it: IterableOnce[T]): Iterable[T] = {
     val b = new JIterableWrapperBuilder
-    it.foreach(b += _)
+    it.iterator.foreach(b += _)
     b.result()
   }
 

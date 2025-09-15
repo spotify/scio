@@ -19,7 +19,7 @@
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.DistCacheExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --input=gs://apache-beam-samples/wikipedia_edits/wiki_data-*.json
 // --output=gs://[BUCKET]/[PATH]/dist_cache_example"`
 package com.spotify.scio.examples.extra

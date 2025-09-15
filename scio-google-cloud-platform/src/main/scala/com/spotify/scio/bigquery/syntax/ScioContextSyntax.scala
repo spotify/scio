@@ -32,22 +32,21 @@ import com.spotify.scio.bigquery.{
   TableRowJsonIO
 }
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.schemas.Schema
 import com.spotify.scio.values._
-import org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord
 
-import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import com.spotify.scio.bigquery.BigQueryTypedTable
 import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import com.spotify.scio.bigquery.coders.tableRowCoder
+import org.apache.beam.sdk.io.Compression
+import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
 
 /** Enhanced version of [[ScioContext]] with BigQuery methods. */
 final class ScioContextOps(private val self: ScioContext) extends AnyVal {
 
   /**
-   * Get an SCollection for a BigQuery SELECT query.
-   * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
+   * Get an SCollection for a BigQuery SELECT query. Both
+   * [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
    * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
    * supported. By default the query dialect will be automatically detected. To override this
    * behavior, start the query string with `#legacysql` or `#standardsql`.
@@ -59,8 +58,8 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(BigQuerySelect(sqlQuery))(BigQuerySelect.ReadParam(flattenResults))
 
   /**
-   * Get an SCollection for a BigQuery SELECT query.
-   * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
+   * Get an SCollection for a BigQuery SELECT query. Both
+   * [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
    * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
    * supported. By default the query dialect will be automatically detected. To override this
    * behavior, start the query string with `#legacysql` or `#standardsql`.
@@ -77,11 +76,11 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   /**
    * Get an SCollection for a BigQuery table using the specified [[Format]].
    *
-   * Reading records as GenericRecord **should** offer better performance over
-   * TableRow records.
+   * Reading records as GenericRecord **should** offer better performance over TableRow records.
    *
-   * Note: When using `Format.GenericRecord` Bigquery types DATE, TIME and DATETIME
-   *       are read as STRING.
+   * Note: When using `Format.GenericRecord` Bigquery types DATE, TIME and DATETIME are read as
+   * STRING. Use `Format.GenericRecordWithLogicalTypes` for avro `date`, `timestamp-micros` and
+   * `local-timestamp-micros` (avro 1.10+)
    */
   def bigQueryTable[F: Coder](table: Table, format: Format[F]): SCollection[F] =
     self.read(BigQueryTypedTable(table, format))
@@ -89,13 +88,15 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   /**
    * Get an SCollection for a BigQuery table using the storage API.
    *
-   * @param selectedFields names of the fields in the table that should be read. If empty, all
-   *                       fields will be read. If the specified field is a nested field, all the
-   *                       sub-fields in the field will be selected.
-   * @param rowRestriction SQL text filtering statement, similar ti a WHERE clause in a query.
-   *                       Currently, we support combinations of predicates that are a comparison
-   *                       between a column and a constant value in SQL statement. Aggregates are
-   *                       not supported. For example:
+   * @param selectedFields
+   *   names of the fields in the table that should be read. If empty, all fields will be read. If
+   *   the specified field is a nested field, all the sub-fields in the field will be selected.
+   *   Fields will always appear in the generated class in the same order as they appear in the
+   *   table, regardless of the order specified in selectedFields.
+   * @param rowRestriction
+   *   SQL text filtering statement, similar ti a WHERE clause in a query. Currently, we support
+   *   combinations of predicates that are a comparison between a column and a constant value in SQL
+   *   statement. Aggregates are not supported. For example:
    *
    * {{{
    * "a > DATE '2014-09-27' AND (b > 5 AND c LIKE 'date')"
@@ -111,20 +112,21 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   /**
    * Get an SCollection for a BigQuery SELECT query using the storage API.
    *
-   * @param query SQL query
+   * @param query
+   *   SQL query
    */
   def bigQueryStorage(query: Query): SCollection[TableRow] =
     self.read(BigQueryStorageSelect(query))
 
-  def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](): SCollection[T] =
+  def typedBigQuery[T <: HasAnnotation: TypeTag: Coder](): SCollection[T] =
     typedBigQuery(None)
 
-  def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+  def typedBigQuery[T <: HasAnnotation: TypeTag: Coder](
     newSource: Source
   ): SCollection[T] = typedBigQuery(Option(newSource))
 
   /** Get a typed SCollection for BigQuery Table or a SELECT query using the Storage API. */
-  def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+  def typedBigQuery[T <: HasAnnotation: TypeTag: Coder](
     newSource: Option[Source]
   ): SCollection[T] = {
     val bqt = BigQueryType[T]
@@ -138,17 +140,6 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     }
   }
 
-  @deprecated("Beam SQL support will be removed in 0.11.0", since = "0.10.1")
-  def typedBigQueryTable[T: Schema: Coder: ClassTag](table: Table): SCollection[T] =
-    self.read(BigQueryTyped.BeamSchema(table))
-
-  @deprecated("Beam SQL support will be removed in 0.11.0", since = "0.10.1")
-  def typedBigQueryTable[T: Schema: Coder: ClassTag](
-    table: Table,
-    parseFn: SchemaAndRecord => T
-  ): SCollection[T] =
-    self.read(BigQueryTyped.BeamSchema(table, parseFn))
-
   /**
    * Get a typed SCollection for a BigQuery storage API.
    *
@@ -156,10 +147,10 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * [[com.spotify.scio.bigquery.types.BigQueryType.fromSchema BigQueryType.fromStorage]] or
    * [[com.spotify.scio.bigquery.types.BigQueryType.fromQuery BigQueryType.fromQuery]]
    */
-  def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](): SCollection[T] = {
+  def typedBigQueryStorage[T <: HasAnnotation: TypeTag: Coder](): SCollection[T] = {
     val bqt = BigQueryType[T]
     if (bqt.isQuery) {
-      self.read(BigQueryTyped.StorageQuery[T](Query(bqt.query.get)))
+      self.read(BigQueryTyped.StorageQuery[T](Query(bqt.queryRaw.get)))
     } else {
       val table = Table.Spec(bqt.table.get)
       val rr = bqt.rowRestriction
@@ -168,7 +159,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     }
   }
 
-  def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+  def typedBigQueryStorage[T <: HasAnnotation: TypeTag: Coder](
     table: Table
   ): SCollection[T] =
     self.read(
@@ -179,7 +170,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
       )
     )
 
-  def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+  def typedBigQueryStorage[T <: HasAnnotation: TypeTag: Coder](
     rowRestriction: String
   ): SCollection[T] = {
     val bqt = BigQueryType[T]
@@ -193,7 +184,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     )
   }
 
-  def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+  def typedBigQueryStorage[T <: HasAnnotation: TypeTag: Coder](
     table: Table,
     rowRestriction: String
   ): SCollection[T] =
@@ -205,7 +196,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
       )
     )
 
-  def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+  def typedBigQueryStorage[T <: HasAnnotation: TypeTag: Coder](
     table: Table,
     selectedFields: List[String],
     rowRestriction: String
@@ -219,8 +210,15 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     )
 
   /** Get an SCollection for a BigQuery TableRow JSON file. */
-  def tableRowJsonFile(path: String): SCollection[TableRow] =
-    self.read(TableRowJsonIO(path))
+  def tableRowJsonFile(
+    path: String,
+    compression: Compression = TableRowJsonIO.ReadParam.DefaultCompression,
+    emptyMatchTreatment: EmptyMatchTreatment = TableRowJsonIO.ReadParam.DefaultEmptyMatchTreatment,
+    suffix: String = TableRowJsonIO.ReadParam.DefaultSuffix
+  ): SCollection[TableRow] =
+    self.read(TableRowJsonIO(path))(
+      TableRowJsonIO.ReadParam(compression, emptyMatchTreatment, suffix)
+    )
 }
 
 trait ScioContextSyntax {

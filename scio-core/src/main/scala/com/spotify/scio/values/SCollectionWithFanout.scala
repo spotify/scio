@@ -21,8 +21,12 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.util.Functions
 import com.spotify.scio.coders.Coder
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
-import org.apache.beam.sdk.transforms.Combine
+import org.apache.beam.sdk.transforms.{Combine, Mean, Top}
 import org.apache.beam.sdk.values.PCollection
+import org.joda.time.ReadableInstant
+
+import java.lang.{Double => JDouble, Iterable => JIterable}
+import scala.jdk.CollectionConverters._
 
 /**
  * An enhanced SCollection that uses an intermediate node to combine parts of the data to reduce
@@ -50,13 +54,21 @@ class SCollectionWithFanout[T] private[values] (coll: SCollection[T], fanout: In
   /** [[SCollection.aggregate[A,U]* SCollection.aggregate]] with fan out. */
   def aggregate[A: Coder, U: Coder](aggregator: Aggregator[T, A, U]): SCollection[U] = {
     val a = aggregator // defeat closure
-    coll.transform(_.map(a.prepare).sum(a.semigroup).map(a.present))
+    coll.transform { in =>
+      new SCollectionWithFanout(in.map(a.prepare), fanout)
+        .sum(a.semigroup)
+        .map(a.present)
+    }
   }
 
   /** [[SCollection.aggregate[A,U]* SCollection.aggregate]] with fan out. */
   def aggregate[A: Coder, U: Coder](aggregator: MonoidAggregator[T, A, U]): SCollection[U] = {
     val a = aggregator // defeat closure
-    coll.transform(_.map(a.prepare).fold(a.monoid).map(a.present))
+    coll.transform { in =>
+      new SCollectionWithFanout(in.map(a.prepare), fanout)
+        .fold(a.monoid)
+        .map(a.present)
+    }
   }
 
   /** [[SCollection.combine]] with fan out. */
@@ -93,6 +105,24 @@ class SCollectionWithFanout[T] private[values] (coll: SCollection[T], fanout: In
       Combine.globally(Functions.reduceFn(context, op)).withoutDefaults().withFanout(fanout)
     )
 
+  /** [[SCollection.min]] with fan out. */
+  def min(implicit ord: Ordering[T]): SCollection[T] =
+    this.reduce(ord.min)
+
+  /** [[SCollection.max]] with fan out. */
+  def max(implicit ord: Ordering[T]): SCollection[T] =
+    this.reduce(ord.max)
+
+  /** [[SCollection.latest]] with fan out. */
+  def latest: SCollection[T] = {
+    coll.transform { in =>
+      // widen to ReadableInstant for scala 2.12 implicit ordering
+      new SCollectionWithFanout(in.withTimestamp, this.fanout)
+        .max(Ordering.by(_._2: ReadableInstant))
+        .keys
+    }
+  }
+
   /** [[SCollection.sum]] with fan out. */
   def sum(implicit sg: Semigroup[T]): SCollection[T] = {
     SCollection.logger.warn(
@@ -102,5 +132,23 @@ class SCollectionWithFanout[T] private[values] (coll: SCollection[T], fanout: In
     coll.pApply(
       Combine.globally(Functions.reduceFn(context, sg)).withoutDefaults().withFanout(fanout)
     )
+  }
+
+  /** [[SCollection.mean]] with fan out. */
+  def mean(implicit ev: Numeric[T]): SCollection[Double] = {
+    val e = ev // defeat closure
+    coll.transform { in =>
+      in.map[JDouble](e.toDouble)
+        .pApply(Mean.globally().withFanout(fanout))
+        .asInstanceOf[SCollection[Double]]
+    }
+  }
+
+  /** [[SCollection.top]] with fan out. */
+  def top(num: Int)(implicit ord: Ordering[T]): SCollection[Iterable[T]] = {
+    coll.transform { in =>
+      in.pApply(Top.of[T, Ordering[T]](num, ord).withFanout(fanout))
+        .map((l: JIterable[T]) => l.asScala)
+    }
   }
 }

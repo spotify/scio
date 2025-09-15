@@ -101,12 +101,15 @@ package object annoy {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
-   * AnnoyReader class for approximate nearest neighbor lookups.
-   * Supports vector lookup by item  as well as nearest neighbor lookup by vector.
+   * AnnoyReader class for approximate nearest neighbor lookups. Supports vector lookup by item as
+   * well as nearest neighbor lookup by vector.
    *
-   * @param path Can be either a local file or a GCS location e.g. gs://<bucket>/<path>
-   * @param metric One of Angular (cosine distance) or Euclidean
-   * @param dim Number of dimensions in vectors
+   * @param path
+   *   Can be either a local file or a GCS location e.g. gs://<bucket>/<path>
+   * @param metric
+   *   One of Angular (cosine distance) or Euclidean
+   * @param dim
+   *   Number of dimensions in vectors
    */
   class AnnoyReader private[annoy] (path: String, metric: AnnoyMetric, dim: Int) {
     require(dim > 0, "Vector dimension should be > 0")
@@ -139,9 +142,12 @@ package object annoy {
      * Create a SideInput of [[AnnoyReader]] from an [[AnnoyUri]] base path, to be used with
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]
      *
-     * @param metric Metric (Angular, Euclidean) used to build the Annoy index
-     * @param dim Number of dimensions in vectors used to build the Annoy index
+     * @param metric
+     *   Metric (Angular, Euclidean) used to build the Annoy index
+     * @param dim
+     *   Number of dimensions in vectors used to build the Annoy index
      */
+    @deprecated("Use voyager instead", "0.14.11")
     @experimental
     def annoySideInput(path: String, metric: AnnoyMetric, dim: Int): SideInput[AnnoyReader] = {
       val uri = AnnoyUri(path, self.options)
@@ -157,14 +163,20 @@ package object annoy {
      * Write the key-value pairs of this SCollection as an Annoy file to a specific location,
      * building the trees in the index according to the parameters provided.
      *
-     * @param path Can be either a local file or a GCS location e.g. gs://<bucket>/<path>
-     * @param metric One of Angular (cosine distance) or Euclidean
-     * @param dim Number of dimensions in vectors
-     * @param nTrees Number of trees to build. More trees means more precision & bigger indices.
-     *               If nTrees is set to -1, the trees will automatically be built in such a way
-     *               that they will take at most 2x the memory of the vectors.
-     * @return A singleton SCollection containing the [[AnnoyUri]] of the saved files
+     * @param path
+     *   Can be either a local file or a GCS location e.g. gs://<bucket>/<path>
+     * @param metric
+     *   One of Angular (cosine distance) or Euclidean
+     * @param dim
+     *   Number of dimensions in vectors
+     * @param nTrees
+     *   Number of trees to build. More trees means more precision & bigger indices. If nTrees is
+     *   set to -1, the trees will automatically be built in such a way that they will take at most
+     *   2x the memory of the vectors.
+     * @return
+     *   A singleton SCollection containing the [[AnnoyUri]] of the saved files
      */
+    @deprecated("Use voyager instead", "0.14.11")
     @experimental
     def asAnnoy(path: String, metric: AnnoyMetric, dim: Int, nTrees: Int): SCollection[AnnoyUri] = {
       val uri = AnnoyUri(path, self.context.options)
@@ -200,11 +212,14 @@ package object annoy {
      * Write the key-value pairs of this SCollection as an Annoy file to a temporary location,
      * building the trees in the index according to the parameters provided.
      *
-     * @param nTrees Number of trees to build. More trees means more precision & bigger indices.
-     *               If nTrees is set to -1, the trees will automatically be built in such a way
-     *               that they will take at most 2x the memory of the vectors.
-     * @return A singleton SCollection containing the [[AnnoyUri]] of the saved files
+     * @param nTrees
+     *   Number of trees to build. More trees means more precision & bigger indices. If nTrees is
+     *   set to -1, the trees will automatically be built in such a way that they will take at most
+     *   2x the memory of the vectors.
+     * @return
+     *   A singleton SCollection containing the [[AnnoyUri]] of the saved files
      */
+    @deprecated("Use voyager instead", "0.14.11")
     @experimental
     def asAnnoy(metric: AnnoyMetric, dim: Int, nTrees: Int): SCollection[AnnoyUri] = {
       val uuid = UUID.randomUUID()
@@ -216,16 +231,21 @@ package object annoy {
 
     /**
      * Write the key-value pairs of this SCollection as an Annoy file to a temporary location,
-     * building the trees in the index according to the parameters provided, then load the
-     * trees as a side input.
+     * building the trees in the index according to the parameters provided, then load the trees as
+     * a side input.
      *
-     * @param metric One of Angular (cosine distance) or Euclidean
-     * @param dim Number of dimensions in vectors
-     * @param nTrees Number of trees to build. More trees means more precision & bigger indices.
-     *               If nTrees is set to -1, the trees will automatically be built in such a way
-     *               that they will take at most 2x the memory of the vectors.
-     * @return SideInput[AnnoyReader]
+     * @param metric
+     *   One of Angular (cosine distance) or Euclidean
+     * @param dim
+     *   Number of dimensions in vectors
+     * @param nTrees
+     *   Number of trees to build. More trees means more precision & bigger indices. If nTrees is
+     *   set to -1, the trees will automatically be built in such a way that they will take at most
+     *   2x the memory of the vectors.
+     * @return
+     *   SideInput[AnnoyReader]
      */
+    @deprecated("Use voyager instead", "0.14.11")
     @experimental
     def asAnnoySideInput(metric: AnnoyMetric, dim: Int, nTrees: Int): SideInput[AnnoyReader] =
       self.asAnnoy(metric, dim, nTrees).asAnnoySideInput(metric, dim)
@@ -238,10 +258,14 @@ package object annoy {
     /**
      * Load Annoy index stored at [[AnnoyUri]] in this
      * [[com.spotify.scio.values.SCollection SCollection]].
-     * @param metric Metric (Angular, Euclidean) used to build the Annoy index
-     * @param dim Number of dimensions in vectors used to build the Annoy index
-     * @return SideInput[AnnoyReader]
+     * @param metric
+     *   Metric (Angular, Euclidean) used to build the Annoy index
+     * @param dim
+     *   Number of dimensions in vectors used to build the Annoy index
+     * @return
+     *   SideInput[AnnoyReader]
      */
+    @deprecated("Use voyager instead", "0.14.11")
     @experimental
     def asAnnoySideInput(metric: AnnoyMetric, dim: Int): SideInput[AnnoyReader] = {
       val view = self.applyInternal(View.asSingleton())

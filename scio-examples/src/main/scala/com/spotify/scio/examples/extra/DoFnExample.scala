@@ -19,7 +19,7 @@
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.DoFnExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=gs://[BUCKET]/[PATH]/do_fn_example"`
 package com.spotify.scio.examples.extra
@@ -56,8 +56,11 @@ object DoFnExample {
 
         // `@ProcessElement` is called once per element.
         @ProcessElement
-        private[extra] def processElement(c: DoFn[String, Int]#ProcessContext): Unit =
-          c.output(c.element().length)
+        private[extra] def processElement(
+          @Element element: String,
+          out: OutputReceiver[Int]
+        ): Unit =
+          out.output(element.length)
 
         // `@FinishBundle` (optional) is called once per worker thread after processing each batch
         // of elements, e.g. elements in a window.

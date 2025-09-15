@@ -20,6 +20,10 @@
   <property>
     <!-- This defaults to SEQUENTIAL in GoogleCloudStorageReadOptions -->
     <name>fs.gs.inputstream.fadvise</name>
-    <value>RANDOM</value>
+    <value>SEQUENTIAL</value>
+  </property>
+  <property>
+    <name>fs.gs.inputstream.fast.fail.on.not.found.enable</name>
+    <value>false</value>
   </property>
 </configuration>

@@ -20,7 +20,7 @@ package com.spotify.scio.avro.types
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 
-import scala.annotation.{compileTimeOnly, StaticAnnotation}
+import scala.annotation.{compileTimeOnly, nowarn, StaticAnnotation}
 import scala.reflect.runtime.universe._
 
 /**
@@ -42,18 +42,22 @@ import scala.reflect.runtime.universe._
  * RECORD         Nested case class
  * }}}
  *
- * @groupname trait Traits for annotated types
- * @groupname annotation Type annotations
- * @groupname converters Converters
- * @groupname Ungrouped Other Members
+ * @groupname trait
+ * Traits for annotated types
+ * @groupname annotation
+ * Type annotations
+ * @groupname converters
+ * Converters
+ * @groupname Ungrouped
+ * Other Members
  */
 object AvroType {
 
   /**
    * Macro annotation for an Avro schema.
    *
-   * Generate case classes for an Avro schema. Note that `schema` must be a single string literal
-   * of the JSON schema with optional `.stripMargin` at the end. For example:
+   * Generate case classes for an Avro schema. Note that `schema` must be a single string literal of
+   * the JSON schema with optional `.stripMargin` at the end. For example:
    *
    * {{{
    *   @AvroType.fromSchema(
@@ -79,6 +83,7 @@ object AvroType {
    * Also generate a companion object with convenience methods.
    * @group annotation
    */
+  @nowarn
   @compileTimeOnly(
     "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
   )
@@ -89,12 +94,12 @@ object AvroType {
   /**
    * Macro annotation for a path containing Avro files.
    *
-   * Generates case classes from a path which contains Avro files.
-   * Path needs to represent a folder, hence it always needs to end with `/`.
-   * Inside of the folder needs to exist at least one file matching `*.avro` glob.
+   * Generates case classes from a path which contains Avro files. Path needs to represent a folder,
+   * hence it always needs to end with `/`. Inside of the folder needs to exist at least one file
+   * matching `*.avro` glob.
    *
-   * Note that path must be a single string literal with optional `.stripMargin` at the end.
-   * For example:
+   * Note that path must be a single string literal with optional `.stripMargin` at the end. For
+   * example:
    *
    * {{{
    * @AvroType.fromPath("gs://myBucket/myFolder/")
@@ -105,10 +110,10 @@ object AvroType {
    *
    * {{{
    * @AvroType.fromPath(
-   *    """
+   *     """
    *     | gs://myBucket/myFolder/
    *     | myLooooooooooooooooongPath/
-   *    """.stripMargin)
+   *     """.stripMargin)
    * class MyRecord
    * }}}
    *
@@ -122,6 +127,7 @@ object AvroType {
    * Also generate a companion object with convenience methods.
    * @group annotation
    */
+  @nowarn
   @compileTimeOnly(
     "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
   )
@@ -132,16 +138,16 @@ object AvroType {
   /**
    * Macro annotation for a file which contains Avro schema.
    *
-   * Generate case classes for an Avro schema. File can be either local or remote files.
-   * For example file can be located on Google Cloud Storage (GCS):
+   * Generate case classes for an Avro schema. File can be either local or remote files. For example
+   * file can be located on Google Cloud Storage (GCS):
    *
    * {{{
    *   @AvroType.fromSchemaFile("gs://myBucket/myFolder/schema-file.avsc")
    *   class MyRecord
    * }}}
    *
-   * For local files, you need to either provide absolute path,
-   * or path relative to project root directory. For example:
+   * For local files, you need to either provide absolute path, or path relative to project root
+   * directory. For example:
    *
    * {{{
    *   @AvroType.fromSchemaFile("sub-project/src/main/avro/schema-file.avsc")
@@ -151,6 +157,7 @@ object AvroType {
    * Also generate a companion object with convenience methods.
    * @group annotation
    */
+  @nowarn
   @compileTimeOnly(
     "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
   )
@@ -170,12 +177,12 @@ object AvroType {
    * case class Result(name: Option[String] = None, score: Option[Double] = None)
    * }}}
    *
-   * It is recommended that you define all of your fields as Option.
-   * This way you could stop populating them in the future if you notice that you don't need them.
+   * It is recommended that you define all of your fields as Option. This way you could stop
+   * populating them in the future if you notice that you don't need them.
    *
-   * This macro doesn't help you with schema evolution.
-   * It's up to you to follow the best practices on how to do evolution of your Avro schemas.
-   * Rule of thumb is to only add new fields, without removing the old ones.
+   * This macro doesn't help you with schema evolution. It's up to you to follow the best practices
+   * on how to do evolution of your Avro schemas. Rule of thumb is to only add new fields, without
+   * removing the old ones.
    * @group annotation
    */
   @compileTimeOnly(
@@ -217,8 +224,8 @@ object AvroType {
   def schemaOf[T: TypeTag]: Schema = SchemaProvider.schemaOf[T]
 
   /**
-   * Generate a converter function from [[org.apache.avro.generic.GenericRecord GenericRecord]]
-   * to the given case class `T`.
+   * Generate a converter function from [[org.apache.avro.generic.GenericRecord GenericRecord]] to
+   * the given case class `T`.
    * @group converters
    */
   def fromGenericRecord[T]: GenericRecord => T =

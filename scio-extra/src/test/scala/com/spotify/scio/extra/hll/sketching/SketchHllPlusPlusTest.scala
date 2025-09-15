@@ -23,7 +23,7 @@ import com.spotify.scio.testing.ApproximationAssertions._
 class SketchHllPlusPlusTest extends PipelineSpec {
 
   "SketchHLL++" should "estimate distinct count" in {
-    val input = for (i <- 1 to 10000) yield (i % 20)
+    val input = for (i <- 1 to 10000) yield i % 20
     val result = runWithData(input) { scl =>
       scl
         .countApproxDistinct(new SketchHllPlusPlus[Int](15, 20))

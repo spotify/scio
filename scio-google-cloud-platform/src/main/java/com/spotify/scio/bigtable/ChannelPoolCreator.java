@@ -33,7 +33,7 @@ public class ChannelPoolCreator {
     try {
       final ClientInterceptor interceptor =
           CredentialInterceptorCache.getInstance()
-              .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions());
+              .getCredentialsInterceptor(options.getCredentialOptions());
       // If credentials are unset (i.e. via local emulator), CredentialsInterceptor will return null
       if (interceptor == null) {
         return new ClientInterceptor[] {};
@@ -51,6 +51,9 @@ public class ChannelPoolCreator {
     final ClientInterceptor[] interceptors = getClientInterceptors(options);
 
     return new ChannelPool(
-        () -> BigtableSession.createNettyChannel(options.getAdminHost(), options, interceptors), 1);
+        () ->
+            BigtableSession.createNettyChannel(
+                options.getAdminHost(), options, false, interceptors),
+        1);
   }
 }

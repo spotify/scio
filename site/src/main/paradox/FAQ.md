@@ -6,19 +6,17 @@
 
 #### What's the status of Scio?
 
-Scio is widely being used for production data pipelines at Spotify and is our preferred framework for building new pipelines on Google Cloud. We run Scio on [Google Cloud Dataflow](https://cloud.google.com/dataflow/) service in both batch and streaming modes. However it's still under heavy development and there might be minor breaking API changes from time to time.
+Scio is widely being used for production data pipelines at Spotify and is our preferred framework for building new pipelines on Google Cloud. We run Scio on [Google Cloud Dataflow](https://cloud.google.com/dataflow/) service in both batch and streaming modes. It is still under development and there may be minor breaking API changes.
 
 #### Who's using Scio?
 
 Spotify uses Scio for all new data pipelines running on Google Cloud Platform, including music recommendation, monetization, artist insights and business analysis. We also use BigQuery, Bigtable and Datastore heavily with Scio. We use Scio in both batch and streaming mode.
 
-As of mid 2017, there're 200+ developers and 700+ production pipelines. The largest batch job we've seen uses 800 n1-highmem-32 workers (25600 CPUs, 166.4TB RAM) and processes 325 billion rows from Bigtable (240TB). We also have numerous jobs that process 10TB+ of BigQuery data daily. On the streaming front, we have many jobs with 30+ n1-standard-16 workers (480 CPUs, 1.8TB RAM) and SSD disks for real time machine learning or reporting.
-
-For a incomplete list of users, see the [[Powered By]] page.
+As of mid 2017, there are 200+ developers and 700+ production pipelines. The largest batch job we've seen uses 800 n1-highmem-32 workers (25600 CPUs, 166.4TB RAM) and processes 325 billion rows from Bigtable (240TB). We also have numerous jobs that process 10TB+ of BigQuery data daily. On the streaming front, we have many jobs with 30+ n1-standard-16 workers (480 CPUs, 1.8TB RAM) and SSD disks for real time machine learning or reporting.
 
 #### What's the relationship between Scio and Apache Beam?
 
-Scio is a Scala API built on top of [Apache Beam](https://beam.apache.org/)'s Java SDK. Scio aims to offer a concise, idiomatic Scala API for a subset of Beam's features, plus extras we find useful, like REPL, type safe BigQuery, and IO taps.
+Scio is a Scala API built on top of [Apache Beam](https://beam.apache.org/)'s Java SDK. Scio offers a concise, idiomatic Scala API for a subset of Beam's features, plus extras we find useful, like REPL, type safe BigQuery, and IO taps.
 
 #### What's the relationship between Scio and Google Cloud Dataflow?
 
@@ -66,14 +64,14 @@ resolvers ++= Seq(
 
 #### How do I unit test pipelines?
 
-Any Scala or Java unit testing frameworks can be used with Scio but we provide some utilities for [ScalaTest](http://www.scalatest.org/).
+Any Scala or Java unit testing frameworks can be used with Scio, but we provide some utilities for [ScalaTest](http://www.scalatest.org/).
 
 - @scaladoc[PipelineTestUtils](com.spotify.scio.testing.PipelineTestUtils) - utilities for testing parts of a pipeline
 - @scaladoc[JobTest](com.spotify.scio.testing.JobTest$) - for testing pipelines end-to-end with complete arguments and IO coverage
 - @scaladoc[SCollectionMatchers](com.spotify.scio.testing.SCollectionMatchers) - ScalaTest matchers for `SCollection`
 - @scaladoc[PipelineSpec](com.spotify.scio.testing.PipelineSpec) - shortcut for ScalaTest `FlatSpec` with utilities and matchers
 
-The best place to find example useage of `JobTest` and `SCollectionMatchers` are their respective tests in @github[JobTestTest](/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) and @github[SCollectionMatchersTest](/scio-test/src/test/scala/com/spotify/scio/testing/SCollectionMatchersTest.scala).
+The best place to find example usage of `JobTest` and `SCollectionMatchers` are their respective tests in @github[JobTestTest](/scio-test/core/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) and @github[SCollectionMatchersTest](/scio-test/core/src/test/scala/com/spotify/scio/testing/SCollectionMatchersTest.scala).
 For more examples see:
 
 - @github[scio-examples](/scio-examples/src/test/scala/com/spotify/scio/examples)
@@ -94,9 +92,10 @@ object MyJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    val collections =
-      Seq("gs://bucket1/data/*.avro", "gs://bucket2/data/*.avro")
-        .map(sc.avroFile[TestRecord](_))
+    val collections = Seq(
+      "gs://bucket1/data/",
+      "gs://bucket2/data/"
+    ).map(path => sc.avroFile[TestRecord](path, suffix=".avro"))
 
     val all = SCollection.unionAll(collections)
   }
@@ -130,11 +129,11 @@ object MyJob {
 
 Scio exposes a few things to allow easy integration with native Beam Java API, notably:
 
-- `ScioContext#customInput` to apply a `PTransform[_ >: PBegin, PCollection[T]]` (source) and get a `SCollection[T]`.
-- `SCollection#applyTransform` to apply a `PTransform[_ >: PCollection[T], PCollection[U]]` and get a `SCollection[U]`
+- `ScioContext#customInput` to apply a `PTransform[_ >: PBegin, PCollection[T]]` (source) and get an `SCollection[T]`.
+- `SCollection#applyTransform` to apply a `PTransform[_ >: PCollection[T], PCollection[U]]` and get an `SCollection[U]`
 - `SCollection#saveAsCustomOutput` to apply a `PTransform[_ >: PCollection[T], PDone]` (sink) and get a `ClosedTap[T]`.
 
-See @extref[BeamExample.scala](example:BeamExample) for more details. Custom I/O can also be tested via the @scaladoc[`JobTest`](com.spotify.scio.testing.JobTest$) harness.
+See @extref[BeamExample](example:BeamExample) for more details. Custom I/O can also be tested via the @scaladoc[JobTest](com.spotify.scio.testing.JobTest$) harness.
 
 #### What are the different types of joins and performance implication?
 
@@ -143,7 +142,7 @@ See @extref[BeamExample.scala](example:BeamExample) for more details. Custom I/O
 - Consider `skewedJoin` if some keys on the LHS are extremely hot.
 - Consider `sparseOuterJoin` if you want a full outer join where RHS is much smaller than LHS, but may not fit in memory.
 - Consider `cogroup` if you need to access value groups of each key.
-- [`MultiJoin`](https://spotify.github.io/scio/api/com/spotify/scio/util/MultiJoin$.html) supports inner, left, outer join and cogroup of up to 22 inputs.
+- @scaladoc[MultiJoin](com.spotify.scio.util.MultiJoin$) supports inner, left, outer join and cogroup of up to 22 inputs.
 - For multi-joins larger inputs should be on the left, e.g. `size(a) >= size(b) >= size(c) >= size(d)` in `MultiJoin(a, b, c, d)`.
 - Check out these [slides](http://www.lyh.me/slides/joins.html) for more information on joins.
 - Also see this section on [Cloud Dataflow Shuffle](https://cloud.google.com/dataflow/service/dataflow-service-desc#cloud-dataflow-shuffle) service.
@@ -243,11 +242,11 @@ Also see these [slides](http://www.lyh.me/slides/for-yield.html) and this [blog 
 
 #### How do I unit test BigQuery queries?
 
-BigQuery doesn't provide a way to unit test query logic locally, but we can query the service directly in an integration test. Take a look at @github[BigQueryIT.scala](/scio-bigquery/src/it/scala/com/spotify/scio/bigquery/BigQueryIT.scala). `MockBigQuery` will create temporary tables on the service, feed them with mock data, and substitute table references in your query string with the mocked ones.
+BigQuery doesn't provide a way to unit test query logic locally, but we can query the service directly in an integration test. Take a look at @github[BigQueryIT.scala](/integration/src/test/scala/com/spotify/scio/bigquery/BigQueryIT.scala). `MockBigQuery` will create temporary tables on the service, feed them with mock data, and substitute table references in your query string with the mocked ones.
 
 #### How do I stream to a partitioned BigQuery table?
 
-Currently there is no way to create a [partitioned](https://cloud.google.com/bigquery/docs/partitioned-tables) BigQuery table via Scio/Beam when streaming, however it is possible to stream to a partitioned table if it is already created.
+Currently, there is no way to create a [partitioned](https://cloud.google.com/bigquery/docs/partitioned-tables) BigQuery table via Scio/Beam when streaming, however it is possible to stream to a partitioned table if it is already created.
 
 This can be done by using fixed windows and using the window bounds to infer date. As of Scio 0.4.0-beta2 this looks as follows:
 
@@ -278,7 +277,8 @@ object BQPartitionedJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    sc.pubsubSubscription[String]("projects/data-university/topics/data-university")
+
+    sc.read(PubsubIO.string("projects/data-university/topics/data-university"))(PubsubIO.ReadParam(PubsubIO.Subscription))
       .withFixedWindows(Duration.standardSeconds(30))
       // Convert to `TableRow`
       .map(myStringToTableRowConversion)
@@ -301,9 +301,9 @@ In Scio 0.3.X it is possible to achieve the same behaviour using `SerializableFu
 
 Scio's @scaladoc[BigQuery client](com.spotify.scio.bigquery.client.BigQuery) in Scio caches query result in system property `bigquery.cache.directory`, which defaults to `$PWD/.bigquery`. Use `rm -rf .bigquery` to invalidate all cached results. To disable caching, set system property `bigquery.cache.enabled` to `false`.
 
-#### How does BigQuery determines job priority?
+#### How does BigQuery determine job priority?
 
-By default Scio runs BigQuery jobs with `BATCH` priority except when in the REPL where it runs with `INTERACTIVE`. To override this, set system property `bigquery.priority` to either `BATCH` or `INTERACTIVE`.
+By default, Scio runs BigQuery jobs with `BATCH` priority except when in the REPL where it runs with `INTERACTIVE`. To override this, set system property `bigquery.priority` to either `BATCH` or `INTERACTIVE`.
 
 ### Streaming questions
 
@@ -346,7 +346,7 @@ def readme = FileSystems.open(readmeResource)
 This part is GCS specific.
 @@@
 
-You can get a @javadoc[`GcsUtil`](org.apache.beam.sdk.extensions.gcp.options.GcsOptions#getGcsUtil--) instance from `ScioContext`, which can be used to open GCS files in read or write mode.
+You can get a @javadoc[GcsUtil](org.apache.beam.sdk.extensions.gcp.options.GcsOptions#getGcsUtil--) instance from `ScioContext`, which can be used to open GCS files in read or write mode.
 
 ```scala mdoc:reset:silent
 import com.spotify.scio.ContextAndArgs
@@ -361,11 +361,11 @@ def main(cmdlineArgs: Array[String]): Unit = {
 
 #### How do I reduce Datastore boilerplate?
 
-Datastore `Entity` class is actually generated from @github[Protobuf](/scio-examples/src/test/scala/com/spotify/scio/examples/extra/MagnolifyDatastoreExampleTest.scala) which uses the builder pattern and very boilerplate heavy. You can use the [Magnolify](https://github.com/spotify/magnolify) library to seamlessly convert bewteen case classes and `Entity`s. See @extref[MagnolifyDatastoreExample.scala](example:MagnolifyDatastoreExample) for an example job and @github[MagnolifyDatastoreExampleTest.scala](/scio-examples/src/test/scala/com/spotify/scio/examples/extra/MagnolifyDatastoreExampleTest.scala) for tests.
+Datastore `Entity` class is actually generated from @github[Protobuf](/scio-examples/src/test/scala/com/spotify/scio/examples/extra/MagnolifyDatastoreExampleTest.scala) which uses the builder pattern and very boilerplate heavy. You can use the [Magnolify](https://github.com/spotify/magnolify) library to seamlessly convert between case classes and `Entity`s. See @extref[MagnolifyDatastoreExample.scala](example:MagnolifyDatastoreExample) for an example job and @github[MagnolifyDatastoreExampleTest.scala](/scio-examples/src/test/scala/com/spotify/scio/examples/extra/MagnolifyDatastoreExampleTest.scala) for tests.
 
 #### How do I throttle Bigtable writes?
 
-Currently Dataflow autoscaling may not work well with large writes BigtableIO. Specifically It does not take into account Bigtable IO rate limits and may scale up more workers and end up hitting the limit and eventually fail the job. As a workaround, you can enable throttling for Bigtable writes in Scio 0.4.0-alpha2 or later.
+Currently, Dataflow autoscaling may not work well with large writes BigtableIO. Specifically It does not take into account Bigtable IO rate limits and may scale up more workers and end up hitting the limit and eventually fail the job. As a workaround, you can enable throttling for Bigtable writes in Scio 0.4.0-alpha2 or later.
 
 ```scala mdoc:reset:invisible
 val btProjectId = ""
@@ -522,7 +522,7 @@ import com.spotify.scio.bigquery._
 def main(cmdlineArgs: Array[String]): Unit = {
   val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-  val data: SCollection[Tornado] = sc.typedBigQuery[Tornado]
+  val data: SCollection[Tornado] = sc.typedBigQuery[Tornado]()
   // ...
 }
 ```
@@ -531,7 +531,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
 
 #### What does "Cannot prove that T1 <:< T2" mean?
 
-Sometimes you get an error message like `Cannot prove that T1 <:< T2` when saving an `SCollection`. This is because some sink methods have an implicit argument like this which means element type `T` of `SCollection[T]` must be a sub-type of `TableRow` in order to save it to BigQuery. You have to map out elements to the required type before saving.
+Sometimes you get an error message like `Cannot prove that T1 <:< T2` when saving an `SCollection`. This is because some sink methods have an implicit argument like this which means element type `T` of `SCollection[T]` must be a subtype of `TableRow` in order to save it to BigQuery. You have to map out elements to the required type before saving.
 
 ```scala
 def saveAsBigQuery(tableSpec: String)(implicit ev: T <:< TableRow)
@@ -608,14 +608,15 @@ Your Scio applications should define a `main` method instead of extending `scala
 
 #### How to inspect the content of an `SCollection`?
 
-There is multiple options here:
+There are multiple options here:
+
 - Use `debug()` method on an `SCollection` to print its content as the data flows through the DAG during the execution (after the `run` or `runAndCollect`)
 - Use a debugger and setup break points - make sure to break inside of your functions to stop control at the execution not the pipeline construction time
 - In [[Scio-REPL]], use `runAndCollect()` to execute the pipeline and materialize the contents of an `SCollection`
 
 #### How do I improve side input performance?
 
-By default Dataflow workers allocate 100MB (see @javadoc[DataflowWorkerHarnessOptions#getWorkerCacheMb](org.apache.beam.runners.dataflow.options.DataflowWorkerHarnessOptions#getWorkerCacheMb--)) of memory for caching side inputs, and falls back to disk or network. Therefore jobs with large side inputs may be slow. To override this default, register `DataflowWorkerHarnessOptions` before parsing command line arguments and then pass `--workerCacheMb=N` when submitting the job.
+By default, Dataflow workers allocate 100MB (see @javadoc[DataflowWorkerHarnessOptions#getWorkerCacheMb](org.apache.beam.runners.dataflow.options.DataflowWorkerHarnessOptions#getWorkerCacheMb--)) of memory for caching side inputs, and falls back to disk or network. Therefore jobs with large side inputs may be slow. To override this default, register `DataflowWorkerHarnessOptions` before parsing command line arguments and then pass `--workerCacheMb=N` when submitting the job.
 
 ```scala mdoc:reset:silent
 import com.spotify.scio._
@@ -631,7 +632,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
 
 #### How do I control concurrency (number of DoFn threads) in Dataflow workers
 
-By default Google Cloud Dataflow will use as many threads (concurrent DoFns) per worker as appropriate (precise definition is an implementation detail), in some cases you might want to control this. Use `NumberOfWorkerHarnessThreads` option from `DataflowPipelineDebugOptions`. For example to use a single thread per worker on 8 vCPU machine, simply specify 8 vCPU worker machine type, and `--numberOfWorkerHarnessThreads=1` in CLI or set corresponding option in `DataflowPipelineDebugOptions`.
+By default, Google Cloud Dataflow will use as many threads (concurrent DoFns) per worker as appropriate (precise definition is an implementation detail), in some cases you might want to control this. Use `NumberOfWorkerHarnessThreads` option from `DataflowPipelineDebugOptions`. For example to use a single thread per worker on 8 vCPU machine, simply specify 8 vCPU worker machine type, and `--numberOfWorkerHarnessThreads=1` in CLI or set corresponding option in `DataflowPipelineDebugOptions`.
 
 #### How to manually investigate a Cloud Dataflow worker
 

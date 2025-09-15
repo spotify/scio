@@ -20,10 +20,10 @@
 package com.spotify.scio.util.random
 
 import java.util.{Random => JRandom}
-
 import org.apache.beam.sdk.transforms.DoFn
-import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, StartBundle}
+import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement, StartBundle}
 import org.apache.commons.math3.distribution.{IntegerDistribution, PoissonDistribution}
+import org.typelevel.scalaccompat.annotation.unused
 
 private[scio] object RandomSampler {
 
@@ -31,9 +31,9 @@ private[scio] object RandomSampler {
   def newDefaultRNG: JRandom = new XORShiftRandom
 
   /**
-   * Sampling fraction arguments may be results of computation, and subject to floating
-   * point jitter.  I check the arguments with this epsilon slop factor to prevent spurious
-   * warnings for cases such as summing some numbers to get a sampling fraction of 1.000000001
+   * Sampling fraction arguments may be results of computation, and subject to floating point
+   * jitter. I check the arguments with this epsilon slop factor to prevent spurious warnings for
+   * cases such as summing some numbers to get a sampling fraction of 1.000000001
    */
   val roundingEpsilon = 1e-6
 }
@@ -44,15 +44,14 @@ abstract private[scio] class RandomSampler[T, R] extends DoFn[T, T] {
 
   // TODO: is it necessary to setSeed for each instance like Spark does?
   @StartBundle
-  def startBundle(c: DoFn[T, T]#StartBundleContext): Unit = rng = init
+  def startBundle(): Unit = rng = init
 
   @ProcessElement
-  def processElement(c: DoFn[T, T]#ProcessContext): Unit = {
-    val element = c.element()
+  def processElement(@Element element: T, out: OutputReceiver[T]): Unit = {
     val count = samples
     var i = 0
     while (i < count) {
-      c.output(element)
+      out.output(element)
       i += 1
     }
   }
@@ -65,10 +64,16 @@ abstract private[scio] class RandomSampler[T, R] extends DoFn[T, T] {
 /**
  * A sampler based on Bernoulli trials.
  *
- * @param fraction the sampling fraction, aka Bernoulli sampling probability
- * @tparam T item type
+ * @param fraction
+ *   the sampling fraction, aka Bernoulli sampling probability
+ * @param seedOpt
+ *   optional random seed to make sampling deterministic default to None, which samples
+ *   non-deterministically
+ * @tparam T
+ *   item type
  */
-private[scio] class BernoulliSampler[T](val fraction: Double) extends RandomSampler[T, JRandom] {
+private[scio] class BernoulliSampler[T](val fraction: Double, private val seedOpt: Option[Long])
+    extends RandomSampler[T, JRandom] {
 
   /** Epsilon slop to avoid failure from floating point jitter */
   require(
@@ -79,9 +84,7 @@ private[scio] class BernoulliSampler[T](val fraction: Double) extends RandomSamp
 
   override def init: JRandom = {
     val r = RandomSampler.newDefaultRNG
-    if (seed > 0) {
-      r.setSeed(seed)
-    }
+    seedOpt.foreach(r.setSeed)
     r
   }
 
@@ -95,13 +98,24 @@ private[scio] class BernoulliSampler[T](val fraction: Double) extends RandomSamp
     }
 }
 
+/** Companion object set seed to None by default, which samples non-deterministically */
+private[scio] object BernoulliSampler {
+  def apply[T](fraction: Double, seed: Option[Long] = None): BernoulliSampler[T] =
+    new BernoulliSampler[T](fraction, seed)
+}
+
 /**
  * A sampler for sampling with replacement, based on values drawn from Poisson distribution.
  *
- * @param fraction the sampling fraction (with replacement)
- * @tparam T item type
+ * @param fraction
+ *   the sampling fraction (with replacement)
+ * @param seedOpt
+ *   optional random seed to make sampling deterministic default to None, which samples
+ *   non-deterministically
+ * @tparam T
+ *   item type
  */
-private[scio] class PoissonSampler[T](val fraction: Double)
+private[scio] class PoissonSampler[T](val fraction: Double, private val seedOpt: Option[Long])
     extends RandomSampler[T, IntegerDistribution] {
 
   /** Epsilon slop to avoid failure from floating point jitter. */
@@ -114,13 +128,17 @@ private[scio] class PoissonSampler[T](val fraction: Double)
   // If fraction is <= 0, 0 is used below, so we can use any placeholder value.
   override def init: IntegerDistribution = {
     val r = new PoissonDistribution(if (fraction > 0.0) fraction else 1.0)
-    if (seed > 0) {
-      r.reseedRandomGenerator(seed)
-    }
+    seedOpt.foreach(r.reseedRandomGenerator)
     r
   }
 
   override def samples: Int = if (fraction <= 0.0) 0 else rng.sample()
+}
+
+/** Companion object set seed to None by default, which samples non-deterministically */
+private[scio] object PoissonSampler {
+  def apply[T](fraction: Double, seed: Option[Long] = None): PoissonSampler[T] =
+    new PoissonSampler[T](fraction, seed)
 }
 
 abstract private[scio] class RandomValueSampler[K, V, R](val fractions: Map[K, Double])
@@ -130,18 +148,18 @@ abstract private[scio] class RandomValueSampler[K, V, R](val fractions: Map[K, D
 
   // TODO: is it necessary to setSeed for each instance like Spark does?
   @StartBundle
-  def startBundle(c: DoFn[(K, V), (K, V)]#StartBundleContext): Unit =
+  def startBundle(@unused c: DoFn[(K, V), (K, V)]#StartBundleContext): Unit =
     rngs = fractions.iterator.map { case (k, v) =>
       (k, init(v))
     }.toMap
 
   @ProcessElement
-  def processElement(c: DoFn[(K, V), (K, V)]#ProcessContext): Unit = {
-    val (key, value) = c.element()
+  def processElement(@Element element: (K, V), out: OutputReceiver[(K, V)]): Unit = {
+    val (key, value) = element
     val count = samples(fractions(key), rngs(key))
     var i = 0
     while (i < count) {
-      c.output((key, value))
+      out.output((key, value))
       i += 1
     }
   }

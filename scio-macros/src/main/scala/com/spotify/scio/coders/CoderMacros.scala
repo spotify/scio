@@ -17,7 +17,8 @@
 
 package com.spotify.scio.coders
 
-import com.spotify.scio.{FeatureFlag, MacroSettings, MagnoliaMacros}
+import com.spotify.scio.{FeatureFlag, MacroSettings}
+import org.typelevel.scalaccompat.annotation.{nowarn, unused}
 
 import scala.reflect.macros._
 
@@ -41,13 +42,13 @@ private[coders] object CoderMacros {
 
   def issueFallbackWarning[T: c.WeakTypeTag](
     c: whitebox.Context
-  )(lp: c.Expr[shapeless.LowPriority]): c.Tree = {
+  )(@unused lp: c.Expr[shapeless.LowPriority]): c.Tree = {
     import c.universe._
 
     val show = MacroSettings.showCoderFallback(c) == FeatureFlag.Enable
 
     val wtt = weakTypeOf[T]
-    val TypeRef(_, sym, args) = wtt
+    val TypeRef(_, sym, args) = wtt: @nowarn
 
     val typeName = sym.name
     val params = args.headOption
@@ -118,32 +119,4 @@ private[coders] object CoderMacros {
         fallback
     }
   }
-
-  // Add a level of indirection to prevent the macro from capturing
-  // $outer which would make the Coder serialization fail
-  def wrappedCoder[T: c.WeakTypeTag](c: whitebox.Context): c.Tree = {
-    import c.universe._
-    val wtt = weakTypeOf[T]
-    val imp = c.openImplicits match {
-      case Nil => None
-      case _   => companionImplicit(c)(wtt)
-    }
-
-    imp.map(_ => EmptyTree).getOrElse {
-      // Magnolia does not support classes with a private constructor.
-      // Workaround the limitation by using a fallback in that case
-      privateConstructor(c)(wtt).fold(MagnoliaMacros.genWithoutAnnotations[T](c)) { _ =>
-        q"_root_.com.spotify.scio.coders.Coder.fallback[$wtt](null)"
-      }
-    }
-  }
-
-  private[this] def companionImplicit(c: whitebox.Context)(tpe: c.Type): Option[c.Symbol] = {
-    import c.universe._
-    val tp = c.typecheck(tq"_root_.com.spotify.scio.coders.Coder[$tpe]", c.TYPEmode).tpe
-    tpe.companion.members.iterator.filter(_.isImplicit).find(_.info.resultType =:= tp)
-  }
-
-  private[this] def privateConstructor(c: whitebox.Context)(tpe: c.Type): Option[c.Symbol] =
-    tpe.decls.find(m => m.isConstructor && m.isPrivate)
 }

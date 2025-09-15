@@ -21,11 +21,10 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ProtocolVersion;
-import org.apache.cassandra.dht.Murmur3Partitioner;
-import org.apache.cassandra.dht.RandomPartitioner;
-
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import org.apache.cassandra.dht.Murmur3Partitioner;
+import org.apache.cassandra.dht.RandomPartitioner;
 
 /** Utilities to handle Datastax Java Driver compatibility issues. */
 class CompatUtil {

@@ -17,22 +17,22 @@
 
 package com.spotify.scio.bigquery
 
-import java.math.MathContext
-import java.nio.ByteBuffer
-
 import com.google.api.services.bigquery.model.{
+  Clustering => GClustering,
   TableReference => GTableReference,
   TableRow => GTableRow,
   TimePartitioning => GTimePartitioning
 }
-import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.client.BigQuery
-import com.spotify.scio.values.SCollection
 import org.apache.avro.Conversions.DecimalConversion
 import org.apache.avro.LogicalTypes
-import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryHelpers, BigQueryInsertError, WriteResult}
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 import org.joda.time._
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
+
+import java.math.MathContext
+import java.nio.ByteBuffer
+import scala.jdk.CollectionConverters._
 
 sealed trait Source
 
@@ -40,24 +40,26 @@ sealed trait Source
 final case class Query(underlying: String) extends Source {
 
   /**
-   *  A helper method to replace the "$LATEST" placeholder in query to the latest common partition.
-   *  For example:
-   *  {{{
-   *  @BigQueryType.fromQuery("SELECT ... FROM `project.data.foo_%s`", "$LATEST")
-   *  class Foo
+   * A helper method to replace the "$LATEST" placeholder in query to the latest common partition.
+   * For example:
+   * {{{
+   *   @BigQueryType.fromQuery("SELECT ... FROM `project.data.foo_%s`", "$LATEST")
+   *   class Foo
    *
-   *  val bq: BigQuery = BigQuery.defaultInstance()
-   *  scioContext.bigQuerySelect(Foo.queryAsSource("$LATEST").latest(bq))
-   *  }}}
+   *   val bq: BigQuery = BigQuery.defaultInstance()
+   *   scioContext.bigQuerySelect(Foo.queryAsSource("$LATEST").latest(bq))
+   * }}}
    *
-   *  Or, if your query string is a dynamic value which uses a "$LATEST" placeholder,
-   *  {{{
-   *  val dynamicSQLStr = "SELECT ... FROM some_table_$LATEST"
-   *  scioContext.bigQuerySelect(Query(dynamicSQLStr).latest(bq))
-   *  }}}
+   * Or, if your query string is a dynamic value which uses a "$LATEST" placeholder,
+   * {{{
+   *   val dynamicSQLStr = "SELECT ... FROM some_table_$LATEST"
+   *   scioContext.bigQuerySelect(Query(dynamicSQLStr).latest(bq))
+   * }}}
    *
-   * @param bq [[BigQuery]] client
-   * @return [[Query]] with "$LATEST" replaced
+   * @param bq
+   *   [[BigQuery]] client
+   * @return
+   *   [[Query]] with "$LATEST" replaced
    */
   def latest(bq: BigQuery): Query =
     Query(BigQueryPartitionUtil.latestQuery(bq, underlying))
@@ -66,8 +68,8 @@ final case class Query(underlying: String) extends Source {
 }
 
 /**
- * [[Table]] abstracts the multiple ways of referencing Bigquery tables.
- * Tables can be referenced by a table spec `String` or by a table reference [[GTableReference]].
+ * [[Table]] abstracts the multiple ways of referencing Bigquery tables. Tables can be referenced by
+ * a table spec `String` or by a table reference [[GTableReference]].
  *
  * Example:
  * {{{
@@ -87,8 +89,8 @@ final case class Query(underlying: String) extends Source {
  *   val table = Table.Ref(tableReference)
  * }}}
  *
- * A helper method is provided to replace the "$LATEST" placeholder in the table name
- * to the latest common partition.
+ * A helper method is provided to replace the "$LATEST" placeholder in the table name to the latest
+ * common partition.
  * {{{
  *   val table = Table.Spec("some_project:some_data.some_table_$LATEST").latest()
  * }}}
@@ -116,28 +118,6 @@ object Table {
     def latest(bq: BigQuery): Spec =
       Spec(BigQueryPartitionUtil.latestTable(bq, spec))
     def latest(): Spec = latest(BigQuery.defaultInstance())
-  }
-}
-
-sealed trait ExtendedErrorInfo {
-  type Info
-
-  private[scio] def coll(sc: ScioContext, wr: WriteResult): SCollection[Info]
-}
-
-object ExtendedErrorInfo {
-  final case object Enabled extends ExtendedErrorInfo {
-    override type Info = BigQueryInsertError
-
-    override private[scio] def coll(sc: ScioContext, wr: WriteResult): SCollection[Info] =
-      sc.wrap(wr.getFailedInsertsWithErr())
-  }
-
-  final case object Disabled extends ExtendedErrorInfo {
-    override type Info = TableRow
-
-    override private[scio] def coll(sc: ScioContext, wr: WriteResult): SCollection[Info] =
-      sc.wrap(wr.getFailedInserts())
   }
 }
 
@@ -196,10 +176,13 @@ object Timestamp {
     case t: Long => new Instant(t / 1000)
     case _       => parse(timestamp.toString)
   }
+
+  def micros(timestamp: Instant): Long = timestamp.getMillis * 1000
 }
 
 /** Utility for BigQuery `DATE` type. */
 object Date {
+  private val EpochDate = new LocalDate(1970, 1, 1)
   // YYYY-[M]M-[D]D
   private[this] val Formatter =
     DateTimeFormat.forPattern("yyyy-MM-dd").withZoneUTC()
@@ -215,6 +198,8 @@ object Date {
     case d: Int => new LocalDate(0, DateTimeZone.UTC).plusDays(d)
     case _      => parse(date.toString)
   }
+
+  def days(date: LocalDate): Int = Days.daysBetween(EpochDate, date).getDays
 }
 
 /** Utility for BigQuery `TIME` type. */
@@ -239,6 +224,8 @@ object Time {
     case t: Long => new LocalTime(t / 1000, DateTimeZone.UTC)
     case _       => parse(time.toString)
   }
+
+  def micros(time: LocalTime): Long = time.millisOfDay().get().toLong * 1000
 }
 
 /** Utility for BigQuery `DATETIME` type. */
@@ -270,10 +257,13 @@ object DateTime {
   /** Convert BigQuery `DATETIME` string to `LocalDateTime`. */
   def parse(datetime: String): LocalDateTime =
     Parser.parseLocalDateTime(datetime)
+
+  //  For BigQueryType macros only, do not use directly
+  def format(datetime: LocalDateTime): String = apply(datetime)
 }
 
 /** Scala wrapper for [[com.google.api.services.bigquery.model.TimePartitioning]]. */
-case class TimePartitioning(
+final case class TimePartitioning(
   `type`: String,
   field: String = null,
   expirationMs: Long = 0,
@@ -289,17 +279,43 @@ case class TimePartitioning(
   }
 }
 
+/** Scala wrapper for [[com.google.api.services.bigquery.model.Clustering]]. */
+final case class Clustering(
+  fields: Seq[String] = Seq()
+) {
+  def asJava: GClustering =
+    new GClustering()
+      .setFields(fields.asJava)
+}
+
+/** Scala representation for BQ write sharding. */
+sealed trait Sharding
+object Sharding {
+
+  /**
+   * enables using a dynamically determined number of shards to write to BigQuery. This can be used
+   * for both BigQueryIO.Write.Method.FILE_LOADS and BigQueryIO.Write.Method.STREAMING_INSERTS. Only
+   * applicable to unbounded data.
+   */
+  case object Auto extends Sharding
+
+  /**
+   * Control how many file shards are written when using BigQuery load jobs, or how many parallel
+   * streams are used when using Storage API writes.
+   */
+  final case class Manual(numShards: Int) extends Sharding
+}
+
 object Numeric {
   val MaxNumericPrecision = 38
   val MaxNumericScale = 9
 
-  private[this] val DecimalConverter = new DecimalConversion
-  private[this] val DecimalLogicalType = LogicalTypes.decimal(MaxNumericPrecision, MaxNumericScale)
+  private val DecimalConverter = new DecimalConversion
+  private val DecimalLogicalType = LogicalTypes.decimal(MaxNumericPrecision, MaxNumericScale)
 
   def apply(value: String): BigDecimal = apply(BigDecimal(value))
 
   def apply(value: BigDecimal): BigDecimal = {
-    // NUMERIC's max scale is 9, precision is 38
     val scaled = if (value.scale > MaxNumericScale) {
       value.setScale(MaxNumericScale, scala.math.BigDecimal.RoundingMode.HALF_UP)
     } else {
@@ -310,7 +326,7 @@ object Numeric {
       s"max allowed precision is $MaxNumericPrecision"
     )
 
-    BigDecimal(scaled.toString, new MathContext(MaxNumericPrecision))
+    scaled.round(new MathContext(MaxNumericPrecision))
   }
 
   // For BigQueryType macros only, do not use directly
@@ -318,4 +334,7 @@ object Numeric {
     case b: ByteBuffer => DecimalConverter.fromBytes(b, null, DecimalLogicalType)
     case _             => apply(value.toString)
   }
+
+  def bytes(value: BigDecimal): ByteBuffer =
+    DecimalConverter.toBytes(value.bigDecimal, null, DecimalLogicalType)
 }

@@ -29,8 +29,7 @@ import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.io.redis.{RedisConnectionConfiguration, RedisIO => BeamRedisIO}
 import org.joda.time.Duration
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
 
 sealed trait RedisIO[T] extends ScioIO[T] {
   final override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
@@ -94,8 +93,8 @@ final case class RedisRead(connectionOptions: RedisConnectionOptions, keyPattern
 
 object RedisRead {
   object ReadParam {
-    private[redis] val DefaultBatchSize: Int = 1000
-    private[redis] val DefaultOutputParallelization: Boolean = true
+    val DefaultBatchSize: Int = 1000
+    val DefaultOutputParallelization: Boolean = true
   }
 
   final case class ReadParam private (
@@ -117,9 +116,11 @@ final case class RedisWrite[T <: RedisMutation: RedisMutator](
 
     private val WriteFn =
       new RedisDoFn[T, Unit](connectionConfig, batchSize) {
-        override def request(value: T, client: Client): Future[Unit] =
+        override def request(value: T, client: Client)(implicit
+          ec: ExecutionContext
+        ): Future[Unit] =
           client
-            .request(pipeline => RedisMutator.mutate(pipeline)(value))
+            .request(transaction => RedisMutator.mutate(transaction)(value))
             .map(_ => ())
       }
 

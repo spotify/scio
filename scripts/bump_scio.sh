@@ -17,7 +17,7 @@ REPOS=(
 )
 
 if ! [ -x "$(command -v hub)" ]; then
-  echo 'Error: hub is not installed'
+  echo 'Error: hub is not installed. See https://github.com/github/hub#installation'
   exit 1
 fi
 
@@ -62,7 +62,7 @@ cd $TEMP
 # Update homebrew formula
 ########################################
 
-URL="https://github.com/spotify/scio/releases/download/v$SCIO_VERSION/scio-repl-$SCIO_VERSION.jar"
+URL="https://github.com/spotify/scio/releases/download/v$SCIO_VERSION/scio-repl.jar"
 SHASUM=$(curl -sL $URL | shasum -a 256 | awk '{print $1}')
 REPO="git@github.com:spotify/homebrew-public.git"
 git_clone $REPO

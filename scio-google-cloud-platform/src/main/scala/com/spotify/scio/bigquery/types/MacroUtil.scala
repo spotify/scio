@@ -18,14 +18,12 @@
 package com.spotify.scio.bigquery.types
 
 import com.spotify.scio.bigquery.BigQuerySysProps
-import org.slf4j.LoggerFactory
 
+import scala.annotation.nowarn
 import scala.reflect.macros._
 import scala.reflect.runtime.universe._
 
 private[types] object MacroUtil {
-  private[this] val logger = LoggerFactory.getLogger(this.getClass)
-
   // Case class helpers for runtime reflection
 
   def isCaseClass(t: Type): Boolean =
@@ -55,7 +53,7 @@ private[types] object MacroUtil {
       fields
         .filter { s =>
           try {
-            val AnnotatedType(a, _) = s.asMethod.returnType
+            val AnnotatedType(a, _) = s.asMethod.returnType: @nowarn
             a.exists(_.tree.tpe == typeOf[BigQueryTag])
           } catch {
             case _: MatchError => false
@@ -68,14 +66,15 @@ private[types] object MacroUtil {
 
   // Debugging
 
-  @inline def debug(msg: Any): Unit =
+  @inline def debug(c: blackbox.Context)(h: String, t: c.Tree): Unit =
     if (BigQuerySysProps.Debug.value("false").toBoolean) {
-      logger.info(msg.toString)
+      c.echo(c.enclosingPosition, s"$h: $t")
     }
 
   // Namespace helpers
 
   val SBQ = "_root_.com.spotify.scio.bigquery"
+  val BeamAvroConverterNamespace = "org.apache.beam.sdk.io.gcp.bigquery"
   val GModel = "_root_.com.google.api.services.bigquery.model"
   val GBQIO = "_root_.org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO"
   val SType: String = s"$SBQ.types.BigQueryType"

@@ -28,9 +28,9 @@ import com.twitter.chill.IKryoRegistrar
 import org.apache.beam.sdk.coders.{
   AtomicCoder,
   ByteArrayCoder,
+  Coder => BCoder,
   SerializableCoder,
-  StringUtf8Coder,
-  Coder => BCoder
+  StringUtf8Coder
 }
 import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.schemas.SchemaCoder
@@ -39,7 +39,7 @@ import org.openjdk.jmh.annotations._
 
 final case class UserId(bytes: Array[Byte])
 object UserId {
-  implicit def coderUserId: Coder[UserId] = Coder.gen[UserId]
+  implicit val CoderUserId: Coder[UserId] = Coder.gen[UserId]
 }
 final case class User(id: UserId, username: String, email: String)
 final case class SpecializedUser(id: UserId, username: String, email: String)
@@ -295,7 +295,7 @@ class CoderBenchmark {
 @State(Scope.Thread)
 @AuxCounters(AuxCounters.Type.EVENTS)
 class SerializedOutputSize(var outputSize: Int) {
-  def this() = { this(0) }
+  def this() = this(0)
 }
 
 object Counter {

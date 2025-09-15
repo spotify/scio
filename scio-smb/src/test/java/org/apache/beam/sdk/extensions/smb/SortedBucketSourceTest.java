@@ -19,8 +19,13 @@ package org.apache.beam.sdk.extensions.smb;
 
 import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
 import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR;
+import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.PrimaryAndSecondaryKeyedBucktedInput;
+import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.PrimaryKeyedBucketedInput;
 import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
 
+import com.google.common.collect.ImmutableSet;
+import com.spotify.scio.avro.GenericRecordDatumFactory$;
+import com.spotify.scio.avro.SpecificRecordDatumFactory;
 import java.io.File;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
@@ -32,22 +37,26 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.generic.GenericRecordBuilder;
+import org.apache.avro.generic.IndexedRecord;
 import org.apache.beam.sdk.PipelineResult;
+import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory;
+import org.apache.beam.sdk.extensions.avro.io.AvroGeneratedUser;
 import org.apache.beam.sdk.extensions.smb.FileOperations.Writer;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.Predicate;
-import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.LocalResources;
 import org.apache.beam.sdk.io.Read;
-import org.apache.beam.sdk.io.fs.ResolveOptions;
-import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.metrics.DistributionResult;
 import org.apache.beam.sdk.metrics.MetricResult;
@@ -56,17 +65,18 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.testing.NeedsRunner;
 import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
+import org.apache.beam.sdk.transforms.SerializableFunction;
+import org.apache.beam.sdk.transforms.SerializableFunctions;
 import org.apache.beam.sdk.transforms.join.CoGbkResult;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TupleTag;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Sets;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableMap;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Lists;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -84,56 +94,61 @@ public class SortedBucketSourceTest {
 
   private static final String LHS_FILENAME_PREFIX = "lhs-filename-prefix"; // Custom prefix
   private static final String RHS_FILENAME_PREFIX = "bucket"; // Default prefix
+  private static final String FILENAME_SUFFIX = ".txt";
 
   @Before
   public void setup() {
-    lhsPolicy = new SMBFilenamePolicy(fromFolder(lhsFolder), LHS_FILENAME_PREFIX, ".txt");
-    rhsPolicy = new SMBFilenamePolicy(fromFolder(rhsFolder), RHS_FILENAME_PREFIX, ".txt");
+    lhsPolicy = new SMBFilenamePolicy(fromFolder(lhsFolder), LHS_FILENAME_PREFIX, FILENAME_SUFFIX);
+    rhsPolicy = new SMBFilenamePolicy(fromFolder(rhsFolder), RHS_FILENAME_PREFIX, FILENAME_SUFFIX);
   }
 
   @Test
   public void testBucketedInputMetadata() throws Exception {
-    List<ResourceId> inputDirectories = new LinkedList<>();
+    List<String> inputDirectories = new LinkedList<>();
 
     // first 9 elements are source-compatible, last is not
     for (int i = 0; i < 10; i++) {
       final TestBucketMetadata metadata =
           TestBucketMetadata.of((int) Math.pow(2.0, 1.0 * i), 1).withKeyIndex(i < 9 ? 0 : 1);
       final File dest = lhsFolder.newFolder(String.valueOf(i));
-
       final OutputStream outputStream =
           Channels.newOutputStream(
               FileSystems.create(
                   LocalResources.fromFile(lhsFolder.newFile(i + "/metadata.json"), false),
                   "application/json"));
-
       BucketMetadata.to(metadata, outputStream);
-      inputDirectories.add(LocalResources.fromFile(dest, true));
+      inputDirectories.add(dest.getAbsolutePath());
     }
 
     // Test with source-compatible input directories
-    final BucketedInput validBucketedInput =
-        new BucketedInput<>(
+    final BucketedInput<String> validBucketedInput =
+        new PrimaryKeyedBucketedInput<>(
             new TupleTag<>("testInput"),
-            inputDirectories.subList(0, 8),
-            ".txt",
-            new TestFileOperations());
+            inputDirectories.subList(0, 9),
+            FILENAME_SUFFIX,
+            new TestFileOperations(),
+            null);
 
-    // Canonical metadata should have the smallest bucket count
-    Assert.assertEquals(validBucketedInput.getMetadata().getNumBuckets(), 1);
+    Assert.assertEquals(validBucketedInput.getSourceMetadata().leastNumBuckets(), 1);
+    Assert.assertEquals(
+        SourceSpec.from(Collections.singletonList(validBucketedInput)).greatestNumBuckets,
+        (int) Math.pow(2.0, 1.0 * 8));
 
     // Test when metadata aren't same-source compatible
-    final BucketedInput invalidBucketedInput =
-        new BucketedInput<>(
-            new TupleTag<>("testInput"), inputDirectories, ".txt", new TestFileOperations());
-
-    Assert.assertThrows(IllegalStateException.class, invalidBucketedInput::getMetadata);
+    final BucketedInput<String> invalidBucketedInput =
+        new PrimaryKeyedBucketedInput<>(
+            new TupleTag<>("testInput"),
+            inputDirectories,
+            FILENAME_SUFFIX,
+            new TestFileOperations(),
+            null);
+    Assert.assertThrows(IllegalStateException.class, invalidBucketedInput::getSourceMetadata);
   }
 
   @Test
   @Category(NeedsRunner.class)
   public void testUniformBucketsOneShard() throws Exception {
-    test(
+    testPrimary(
         ImmutableMap.of(
             BucketShardId.of(0, 0), Lists.newArrayList("a1", "a2", "b1", "b2"),
             BucketShardId.of(1, 0), Lists.newArrayList("x1", "x2", "y1", "y2")),
@@ -145,7 +160,7 @@ public class SortedBucketSourceTest {
   @Test
   @Category(NeedsRunner.class)
   public void testUniformBucketsMultiShard() throws Exception {
-    test(
+    testPrimary(
         ImmutableMap.of(
             BucketShardId.of(0, 0), Lists.newArrayList("a1", "b1"),
             BucketShardId.of(0, 1), Lists.newArrayList("a2", "b2"),
@@ -161,7 +176,7 @@ public class SortedBucketSourceTest {
   @Test
   @Category(NeedsRunner.class)
   public void testUniformBucketsMixedShard() throws Exception {
-    test(
+    testPrimary(
         ImmutableMap.of(
             BucketShardId.of(0, 0), Lists.newArrayList("a1", "a2", "b1", "b2"),
             BucketShardId.of(1, 0), Lists.newArrayList("x1", "x2", "y1", "y2")),
@@ -175,7 +190,7 @@ public class SortedBucketSourceTest {
   @Test
   @Category(NeedsRunner.class)
   public void testMixedBucketsOneShard() throws Exception {
-    test(
+    testPrimary(
         ImmutableMap.of(
             BucketShardId.of(0, 0), Lists.newArrayList("a1", "a2", "b1", "b2"),
             BucketShardId.of(1, 0), Lists.newArrayList("x1", "x2", "y1", "y2"),
@@ -199,7 +214,7 @@ public class SortedBucketSourceTest {
     lhs.put(BucketShardId.of(3, 0), Lists.newArrayList("y1", "y2", "z1", "z2"));
     lhs.put(BucketShardId.of(3, 1), Lists.newArrayList("y1", "y2", "z1", "z2"));
 
-    test(
+    testPrimary(
         lhs,
         ImmutableMap.of(
             BucketShardId.of(0, 0), Lists.newArrayList("a3", "c3"),
@@ -211,7 +226,7 @@ public class SortedBucketSourceTest {
   @Test
   @Category(NeedsRunner.class)
   public void testMixedBucketsMixedShard() throws Exception {
-    test(
+    testPrimary(
         ImmutableMap.of(
             BucketShardId.of(0, 0), Lists.newArrayList("a1", "a2", "b1", "b2"),
             BucketShardId.of(1, 0), Lists.newArrayList("x1", "x2", "y1", "y2"),
@@ -227,7 +242,7 @@ public class SortedBucketSourceTest {
   @Test
   @Category(NeedsRunner.class)
   public void testNullKeysIgnored() throws Exception {
-    test(
+    testPrimary(
         ImmutableMap.of(
             BucketShardId.ofNullKey(), Lists.newArrayList(""),
             BucketShardId.of(0, 0), Lists.newArrayList("x1", "x2", "y1", "y2"),
@@ -241,105 +256,216 @@ public class SortedBucketSourceTest {
   @Test
   @Category(NeedsRunner.class)
   public void testSingleSourceGbk() throws Exception {
-    testSingleSourceGbk(null);
+    testSingleSourceGbkPrimary(null);
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
+  public void testSingleSourceGbkSecondary() throws Exception {
+    testSingleSourceGbkSecondary(null);
   }
 
   @Test
   @Category(NeedsRunner.class)
   public void testSingleSourceGbkWithPredicate() throws Exception {
-    testSingleSourceGbk((vs, v) -> v.startsWith("x"));
-    testSingleSourceGbk((vs, v) -> v.endsWith("1"));
+    testSingleSourceGbkPrimary((vs, v) -> v.startsWith("x") || v.endsWith("1"));
   }
 
-  private void testSingleSourceGbk(Predicate<String> predicate) throws Exception {
-    Map<BucketShardId, List<String>> input =
-        ImmutableMap.of(
-            BucketShardId.of(0, 0), Lists.newArrayList("a1", "a2", "b1", "b2"),
-            BucketShardId.of(1, 0), Lists.newArrayList("x1", "x2", "y1", "y2"));
+  @Test
+  @Category(NeedsRunner.class)
+  public void testSingleSourceGbkWithPredicateEmpty() throws Exception {
+    testSingleSourceGbkPrimary((vs, v) -> v.startsWith("z")); // matches no values
+  }
 
-    int numBuckets = maxId(input.keySet(), BucketShardId::getBucketId) + 1;
-    int numShards = maxId(input.keySet(), BucketShardId::getShardId) + 1;
+  @Test
+  @Category(NeedsRunner.class)
+  public void testSingleSourceGbkWithSecondaryWithPredicate() throws Exception {
+    testSingleSourceGbkSecondary((vs, v) -> v.startsWith("x") && v.endsWith("1"));
+  }
 
-    TestBucketMetadata metadata = TestBucketMetadata.of(numBuckets, numShards, LHS_FILENAME_PREFIX);
+  Map<BucketShardId, List<String>> singleSourceGbkInput =
+      ImmutableMap.of(
+          BucketShardId.of(0, 0), Lists.newArrayList("a1", "a2", "b1", "b2"),
+          BucketShardId.of(1, 0), Lists.newArrayList("x1", "x2", "y1", "y2"));
 
-    write(lhsPolicy.forDestination(), metadata, input);
-
+  private void testSingleSourceGbkPrimary(Predicate<String> predicate) throws Exception {
+    int numBuckets = maxId(singleSourceGbkInput.keySet(), BucketShardId::getBucketId) + 1;
+    int numShards = maxId(singleSourceGbkInput.keySet(), BucketShardId::getShardId) + 1;
+    BucketMetadata<String, Void, String> metadata =
+        TestBucketMetadata.of(numBuckets, numShards, LHS_FILENAME_PREFIX);
     final TupleTag<String> tag = new TupleTag<>("GBK");
     final TestFileOperations fileOperations = new TestFileOperations();
-    final BucketedInput<?, ?> bucketedInput =
-        new BucketedInput<>(
+    final BucketedInput<?> bucketedInput =
+        new PrimaryKeyedBucketedInput<>(
             tag,
-            Collections.singletonList(fromFolder(lhsFolder)),
-            ".txt",
+            Collections.singletonList(lhsFolder.getRoot().getAbsolutePath()),
+            FILENAME_SUFFIX,
             fileOperations,
             predicate);
+    SortedBucketSource<String> src =
+        new SortedBucketPrimaryKeyedSource<>(
+            String.class, Collections.singletonList(bucketedInput), null, null);
+    checkSingleSourceGbk(metadata, tag, src, metadata::extractKeyPrimary, predicate);
+  }
 
-    PCollection<KV<String, CoGbkResult>> output =
-        pipeline.apply(
-            Read.from(
-                new SortedBucketSource<>(String.class, Collections.singletonList(bucketedInput))));
+  private void testSingleSourceGbkSecondary(Predicate<String> predicate) throws Exception {
+    int numBuckets = maxId(singleSourceGbkInput.keySet(), BucketShardId::getBucketId) + 1;
+    int numShards = maxId(singleSourceGbkInput.keySet(), BucketShardId::getShardId) + 1;
+    BucketMetadata<String, String, String> metadata =
+        TestBucketMetadataWithSecondary.of(numBuckets, numShards, LHS_FILENAME_PREFIX);
+    final TupleTag<String> tag = new TupleTag<>("GBK");
+    final TestFileOperations fileOperations = new TestFileOperations();
+    final BucketedInput<?> bucketedInput =
+        new PrimaryAndSecondaryKeyedBucktedInput<>(
+            tag,
+            Collections.singletonList(lhsFolder.getRoot().getAbsolutePath()),
+            FILENAME_SUFFIX,
+            fileOperations,
+            predicate);
+    SortedBucketSource<KV<String, String>> src =
+        new SortedBucketPrimaryAndSecondaryKeyedSource<>(
+            String.class, String.class, Collections.singletonList(bucketedInput), null, null);
+    checkSingleSourceGbk(
+        metadata,
+        tag,
+        src,
+        v -> KV.of(metadata.extractKeyPrimary(v), metadata.extractKeySecondary(v)),
+        predicate);
+  }
 
-    final Map<String, List<String>> expected =
-        filter(groupByKey(input, metadata::extractKey), predicate);
-
+  private <KeyType, K2> void checkSingleSourceGbk(
+      BucketMetadata<String, K2, String> metadata,
+      TupleTag<String> tag,
+      SortedBucketSource<KeyType> src,
+      Function<String, KeyType> keyFn,
+      Predicate<String> predicate)
+      throws Exception {
+    write(lhsPolicy.forDestination(), metadata, singleSourceGbkInput);
+    PCollection<KV<KeyType, CoGbkResult>> output =
+        pipeline.apply("SingleSourceGbk-" + UUID.randomUUID(), Read.from(src));
+    final KV<Map<KeyType, List<String>>, Long> filteredRecords =
+        filter(groupByKey(singleSourceGbkInput, keyFn), predicate);
     PAssert.thatMap(output)
         .satisfies(
             m -> {
-              Map<String, List<String>> actual = new HashMap<>();
-              for (Map.Entry<String, CoGbkResult> kv : m.entrySet()) {
+              Map<KeyType, List<String>> actual = new HashMap<>();
+              for (Map.Entry<KeyType, CoGbkResult> kv : m.entrySet()) {
                 List<String> v =
                     StreamSupport.stream(kv.getValue().getAll(tag).spliterator(), false)
                         .sorted()
                         .collect(Collectors.toList());
                 actual.put(kv.getKey(), v);
               }
-              Assert.assertEquals(expected, actual);
+              Assert.assertEquals(filteredRecords.getKey(), actual);
               return null;
             });
 
-    pipeline.run();
+    final PipelineResult result = pipeline.run();
+
+    verifyMetrics(
+        result,
+        ImmutableMap.of(),
+        ImmutableMap.of(
+            "SortedBucketSource-PredicateFilteredRecordsCount_GBK", filteredRecords.getValue()));
+  }
+
+  static final List<Map<BucketShardId, List<String>>> partitionedInputsMixedBucketsLHS,
+      partitionedInputsMixedBucketsRHS,
+      partitionedInputsUniformBucketsLHS,
+      partitionedInputsUniformBucketsRHS,
+      partitionedInputsMixedBucketsAutoParallelismLHS,
+      partitionedInputsMixedBucketsAutoParallelismRHS,
+      partitionedInputsMixedBucketsMaxParallelismLHS,
+      partitionedInputsMixedBucketsMaxParallelismRHS,
+      partitionedInputsMixedBucketsCustomParallelismLHS,
+      partitionedInputsMixedBucketsCustomParallelismRHS;
+
+  static {
+    partitionedInputsMixedBucketsLHS =
+        ImmutableList.of(
+            ImmutableMap.of(
+                BucketShardId.of(0, 0), Lists.newArrayList("x1", "x2"),
+                BucketShardId.of(1, 0), Lists.newArrayList("c1", "c2")),
+            ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("x3", "x4")));
+    partitionedInputsMixedBucketsRHS =
+        ImmutableList.of(
+            ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("x5", "x6")),
+            ImmutableMap.of(
+                BucketShardId.of(0, 0), Lists.newArrayList("x7", "x8"),
+                BucketShardId.of(1, 0), Lists.newArrayList("c7", "c8")));
   }
 
   @Test
   @Category(NeedsRunner.class)
   public void testPartitionedInputsMixedBuckets() throws Exception {
-    testPartitioned(
-        ImmutableList.of(
-            ImmutableMap.of(
-                BucketShardId.of(0, 0), Lists.newArrayList("x1", "x2"),
-                BucketShardId.of(1, 0), Lists.newArrayList("c1", "c2")),
-            ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("x3", "x4"))),
-        ImmutableList.of(
-            ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("x5", "x6")),
-            ImmutableMap.of(
-                BucketShardId.of(0, 0), Lists.newArrayList("x7", "x8"),
-                BucketShardId.of(1, 0), Lists.newArrayList("c7", "c8"))));
+    testPartitionedPrimary(
+        partitionedInputsMixedBucketsLHS,
+        partitionedInputsMixedBucketsRHS,
+        TargetParallelism.min(),
+        null);
   }
 
   @Test
   @Category(NeedsRunner.class)
-  public void testPartitionedInputsUniformBuckets() throws Exception {
-    testPartitioned(
+  public void testMultiSourcesWithPredicate() throws Exception {
+    testPartitionedPrimary(
+        partitionedInputsMixedBucketsLHS,
+        partitionedInputsMixedBucketsRHS,
+        TargetParallelism.min(),
+        (vs, v) -> v.startsWith("x") || v.endsWith("1"));
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
+  public void testPartitionedInputsMixedBucketsSecondary() throws Exception {
+    testPartitionedSecondary(
+        partitionedInputsMixedBucketsLHS,
+        partitionedInputsMixedBucketsRHS,
+        TargetParallelism.min());
+  }
+
+  static {
+    partitionedInputsUniformBucketsLHS =
         ImmutableList.of(
             ImmutableMap.of(
                 BucketShardId.of(0, 0), Lists.newArrayList("x1", "x2"),
                 BucketShardId.of(1, 0), Lists.newArrayList("c1", "c2")),
             ImmutableMap.of(
                 BucketShardId.of(0, 0), Lists.newArrayList("x3", "x4"),
-                BucketShardId.of(1, 0), Lists.newArrayList("c3", "c4"))),
+                BucketShardId.of(1, 0), Lists.newArrayList("c3", "c4")));
+    partitionedInputsUniformBucketsRHS =
         ImmutableList.of(
             ImmutableMap.of(
                 BucketShardId.of(0, 0), Lists.newArrayList("x5", "x6"),
                 BucketShardId.of(1, 0), Lists.newArrayList("c5", "c6")),
             ImmutableMap.of(
                 BucketShardId.of(0, 0), Lists.newArrayList("x7", "x8"),
-                BucketShardId.of(1, 0), Lists.newArrayList("c7", "c8"))));
+                BucketShardId.of(1, 0), Lists.newArrayList("c7", "c8")));
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
+  public void testPartitionedInputsUniformBuckets() throws Exception {
+    testPartitionedPrimary(
+        partitionedInputsUniformBucketsLHS,
+        partitionedInputsUniformBucketsRHS,
+        TargetParallelism.min(),
+        null);
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
+  public void testPartitionedInputsUniformBucketsSecondary() throws Exception {
+    testPartitionedSecondary(
+        partitionedInputsUniformBucketsLHS,
+        partitionedInputsUniformBucketsRHS,
+        TargetParallelism.min());
   }
 
   @Test
   @Category(NeedsRunner.class)
   public void testMixedBucketsMixedShardMaxParallelism() throws Exception {
-    test(
+    testPrimary(
         ImmutableMap.of(
             BucketShardId.of(0, 0), Lists.newArrayList("e1", "e2"),
             BucketShardId.of(1, 0), Lists.newArrayList("c1", "c2", "c3"),
@@ -356,7 +482,7 @@ public class SortedBucketSourceTest {
   @Test
   @Category(NeedsRunner.class)
   public void testMixedBucketsMixedShardCustomParallelism() throws Exception {
-    test(
+    testPrimary(
         ImmutableMap.of(
             BucketShardId.of(0, 0), Lists.newArrayList("e1", "e2"),
             BucketShardId.of(1, 0), Lists.newArrayList("c1", "c2", "c3"),
@@ -371,7 +497,7 @@ public class SortedBucketSourceTest {
   @Test
   @Category(NeedsRunner.class)
   public void testMixedBucketsMixedShardAutoParallelism() throws Exception {
-    test(
+    testPrimary(
         ImmutableMap.of(
             BucketShardId.of(0, 0), Lists.newArrayList("e1", "e2"),
             BucketShardId.of(1, 0), Lists.newArrayList("c1", "c2", "c3"),
@@ -385,9 +511,8 @@ public class SortedBucketSourceTest {
 
   // For non-minimal parallelism, test input keys *must* hash to their corresponding bucket IDs,
   // since a rehash is required in the merge step
-  @Test
-  @Category(NeedsRunner.class)
-  public void testPartitionedInputsMixedBucketsAutoParallelism() throws Exception {
+
+  static {
     Map<BucketShardId, List<String>> partition1Map = new HashMap<>();
     partition1Map.put(BucketShardId.of(0, 0), Lists.newArrayList("w9"));
     partition1Map.put(BucketShardId.of(0, 1), Lists.newArrayList("p1"));
@@ -398,24 +523,79 @@ public class SortedBucketSourceTest {
     partition1Map.put(BucketShardId.of(3, 0), Lists.newArrayList("b1"));
     partition1Map.put(BucketShardId.of(3, 1), Lists.newArrayList());
 
-    testPartitioned(
+    partitionedInputsMixedBucketsAutoParallelismLHS =
         ImmutableList.of(
-            partition1Map, ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("w3", "w4"))),
+            partition1Map, ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("w3", "w4")));
+
+    partitionedInputsMixedBucketsAutoParallelismRHS =
         ImmutableList.of(
             ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("w5", "w6")),
             ImmutableMap.of(
                 BucketShardId.of(0, 0), Lists.newArrayList(),
-                BucketShardId.of(1, 0), Lists.newArrayList("c7", "c8"))),
+                BucketShardId.of(1, 0), Lists.newArrayList("c7", "c8")));
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
+  public void testPartitionedInputsMixedBucketsAutoParallelism() throws Exception {
+    testPartitionedPrimary(
+        partitionedInputsMixedBucketsAutoParallelismLHS,
+        partitionedInputsMixedBucketsAutoParallelismRHS,
+        TargetParallelism.auto(),
+        null);
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
+  public void testPartitionedInputsMixedBucketsAutoParallelismSecondary() throws Exception {
+    testPartitionedSecondary(
+        partitionedInputsMixedBucketsAutoParallelismLHS,
+        partitionedInputsMixedBucketsAutoParallelismRHS,
         TargetParallelism.auto());
+  }
+
+  static {
+    partitionedInputsMixedBucketsMaxParallelismLHS =
+        ImmutableList.of(
+            ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("c1", "w1", "x1", "z1")),
+            ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("w1", "w2")));
+    partitionedInputsMixedBucketsMaxParallelismRHS =
+        ImmutableList.of(
+            ImmutableMap.of(
+                BucketShardId.of(0, 0), Lists.newArrayList("w5", "w6"),
+                BucketShardId.of(1, 0), Lists.newArrayList("t1", "t2", "x1")),
+            ImmutableMap.of(
+                BucketShardId.of(0, 0), Lists.newArrayList("w3", "w4"),
+                BucketShardId.of(1, 0), Lists.newArrayList("c1", "c2"),
+                BucketShardId.of(2, 0), Lists.newArrayList("u1", "u2"),
+                BucketShardId.of(3, 0), Lists.newArrayList("r1", "r2")));
   }
 
   @Test
   @Category(NeedsRunner.class)
   public void testPartitionedInputsMixedBucketsMaxParallelism() throws Exception {
-    testPartitioned(
+    testPartitionedPrimary(
+        partitionedInputsMixedBucketsMaxParallelismLHS,
+        partitionedInputsMixedBucketsMaxParallelismRHS,
+        TargetParallelism.max(),
+        null);
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
+  public void testPartitionedInputsMixedBucketsMaxParallelismSecondary() throws Exception {
+    testPartitionedSecondary(
+        partitionedInputsMixedBucketsMaxParallelismLHS,
+        partitionedInputsMixedBucketsMaxParallelismRHS,
+        TargetParallelism.max());
+  }
+
+  static {
+    partitionedInputsMixedBucketsCustomParallelismLHS =
         ImmutableList.of(
             ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("c1", "w1", "x1", "z1")),
-            ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("w1", "w2"))),
+            ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("w1", "w2")));
+    partitionedInputsMixedBucketsCustomParallelismRHS =
         ImmutableList.of(
             ImmutableMap.of(
                 BucketShardId.of(0, 0), Lists.newArrayList("w5", "w6"),
@@ -424,27 +604,17 @@ public class SortedBucketSourceTest {
                 BucketShardId.of(0, 0), Lists.newArrayList("w3", "w4"),
                 BucketShardId.of(1, 0), Lists.newArrayList("c1", "c2"),
                 BucketShardId.of(2, 0), Lists.newArrayList("u1", "u2"),
-                BucketShardId.of(3, 0), Lists.newArrayList("r1", "r2"))),
-        TargetParallelism.max());
+                BucketShardId.of(3, 0), Lists.newArrayList("r1", "r2")));
   }
 
   @Test
   @Category(NeedsRunner.class)
   public void testPartitionedInputsMixedBucketsCustomParallelism() throws Exception {
-    testPartitioned(
-        ImmutableList.of(
-            ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("c1", "w1", "x1", "z1")),
-            ImmutableMap.of(BucketShardId.of(0, 0), Lists.newArrayList("w1", "w2"))),
-        ImmutableList.of(
-            ImmutableMap.of(
-                BucketShardId.of(0, 0), Lists.newArrayList("w5", "w6"),
-                BucketShardId.of(1, 0), Lists.newArrayList("t1", "t2", "x1")),
-            ImmutableMap.of(
-                BucketShardId.of(0, 0), Lists.newArrayList("w3", "w4"),
-                BucketShardId.of(1, 0), Lists.newArrayList("c1", "c2"),
-                BucketShardId.of(2, 0), Lists.newArrayList("u1", "u2"),
-                BucketShardId.of(3, 0), Lists.newArrayList("r1", "r2"))),
-        TargetParallelism.of(2));
+    testPartitionedPrimary(
+        partitionedInputsMixedBucketsCustomParallelismLHS,
+        partitionedInputsMixedBucketsCustomParallelismRHS,
+        TargetParallelism.of(2),
+        null);
   }
 
   @SuppressWarnings("unchecked")
@@ -452,16 +622,17 @@ public class SortedBucketSourceTest {
   public void testRecursiveSourceSplit() throws Exception {
     writeSmbSourceWithBytes(800, 8, 1, lhsPolicy);
 
-    final List<BucketedInput<?, ?>> inputs =
+    final List<BucketedInput<?>> inputs =
         Collections.singletonList(
-            new BucketedInput<String, String>(
+            new PrimaryKeyedBucketedInput<String>(
                 new TupleTag<>("lhs"),
-                lhsPolicy.forDestination().getDirectory(),
-                ".txt",
-                new TestFileOperations()));
+                Collections.singletonList(lhsPolicy.forDestination().getDirectory().toString()),
+                FILENAME_SUFFIX,
+                new TestFileOperations(),
+                null));
 
     final SortedBucketSource<String> source =
-        new SortedBucketSource<>(String.class, inputs, TargetParallelism.auto());
+        new SortedBucketPrimaryKeyedSource<>(String.class, inputs, TargetParallelism.auto(), null);
 
     Assert.assertEquals(800, source.getEstimatedSizeBytes(PipelineOptionsFactory.create()));
 
@@ -478,12 +649,12 @@ public class SortedBucketSourceTest {
 
     // Split 1 of the sources again into 4 sources of 100 bytes each
     List<SortedBucketSource<String>> secondSplit = splitAndSort(split1, 100);
+    secondSplit.forEach(s -> Assert.assertEquals(8, s.getEffectiveParallelism()));
     Assert.assertEquals(4, secondSplit.size());
     Assert.assertEquals(0, secondSplit.get(0).getBucketOffset());
     Assert.assertEquals(2, secondSplit.get(1).getBucketOffset());
     Assert.assertEquals(4, secondSplit.get(2).getBucketOffset());
     Assert.assertEquals(6, secondSplit.get(3).getBucketOffset());
-    secondSplit.forEach(s -> Assert.assertEquals(8, s.getEffectiveParallelism()));
 
     // Split the other source again into 2 sources of 200 bytes each
     secondSplit = splitAndSort(split2, 200);
@@ -494,22 +665,170 @@ public class SortedBucketSourceTest {
   }
 
   @Test
-  public void testFailsNonDirectoryInput() {
-    final ResourceId illegalPath =
-        lhsPolicy
-            .forDestination()
-            .getDirectory()
-            .resolve("/*.txt", StandardResolveOptions.RESOLVE_FILE);
+  public void testUniqueTupleTagIdOf() {
+    ParquetAvroSortedBucketIO.Read<GenericRecord> read1 =
+        ParquetAvroSortedBucketIO.read(new TupleTag<>("input"), AvroGeneratedUser.getClassSchema())
+            .from("dir1");
+
+    ParquetAvroSortedBucketIO.Read<GenericRecord> read2 =
+        ParquetAvroSortedBucketIO.read(new TupleTag<>("input"), AvroGeneratedUser.getClassSchema())
+            .from("dir2");
+
     Assert.assertThrows(
-        "Cannot construct SMB source from non-directory input " + illegalPath,
-        IllegalArgumentException.class,
-        () ->
-            new SortedBucketSource<>(
-                String.class,
-                Lists.newArrayList(
-                    new BucketedInput<String, String>(
-                        new TupleTag<>("lhs"), illegalPath, ".txt", new TestFileOperations())),
-                TargetParallelism.auto()));
+        IllegalArgumentException.class, () -> SortedBucketIO.read(String.class).of(read1, read2));
+  }
+
+  @Test
+  public void testUniqueTupleTagIdAnd() {
+    ParquetAvroSortedBucketIO.Read<GenericRecord> read1 =
+        ParquetAvroSortedBucketIO.read(new TupleTag<>("input1"), AvroGeneratedUser.getClassSchema())
+            .from("dir1");
+
+    ParquetAvroSortedBucketIO.Read<GenericRecord> read2 =
+        ParquetAvroSortedBucketIO.read(new TupleTag<>("input2"), AvroGeneratedUser.getClassSchema())
+            .from("dir2");
+
+    SortedBucketIO.CoGbk<String> sb = SortedBucketIO.read(String.class).of(read1, read2);
+
+    // None of these changes the set of inputs
+    sb.withMetricsKey("Metric Key");
+    sb.withTargetParallelism(TargetParallelism.auto());
+
+    ParquetAvroSortedBucketIO.Read<GenericRecord> read3 =
+        ParquetAvroSortedBucketIO.read(new TupleTag<>("input2"), AvroGeneratedUser.getClassSchema())
+            .from("dir3");
+
+    Assert.assertThrows(IllegalArgumentException.class, () -> sb.and(read3));
+  }
+
+  @Test
+  public void testUniqueTupleTagIdSecondaryKey() {
+    ParquetAvroSortedBucketIO.Read<GenericRecord> read1 =
+        ParquetAvroSortedBucketIO.read(new TupleTag<>("input1"), AvroGeneratedUser.getClassSchema())
+            .from("dir1");
+
+    SortedBucketIO.CoGbkWithSecondary<String, String> sb =
+        SortedBucketIO.read(String.class, String.class).of(read1);
+
+    // None of these changes the set of inputs
+    sb.withMetricsKey("Metric Key");
+    sb.withTargetParallelism(TargetParallelism.auto());
+
+    ParquetAvroSortedBucketIO.Read<GenericRecord> read2 =
+        ParquetAvroSortedBucketIO.read(new TupleTag<>("input1"), AvroGeneratedUser.getClassSchema())
+            .from("dir2");
+
+    Assert.assertThrows(IllegalArgumentException.class, () -> sb.and(read2));
+  }
+
+  @Test
+  public void testMixedSpecificAvroInputTypesInSource() throws Exception {
+    AvroDatumFactory<AvroGeneratedUser> datumFactory =
+        new SpecificRecordDatumFactory<>(AvroGeneratedUser.class);
+    testBucketedInputOfPartitions(
+        AvroFileOperations.of(datumFactory, AvroGeneratedUser.getClassSchema()),
+        SerializableFunctions.identity(),
+        ParquetAvroFileOperations.of(AvroGeneratedUser.class),
+        SerializableFunctions.identity());
+  }
+
+  @Test
+  public void testMixedGenericAvroInputTypesInSource() throws Exception {
+    AvroDatumFactory<GenericRecord> datumFactory = GenericRecordDatumFactory$.INSTANCE;
+    testBucketedInputOfPartitions(
+        AvroFileOperations.of(datumFactory, AvroGeneratedUser.getClassSchema()),
+        SortedBucketSourceTest::toAvroUserGenericRecord,
+        ParquetAvroFileOperations.of(AvroGeneratedUser.getClassSchema()),
+        SortedBucketSourceTest::toAvroUserGenericRecord);
+  }
+
+  private <RecordT extends IndexedRecord> void testBucketedInputOfPartitions(
+      FileOperations<RecordT> avroFileOp,
+      SerializableFunction<AvroGeneratedUser, RecordT> avroToT,
+      FileOperations<RecordT> parquetFileOp,
+      SerializableFunction<AvroGeneratedUser, RecordT> parquetToT)
+      throws Exception {
+    final TemporaryFolder avroDir = new TemporaryFolder();
+    avroDir.create();
+    final TemporaryFolder parquetDir = new TemporaryFolder();
+    parquetDir.create();
+    final SMBFilenamePolicy avroPolicy =
+        new SMBFilenamePolicy(fromFolder(avroDir), "bucket", ".avro");
+    final SMBFilenamePolicy parquetPolicy =
+        new SMBFilenamePolicy(fromFolder(parquetDir), "bucket", ".parquet");
+
+    final AvroGeneratedUser avroRecord =
+        AvroGeneratedUser.newBuilder()
+            .setName("foo")
+            .setFavoriteColor("avro-color")
+            .setFavoriteNumber(1)
+            .build();
+    final AvroGeneratedUser parquetRecord =
+        AvroGeneratedUser.newBuilder()
+            .setName("foo")
+            .setFavoriteColor("parquet-color")
+            .setFavoriteNumber(2)
+            .build();
+
+    write(
+        avroPolicy.forDestination(),
+        new AvroBucketMetadata<String, Void, RecordT>(
+            1,
+            1,
+            String.class,
+            "name",
+            null,
+            null,
+            BucketMetadata.HashType.MURMUR3_32,
+            "bucket",
+            AvroGeneratedUser.getClassSchema()),
+        ImmutableMap.of(BucketShardId.of(0, 0), ImmutableList.of((RecordT) avroRecord)),
+        avroFileOp);
+
+    write(
+        parquetPolicy.forDestination(),
+        new ParquetBucketMetadata<String, Void, RecordT>(
+            1,
+            1,
+            String.class,
+            "name",
+            null,
+            null,
+            BucketMetadata.HashType.MURMUR3_32,
+            "bucket",
+            (Class<RecordT>) AvroGeneratedUser.class),
+        ImmutableMap.of(BucketShardId.of(0, 0), ImmutableList.of((RecordT) parquetRecord)),
+        parquetFileOp);
+
+    final TupleTag<RecordT> tupleTag = new TupleTag<>("source-tag");
+    final PCollection<KV<String, CoGbkResult>> output =
+        pipeline.apply(
+            Read.from(
+                new SortedBucketPrimaryKeyedSource<>(
+                    String.class,
+                    ImmutableList.of(
+                        new PrimaryKeyedBucketedInput<>(
+                            tupleTag,
+                            ImmutableMap.of(
+                                TestUtils.fromFolder(avroDir).toString(),
+                                    KV.of(".avro", avroFileOp),
+                                TestUtils.fromFolder(parquetDir).toString(),
+                                    KV.of(".parquet", parquetFileOp)),
+                            null)),
+                    TargetParallelism.max(),
+                    "metrics-key")));
+
+    PAssert.thatMap(output)
+        .satisfies(
+            m -> {
+              Assert.assertEquals(1, m.keySet().size());
+              Assert.assertEquals(
+                  ImmutableSet.of(avroToT.apply(avroRecord), avroToT.apply(parquetRecord)),
+                  Sets.newHashSet(m.get("foo").getAll("source-tag")));
+              return null;
+            });
+
+    pipeline.run();
   }
 
   @SuppressWarnings("unchecked")
@@ -546,62 +865,182 @@ public class SortedBucketSourceTest {
     write(filenamePolicy.forDestination(), metadata, inputMap);
   }
 
-  private void test(
+  private void testPrimary(
       Map<BucketShardId, List<String>> lhsInput, Map<BucketShardId, List<String>> rhsInput)
       throws Exception {
-    test(lhsInput, rhsInput, null, null, TargetParallelism.min());
+    testPrimary(lhsInput, rhsInput, null, null, TargetParallelism.min());
   }
 
-  private void test(
+  private void testPrimary(
       Map<BucketShardId, List<String>> lhsInput,
       Map<BucketShardId, List<String>> rhsInput,
       TargetParallelism targetParallelism)
       throws Exception {
-    test(lhsInput, rhsInput, null, null, targetParallelism);
+    testPrimary(lhsInput, rhsInput, null, null, targetParallelism);
   }
 
-  private void test(
+  class TestInput<KeyType, K2> {
+    TupleTag<String> tag;
+    Map<BucketShardId, List<String>> input;
+    BucketMetadata<String, K2, String> metadata;
+    BucketedInput<?> bucketedInput;
+    Map<KeyType, List<String>> expectedOutput;
+
+    Long expectedFilteredRecords;
+    Function<String, KeyType> keyFn;
+
+    public TestInput(
+        TupleTag<String> tag,
+        Map<BucketShardId, List<String>> input,
+        BucketMetadata<String, K2, String> metadata,
+        Function<String, KeyType> keyFn,
+        BucketedInput<?> bucketedInput,
+        KV<Map<KeyType, List<String>>, Long> expected) {
+      this.tag = tag;
+      this.input = input;
+      this.metadata = metadata;
+      this.bucketedInput = bucketedInput;
+      this.expectedOutput = expected.getKey();
+      this.expectedFilteredRecords = expected.getValue();
+      this.keyFn = keyFn;
+    }
+  }
+
+  private TestInput<String, Void> testInputPrimary(
+      String tagName,
+      Map<BucketShardId, List<String>> input,
+      Predicate<String> predicate,
+      TestFileOperations fileOperations,
+      String prefix,
+      List<String> paths)
+      throws Exception {
+    int numBuckets = maxId(input.keySet(), BucketShardId::getBucketId) + 1;
+    int numShards = maxId(input.keySet(), BucketShardId::getShardId) + 1;
+    final TupleTag<String> tag = new TupleTag<>(tagName);
+    TestBucketMetadata metadata = TestBucketMetadata.of(numBuckets, numShards, prefix);
+    Function<String, String> keyFn = metadata::extractKeyPrimary;
+    return new TestInput<>(
+        tag,
+        input,
+        metadata,
+        keyFn,
+        new PrimaryKeyedBucketedInput<>(tag, paths, FILENAME_SUFFIX, fileOperations, predicate),
+        filter(groupByKey(input, keyFn), predicate));
+  }
+
+  private TestInput<KV<String, String>, String> testInputSecondary(
+      String tagName,
+      Map<BucketShardId, List<String>> input,
+      Predicate<String> predicate,
+      TestFileOperations fileOperations,
+      String prefix,
+      List<String> paths)
+      throws Exception {
+    int numBuckets = maxId(input.keySet(), BucketShardId::getBucketId) + 1;
+    int numShards = maxId(input.keySet(), BucketShardId::getShardId) + 1;
+    final TupleTag<String> tag = new TupleTag<>(tagName);
+    TestBucketMetadataWithSecondary metadata =
+        TestBucketMetadataWithSecondary.of(numBuckets, numShards, prefix);
+    Function<String, KV<String, String>> keyFn =
+        v -> KV.of(metadata.extractKeyPrimary(v), metadata.extractKeySecondary(v));
+    return new TestInput<>(
+        tag,
+        input,
+        metadata,
+        keyFn,
+        new PrimaryAndSecondaryKeyedBucktedInput<>(
+            tag, paths, FILENAME_SUFFIX, fileOperations, predicate),
+        filter(groupByKey(input, keyFn), predicate));
+  }
+
+  private void testPrimary(
       Map<BucketShardId, List<String>> lhsInput,
       Map<BucketShardId, List<String>> rhsInput,
       Predicate<String> lhsPredicate,
       Predicate<String> rhsPredicate,
       TargetParallelism targetParallelism)
       throws Exception {
-    int lhsNumBuckets = maxId(lhsInput.keySet(), BucketShardId::getBucketId) + 1;
-    int lhsNumShards = maxId(lhsInput.keySet(), BucketShardId::getShardId) + 1;
+    final TestFileOperations fileOperations = new TestFileOperations();
+    TestInput<String, Void> lhs =
+        testInputPrimary(
+            "LHS",
+            lhsInput,
+            lhsPredicate,
+            fileOperations,
+            LHS_FILENAME_PREFIX,
+            Collections.singletonList(lhsFolder.getRoot().getAbsolutePath()));
+    TestInput<String, Void> rhs =
+        testInputPrimary(
+            "RHS",
+            rhsInput,
+            rhsPredicate,
+            fileOperations,
+            RHS_FILENAME_PREFIX,
+            Collections.singletonList(rhsFolder.getRoot().getAbsolutePath()));
 
-    int rhsNumBuckets = maxId(rhsInput.keySet(), BucketShardId::getBucketId) + 1;
-    int rhsNumShards = maxId(rhsInput.keySet(), BucketShardId::getShardId) + 1;
+    test(
+        lhs,
+        rhs,
+        new SortedBucketPrimaryKeyedSource<>(
+            String.class,
+            Lists.newArrayList(lhs.bucketedInput, rhs.bucketedInput),
+            targetParallelism,
+            null));
+  }
 
-    TestBucketMetadata lhsMetadata =
-        TestBucketMetadata.of(lhsNumBuckets, lhsNumShards, LHS_FILENAME_PREFIX);
-    TestBucketMetadata rhsMetadata =
-        TestBucketMetadata.of(rhsNumBuckets, rhsNumShards, RHS_FILENAME_PREFIX);
+  private void testSecondary(
+      Map<BucketShardId, List<String>> lhsInput,
+      Map<BucketShardId, List<String>> rhsInput,
+      Predicate<String> lhsPredicate,
+      Predicate<String> rhsPredicate,
+      TargetParallelism targetParallelism)
+      throws Exception {
+    final TestFileOperations fileOperations = new TestFileOperations();
+    TestInput<KV<String, String>, String> lhs =
+        testInputSecondary(
+            "LHS",
+            lhsInput,
+            lhsPredicate,
+            fileOperations,
+            LHS_FILENAME_PREFIX,
+            Collections.singletonList(lhsFolder.getRoot().getAbsolutePath()));
+    TestInput<KV<String, String>, String> rhs =
+        testInputSecondary(
+            "RHS",
+            rhsInput,
+            rhsPredicate,
+            fileOperations,
+            RHS_FILENAME_PREFIX,
+            Collections.singletonList(rhsFolder.getRoot().getAbsolutePath()));
 
-    write(lhsPolicy.forDestination(), lhsMetadata, lhsInput);
-    write(rhsPolicy.forDestination(), rhsMetadata, rhsInput);
+    test(
+        lhs,
+        rhs,
+        new SortedBucketPrimaryAndSecondaryKeyedSource<>(
+            String.class,
+            String.class,
+            Lists.newArrayList(lhs.bucketedInput, rhs.bucketedInput),
+            targetParallelism,
+            null));
+  }
 
-    checkJoin(
-        pipeline,
-        Collections.singletonList(fromFolder(lhsFolder)),
-        Collections.singletonList(fromFolder(rhsFolder)),
-        lhsInput,
-        rhsInput,
-        lhsPredicate,
-        rhsPredicate,
-        targetParallelism);
+  private <KeyType, K2> void test(
+      TestInput<KeyType, K2> lhs, TestInput<KeyType, K2> rhs, SortedBucketSource<KeyType> src)
+      throws Exception {
+    write(lhsPolicy.forDestination(), lhs.metadata, lhs.input);
+    write(rhsPolicy.forDestination(), rhs.metadata, rhs.input);
+    checkJoin(pipeline, lhs.tag, rhs.tag, lhs.expectedOutput, rhs.expectedOutput, src);
 
     final PipelineResult result = pipeline.run();
-
     // Verify Metrics
-    final Map<String, Integer> keyGroupCounts =
-        Stream.concat(lhsInput.values().stream(), rhsInput.values().stream())
+    Function<String, KeyType> keyFn = lhs.keyFn;
+    final Map<KeyType, Integer> keyGroupCounts =
+        Stream.concat(lhs.input.values().stream(), rhs.input.values().stream())
             .flatMap(List::stream)
             .filter(element -> !element.equals("")) // filter out null keys
-            .collect(Collectors.toMap(lhsMetadata::extractKey, str -> 1, Integer::sum));
+            .collect(Collectors.toMap(keyFn, str -> 1, Integer::sum));
 
     final long elementsRead = keyGroupCounts.values().stream().reduce(0, Integer::sum);
-
     verifyMetrics(
         result,
         ImmutableMap.of(
@@ -610,120 +1049,188 @@ public class SortedBucketSourceTest {
                 elementsRead,
                 keyGroupCounts.keySet().size(),
                 keyGroupCounts.values().stream().min(Integer::compareTo).get(),
-                keyGroupCounts.values().stream().max(Integer::compareTo).get())));
+                keyGroupCounts.values().stream().max(Integer::compareTo).get())),
+        ImmutableMap.of(
+            "SortedBucketSource-PredicateFilteredRecordsCount_" + lhs.tag.getId(),
+            lhs.expectedFilteredRecords,
+            "SortedBucketSource-PredicateFilteredRecordsCount_" + rhs.tag.getId(),
+            rhs.expectedFilteredRecords));
   }
 
-  private void testPartitioned(
-      List<Map<BucketShardId, List<String>>> lhsInputs,
-      List<Map<BucketShardId, List<String>>> rhsInputs)
+  private Map<BucketShardId, List<String>> mergePartitions(
+      List<Map<BucketShardId, List<String>>> inputs) {
+    Map<BucketShardId, List<String>> allValues = new HashMap<>();
+    inputs.forEach(
+        input ->
+            input.forEach(
+                (k, v) ->
+                    allValues.merge(
+                        k,
+                        v,
+                        (v1, v2) -> {
+                          List<String> newList = new LinkedList<>(v1);
+                          newList.addAll(v2);
+                          return newList;
+                        })));
+    return allValues;
+  }
+
+  private <K2> List<ResourceId> writePartitionDests(
+      List<Map<BucketShardId, List<String>>> inputs,
+      String pathPrefix,
+      String filenamePrefix,
+      BiFunction<Integer, Integer, BucketMetadata<String, K2, String>> mdFn)
       throws Exception {
-    testPartitioned(lhsInputs, rhsInputs, TargetParallelism.min());
+    List<ResourceId> dests = new ArrayList<>();
+    for (Map<BucketShardId, List<String>> input : inputs) {
+      int numBuckets = maxId(input.keySet(), BucketShardId::getBucketId) + 1;
+      int numShards = maxId(input.keySet(), BucketShardId::getShardId) + 1;
+      BucketMetadata<String, K2, String> metadata = mdFn.apply(numBuckets, numShards);
+      ResourceId destination =
+          LocalResources.fromFile(
+              partitionedInputFolder.newFolder(pathPrefix + inputs.indexOf(input)), true);
+      FileAssignment fileAssignment =
+          new SMBFilenamePolicy(destination, filenamePrefix, FILENAME_SUFFIX).forDestination();
+      write(fileAssignment, metadata, input);
+      dests.add(destination);
+    }
+    return dests;
   }
 
-  private void testPartitioned(
+  private void testPartitionedPrimary(
+      List<Map<BucketShardId, List<String>>> lhsInputs,
+      List<Map<BucketShardId, List<String>>> rhsInputs,
+      TargetParallelism targetParallelism,
+      Predicate<String> predicate)
+      throws Exception {
+    final TestFileOperations fileOperations = new TestFileOperations();
+
+    Map<BucketShardId, List<String>> allLhsValues = mergePartitions(lhsInputs);
+    List<ResourceId> lhsDests =
+        writePartitionDests(
+            lhsInputs,
+            "lhs",
+            LHS_FILENAME_PREFIX,
+            (b, s) -> TestBucketMetadata.of(b, s, LHS_FILENAME_PREFIX));
+    TestInput<String, Void> lhs =
+        testInputPrimary(
+            "LHS",
+            allLhsValues,
+            predicate,
+            fileOperations,
+            LHS_FILENAME_PREFIX,
+            lhsDests.stream().map(ResourceId::toString).collect(Collectors.toList()));
+
+    Map<BucketShardId, List<String>> allRhsValues = mergePartitions(rhsInputs);
+    List<ResourceId> rhsDests =
+        writePartitionDests(
+            rhsInputs,
+            "rhs",
+            RHS_FILENAME_PREFIX,
+            (b, s) -> TestBucketMetadata.of(b, s, RHS_FILENAME_PREFIX));
+    TestInput<String, Void> rhs =
+        testInputPrimary(
+            "RHS",
+            allRhsValues,
+            predicate,
+            fileOperations,
+            RHS_FILENAME_PREFIX,
+            rhsDests.stream().map(ResourceId::toString).collect(Collectors.toList()));
+
+    SortedBucketSource<String> src =
+        new SortedBucketPrimaryKeyedSource<>(
+            String.class,
+            Lists.newArrayList(lhs.bucketedInput, rhs.bucketedInput),
+            targetParallelism,
+            null);
+
+    checkJoin(pipeline, lhs.tag, rhs.tag, lhs.expectedOutput, rhs.expectedOutput, src);
+    final PipelineResult result = pipeline.run();
+
+    verifyMetrics(
+        result,
+        ImmutableMap.of(),
+        ImmutableMap.of(
+            "SortedBucketSource-PredicateFilteredRecordsCount_" + lhs.tag.getId(),
+            lhs.expectedFilteredRecords,
+            "SortedBucketSource-PredicateFilteredRecordsCount_" + rhs.tag.getId(),
+            rhs.expectedFilteredRecords));
+  }
+
+  private void testPartitionedSecondary(
       List<Map<BucketShardId, List<String>>> lhsInputs,
       List<Map<BucketShardId, List<String>>> rhsInputs,
       TargetParallelism targetParallelism)
       throws Exception {
+    final TestFileOperations fileOperations = new TestFileOperations();
 
-    List<ResourceId> lhsPaths = new ArrayList<>();
-    Map<BucketShardId, List<String>> allLhsValues = new HashMap<>();
+    Map<BucketShardId, List<String>> allLhsValues = mergePartitions(lhsInputs);
+    List<ResourceId> lhsDests =
+        writePartitionDests(
+            lhsInputs,
+            "lhs",
+            LHS_FILENAME_PREFIX,
+            (b, s) -> TestBucketMetadataWithSecondary.of(b, s, LHS_FILENAME_PREFIX));
+    TestInput<KV<String, String>, String> lhs =
+        testInputSecondary(
+            "LHS",
+            allLhsValues,
+            null,
+            fileOperations,
+            LHS_FILENAME_PREFIX,
+            lhsDests.stream().map(ResourceId::toString).collect(Collectors.toList()));
 
-    for (Map<BucketShardId, List<String>> input : lhsInputs) {
-      int numBuckets = maxId(input.keySet(), BucketShardId::getBucketId) + 1;
-      int numShards = maxId(input.keySet(), BucketShardId::getShardId) + 1;
-      TestBucketMetadata metadata =
-          TestBucketMetadata.of(numBuckets, numShards, LHS_FILENAME_PREFIX);
-      ResourceId destination =
-          LocalResources.fromFile(
-              partitionedInputFolder.newFolder("lhs" + lhsInputs.indexOf(input)), true);
-      FileAssignment fileAssignment =
-          new SMBFilenamePolicy(destination, metadata.getFilenamePrefix(), ".txt").forDestination();
-      write(fileAssignment, metadata, input);
-      lhsPaths.add(destination);
-      input.forEach(
-          (k, v) ->
-              allLhsValues.merge(
-                  k,
-                  v,
-                  (v1, v2) -> {
-                    List<String> newList = new LinkedList<>(v1);
-                    newList.addAll(v2);
-                    return newList;
-                  }));
-    }
+    Map<BucketShardId, List<String>> allRhsValues = mergePartitions(rhsInputs);
+    List<ResourceId> rhsDests =
+        writePartitionDests(
+            rhsInputs,
+            "rhs",
+            RHS_FILENAME_PREFIX,
+            (b, s) -> TestBucketMetadataWithSecondary.of(b, s, RHS_FILENAME_PREFIX));
+    TestInput<KV<String, String>, String> rhs =
+        testInputSecondary(
+            "RHS",
+            allRhsValues,
+            null,
+            fileOperations,
+            RHS_FILENAME_PREFIX,
+            rhsDests.stream().map(ResourceId::toString).collect(Collectors.toList()));
 
-    List<ResourceId> rhsPaths = new ArrayList<>();
-    Map<BucketShardId, List<String>> allRhsValues = new HashMap<>();
-    for (Map<BucketShardId, List<String>> input : rhsInputs) {
-      int numBuckets = maxId(input.keySet(), BucketShardId::getBucketId) + 1;
-      int numShards = maxId(input.keySet(), BucketShardId::getShardId) + 1;
-      TestBucketMetadata metadata =
-          TestBucketMetadata.of(numBuckets, numShards, RHS_FILENAME_PREFIX);
-      ResourceId destination =
-          LocalResources.fromFile(
-              partitionedInputFolder.newFolder("rhs" + rhsInputs.indexOf(input)), true);
-      FileAssignment fileAssignment =
-          new SMBFilenamePolicy(destination, metadata.getFilenamePrefix(), ".txt").forDestination();
-      write(fileAssignment, metadata, input);
-      rhsPaths.add(destination);
-      input.forEach(
-          (k, v) ->
-              allRhsValues.merge(
-                  k,
-                  v,
-                  (v1, v2) -> {
-                    List<String> newList = new LinkedList<>(v1);
-                    newList.addAll(v2);
-                    return newList;
-                  }));
-    }
+    SortedBucketSource<KV<String, String>> src =
+        new SortedBucketPrimaryAndSecondaryKeyedSource<>(
+            String.class,
+            String.class,
+            Lists.newArrayList(lhs.bucketedInput, rhs.bucketedInput),
+            targetParallelism,
+            null);
 
-    checkJoin(
-        pipeline, lhsPaths, rhsPaths, allLhsValues, allRhsValues, null, null, targetParallelism);
+    checkJoin(pipeline, lhs.tag, rhs.tag, lhs.expectedOutput, rhs.expectedOutput, src);
     pipeline.run();
   }
 
-  private static void checkJoin(
+  private static <KeyType> void checkJoin(
       TestPipeline pipeline,
-      List<ResourceId> lhsPaths,
-      List<ResourceId> rhsPaths,
-      Map<BucketShardId, List<String>> lhsValues,
-      Map<BucketShardId, List<String>> rhsValues,
-      Predicate<String> lhsPredicate,
-      Predicate<String> rhsPredicate,
-      TargetParallelism targetParallelism)
+      TupleTag<String> lhsTag,
+      TupleTag<String> rhsTag,
+      Map<KeyType, List<String>> lhsExpected,
+      Map<KeyType, List<String>> rhsExpected,
+      SortedBucketSource<KeyType> src)
       throws Exception {
-    final TupleTag<String> lhsTag = new TupleTag<>("LHS");
-    final TupleTag<String> rhsTag = new TupleTag<>("RHS");
-    final TestFileOperations fileOperations = new TestFileOperations();
-    final List<BucketedInput<?, ?>> inputs =
-        Lists.newArrayList(
-            new BucketedInput<>(lhsTag, lhsPaths, ".txt", fileOperations, lhsPredicate),
-            new BucketedInput<>(rhsTag, rhsPaths, ".txt", fileOperations, rhsPredicate));
-
-    PCollection<KV<String, CoGbkResult>> output =
-        pipeline.apply(
-            Read.from(new SortedBucketSource<>(String.class, inputs, targetParallelism)));
-
-    Function<String, String> extractKeyFn = TestBucketMetadata.of(2, 1)::extractKey;
-
+    PCollection<KV<KeyType, CoGbkResult>> output =
+        pipeline.apply("CheckJoin-" + UUID.randomUUID(), Read.from(src));
     // CoGroupByKey inputs as expected result
-    final Map<String, List<String>> lhs = filter(groupByKey(lhsValues, extractKeyFn), lhsPredicate);
-    final Map<String, List<String>> rhs = filter(groupByKey(rhsValues, extractKeyFn), rhsPredicate);
-
-    final Map<String, KV<List<String>, List<String>>> expected = new HashMap<>();
-    for (String k : Sets.union(lhs.keySet(), rhs.keySet())) {
-      List<String> l = lhs.getOrDefault(k, Collections.emptyList());
-      List<String> r = rhs.getOrDefault(k, Collections.emptyList());
+    final Map<KeyType, KV<List<String>, List<String>>> expected = new HashMap<>();
+    for (KeyType k : Sets.union(lhsExpected.keySet(), rhsExpected.keySet())) {
+      List<String> l = lhsExpected.getOrDefault(k, Collections.emptyList());
+      List<String> r = rhsExpected.getOrDefault(k, Collections.emptyList());
       expected.put(k, KV.of(l, r));
     }
 
     PAssert.thatMap(output)
         .satisfies(
             m -> {
-              Map<String, KV<List<String>, List<String>>> actual = new HashMap<>();
-              for (Map.Entry<String, CoGbkResult> kv : m.entrySet()) {
+              Map<KeyType, KV<List<String>, List<String>>> actual = new HashMap<>();
+              for (Map.Entry<KeyType, CoGbkResult> kv : m.entrySet()) {
                 List<String> l =
                     StreamSupport.stream(kv.getValue().getAll(lhsTag).spliterator(), false)
                         .sorted()
@@ -739,10 +1246,19 @@ public class SortedBucketSourceTest {
             });
   }
 
-  private static void write(
+  private static <K2> void write(
       FileAssignment fileAssignment,
-      TestBucketMetadata metadata,
+      BucketMetadata<String, K2, String> metadata,
       Map<BucketShardId, List<String>> input)
+      throws Exception {
+    write(fileAssignment, metadata, input, new TestFileOperations());
+  }
+
+  private static <K2, V> void write(
+      FileAssignment fileAssignment,
+      BucketMetadata<String, K2, V> metadata,
+      Map<BucketShardId, List<V>> input,
+      FileOperations<V> fileOperations)
       throws Exception {
     // Write bucket metadata
     BucketMetadata.to(
@@ -751,11 +1267,10 @@ public class SortedBucketSourceTest {
             FileSystems.create(fileAssignment.forMetadata(), "application/json")));
 
     // Write bucket files
-    final TestFileOperations fileOperations = new TestFileOperations();
-    for (Map.Entry<BucketShardId, List<String>> entry : input.entrySet()) {
-      Writer<String> writer =
+    for (Map.Entry<BucketShardId, List<V>> entry : input.entrySet()) {
+      Writer<V> writer =
           fileOperations.createWriter(fileAssignment.forBucket(entry.getKey(), metadata));
-      for (String s : entry.getValue()) {
+      for (V s : entry.getValue()) {
         writer.write(s);
       }
       writer.close();
@@ -766,8 +1281,8 @@ public class SortedBucketSourceTest {
     return ids.stream().mapToInt(fn).max().getAsInt();
   }
 
-  private static Map<String, List<String>> groupByKey(
-      Map<BucketShardId, List<String>> input, Function<String, String> keyFn) {
+  private static <KeyType> Map<KeyType, List<String>> groupByKey(
+      Map<BucketShardId, List<String>> input, Function<String, KeyType> keyFn) {
     final List<String> values =
         input.values().stream().flatMap(List::stream).collect(Collectors.toList());
     return values.stream()
@@ -780,36 +1295,69 @@ public class SortedBucketSourceTest {
                     Stream.concat(l.stream(), r.stream()).sorted().collect(Collectors.toList())));
   }
 
-  private static Map<String, List<String>> filter(
-      Map<String, List<String>> input, Predicate<String> predicate) {
+  private static <KeyType> KV<Map<KeyType, List<String>>, Long> filter(
+      Map<KeyType, List<String>> input, Predicate<String> predicate) {
+    long filteredRecords = 0;
     if (predicate == null) {
-      return input;
+      return KV.of(input, filteredRecords);
     } else {
-      Map<String, List<String>> filtered = new HashMap<>();
-      for (Map.Entry<String, List<String>> e : input.entrySet()) {
+      Map<KeyType, List<String>> filtered = new HashMap<>();
+      for (Map.Entry<KeyType, List<String>> e : input.entrySet()) {
         List<String> value = new ArrayList<>();
-        e.getValue()
-            .forEach(
-                v -> {
-                  if (predicate.apply(value, v)) {
-                    value.add(v);
-                  }
-                });
+        for (String v : e.getValue()) {
+          if (predicate.apply(value, v)) {
+            value.add(v);
+          } else {
+            filteredRecords++;
+          }
+        }
         filtered.put(e.getKey(), value);
       }
-      return filtered;
+      // if predicate removes all values, remove key group
+      List<KeyType> toRemove =
+          filtered.keySet().stream()
+              .filter(k -> filtered.get(k).isEmpty())
+              .collect(Collectors.toList());
+      toRemove.forEach(filtered::remove);
+      return KV.of(filtered, filteredRecords);
     }
   }
 
   static void verifyMetrics(
-      PipelineResult result, Map<String, DistributionResult> expectedDistributions) {
+      PipelineResult result,
+      Map<String, DistributionResult> expectedDistributions,
+      Map<String, Long> expectedCounters) {
     final Map<String, DistributionResult> actualDistributions =
         ImmutableList.copyOf(result.metrics().allMetrics().getDistributions().iterator()).stream()
             .collect(
                 Collectors.toMap(
                     metric -> metric.getName().getName().replaceAll("\\{\\d+}", ""),
                     MetricResult::getCommitted));
+    expectedDistributions
+        .entrySet()
+        .forEach(
+            dist -> Assert.assertEquals(dist.getValue(), actualDistributions.get(dist.getKey())));
 
-    Assert.assertEquals(expectedDistributions, actualDistributions);
+    final Map<String, Long> actualCounters =
+        ImmutableList.copyOf(result.metrics().allMetrics().getCounters().iterator()).stream()
+            .collect(
+                Collectors.toMap(
+                    metric -> metric.getName().getName().replaceAll("\\{\\d+}", ""),
+                    MetricResult::getCommitted));
+
+    expectedCounters
+        .entrySet()
+        .forEach(
+            counter ->
+                Assert.assertEquals(
+                    counter.getValue(), actualCounters.getOrDefault(counter.getKey(), 0L)));
+  }
+
+  private static GenericRecord toAvroUserGenericRecord(AvroGeneratedUser user) {
+    return new GenericRecordBuilder(AvroGeneratedUser.getClassSchema())
+        .set("name", user.getName())
+        .set("favorite_number", user.getFavoriteNumber())
+        .set("favorite_color", user.getFavoriteColor())
+        .build();
   }
 }

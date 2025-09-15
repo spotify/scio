@@ -19,20 +19,16 @@
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.AvroExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --input=[INPUT].avro --output=[OUTPUT].avro --method=[METHOD]"`
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.avro._
-import com.spotify.scio.avro.Account
 import com.spotify.scio.avro.types.AvroType
 import com.spotify.scio.io.ClosedTap
-import org.apache.avro.Schema
-import org.apache.avro.generic.{GenericData, GenericRecord}
-
-import scala.jdk.CollectionConverters._
+import org.apache.avro.{Schema, SchemaBuilder}
+import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
 
 object AvroExample {
   @AvroType.fromSchema("""{
@@ -51,7 +47,7 @@ object AvroExample {
   @AvroType.toSchema
   case class AccountToSchema(id: Int, `type`: String, name: String, amount: Double)
 
-  def main(cmdlineArgs: Array[String]): Unit = {
+  def pipeline(cmdlineArgs: Array[String]): ScioContext = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     val m = args("method")
@@ -77,7 +73,12 @@ object AvroExample {
       case _ => throw new RuntimeException(s"Invalid method $m")
     }
 
-    sc.run()
+    sc
+  }
+
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val sc = pipeline(cmdlineArgs)
+    sc.run().waitUntilDone()
     ()
   }
 
@@ -101,15 +102,15 @@ object AvroExample {
 
   private def genericOut(sc: ScioContext, args: Args): ClosedTap[GenericRecord] = {
     // Avro generic record encoding is more efficient with an explicit schema
-    implicit def genericCoder = Coder.avroGenericRecordCoder(schema)
+    implicit def genericCoder = avroGenericRecordCoder(schema)
     sc.parallelize(1 to 100)
       .map[GenericRecord] { i =>
-        val r = new GenericData.Record(schema)
-        r.put("id", i)
-        r.put("amount", i.toDouble)
-        r.put("name", "account" + i)
-        r.put("type", "checking")
-        r
+        new GenericRecordBuilder(schema)
+          .set("id", i)
+          .set("amount", i.toDouble)
+          .set("name", "account" + i)
+          .set("type", "checking")
+          .build()
       }
       .saveAsAvroFile(args("output"), schema = schema)
   }
@@ -130,24 +131,12 @@ object AvroExample {
       .map(_.toString)
       .saveAsTextFile(args("output"))
 
-  val schema: Schema = {
-    def f(name: String, tpe: Schema.Type) =
-      new Schema.Field(
-        name,
-        Schema.createUnion(List(Schema.create(Schema.Type.NULL), Schema.create(tpe)).asJava),
-        null: String,
-        null: AnyRef
-      )
-
-    val s = Schema.createRecord("GenericAccountRecord", null, null, false)
-    s.setFields(
-      List(
-        f("id", Schema.Type.INT),
-        f("amount", Schema.Type.DOUBLE),
-        f("name", Schema.Type.STRING),
-        f("type", Schema.Type.STRING)
-      ).asJava
-    )
-    s
-  }
+  val schema: Schema = SchemaBuilder
+    .record("GenericAccountRecord")
+    .fields()
+    .requiredInt("id")
+    .requiredDouble("amount")
+    .requiredString("name")
+    .requiredString("type")
+    .endRecord()
 }

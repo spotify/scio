@@ -19,6 +19,7 @@ package com.spotify.scio.spanner
 
 import com.google.cloud.spanner._
 import com.spotify.scio.ScioContext
+import com.spotify.scio.coders.CoderMaterializer
 import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.gcp.spanner.SpannerIO.FailureMode
@@ -38,8 +39,8 @@ sealed trait SpannerIO[T] extends ScioIO[T] {
 
 object SpannerRead {
   object ReadParam {
-    private[spanner] val DefaultWithTransaction = false
-    private[spanner] val DefaultWithBatching = true
+    val DefaultWithTransaction: Boolean = false
+    val DefaultWithBatching: Boolean = true
   }
 
   sealed trait ReadMethod
@@ -60,6 +61,7 @@ final case class SpannerRead(config: SpannerConfig) extends SpannerIO[Struct] {
   override type WriteP = Nothing
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[Struct] = {
+    val coder = CoderMaterializer.beam(sc, coders.spannerStructCoder)
     var transform = BSpannerIO
       .read()
       .withSpannerConfig(config)
@@ -75,7 +77,7 @@ final case class SpannerRead(config: SpannerConfig) extends SpannerIO[Struct] {
       transform = transform.withTransaction(sc.applyInternal(txn))
     }
 
-    sc.applyTransform(transform)
+    sc.applyTransform(transform).setCoder(coder)
   }
 
   override protected def write(data: SCollection[Struct], params: WriteP): Tap[Nothing] =
@@ -86,8 +88,8 @@ final case class SpannerRead(config: SpannerConfig) extends SpannerIO[Struct] {
 
 object SpannerWrite {
   object WriteParam {
-    private[spanner] val DefaultFailureMode = FailureMode.FAIL_FAST
-    private[spanner] val DefaultBatchSizeBytes = 1024L * 1024L
+    val DefaultFailureMode: FailureMode = FailureMode.FAIL_FAST
+    val DefaultBatchSizeBytes: Long = 1024L * 1024L
   }
 
   final case class WriteParam private (

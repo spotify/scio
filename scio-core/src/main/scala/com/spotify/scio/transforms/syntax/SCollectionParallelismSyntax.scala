@@ -29,15 +29,15 @@ trait SCollectionParallelismSyntax {
 
   /**
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with custom
-   * parallelism, where `parallelism` is the number of concurrent `DoFn` threads per worker
-   * (default to number of CPU cores).
+   * parallelism, where `parallelism` is the number of concurrent `DoFn` threads per worker (default
+   * to number of CPU cores).
    */
   implicit class CustomParallelismSCollection[T](private val self: SCollection[T]) {
 
     /**
-     * Return a new SCollection by first applying a function to all elements of
-     * this SCollection, and then flattening the results.
-     * `parallelism` is the number of concurrent `DoFn`s per worker.
+     * Return a new SCollection by first applying a function to all elements of this SCollection,
+     * and then flattening the results. `parallelism` is the number of concurrent `DoFn`s per
+     * worker.
      * @group transform
      */
     def flatMapWithParallelism[U: Coder](
@@ -46,8 +46,8 @@ trait SCollectionParallelismSyntax {
       self.parDo(new ParallelFlatMapFn(parallelism)(fn))
 
     /**
-     * Return a new SCollection containing only the elements that satisfy a predicate.
-     * `parallelism` is the number of concurrent `DoFn`s per worker.
+     * Return a new SCollection containing only the elements that satisfy a predicate. `parallelism`
+     * is the number of concurrent `DoFn`s per worker.
      * @group transform
      */
     def filterWithParallelism(

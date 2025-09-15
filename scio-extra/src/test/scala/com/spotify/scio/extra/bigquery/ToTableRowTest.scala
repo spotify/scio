@@ -19,16 +19,15 @@ package com.spotify.scio.extra.bigquery
 
 import java.math.{BigDecimal => JBigDecimal}
 import java.nio.ByteBuffer
-
 import com.google.protobuf.ByteString
 import com.spotify.scio.bigquery.TableRow
-import org.apache.avro.generic.GenericData
+import org.apache.avro.generic.GenericRecordBuilder
 import org.apache.avro.generic.GenericData.EnumSymbol
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.BaseEncoding
-import org.joda.time.{DateTime, LocalDate, LocalTime}
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.io.BaseEncoding
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import java.time.{Instant, LocalDate, LocalTime}
 import scala.jdk.CollectionConverters._
 
 class ToTableRowTest extends AnyFlatSpec with Matchers {
@@ -72,38 +71,33 @@ class ToTableRowTest extends AnyFlatSpec with Matchers {
   it should "convert a GenericRecord to TableRow" in {
     val enumSchema = AvroExample.SCHEMA$.getField("enumField").schema()
 
-    val nestedAvro = new GenericData.Record(NestedAvro.SCHEMA$)
-    nestedAvro.put("nestedField", "nestedValue")
+    val nestedAvro = new GenericRecordBuilder(NestedAvro.SCHEMA$)
+      .set("nestedField", "nestedValue")
+      .build()
 
-    val genericRecord = new GenericData.Record(AvroExample.SCHEMA$)
-    genericRecord.put("booleanField", true)
-    genericRecord.put("stringField", "someString")
-    genericRecord.put("doubleField", 1.0)
-    genericRecord.put("longField", 1L)
-    genericRecord.put("intField", 1)
-    genericRecord.put("floatField", 1f)
-    genericRecord.put(
-      "bytesField",
-      ByteBuffer.wrap(ByteString.copyFromUtf8("%20cフーバー").toByteArray)
-    )
-    genericRecord.put("arrayField", List(nestedAvro).asJava)
-    genericRecord.put("unionField", "someUnion")
-    genericRecord.put(
-      "mapField",
-      Map("mapKey" -> 1.0d).asJava
-        .asInstanceOf[java.util.Map[java.lang.CharSequence, java.lang.Double]]
-    )
-    genericRecord.put("enumField", new EnumSymbol(enumSchema, Kind.FOO.toString))
-    genericRecord.put("fixedField", new fixedType("%20cフーバー".getBytes()))
+    val genericRecord = new GenericRecordBuilder(AvroExample.SCHEMA$)
+      .set("booleanField", true)
+      .set("stringField", "someString")
+      .set("doubleField", 1.0)
+      .set("longField", 1L)
+      .set("intField", 1)
+      .set("floatField", 1f)
+      .set("bytesField", ByteBuffer.wrap(ByteString.copyFromUtf8("%20cフーバー").toByteArray))
+      .set("arrayField", List(nestedAvro).asJava)
+      .set("unionField", "someUnion")
+      .set("mapField", Map[CharSequence, java.lang.Double]("mapKey" -> 1.0d).asJava)
+      .set("enumField", new EnumSymbol(enumSchema, Kind.FOO.toString))
+      .set("fixedField", new fixedType("%20cフーバー".getBytes()))
+      .build()
 
     AvroConverters.toTableRow(genericRecord) shouldEqual expectedOutput
   }
 
   val date: LocalDate = LocalDate.parse("2019-10-29")
   val timeMillis: LocalTime = LocalTime.parse("01:24:52.211")
-  val timeMicros = 1234L
-  val timestampMillis: DateTime = DateTime.parse("2019-10-29T05:24:52.215")
-  val timestampMicros = 4325L
+  val timeMicros: LocalTime = LocalTime.parse("01:24:52.211112")
+  val timestampMillis: Instant = Instant.parse("2019-10-29T05:24:52.215Z")
+  val timestampMicros: Instant = Instant.parse("2019-10-29T05:24:52.215521Z")
   val decimal = new JBigDecimal("3.14")
 
   val expectedLogicalTypeOutput: TableRow = new TableRow()
@@ -117,9 +111,9 @@ class ToTableRowTest extends AnyFlatSpec with Matchers {
     .set("dateField", "2019-10-29")
     .set("decimalField", decimal.toString)
     .set("timeMillisField", "01:24:52.211000")
-    .set("timeMicrosField", timeMicros)
+    .set("timeMicrosField", "01:24:52.211112")
     .set("timestampMillisField", "2019-10-29T05:24:52.215000")
-    .set("timestampMicrosField", timestampMicros)
+    .set("timestampMicrosField", "2019-10-29T05:24:52.215521")
 
   "ToTableRowWithLogicalType" should "convert a SpecificRecord with Logical Types to TableRow" in {
     val specificRecord = AvroExampleWithLogicalType

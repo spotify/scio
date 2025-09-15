@@ -18,7 +18,7 @@
 
 package org.apache.beam.sdk.extensions.sorter;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkArgument;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkArgument;
 
 import java.io.Serializable;
 
@@ -28,7 +28,7 @@ public abstract class ExternalSorter implements Sorter {
 
   /** {@link Options} contains configuration of the sorter. */
   public static class Options implements Serializable {
-    private String tempLocation = "/tmp";
+    private String tempLocation = SorterSysProps.getTempLocation();
     private int memoryMB = 100;
     private SorterType sorterType = SorterType.HADOOP;
 
@@ -92,7 +92,9 @@ public abstract class ExternalSorter implements Sorter {
 
   /** Returns a {@link Sorter} configured with the given {@link Options}. */
   public static ExternalSorter create(Options options) {
-    checkArgument(options.getSorterType() == Options.SorterType.NATIVE);
+    checkArgument(
+        options.getSorterType() == Options.SorterType.NATIVE,
+        "NativeExternalSorter is the only supported external sorter");
     return NativeExternalSorter.create(options);
   }
 

@@ -59,7 +59,8 @@ class ReplScioContext private (options: PipelineOptions, replOutputDir: String, 
   /**
    * Creates a jar file in a temporary directory containing the code thus far compiled by the REPL.
    *
-   * @return some file for the jar created, or `None` if the REPL is not running
+   * @return
+   *   some file for the jar created, or `None` if the REPL is not running
    */
   private def createJar(): String =
     createJar(AbstractFile.getDirectory(Path(replOutputDir)), tempJar).getPath()
@@ -67,7 +68,8 @@ class ReplScioContext private (options: PipelineOptions, replOutputDir: String, 
   /**
    * Creates a jar file from the classes contained in a virtual directory.
    *
-   * @param virtualDirectory containing classes that should be added to the jar
+   * @param virtualDirectory
+   *   containing classes that should be added to the jar
    */
   private def createJar(dir: Iterable[AbstractFile], jarFile: File): File = {
     val jarStream = new JarOutputStream(new FileOutputStream(jarFile))
@@ -81,9 +83,12 @@ class ReplScioContext private (options: PipelineOptions, replOutputDir: String, 
    * Add the contents of the specified virtual directory to a jar. This method will recursively
    * descend into subdirectories to add their contents.
    *
-   * @param dir is a virtual directory whose contents should be added
-   * @param entryPath for classes found in the virtual directory
-   * @param jarStream for writing the jar file
+   * @param dir
+   *   is a virtual directory whose contents should be added
+   * @param entryPath
+   *   for classes found in the virtual directory
+   * @param jarStream
+   *   for writing the jar file
    */
   private def addVirtualDirectoryToJar(
     dir: Iterable[AbstractFile],

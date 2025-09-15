@@ -23,15 +23,14 @@ import com.spotify.scio.io.TapSpec
 import org.apache.commons.io.FileUtils
 
 class TFTapTest extends TapSpec {
-  "SCollection" should "support saveAsTFRecordFile" in {
+  "SCollection" should "support saveAsTFRecordFile" in withTempDir { dir =>
     val data = Seq.fill(100)(UUID.randomUUID().toString)
     import org.apache.beam.sdk.io.{Compression => CType}
     for (compressionType <- Seq(CType.UNCOMPRESSED, CType.DEFLATE, CType.GZIP)) {
-      val dir = tmpDir
       val t = runWithFileFuture {
         _.parallelize(data)
           .map(_.getBytes)
-          .saveAsTfRecordFile(dir.getPath, compression = compressionType)
+          .saveAsTfRecordFile(dir.getAbsolutePath, compression = compressionType)
       }
       verifyTap(t.map(new String(_)), data.toSet)
       FileUtils.deleteDirectory(dir)

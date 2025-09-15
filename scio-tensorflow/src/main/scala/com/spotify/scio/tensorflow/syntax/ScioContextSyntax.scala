@@ -29,9 +29,9 @@ import org.tensorflow.metadata.v0._
 final class ScioContextOps(private val self: ScioContext) extends AnyVal {
 
   /**
-   * Get an SCollection for a TensorFlow TFRecord file. Note that TFRecord files are not
-   * splittable. The recommended record encoding is [[org.tensorflow.proto.example.Example]] protocol
-   * buffers (which contain [[org.tensorflow.proto.example.Features]] as a field) serialized as bytes.
+   * Get an SCollection for a TensorFlow TFRecord file. Note that TFRecord files are not splittable.
+   * The recommended record encoding is [[org.tensorflow.proto.example.Example]] protocol buffers
+   * (which contain [[org.tensorflow.proto.example.Features]] as a field) serialized as bytes.
    * @group input
    */
   def tfRecordFile(
@@ -52,8 +52,9 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(TFExampleIO(path))(TFExampleIO.ReadParam(compression))
 
   /**
-   * Get an SCollection of [[org.tensorflow.proto.example.SequenceExample]] from a TensorFlow TFRecord
-   * file encoded as serialized [[org.tensorflow.proto.example.SequenceExample]] protocol buffers.
+   * Get an SCollection of [[org.tensorflow.proto.example.SequenceExample]] from a TensorFlow
+   * TFRecord file encoded as serialized [[org.tensorflow.proto.example.SequenceExample]] protocol
+   * buffers.
    * @group input
    */
   def tfRecordSequenceExampleFile(

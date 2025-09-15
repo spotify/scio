@@ -23,25 +23,26 @@ import com.spotify.scio.testing._
 
 class CloudSqlExampleTest extends PipelineSpec {
   "CloudSqlExample" should "work" in {
-    val args =
-      Array(
-        "--cloudSqlUsername=john",
-        "--cloudSqlPassword=secret",
-        "--cloudSqlDb=mydb",
-        "--cloudSqlInstanceConnectionName=project-id:zone:db-instance-name"
-      )
-    val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](args)
+    val args = Seq(
+      "--cloudSqlUsername=john",
+      "--cloudSqlPassword=secret",
+      "--cloudSqlDb=mydb",
+      "--cloudSqlInstanceConnectionName=project-id:zone:db-instance-name"
+    )
+    val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](args.toArray)
     val connOpts = CloudSqlExample.getConnectionOptions(opts)
-    val readOpts = CloudSqlExample.getReadOptions(connOpts)
-    val writeOpts = CloudSqlExample.getWriteOptions(connOpts)
+    val query = "SELECT * FROM word_count"
+    val statement = "INSERT INTO result_word_count values(?, ?)"
 
     val input = Seq("a" -> 1L, "b" -> 2L, "c" -> 3L)
     val expected = input.map(kv => (kv._1.toUpperCase, kv._2))
 
     JobTest[com.spotify.scio.examples.extra.CloudSqlExample.type]
       .args(args: _*)
-      .input(JdbcIO(readOpts), input)
-      .output(JdbcIO[(String, Long)](writeOpts))(coll => coll should containInAnyOrder(expected))
+      .input(JdbcIO(connOpts, query), input)
+      .output(JdbcIO[(String, Long)](connOpts, statement))(coll =>
+        coll should containInAnyOrder(expected)
+      )
       .run()
   }
 }

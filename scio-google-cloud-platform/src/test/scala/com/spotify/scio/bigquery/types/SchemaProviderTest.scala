@@ -41,7 +41,9 @@ class SchemaProviderTest extends AnyFlatSpec with Matchers {
        |  {"mode": "$mode", "name": "timeF", "type": "TIME"},
        |  {"mode": "$mode", "name": "datetimeF", "type": "DATETIME"},
        |  {"mode": "$mode", "name": "bigDecimalF", "type": "NUMERIC"},
-       |  {"mode": "$mode", "name": "geographyF", "type": "GEOGRAPHY"}
+       |  {"mode": "$mode", "name": "geographyF", "type": "GEOGRAPHY"},
+       |  {"mode": "$mode", "name": "jsonF", "type": "JSON"},
+       |  {"mode": "$mode", "name": "bigNumericF", "type": "BIGNUMERIC"}
        |]
        |""".stripMargin
 

@@ -18,6 +18,8 @@
 
 package org.apache.beam.examples.cookbook;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+
 import com.google.api.services.bigquery.model.TableRow;
 import java.util.Arrays;
 import java.util.List;
@@ -28,8 +30,6 @@ import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Unit tests for {@link FilterExamples}. */
 @RunWith(JUnit4.class)

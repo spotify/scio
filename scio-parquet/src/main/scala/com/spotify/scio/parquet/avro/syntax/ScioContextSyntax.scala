@@ -34,8 +34,8 @@ import scala.reflect.ClassTag
 final class ScioContextOps(@transient private val self: ScioContext) extends AnyVal {
 
   /**
-   * Get an SCollection for a Parquet file as Avro records. Since Avro records produced by
-   * Parquet column projection may be incomplete and may fail serialization, you must
+   * Get an SCollection for a Parquet file as Avro records. Since Avro records produced by Parquet
+   * column projection may be incomplete and may fail serialization, you must
    * [[ParquetAvroFile.map map]] the result to extract projected fields from the Avro records.
    *
    * Note that due to limitations of the underlying `HadoopInputFormatIO`, dynamic work rebalancing
@@ -46,10 +46,11 @@ final class ScioContextOps(@transient private val self: ScioContext) extends Any
     path: String,
     projection: Schema = ReadParam.DefaultProjection,
     predicate: FilterPredicate = ReadParam.DefaultPredicate,
-    conf: Configuration = ReadParam.DefaultConfiguration
+    conf: Configuration = ReadParam.DefaultConfiguration,
+    suffix: String = ReadParam.DefaultSuffix
   ): ParquetAvroFile[T] =
     self.requireNotClosed {
-      new ParquetAvroFile[T](self, path, projection, predicate, conf)
+      new ParquetAvroFile[T](self, path, projection, predicate, conf, suffix)
     }
 }
 
@@ -58,7 +59,8 @@ class ParquetAvroFile[T: ClassTag] private[avro] (
   path: String,
   projection: Schema,
   predicate: FilterPredicate,
-  conf: Configuration
+  conf: Configuration,
+  suffix: String
 ) {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -67,20 +69,22 @@ class ParquetAvroFile[T: ClassTag] private[avro] (
    * file.
    */
   def map[U: ClassTag: Coder](f: T => U): SCollection[U] = {
-    val param = ParquetAvroIO.ReadParam[T, U](f, projection, predicate, conf)
+    val param = ParquetAvroIO.ReadParam[T, U](f, projection, predicate, conf, suffix)
     context.read(ParquetAvroIO[U](path))(param)
   }
 
   /**
-   * Return a new SCollection by first applying a function to all Parquet Avro records of
-   * this Parquet file, and then flattening the results.
+   * Return a new SCollection by first applying a function to all Parquet Avro records of this
+   * Parquet file, and then flattening the results.
    */
-  def flatMap[U: Coder](f: T => TraversableOnce[U]): SCollection[U] =
+  def flatMap[U: Coder](f: T => TraversableOnce[U]): SCollection[U] = {
+    implicit val coder: Coder[TraversableOnce[U]] = Coder.kryo
     this
       // HadoopInputFormatIO does not support custom coder, force SerializableCoder
-      .map(x => f(x).asInstanceOf[Serializable])
+      .map(x => f(x))
       .asInstanceOf[SCollection[TraversableOnce[U]]]
       .flatten
+  }
 
   private[avro] def toSCollection(implicit c: Coder[T]): SCollection[T] = {
     if (projection != null) {

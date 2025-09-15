@@ -17,14 +17,13 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
-import org.apache.parquet.io.DelegatingSeekableInputStream;
-import org.apache.parquet.io.InputFile;
-import org.apache.parquet.io.SeekableInputStream;
-
 import java.io.IOException;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
+import org.apache.parquet.io.DelegatingSeekableInputStream;
+import org.apache.parquet.io.InputFile;
+import org.apache.parquet.io.SeekableInputStream;
 
 public class ParquetInputFile implements InputFile {
   private final SeekableByteChannel channel;

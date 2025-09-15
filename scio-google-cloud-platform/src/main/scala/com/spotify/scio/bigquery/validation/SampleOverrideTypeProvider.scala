@@ -84,8 +84,9 @@ final class SampleOverrideTypeProvider extends OverrideTypeProvider {
       case Some(tuple) =>
         val (_, correspondingType) = tuple
         val name = correspondingType.getPackage.getName + "." + correspondingType.getSimpleName
+        // GenericRecord read format returns a Utf8, not a String
         val instanceOfType =
-          q"${c.parse(name)}.parse(${c.parse(s"$tree.asInstanceOf[String]")})"
+          q"${c.parse(name)}.parse(${c.parse(s"$tree.asInstanceOf[CharSequence].toString")})"
         instanceOfType
       case None => throw new IllegalArgumentException("Should never be here")
     }
@@ -98,18 +99,19 @@ final class SampleOverrideTypeProvider extends OverrideTypeProvider {
   ): Unit = ()
 }
 
-class Country(val data: String) extends AnyVal
+abstract class BaseValidationType[T](data: T) {
+  override def toString: String = data.toString
+}
+
+case class Country(data: String) extends BaseValidationType[String](data) {
+  require(data.length == 2, s"Invalid Country $data")
+}
+
+case class NonNegativeInt(data: Int) extends BaseValidationType[Int](data) {
+  require(data >= 0, s"Invalid NonNegativeInt $data")
+}
 
 object Country {
-  def apply(data: String): Country = {
-    if (!isValid(data)) {
-      throw new IllegalArgumentException("Not valid")
-    }
-    new Country(data)
-  }
-
-  def isValid(data: String): Boolean = data.length == 2
-
   def parse(data: String): Country = Country(data)
 
   def stringType: String = "COUNTRY"
@@ -117,16 +119,33 @@ object Country {
   def bigQueryType: String = "STRING"
 }
 
+object NonNegativeInt {
+  def parse(data: String): NonNegativeInt = NonNegativeInt(data.toInt)
+
+  def stringType: String = "NONNEGATIVEINT"
+
+  def bigQueryType: String = "INTEGER"
+}
+
 // Internal index to keep track of class mappings this can be done in a number of ways
 object Index {
   def getIndexCompileTimeTypes(c: blackbox.Context): mutable.Map[c.Type, Class[_]] = {
     import c.universe._
-    mutable.Map[Type, Class[_]](typeOf[Country] -> classOf[Country])
+    mutable.Map[Type, Class[_]](
+      typeOf[Country] -> classOf[Country],
+      typeOf[NonNegativeInt] -> classOf[NonNegativeInt]
+    )
   }
 
   def getIndexClass: mutable.Map[String, Class[_]] =
-    mutable.Map[String, Class[_]](Country.stringType -> classOf[Country])
+    mutable.Map[String, Class[_]](
+      Country.stringType -> classOf[Country],
+      NonNegativeInt.stringType -> classOf[NonNegativeInt]
+    )
 
   def getIndexRuntimeTypes: mutable.Map[Type, Class[_]] =
-    mutable.Map[Type, Class[_]](typeOf[Country] -> classOf[Country])
+    mutable.Map[Type, Class[_]](
+      typeOf[Country] -> classOf[Country],
+      typeOf[NonNegativeInt] -> classOf[NonNegativeInt]
+    )
 }

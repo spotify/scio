@@ -17,11 +17,18 @@
 
 package com.spotify.scio.bigquery
 
+import com.spotify.scio.avro._
+import com.spotify.scio.bigquery.BigQueryTypedTable.Format
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.{ContextAndArgs, ScioContext}
 import com.spotify.scio.testing._
+import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.Pipeline.PipelineVisitor
+import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.io.Read
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.CreateDisposition
 import org.apache.beam.sdk.runners.TransformHierarchy
+import org.apache.beam.sdk.transforms.display.DisplayData
 import org.apache.beam.sdk.values.PValue
 
 import scala.collection.mutable
@@ -31,9 +38,15 @@ object BigQueryIOTest {
   @BigQueryType.toTable
   case class BQRecord(i: Int, s: String, r: List[String])
 
+  // BQ Write transform display id data for tableDescription
+  private val TableDescriptionId = DisplayData.Identifier.of(
+    DisplayData.Path.root(),
+    classOf[beam.BigQueryIO.Write[_]],
+    "tableDescription"
+  )
+
   /**
-   * Return `Read` Transforms that do not have another transform using it as an
-   * input.
+   * Return `Read` Transforms that do not have another transform using it as an input.
    *
    * To do this, we visit all PTransforms, and find the inputs at each stage, and mark those inputs
    * as consumed by putting them in `consumedOutputs`. We also check if each transform is a `Read`
@@ -64,13 +77,37 @@ object BigQueryIOTest {
 
     allReads.diff(consumedOutputs).toSet
   }
-
 }
 
 final class BigQueryIOTest extends ScioIOSpec {
   import BigQueryIOTest._
 
-  "BigQueryIO" should "work with TableRow" in {
+  "BigQueryIO" should "apply config override" in {
+    val name = "saveAsBigQueryTable"
+    val desc = "table-description"
+    val sc = ScioContext()
+    implicit val coder: Coder[GenericRecord] = avroGenericRecordCoder
+    val io = BigQueryTypedTable[GenericRecord](
+      table = Table.Spec("project:dataset.out_table"),
+      format = Format.GenericRecord
+    )
+    val params = BigQueryTypedTable.WriteParam[GenericRecord](
+      createDisposition = CreateDisposition.CREATE_NEVER,
+      configOverride = _.withTableDescription(desc)
+    )
+    sc.empty[GenericRecord]()
+      .withName(name)
+      .write(io)(params)
+
+    val finder = new TransformFinder(new EqualNamePTransformMatcher(name))
+    sc.pipeline.traverseTopologically(finder)
+    val transform = finder.result().head
+    val displayData = DisplayData.from(transform).asMap().asScala
+    displayData should contain key TableDescriptionId
+    displayData(TableDescriptionId).getValue shouldBe desc
+  }
+
+  it should "work with TableRow" in {
     val xs = (1 to 100).map(x => TableRow("x" -> x.toString))
     testJobTest(xs, in = "project:dataset.in_table", out = "project:dataset.out_table")(
       BigQueryIO(_)
@@ -79,21 +116,12 @@ final class BigQueryIOTest extends ScioIOSpec {
     )
   }
 
-  it should "work with typed BigQuery" in {
-    val xs = (1 to 100).map(x => BQRecord(x, x.toString, (1 to x).map(_.toString).toList))
-    testJobTest(xs, in = "project:dataset.in_table", out = "project:dataset.out_table")(
-      BigQueryIO(_)
-    )((sc, s) => sc.typedBigQueryTable[BQRecord](Table.Spec(s)))((coll, s) =>
-      coll.saveAsTypedBigQueryTable(Table.Spec(s))
-    )
-  }
-
   /**
    * The `BigQueryIO`'s write, runs Beam's BQ IO which creates a `Read` Transform to return the
    * insert errors.
    *
-   * The `saveAsBigQuery` or `saveAsTypedBigQuery` in Scio is designed to return a `ClosedTap`
-   * and by default drops insert errors.
+   * The `saveAsBigQuery` or `saveAsTypedBigQuery` in Scio is designed to return a `ClosedTap` and
+   * by default drops insert errors.
    *
    * The following tests make sure that the dropped insert errors do not appear as an unconsumed
    * read outside the transform writing to Big Query.

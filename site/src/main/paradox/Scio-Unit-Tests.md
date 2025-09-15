@@ -5,7 +5,7 @@ To write Scio unit tests you will need to add the following dependency to your b
 ```sbt
 libraryDependencies ++= Seq(
   // .......
-  "com.spotify" %% "scio-test" % scioVersion % Test,
+  "com.spotify" %% "scio-test-core" % scioVersion % Test,
   // .......
 )
 ```
@@ -35,7 +35,7 @@ Using `JobTest`, you can test the entire pipeline. Specify the type of the class
 
 The `input` function injects your input test data. Note that the `TestIO[T]` should match the input source used in the pipeline e.g. TextIO for sc.textFile, AvroIO for sc.avro. The TextIO id (“in.txt”) should match the one specified in the args.
 
-The output function evaluates the output of the pipeline using the provided assertion from the `SCollectionMatchers`. More info on `SCollectionMatchers` can be found [here](https://spotify.github.io/scio/api/com/spotify/scio/testing/SCollectionMatchers.html). In this example, we are asserting that the output of the pipeline should contain an `SCollection` with elements that in the expected variable in any order.
+The output function evaluates the output of the pipeline using the provided assertion from the `SCollectionMatchers`. More info on `SCollectionMatchers` can be found @scaladoc[here](com.spotify.scio.testing.SCollectionMatchers). In this example, we are asserting that the output of the pipeline should contain an `SCollection` with elements that in the expected variable in any order.
 Also, note that the `TestIO[T]` should match the output used in the pipeline e.g. TextIO for sc.saveAsTextFile
 
 The run function will run the pipeline.
@@ -55,12 +55,24 @@ Since we have two input sources, we have to specify both in the `JobTest`. Note 
 ### Test partial pipeline
 To test a section of a pipeline, use `runWithContext`. The TriggerExample.extractFlowInfo test in @github[TriggerExampleTest](/scio-examples/src/test/scala/com/spotify/scio/examples/cookbook/TriggerExampleTest.scala) tests only the extractFlowInfo part of the pipeline.
 
-The data variable hold the test data and `sc.parallelize` will transform the input iterable to a `SCollection` of strings. TriggerExample.extractFlowInfo will be executed using the `ScioContext` and you can then specify assertions against the result of the pipeline.
+The data variable hold the test data and `sc.parallelize` will transform the input Iterable to an `SCollection` of strings. TriggerExample.extractFlowInfo will be executed using the `ScioContext` and you can then specify assertions against the result of the pipeline.
 
 @@snip [TriggerExampleTest.scala](/scio-examples/src/test/scala/com/spotify/scio/examples/cookbook/TriggerExampleTest.scala) { #TriggerExampleTest_example }
 
+When your pipeline section contains input and/or output, you can also create an anonymous `JobTest` to inject the test data.
+
+If we have the following pipeline section:
+
+@@snip [JobTestTest.scala](/scio-test/core/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_io_pipeline_section }
+
+It can be tested with:
+
+@@snip [JobTestTest.scala](/scio-test/core/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_anonymous_job_test }
+
+
 ### Test for pipeline with windowing
 We will use the LeaderBoardTest to explain how to test Windowing in Scio. The full example code is found @github[here](/scio-examples/src/test/scala/com/spotify/scio/examples/complete/game/LeaderBoardTest.scala). LeaderBoardTest also extends `PipelineSpec`. The function under test is the @github[LeaderBoard.calculateTeamScores](/scio-examples/src/main/scala/com/spotify/scio/examples/complete/game/LeaderBoard.scala#L131).  This function calculates teams scores within a fixed window with the following the window options:
+
 * Calculate the scores every time the window ends
 * Calculate an early/"speculative" result from partial data, 5 minutes after the first element in our window is processed (withEarlyFiring)
 * Accept late entries (and recalculates based on them) only if they arrive within the allowedLateness duration.
@@ -81,8 +93,70 @@ To run the test, we use the `runWithContext`, this will run calculateTeamScores 
 
 @@snip [LeaderBoardTest.scala](/scio-examples/src/test/scala/com/spotify/scio/examples/complete/game/LeaderBoardTest.scala) { #LeaderBoardTest_example_3 }
 
-Scio provides more `SCollection` assertions such as `inWindow`, `inCombinedNonLatePanes`, `inFinalPane`, and `inOnlyPane`. You can find the full list [here](https://spotify.github.io/scio/api/com/spotify/scio/testing/SCollectionMatchers.html). More information on testing unbounded pipelines can be found [here](https://beam.apache.org/blog/2016/10/20/test-stream.html).
+Scio provides more `SCollection` assertions such as `inWindow`, `inCombinedNonLatePanes`, `inFinalPane`, and `inOnlyPane`. You can find the full list @scaladoc[here](com.spotify.scio.testing.SCollectionMatchers). More information on testing unbounded pipelines can be found [here](https://beam.apache.org/blog/2016/10/20/test-stream.html).
 
+### Test with transform overrides
 
+Scio provides a method to replace arbitrary _named_ `PTransform`s in a test context; this is primarily useful for mocking requests to external services.
 
+In this example, the `GuavaLookupDoFn` stands in for a transform that contacts an external service.
+A `ParDo` `PTransform` is created from the `DoFn` (`ParDo.of`), then applied to the pipeline (`applyTransform`) with a unique name (`myTransform`).
 
+@@snip [JobTestTest.scala](/scio-test/core/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_kv }
+
+In a `JobTest`, a `PTransformOverride` can be passed to the `transformOverride` method to replace transforms in the original pipeline.
+Scio provides convenience methods for constructing `PTransformOverride`s in the `com.spotify.scio.testing.TransformOverride` object.
+Continuing the example above, `TransformOverride.ofAsyncLookup` can be used to map static mock data into the expected output format
+for the transform, here `KV[Int, BaseAsyncLookupDoFn.Try[String]]`.
+
+@@snip [JobTestTest.scala](/scio-test/core/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_mock_kv_map }
+
+It is also possible to provide a function rather than a static map:
+
+@@snip [JobTestTest.scala](/scio-test/core/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_mock_kv_fun }
+
+In a scenario when the PTransform's output is generating more elements than input, e.g. there is a flatmap inside the transform:
+
+@@snip [JobTestTest.scala](/scio-test/core/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_iter }
+
+The transform can be mocked by one of the flavours of `ofIter` method to map each element to an Iterable[U]:
+
+@@snip [JobTestTest.scala](/scio-test/core/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_mock_iter_map }
+
+or similarly provide a function rather than a static map:
+
+@@snip [JobTestTest.scala](/scio-test/core/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_mock_iter_fun }
+
+`TransformOverride.of` overrides transforms of type `PTransform[PCollection[T], PCollection[U]]` as in the case of `BaseAsyncDoFn` subclasses.
+`TransformOverride.ofKV` overrides transforms of type `PTransform[PCollection[T], PCollection[KV[T, U]]]`.
+
+Sources can also be overridden with `TransformOverride.ofSource`. For example, this source:
+
+@@snip [JobTestTest.scala](/scio-test/core/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_source }
+
+Can be overridden with static mock data:
+
+@@snip [JobTestTest.scala](/scio-test/core/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_source_mock }
+
+It is alo possible to override a named `PTransform` during partial pipeline testing with `runWithOverrides`.
+
+@@snip [PipelineTestUtilsTest.scala](/scio-test/core/src/test/scala/com/spotify/scio/testing/PipelineTestUtilsTest.scala) { #PipelineTestUtilsTest_example_run_with_overrides }
+
+Due to type erasure it is possible to provide the incorrect types for the transform and the error will not be caught until runtime.
+
+If you've specified the incorrect input type, scio will attempt to detect the error and throw an `IllegalArgumentException`,
+which will be wrapped in a `PipelineExecutionException` at runtime:
+```
+org.apache.beam.sdk.Pipeline$PipelineExecutionException:
+  java.lang.IllegalArgumentException:
+    Input for override transform myTransform does not match pipeline transform. Expected: class java.lang.Integer Found: class java.lang.String
+```
+
+If you've specified the incorrect output type, there is little scio can do to detect the error.
+Typically, a coder will throw a `ClassCastException` whose message will contain the correct type:
+
+```
+org.apache.beam.sdk.Pipeline$PipelineExecutionException:
+  java.lang.ClassCastException:
+    java.lang.String cannot be cast to java.lang.Integer
+```

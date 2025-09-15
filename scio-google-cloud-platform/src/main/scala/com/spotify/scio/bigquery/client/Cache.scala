@@ -22,9 +22,9 @@ import java.io.File
 import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.spotify.scio.bigquery.BigQueryUtil
 import org.apache.beam.sdk.io.gcp.{bigquery => bq}
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Charsets
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.hash.Hashing
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.Files
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Charsets
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.hash.Hashing
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.io.Files
 
 import scala.util.Try
 import org.apache.avro.Schema
@@ -82,7 +82,7 @@ private[client] object Cache {
     if (isCacheEnabled) {
       get(key, f) match {
         case Some(schema) => schema
-        case None =>
+        case None         =>
           val schema = method
           set(key, schema, f)
           schema

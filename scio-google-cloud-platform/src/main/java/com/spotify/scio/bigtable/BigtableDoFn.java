@@ -22,9 +22,9 @@ import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn;
 import com.spotify.scio.transforms.GuavaAsyncLookupDoFn;
-import org.apache.beam.sdk.transforms.DoFn;
-
 import java.io.IOException;
+import java.time.Duration;
+import org.apache.beam.sdk.transforms.DoFn;
 
 /**
  * A {@link DoFn} that performs asynchronous lookup using Google Cloud Bigtable.
@@ -52,8 +52,8 @@ public abstract class BigtableDoFn<A, B> extends GuavaAsyncLookupDoFn<A, B, Bigt
    * Create a {@link BigtableDoFn} instance.
    *
    * @param options Bigtable options.
-   * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
-   *     and retrying bundles.
+   * @param maxPendingRequests maximum number of pending requests on every cloned DoFn. This
+   *     prevents runner from timing out and retrying bundles.
    */
   public BigtableDoFn(BigtableOptions options, int maxPendingRequests) {
     this(options, maxPendingRequests, new BaseAsyncLookupDoFn.NoOpCacheSupplier<>());
@@ -63,16 +63,46 @@ public abstract class BigtableDoFn<A, B> extends GuavaAsyncLookupDoFn<A, B, Bigt
    * Create a {@link BigtableDoFn} instance.
    *
    * @param options Bigtable options.
-   * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
-   *     and retrying bundles.
+   * @param maxPendingRequests maximum number of pending requests on every cloned DoFn. This
+   *     prevents runner from timing out and retrying bundles.
    * @param cacheSupplier supplier for lookup cache.
    */
-  public <K> BigtableDoFn(
+  public BigtableDoFn(
       BigtableOptions options,
       int maxPendingRequests,
-      BaseAsyncLookupDoFn.CacheSupplier<A, B, K> cacheSupplier) {
+      BaseAsyncLookupDoFn.CacheSupplier<A, B> cacheSupplier) {
     super(maxPendingRequests, cacheSupplier);
     this.options = options;
+  }
+
+  /**
+   * Create a {@link BigtableDoFn} instance.
+   *
+   * @param options Bigtable options.
+   * @param maxPendingRequests maximum number of pending requests on every cloned DoFn. This
+   *     prevents runner from timing out and retrying bundles.
+   * @param deduplicate if an attempt should be made to de-duplicate simultaneous requests for the
+   *     same input
+   * @param cacheSupplier supplier for lookup cache.
+   */
+  public BigtableDoFn(
+      BigtableOptions options,
+      int maxPendingRequests,
+      boolean deduplicate,
+      BaseAsyncLookupDoFn.CacheSupplier<A, B> cacheSupplier) {
+    super(maxPendingRequests, deduplicate, cacheSupplier);
+    this.options = options;
+  }
+
+  @Override
+  public ResourceType getResourceType() {
+    // BigtableSession is backed by a gRPC thread safe client
+    return ResourceType.PER_INSTANCE;
+  }
+
+  @Override
+  public Duration getTimeout() {
+    return Duration.ofMillis(options.getCallOptionsConfig().getMutateRpcTimeoutMs());
   }
 
   protected BigtableSession newClient() {

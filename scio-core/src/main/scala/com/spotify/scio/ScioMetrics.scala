@@ -59,8 +59,8 @@ object ScioMetrics {
     Metrics.gauge(namespace, name)
 
   /**
-   * Create a new [[org.apache.beam.sdk.metrics.Gauge Gauge]] metric using `T` as namespace.
-   * Default is "com.spotify.scio.ScioMetrics" if `T` is not specified.
+   * Create a new [[org.apache.beam.sdk.metrics.Gauge Gauge]] metric using `T` as namespace. Default
+   * is "com.spotify.scio.ScioMetrics" if `T` is not specified.
    */
   def gauge[T: ClassTag](name: String): Gauge = gauge(namespace[T], name)
 }

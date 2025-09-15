@@ -25,23 +25,44 @@ import scala.util.{Failure, Success, Try}
 /**
  * A [[org.apache.beam.sdk.transforms.DoFn DoFn]] that performs asynchronous lookup using the
  * provided client for Scala [[Future]].
- * @tparam A input element type.
- * @tparam B client lookup value type.
- * @tparam C client type.
+ * @tparam Input
+ *   input element type.
+ * @tparam Output
+ *   client lookup value type.
+ * @tparam Client
+ *   client type.
  */
-abstract class ScalaAsyncLookupDoFn[A, B, C](
+abstract class ScalaAsyncLookupDoFn[Input, Output, Client](
   maxPendingRequests: Int,
-  cacheSupplier: CacheSupplier[A, B, _]
-) extends BaseAsyncLookupDoFn[A, B, C, Future[B], Try[B]](maxPendingRequests, cacheSupplier)
-    with ScalaFutureHandlers[B] {
-  def this() = {
-    this(1000, new NoOpCacheSupplier[A, B])
-  }
+  deduplicate: Boolean,
+  cacheSupplier: CacheSupplier[Input, Output]
+) extends BaseAsyncLookupDoFn[Input, Output, Client, Future[Output], Try[Output]](
+      maxPendingRequests,
+      deduplicate,
+      cacheSupplier
+    )
+    with ScalaFutureHandlers[Output] {
+  def this() =
+    this(1000, true, new NoOpCacheSupplier[Input, Output])
 
-  def this(maxPendingRequests: Int) = {
-    this(maxPendingRequests, new NoOpCacheSupplier[A, B])
-  }
+  /**
+   * @param maxPendingRequests
+   *   maximum number of pending requests on every cloned DoFn. This prevents runner from timing out
+   *   and retrying bundles.
+   */
+  def this(maxPendingRequests: Int) =
+    this(maxPendingRequests, true, new NoOpCacheSupplier[Input, Output])
 
-  override def success(output: B): Try[B] = Success(output)
-  override def failure(throwable: Throwable): Try[B] = Failure(throwable)
+  /**
+   * @param maxPendingRequests
+   *   maximum number of pending requests on every cloned DoFn. This prevents runner from timing out
+   *   and retrying bundles.
+   * @param cacheSupplier
+   *   supplier for lookup cache.
+   */
+  def this(maxPendingRequests: Int, cacheSupplier: CacheSupplier[Input, Output]) =
+    this(maxPendingRequests, true, cacheSupplier)
+
+  override def success(output: Output): Try[Output] = Success(output)
+  override def failure(throwable: Throwable): Try[Output] = Failure(throwable)
 }

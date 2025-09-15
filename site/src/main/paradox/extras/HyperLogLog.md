@@ -6,7 +6,7 @@ requires linear space. Hll algorithm approximate the cardinality with a small me
 [HyperLogLog++](https://research.google/pubs/pub40671/) is an improved version of `HyperLogLog` algorithms presented by Google. It more accurately estimates
 distinct count in large and small data streams.
 
-HyperLogLgo++ algorithm has been integrated with Apache Beam with help of [ZetaSketch](https://github.com/google/zetasketch) library, which is comply with
+HyperLogLog++ algorithm has been integrated with Apache Beam with help of [ZetaSketch](https://github.com/google/zetasketch) library, which is comply with
 [Google Cloud BigQuery](https://cloud.google.com/bigquery/docs/reference/standard-sql/hll_functions) sketches. More about Apache beam integration
 can find [here](https://s.apache.org/hll-in-beam).
 

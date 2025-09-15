@@ -27,9 +27,9 @@ private[coders] class JodaLocalDateTimeSerializer extends Serializer[LocalDateTi
 
   def write(kryo: Kryo, output: Output, ldt: LocalDateTime): Unit = {
     output.writeInt(ldt.getYear, /*optimizePositive=*/ false)
-    output.writeByte(ldt.getMonthOfYear)
-    output.writeByte(ldt.getDayOfMonth)
-    output.writeLong(ldt.getMillisOfDay)
+    output.writeByte(ldt.getMonthOfYear.toByte)
+    output.writeByte(ldt.getDayOfMonth.toByte)
+    output.writeLong(ldt.getMillisOfDay.toLong)
 
     val chronology = ldt.getChronology
     if (chronology != null && chronology != ISOChronology.getInstanceUTC) {
@@ -65,7 +65,7 @@ private[coders] class JodaLocalTimeSerializer extends Serializer[LocalTime] {
   }
 
   def read(kryo: Kryo, input: Input, tpe: Class[LocalTime]): LocalTime =
-    LocalTime.fromMillisOfDay(input.readInt( /*optimizePositive=*/ false))
+    LocalTime.fromMillisOfDay(input.readInt( /*optimizePositive=*/ false).toLong)
 }
 
 private[coders] class JodaLocalDateSerializer extends Serializer[LocalDate] {

@@ -20,37 +20,34 @@ package org.apache.beam.sdk.extensions.smb
 import java.io.File
 import java.util.UUID
 import com.spotify.scio._
+import com.spotify.scio.avro._
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.smb._
 import com.spotify.scio.testing._
-import org.apache.avro.Schema
+import org.apache.avro.{Schema, SchemaBuilder}
 import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
+import org.apache.beam.sdk.extensions.avro.io.AvroGeneratedUser
 import org.apache.beam.sdk.values.TupleTag
 
-import scala.jdk.CollectionConverters._
+import scala.collection.compat._
 
 object ParquetEndToEndTest {
-  val eventSchema: Schema = Schema.createRecord(
-    "Event",
-    "",
-    "org.apache.beam.sdk.extensions.smb.avro",
-    false,
-    List(
-      new Schema.Field("user", Schema.create(Schema.Type.STRING), "", ""),
-      new Schema.Field("event", Schema.create(Schema.Type.STRING), "", ""),
-      new Schema.Field("timestamp", Schema.create(Schema.Type.INT), "", 0)
-    ).asJava
-  )
+  val eventSchema: Schema = SchemaBuilder
+    .record("Event")
+    .namespace("org.apache.beam.sdk.extensions.smb.avro")
+    .fields()
+    .requiredString("user")
+    .requiredString("event")
+    .requiredInt("timestamp")
+    .endRecord()
 
-  val userSchema: Schema = Schema.createRecord(
-    "User",
-    "",
-    "org.apache.beam.sdk.extensions.smb.avro",
-    false,
-    List(
-      new Schema.Field("name", Schema.create(Schema.Type.STRING), "", ""),
-      new Schema.Field("age", Schema.create(Schema.Type.INT), "", 0)
-    ).asJava
-  )
+  val userSchema: Schema = SchemaBuilder
+    .record("User")
+    .namespace("org.apache.beam.sdk.extensions.smb.avro")
+    .fields()
+    .requiredString("name")
+    .requiredInt("age")
+    .endRecord()
 
   def avroEvent(x: Int): GenericRecord = new GenericRecordBuilder(eventSchema)
     .set("user", s"user${x % 10 + 1}")
@@ -76,6 +73,10 @@ object ParquetEndToEndTest {
 
   val avroEvents: Seq[GenericRecord] = (1 to 100).map(avroEvent)
   val avroUsers: Seq[GenericRecord] = (1 to 15).map(avroUser)
+
+  val avroEventCoder: Coder[GenericRecord] = avroGenericRecordCoder(eventSchema)
+  val avroUserCoder: Coder[GenericRecord] = avroGenericRecordCoder(userSchema)
+
   val events: Seq[Event] = (1 to 100).map(Event(_))
   val users: Seq[User] = (1 to 15).map(User(_))
 }
@@ -93,18 +94,20 @@ class ParquetEndToEndTest extends PipelineSpec {
     // Write one with keyClass = CharSequence and one with String
     // Downstream should be able to handle the difference
     sc1
-      .parallelize(avroEvents)
+      .parallelize(avroEvents)(avroEventCoder)
       .saveAsSortedBucket(
         ParquetAvroSortedBucketIO
           .write(classOf[CharSequence], "user", eventSchema)
           .to(eventsDir.toString)
+          .withNumBuckets(1)
       )
     sc1
-      .parallelize(avroUsers)
+      .parallelize(avroUsers)(avroUserCoder)
       .saveAsSortedBucket(
         ParquetAvroSortedBucketIO
           .write(classOf[String], "name", userSchema)
           .to(usersDir.toString)
+          .withNumBuckets(1)
       )
     sc1.run()
 
@@ -119,7 +122,7 @@ class ParquetEndToEndTest extends PipelineSpec {
           .read[User](new TupleTag[User]("rhs"))
           .from(usersDir.toString)
       )
-    val userMap = users.groupBy(_.name).mapValues(_.head)
+    val userMap = users.groupBy(_.name).view.mapValues(_.head).toMap
     val expected = events.groupBy(_.user).toSeq.flatMap { case (k, es) =>
       es.map(e => (k, (e, userMap(k))))
     }
@@ -141,6 +144,7 @@ class ParquetEndToEndTest extends PipelineSpec {
         ParquetTypeSortedBucketIO
           .write[String, Event]("user")
           .to(eventsDir.toString)
+          .withNumBuckets(1)
       )
     sc1
       .parallelize(users)
@@ -148,6 +152,7 @@ class ParquetEndToEndTest extends PipelineSpec {
         ParquetTypeSortedBucketIO
           .write[String, User]("name")
           .to(usersDir.toString)
+          .withNumBuckets(1)
       )
     sc1.run()
 
@@ -161,15 +166,55 @@ class ParquetEndToEndTest extends PipelineSpec {
         ParquetAvroSortedBucketIO
           .read(new TupleTag[GenericRecord]("rhs"), userSchema)
           .from(usersDir.toString)
-      )
-    val userMap = avroUsers.groupBy(_.get("name").toString).mapValues(_.head)
+      )(Coder[String], avroEventCoder, avroUserCoder)
+    val userMap = avroUsers.groupBy(_.get("name").toString).view.mapValues(_.head).toMap
     val expected = avroEvents.groupBy(_.get("user").toString).toSeq.flatMap { case (k, es) =>
       es.map(e => (k, (e, userMap(k))))
     }
+    implicit val c: Coder[(String, (GenericRecord, GenericRecord))] = actual.coder
     actual should containInAnyOrder(expected)
     sc2.run()
 
     eventsDir.delete()
     usersDir.delete()
+  }
+
+  it should "support specific records" in {
+    val usersDir = tmpDir
+
+    val sc1 = ScioContext()
+
+    val users = (1 to 100).map { i =>
+      AvroGeneratedUser
+        .newBuilder()
+        .setName(s"user$i")
+        .setFavoriteColor(s"color$i")
+        .setFavoriteNumber(i)
+        .build()
+    }
+    sc1
+      .parallelize(users)
+      .saveAsSortedBucket(
+        ParquetAvroSortedBucketIO
+          .write(classOf[CharSequence], "name", classOf[AvroGeneratedUser])
+          .to(usersDir.toString)
+          .withNumBuckets(1)
+      )
+    sc1.run()
+
+    implicit val keyCoder: Coder[CharSequence] =
+      Coder.xmap(Coder.stringCoder)(identity, _.toString)
+
+    val sc2 = ScioContext()
+    val actual = sc2
+      .sortMergeGroupByKey(
+        classOf[CharSequence],
+        ParquetAvroSortedBucketIO
+          .read(new TupleTag[AvroGeneratedUser]("user"), classOf[AvroGeneratedUser])
+          .from(usersDir.toString)
+      )
+      .map(kv => (kv._1.toString, kv._2.toList))
+    val expected = users.map(u => (u.getName.toString, List(u)))
+    actual should containInAnyOrder(expected)
   }
 }

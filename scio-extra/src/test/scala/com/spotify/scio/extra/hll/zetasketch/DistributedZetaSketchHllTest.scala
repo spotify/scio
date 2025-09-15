@@ -23,7 +23,7 @@ import com.spotify.scio.testing.PipelineSpec
 class DistributedZetaSketchHllTest extends PipelineSpec {
 
   "DistributedZetaSketchHll" should "approximate distinct count" in {
-    val input = for (i <- 0 to 10000) yield (i % 20)
+    val input = for (i <- 0 to 10000) yield i % 20
     val output = runWithData(input) { scl =>
       scl.asZetaSketchHll.sumHll.approxDistinctCount
     }
@@ -33,7 +33,7 @@ class DistributedZetaSketchHllTest extends PipelineSpec {
 
   it should "approximate distinct count using aggregator" in {
 
-    val input = for (i <- 0 to 10000) yield (i % 20)
+    val input = for (i <- 0 to 10000) yield i % 20
     val output = runWithData(input) { scl =>
       scl.approxDistinctCountWithZetaHll
     }

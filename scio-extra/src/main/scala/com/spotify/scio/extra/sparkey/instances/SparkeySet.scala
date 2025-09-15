@@ -23,9 +23,8 @@ import org.apache.beam.sdk.util.CoderUtils
 import scala.jdk.CollectionConverters._
 
 /**
- * Enhanced version of `SparkeyReader` that assumes the underlying
- * Sparkey is encoded with a given Coder, but contains no values
- * (i.e.: only used as an on-disk HashSet).
+ * Enhanced version of `SparkeyReader` that assumes the underlying Sparkey is encoded with a given
+ * Coder, but contains no values (i.e.: only used as an on-disk HashSet).
  */
 class SparkeySet[T](val sparkey: SparkeyReader, val coder: Coder[T]) extends SparkeySetBase[T] {
 

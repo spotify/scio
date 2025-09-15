@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "Test",
+  "namespace": "com.spotify.scio.avro.types",
+  "fields": [
+    {
+      "name": "test",
+      "type": "int"
+    }
+  ]
+}

@@ -21,5 +21,4 @@ trait AllInstances
     extends ScalaInstances
     with JavaInstances
     with JodaInstances
-    with AvroInstances
     with LowPrioritySchemaDerivation

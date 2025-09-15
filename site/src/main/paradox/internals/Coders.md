@@ -7,7 +7,7 @@ As per [Beam's documentation](https://beam.apache.org/documentation/programming-
 > When Beam runners execute your pipeline, they often need to materialize the intermediate data in your PCollections, which requires converting elements to and from byte strings. The Beam SDKs use objects called Coders to describe how the elements of a given PCollection may be encoded and decoded.
 
 For the most part, coders are used when Beam transfer intermediate data between workers over the network. They may also be used by beam to test instances for equality.
-Anytime you create a `SCollection[T]`, Beam needs to know how to go from an instance of `T` to an array of bytes, and from that array of bytes to an instance of `T`.
+Anytime you create an `SCollection[T]`, Beam needs to know how to go from an instance of `T` to an array of bytes, and from that array of bytes to an instance of `T`.
 
 The Beam SDK defines a class called `Coder` that roughly looks like this:
 
@@ -18,7 +18,7 @@ public abstract class Coder<T> implements Serializable {
 }
 ```
 
-Beam provides built-in Coders for various basic Java types (`Integer`, `Long`, `Double`, etc.). But anytime you create a new class, and that class is used in a `SCollection`, a beam coder needs to be provided.
+Beam provides built-in Coders for various basic Java types (`Integer`, `Long`, `Double`, etc.). But anytime you create a new class, and that class is used in an `SCollection`, a beam coder needs to be provided.
 
 ```scala mdoc:silent
 import com.spotify.scio.values.SCollection
@@ -76,21 +76,6 @@ val grouped =
 sc.run()
 ```
 
-## Scio `0.6.x` and below
-
-In Scio `0.6.x` and below, Scio would delegate this serialization process to [Kryo](https://github.com/EsotericSoftware/kryo). Kryo's job is to automagically "generate" the serialization logic for any type. The benefit is you don't really have to care about serialization most of the time when writing pipelines with Scio. Using Beam, you would need to explicitly set the coder every time you use a `PTtransform`.
-
-While it saves a lot of work, it also has a few drawbacks:
-
-- `Kryo` coders can be really inefficient. Especially if you forget to @ref:[register your classes using a custom `KryoRegistrar`](../FAQ.md#how-do-i-use-custom-kryo-serializers-).
-- The only way to be sure Kryo coders are correctly registered is to write tests and run them with a specific option: (see @ref:[kryoRegistrationRequired=true](../FAQ.md#what-kryo-tuning-options-are-there-)).
-- Kryo coders are very dynamic and it can be hard to know exactly which coder is used for a given class.
-- Kryo coders do not always play well with Beam, and sometime can cause weird runtime exceptions. For example, Beam may sometimes throw an `IllegalMutationException` because of the default Kryo coder implementation.
-
-## Scio `0.7.0` and above
-
-In Scio `0.7.0` and above, the Scala compiler will try to find the correct instance of `Coder` at compile time. In most cases, the compiler should be able to either directly find a proper `Coder` implementation, or derive one automatically.
-
 ### Scio `Coder` vs Beam `Coder`
 
 Both Scio and Beam define a class called `Coder`. For the most part when writing a job, you will be interacting with `com.spotify.scio.coders.Coder`.
@@ -98,17 +83,19 @@ Both Scio and Beam define a class called `Coder`. For the most part when writing
 Scio `Coder` and its implementations simply form an [ADT](https://en.wikipedia.org/wiki/Algebraic_data_type) where each implementation is a building block that covers one of the possible cases:
 
 - `Beam`: a simple wrapper around a Beam Coder
+- `Singleton`: A coder for a static object. It is for example used to serialize `Unit`.
 - `Disjunction`: Represent a Coder that makes a choice between different possible implementations. It is for example used to serialize ADTs and `Either`
 - `Record`: A Coder for record-like structures like case classes and tuples.
-- `Transform`: A Coder implemented by "transforming" another Coder.
+- `Transform`: A Coder implemented by "transforming" the encoded/decoded value of another Coder.
+- `CoderTransform`: A Coder implemented by "transforming" a Beam Coder to a new Coder.
 - `Fallback`: A default `Coder`. Used when there is no better option.
 
 There is also a "special" coder called `KVCoder`. It is a specific coder for Key-Value pairs. Internally Beam treats @javadoc[KV](org.apache.beam.sdk.values.KV) differently from other types so Scio needs to do the same.
 
-It is important to note that **Scio's coders are only representations** of those cases but **do not actually implement any serialization logic**. Before the job starts, those coders will be *materialized*, meaning they will be converted to instances of @javadoc[`org.apache.beam.sdk.coders.Coder`](org.apache.beam.sdk.coders.Coder).
+It is important to note that **Scio's coders are only representations** of those cases but **do not actually implement any serialization logic**. Before the job starts, those coders will be *materialized*, meaning they will be converted to instances of @javadoc[org.apache.beam.sdk.coders.Coder](org.apache.beam.sdk.coders.Coder).
 Thanks to this technique, Scio can dynamically change the behavior of coders depending on the execution context. For example coders may handle nullable values differently depending on options passed to the job.
 
-@javadoc[`org.apache.beam.sdk.coders.Coder`](org.apache.beam.sdk.coders.Coder) instances on the other hand are the actual implementations of serialization and deserialization logic. Among other thing, each instance of `org.apache.beam.sdk.coders.Coder[T]` defines two methods:
+@javadoc[org.apache.beam.sdk.coders.Coder](org.apache.beam.sdk.coders.Coder) instances on the other hand are the actual implementations of serialization and deserialization logic. Among other thing, each instance of `org.apache.beam.sdk.coders.Coder[T]` defines two methods:
 
 ```scala
 class ExampleCoder extends org.apache.beam.sdk.coders.Coder[Example] {
@@ -170,14 +157,17 @@ Coder[Top]
 #### No `Coder[Foo]` is available and the compiler can not derive one
 
 Sometimes, no `Coder` instance can be found, and it's impossible to automatically derive one.
-In that case, Scio will fallback to a `Kryo` coder for that specific type. Note that **it might negatively impact the performance of your job**.
+In that case, Scio can fallback to a `Kryo` coder for that type by importing `com.spotify.scio.coders.kryo._`.
+Note that **it might negatively impact the performance of your job**.
 
-If the scalac flag `-Xmacro-settings:show-coder-fallback=true` is set, a warning message will be displayed **at compile time**. This message should help you fix the warning.
+If the scalac flag `-Xmacro-settings:show-coder-fallback=true` is set, a warning message will be displayed **at compile time**.
+This message should help you keep track where the implicit kryo coder are used.
 
 While compiling the following example with `-Xmacro-settings:show-coder-fallback=true`
 
 ```scala mdoc:reset
 import com.spotify.scio.coders._
+import com.spotify.scio.coders.kryo._
 val localeCoder = Coder[java.util.Locale]
 ```
 
@@ -220,7 +210,8 @@ In this example, the compiler could not find a proper instance of `Coder[Locale]
 Note that this message is not limited to direct invocation of fallback. For example, if you declare a case class that uses `Locale` internally, the compiler will show the same warning:
 
 ```scala mdoc:reset
-import com.spotify.scio.coders._
+import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.kryo._
 case class Demo2(i: Int, s: String, xs: List[java.util.Locale])
 val demoCoder = Coder[Demo2]
 ```
@@ -256,14 +247,13 @@ scalacOptions += "-Xmacro-settings:show-coder-fallback=true"
 
 ## How to build a custom Coder
 
-It is possible for the user to define their own `Coder` implementation. Scio provides [builder functions](https://spotify.github.io/scio/api/com/spotify/scio/coders/CoderGrammar.html) in the `Coder` object. If you want to create a custom `Coder`, you should use one of the those three builder:
+It is possible for the user to define their own `Coder` implementation. Scio provides @scaladoc[builder functions](com.spotify.scio.coders.CoderGrammar) in the `Coder` object. If you want to create a custom `Coder`, you should use one of the those three builder:
 
 - **`Coder.beam`**: Create a Scio `Coder` that simply wraps a Beam implementation. For example:
 ```scala mdoc
 import com.spotify.scio.coders._
 import org.apache.beam.sdk.coders.DoubleCoder
-implicit def doubleCoder =
-  Coder.beam(DoubleCoder.of())
+implicit def doubleCoder = Coder.beam(DoubleCoder.of())
 ```
 - **`Coder.transform`**: Create a Coder for a type `B` by transforming the Beam implementation for a type `A`. Usually useful for `Coder` that depend on another `Coder`:
 ```scala mdoc
@@ -288,11 +278,11 @@ Note that in test mode (when you use `JobTest`), Scio will make sure that all th
 
 ### Testing custom coders
 
-Scio provides a few assertions specific to coders. See [CoderAssertions](https://spotify.github.io/scio/api/com/spotify/scio/testing/CoderAssertions$.html).
+Scio provides a few assertions specific to coders. See @scaladoc[CoderAssertions](com.spotify.scio.testing.CoderAssertions$).
 
 ## Null values support
 
-By default and for performance reasons, Scio coders will expect the values to serialized to never be `null`.
+By default, and for performance reasons, Scio coders will expect the values to serialized to never be `null`.
 
 This may cause the following exception to be thrown:
 
@@ -316,4 +306,4 @@ There are 2 ways to fix this issue:
 ## Upgrading to `v0.7.0` or above: Migrating to static coder
 
 Migrating to Scio `0.7.x` from an older version is likely to break a few things at compile time in your project.
-See the complete @ref:[v0.7.0 Migration Guide](../migrations/v0.7.0-Migration-Guide.md) for more information.
+See the complete @ref:[v0.7.0 Migration Guide](../releases/migrations/v0.7.0-Migration-Guide.md) for more information.

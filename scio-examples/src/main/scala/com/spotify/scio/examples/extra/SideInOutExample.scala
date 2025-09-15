@@ -19,7 +19,7 @@
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.SideInOutExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --stopWords=[STOP_WORDS_URI]
 // --output1=gs://[BUCKET]/[PATH]/output1
@@ -43,7 +43,7 @@ object SideInOutExample {
     }
 
     // Convert stop words to a `SideInput[Map[String, Unit]]`
-    val sideIn = stopWords.map(_ -> ()).asMapSideInput
+    val sideIn = stopWords.map(w => (w, ())).asMapSideInput
 
     // Open text files a `SCollection[String]`
     val wordCount = sc

@@ -18,12 +18,17 @@
 package com.spotify.scio.transforms;
 
 import com.google.common.util.concurrent.*;
-
-import javax.annotation.Nullable;
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
+import javax.annotation.Nullable;
 
 /** Utility to abstract away Guava, Java 8 and Scala future handling. */
 public class FutureHandlers {
@@ -35,18 +40,42 @@ public class FutureHandlers {
    * @param <V> value type.
    */
   public interface Base<F, V> {
-    void waitForFutures(Iterable<F> futures) throws InterruptedException, ExecutionException;
+
+    default Duration getTimeout() {
+      return Duration.ofMinutes(10);
+    }
+
+    void waitForFutures(Iterable<F> futures)
+        throws InterruptedException, ExecutionException, TimeoutException;
 
     F addCallback(F future, Function<V, Void> onSuccess, Function<Throwable, Void> onFailure);
   }
 
   /** A {@link Base} implementation for Guava {@link ListenableFuture}. */
   public interface Guava<V> extends Base<ListenableFuture<V>, V> {
+
+    /**
+     * Executor used for callbacks. Default is {@link ForkJoinPool#commonPool()}. Consider
+     * overriding this method if callbacks are blocking.
+     *
+     * @return Executor for callbacks.
+     */
+    default Executor getCallbackExecutor() {
+      return ForkJoinPool.commonPool();
+    }
+
     @Override
     default void waitForFutures(Iterable<ListenableFuture<V>> futures)
-        throws InterruptedException, ExecutionException {
-      // Futures#allAsList only works if all futures succeed
-      Futures.whenAllComplete(futures).run(() -> {}, MoreExecutors.directExecutor()).get();
+        throws InterruptedException, ExecutionException, TimeoutException {
+      // use Future#successfulAsList instead of Futures#allAsList which only works if all
+      // futures succeed
+      ListenableFuture<?> f = Futures.successfulAsList(futures);
+      Duration timeout = getTimeout();
+      if (timeout != null) {
+        f.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+      } else {
+        f.get();
+      }
     }
 
     @Override
@@ -57,6 +86,15 @@ public class FutureHandlers {
       // Futures#transform doesn't allow onFailure callback while Futures#addCallback doesn't
       // guarantee that callbacks are called before ListenableFuture#get() unblocks
       SettableFuture<V> f = SettableFuture.create();
+      // if executor rejects the callback, we have to fail the future
+      Executor rejectPropagationExecutor =
+          command -> {
+            try {
+              getCallbackExecutor().execute(command);
+            } catch (RejectedExecutionException e) {
+              f.setException(e);
+            }
+          };
       Futures.addCallback(
           future,
           new FutureCallback<V>() {
@@ -64,23 +102,30 @@ public class FutureHandlers {
             public void onSuccess(@Nullable V result) {
               try {
                 onSuccess.apply(result);
-              } catch (RuntimeException | Error e) {
+                f.set(result);
+              } catch (Throwable e) {
                 f.setException(e);
-                return;
               }
-              f.set(result);
             }
 
             @Override
             public void onFailure(Throwable t) {
+              Throwable callbackException = null;
               try {
                 onFailure.apply(t);
+              } catch (Throwable e) {
+                // do not fail executing thread if callback fails
+                // record exception and propagate as suppressed
+                callbackException = e;
               } finally {
+                if (callbackException != null) {
+                  t.addSuppressed(callbackException);
+                }
                 f.setException(t);
               }
             }
           },
-          MoreExecutors.directExecutor());
+          rejectPropagationExecutor);
 
       return f;
     }
@@ -90,10 +135,16 @@ public class FutureHandlers {
   public interface Java<V> extends Base<CompletableFuture<V>, V> {
     @Override
     default void waitForFutures(Iterable<CompletableFuture<V>> futures)
-        throws InterruptedException, ExecutionException {
+        throws InterruptedException, ExecutionException, TimeoutException {
       CompletableFuture[] array =
           StreamSupport.stream(futures.spliterator(), false).toArray(CompletableFuture[]::new);
-      CompletableFuture.allOf(array).get();
+      CompletableFuture<?> f = CompletableFuture.allOf(array).exceptionally(t -> null);
+      Duration timeout = getTimeout();
+      if (timeout != null) {
+        f.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+      } else {
+        f.get();
+      }
     }
 
     @Override

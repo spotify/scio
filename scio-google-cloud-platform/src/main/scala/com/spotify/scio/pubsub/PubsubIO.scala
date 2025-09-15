@@ -17,23 +17,24 @@
 
 package com.spotify.scio.pubsub
 
+import com.google.api.client.util.DateTime
 import com.google.protobuf.Message
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.{Functions, JMapWrapper, ScioUtil}
-import com.spotify.scio.pubsub.PubsubIO.Subscription
-import com.spotify.scio.pubsub.PubsubIO.Topic
 import com.spotify.scio.values.SCollection
+import com.spotify.scio.avro._
 import com.spotify.scio.io._
 import com.spotify.scio.pubsub.coders._
-import org.apache.avro.specific.SpecificRecordBase
+import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.io.gcp.{pubsub => beam}
 import org.apache.beam.sdk.util.CoderUtils
 import org.joda.time.Instant
 
+import scala.util.Try
 import scala.jdk.CollectionConverters._
-import scala.reflect.{classTag, ClassTag}
+import scala.reflect.ClassTag
 
 sealed trait PubsubIO[T] extends ScioIO[T] {
   override type ReadP = PubsubIO.ReadParam
@@ -49,62 +50,36 @@ object PubsubIO {
   case object Subscription extends ReadType
   case object Topic extends ReadType
 
-  final case class ReadParam(readType: ReadType) {
+  final case class ReadParam private (
+    readType: ReadType,
+    clientFactory: Option[beam.PubsubClient.PubsubClientFactory] = ReadParam.DefaultClientFactory,
+    deadLetterTopic: Option[String] = ReadParam.DefaultDeadLetterTopic
+  ) {
     val isSubscription: Boolean = readType match {
       case Subscription => true
       case _            => false
     }
   }
   object ReadParam {
+    val DefaultClientFactory: Option[beam.PubsubClient.PubsubClientFactory] = None
+    val DefaultDeadLetterTopic: Option[String] = None
+
     // required for back compatibility
     def apply(isSubscription: Boolean): ReadParam =
       if (isSubscription) ReadParam(Subscription) else ReadParam(Topic)
   }
 
-  final case class WriteParam(
-    maxBatchSize: Option[Int] = None,
-    maxBatchBytesSize: Option[Int] = None
+  final case class WriteParam private (
+    maxBatchSize: Option[Int] = WriteParam.DefaultMaxBatchSize,
+    maxBatchBytesSize: Option[Int] = WriteParam.DefaultMaxBatchBytesSize,
+    clientFactory: Option[beam.PubsubClient.PubsubClientFactory] = WriteParam.DefaultClientFactory
   )
 
-  // The following method is unsafe and exists to preserve compatibility with
-  // the previous implementation while the underlying `PubsubIO` implementations
-  // have been refactored and are more type safe.
-  @deprecated(
-    "Use readString, readAvro, readProto, readPubsub or readCoder instead.",
-    since = "0.8.0"
-  )
-  def apply[T: ClassTag: Coder](
-    name: String,
-    idAttribute: String = null,
-    timestampAttribute: String = null
-  ): PubsubIO[T] = ScioUtil.classOf[T] match {
-    case cls if classOf[String] isAssignableFrom cls =>
-      StringPubsubIOWithoutAttributes(name, idAttribute, timestampAttribute)
-        .asInstanceOf[PubsubIO[T]]
-    case cls if classOf[SpecificRecordBase] isAssignableFrom cls =>
-      type X = T with SpecificRecordBase
-      AvroPubsubIOWithoutAttributes[X](name, idAttribute, timestampAttribute)(
-        classTag[T].asInstanceOf[ClassTag[X]]
-      ).asInstanceOf[PubsubIO[T]]
-    case cls if classOf[Message] isAssignableFrom cls =>
-      type X = T with Message
-      MessagePubsubIOWithoutAttributes[X](name, idAttribute, timestampAttribute)(
-        classTag[T].asInstanceOf[ClassTag[X]]
-      ).asInstanceOf[PubsubIO[T]]
-    case cls if classOf[beam.PubsubMessage] isAssignableFrom cls =>
-      type X = T with beam.PubsubMessage
-      PubSubMessagePubsubIOWithoutAttributes[X](name, idAttribute, timestampAttribute)
-        .asInstanceOf[PubsubIO[T]]
-    case _ =>
-      FallbackPubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
+  object WriteParam {
+    val DefaultMaxBatchSize: Option[Int] = None
+    val DefaultMaxBatchBytesSize: Option[Int] = None
+    val DefaultClientFactory: Option[beam.PubsubClient.PubsubClientFactory] = None
   }
-
-  @deprecated("Use PubsubIO.string", since = "0.10.0")
-  def readString(
-    name: String,
-    idAttribute: String = null,
-    timestampAttribute: String = null
-  ): PubsubIO[String] = string(name, idAttribute, timestampAttribute)
 
   def string(
     name: String,
@@ -113,26 +88,12 @@ object PubsubIO {
   ): PubsubIO[String] =
     StringPubsubIOWithoutAttributes(name, idAttribute, timestampAttribute)
 
-  @deprecated("Use PubsubIO.avro", since = "0.10.0")
-  def readAvro[T <: SpecificRecordBase: ClassTag](
-    name: String,
-    idAttribute: String = null,
-    timestampAttribute: String = null
-  ): PubsubIO[T] = avro(name, idAttribute, timestampAttribute)
-
-  def avro[T <: SpecificRecordBase: ClassTag](
+  def avro[T <: SpecificRecord: ClassTag](
     name: String,
     idAttribute: String = null,
     timestampAttribute: String = null
   ): PubsubIO[T] =
     AvroPubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
-
-  @deprecated("Use PubsubIO.proto", since = "0.10.0")
-  def readProto[T <: Message: ClassTag](
-    name: String,
-    idAttribute: String = null,
-    timestampAttribute: String = null
-  ): PubsubIO[T] = proto(name, idAttribute, timestampAttribute)
 
   def proto[T <: Message: ClassTag](
     name: String,
@@ -141,63 +102,66 @@ object PubsubIO {
   ): PubsubIO[T] =
     MessagePubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
 
-  @deprecated("Use PubsubIO.pubsub", since = "0.10.0")
-  def readPubsub[T <: beam.PubsubMessage: ClassTag](
-    name: String,
-    idAttribute: String = null,
-    timestampAttribute: String = null
-  ): PubsubIO[T] = pubsub(name, idAttribute, timestampAttribute)
-
-  def pubsub[T <: beam.PubsubMessage: ClassTag](
+  def pubsub[T <: beam.PubsubMessage](
     name: String,
     idAttribute: String = null,
     timestampAttribute: String = null
   ): PubsubIO[T] =
     PubSubMessagePubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
 
-  @deprecated("Use PubsubIO.coder", since = "0.10.0")
-  def readCoder[T: Coder: ClassTag](
-    name: String,
-    idAttribute: String = null,
-    timestampAttribute: String = null
-  ): PubsubIO[T] = coder(name, idAttribute, timestampAttribute)
-
-  def coder[T: Coder: ClassTag](
+  def coder[T: Coder](
     name: String,
     idAttribute: String = null,
     timestampAttribute: String = null
   ): PubsubIO[T] =
     FallbackPubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
 
-  def withAttributes[T: ClassTag: Coder](
+  def withAttributes[T: Coder](
     name: String,
     idAttribute: String = null,
     timestampAttribute: String = null
   ): PubsubIO[(T, Map[String, String])] =
     PubsubIOWithAttributes[T](name, idAttribute, timestampAttribute)
 
-  private[pubsub] def setAttrs[T](
+  private[pubsub] def configureRead[T](
     r: beam.PubsubIO.Read[T]
-  )(idAttribute: String, timestampAttribute: String): beam.PubsubIO.Read[T] = {
-    val r0 = Option(idAttribute)
-      .map(att => r.withIdAttribute(att))
-      .getOrElse(r)
+  )(
+    name: String,
+    params: ReadParam,
+    idAttribute: String,
+    timestampAttribute: String
+  ): beam.PubsubIO.Read[T] = {
+    var read =
+      params.readType match {
+        case Subscription => r.fromSubscription(name)
+        case Topic        => r.fromTopic(name)
+      }
 
-    Option(timestampAttribute)
-      .map(att => r0.withTimestampAttribute(att))
-      .getOrElse(r0)
+    read = params.clientFactory.fold(read)(read.withClientFactory)
+    read = params.deadLetterTopic.fold(read)(read.withDeadLetterTopic)
+    read = Option(idAttribute).fold(read)(read.withIdAttribute)
+    read = Option(timestampAttribute).fold(read)(read.withTimestampAttribute)
+
+    read
   }
 
-  private[pubsub] def setAttrs[T](
-    r: beam.PubsubIO.Write[T]
-  )(idAttribute: String, timestampAttribute: String): beam.PubsubIO.Write[T] = {
-    val r0 = Option(idAttribute)
-      .map(att => r.withIdAttribute(att))
-      .getOrElse(r)
+  private[pubsub] def configureWrite[T](
+    w: beam.PubsubIO.Write[T]
+  )(
+    name: String,
+    params: WriteParam,
+    idAttribute: String,
+    timestampAttribute: String
+  ): beam.PubsubIO.Write[T] = {
+    var write = w.to(name)
 
-    Option(timestampAttribute)
-      .map(att => r0.withTimestampAttribute(att))
-      .getOrElse(r0)
+    write = params.maxBatchBytesSize.fold(write)(write.withMaxBatchBytesSize)
+    write = params.maxBatchSize.fold(write)(write.withMaxBatchSize)
+    write = params.clientFactory.fold(write)(write.withClientFactory)
+    write = Option(idAttribute).fold(write)(write.withIdAttribute)
+    write = Option(timestampAttribute).fold(write)(write.withTimestampAttribute)
+
+    write
   }
 }
 
@@ -212,22 +176,14 @@ sealed private trait PubsubIOWithoutAttributes[T] extends PubsubIO[T] {
   protected def setup[U](
     read: beam.PubsubIO.Read[U],
     params: PubsubIO.ReadParam
-  ): beam.PubsubIO.Read[U] = {
-    val r =
-      params.readType match {
-        case Subscription => read.fromSubscription(name)
-        case Topic        => read.fromTopic(name)
-      }
+  ): beam.PubsubIO.Read[U] =
+    PubsubIO.configureRead(read)(name, params, idAttribute, timestampAttribute)
 
-    PubsubIO.setAttrs(r)(idAttribute, timestampAttribute)
-  }
-
-  protected def setup[U](write: beam.PubsubIO.Write[U], params: PubsubIO.WriteParam) = {
-    val w = PubsubIO.setAttrs(write.to(name))(idAttribute, timestampAttribute)
-    params.maxBatchBytesSize.foreach(w.withMaxBatchBytesSize)
-    params.maxBatchSize.foreach(w.withMaxBatchSize)
-    w
-  }
+  protected def setup[U](
+    write: beam.PubsubIO.Write[U],
+    params: PubsubIO.WriteParam
+  ): beam.PubsubIO.Write[U] =
+    PubsubIO.configureWrite(write)(name, params, idAttribute, timestampAttribute)
 }
 
 final private case class StringPubsubIOWithoutAttributes(
@@ -236,8 +192,9 @@ final private case class StringPubsubIOWithoutAttributes(
   timestampAttribute: String
 ) extends PubsubIOWithoutAttributes[String] {
   override protected def read(sc: ScioContext, params: ReadP): SCollection[String] = {
+    val coder = CoderMaterializer.beam(sc, Coder.stringCoder)
     val t = setup(beam.PubsubIO.readStrings(), params)
-    sc.applyTransform(t)
+    sc.applyTransform(t).setCoder(coder)
   }
 
   override protected def write(data: SCollection[String], params: WriteP): Tap[Nothing] = {
@@ -247,7 +204,7 @@ final private case class StringPubsubIOWithoutAttributes(
   }
 }
 
-final private case class AvroPubsubIOWithoutAttributes[T <: SpecificRecordBase: ClassTag](
+final private case class AvroPubsubIOWithoutAttributes[T <: SpecificRecord: ClassTag](
   name: String,
   idAttribute: String,
   timestampAttribute: String
@@ -255,8 +212,9 @@ final private case class AvroPubsubIOWithoutAttributes[T <: SpecificRecordBase: 
   private[this] val cls = ScioUtil.classOf[T]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    val coder = CoderMaterializer.beam(sc, avroSpecificRecordCoder[T])
     val t = setup(beam.PubsubIO.readAvros(cls), params)
-    sc.applyTransform(t)
+    sc.applyTransform(t).setCoder(coder)
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
@@ -274,8 +232,9 @@ final private case class MessagePubsubIOWithoutAttributes[T <: Message: ClassTag
   private[this] val cls = ScioUtil.classOf[T]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    val coder = CoderMaterializer.beam(sc, Coder.protoMessageCoder[T])
     val t = setup(beam.PubsubIO.readProtos(cls), params)
-    sc.applyTransform(t)
+    sc.applyTransform(t).setCoder(coder)
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
@@ -291,8 +250,9 @@ final private case class PubSubMessagePubsubIOWithoutAttributes[T <: beam.Pubsub
   timestampAttribute: String
 ) extends PubsubIOWithoutAttributes[T] {
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    val coder = CoderMaterializer.beam(sc, coders.messageCoder)
     val t = setup(beam.PubsubIO.readMessages(), params)
-    sc.applyTransform(t).contravary[T]
+    sc.applyTransform(t).setCoder(coder).contravary[T]
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
@@ -333,7 +293,7 @@ final private case class FallbackPubsubIOWithoutAttributes[T: Coder](
   }
 }
 
-final private case class PubsubIOWithAttributes[T: ClassTag: Coder](
+final private case class PubsubIOWithAttributes[T: Coder](
   name: String,
   idAttribute: String,
   timestampAttribute: String
@@ -344,14 +304,14 @@ final private case class PubsubIOWithAttributes[T: ClassTag: Coder](
     s"PubsubIO($name, $idAttribute, $timestampAttribute)"
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[WithAttributeMap] = {
-    var r = beam.PubsubIO.readMessagesWithAttributes()
-    r = params.readType match {
-      case Subscription => r.fromSubscription(name)
-      case Topic        => r.fromTopic(name)
-    }
-    r = PubsubIO.setAttrs(r)(idAttribute, timestampAttribute)
-
     val coder = CoderMaterializer.beam(sc, Coder[T])
+    val r = PubsubIO.configureRead(beam.PubsubIO.readMessagesWithAttributes())(
+      name,
+      params,
+      idAttribute,
+      timestampAttribute
+    )
+
     sc.applyTransform(r)
       .map { m =>
         val payload = CoderUtils.decodeFromByteArray(coder, m.getPayload)
@@ -360,11 +320,21 @@ final private case class PubsubIOWithAttributes[T: ClassTag: Coder](
       }
   }
 
+  // timestamp is either epoch or RFC 3339
+  // use same implementation as beam
+  private def parseTimestampAttribute(ts: String): Instant =
+    Try(ts.toLong)
+      .recover { case _: IllegalArgumentException =>
+        DateTime.parseRfc3339(ts).getValue
+      }
+      .map(Instant.ofEpochMilli)
+      .get
+
   override def readTest(sc: ScioContext, params: ReadP): SCollection[WithAttributeMap] = {
     val read = TestDataManager.getInput(sc.testId.get)(this).toSCollection(sc)
 
     Option(timestampAttribute)
-      .map(att => read.timestampBy(kv => new Instant(kv._2(att))))
+      .map(att => read.timestampBy(kv => parseTimestampAttribute(kv._2(att))))
       .getOrElse(read)
   }
 
@@ -373,7 +343,12 @@ final private case class PubsubIOWithAttributes[T: ClassTag: Coder](
     params: WriteP
   ): Tap[Nothing] = {
     val w =
-      PubsubIO.setAttrs(beam.PubsubIO.writeMessages().to(name))(idAttribute, timestampAttribute)
+      PubsubIO.configureWrite(beam.PubsubIO.writeMessages())(
+        name,
+        params,
+        idAttribute,
+        timestampAttribute
+      )
 
     val coder = CoderMaterializer.beam(data.context, Coder[T])
     data.transform_ { coll =>

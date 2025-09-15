@@ -24,9 +24,9 @@ import com.spotify.scio.CoreSysProps
 import com.spotify.scio.bigquery.BigQuerySysProps
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.QueryPriority
 
-import scala.util.Try
-
 object BigQueryConfig {
+
+  case class ImpersonationInfo(targetPrincipal: String, lifetime: Int)
 
   /** Default cache directory. */
   private[this] val CacheDirectoryDefault: Path = Paths
@@ -36,6 +36,9 @@ object BigQueryConfig {
 
   /** Default cache behavior is enabled. */
   private[this] val CacheEnabledDefault: Boolean = true
+
+  /** Default debug auth behavior is disabled. */
+  private[this] val DebugAuthEnabledDefault: Boolean = false
 
   /** Default priority is batch. */
   private[this] val PriorityDefault: QueryPriority = QueryPriority.BATCH
@@ -50,8 +53,13 @@ object BigQueryConfig {
 
   def isCacheEnabled: Boolean =
     BigQuerySysProps.CacheEnabled.valueOption
-      .flatMap(x => Try(x.toBoolean).toOption)
+      .map(x => x.toBoolean)
       .getOrElse(CacheEnabledDefault)
+
+  def isDebugAuthEnabled: Boolean =
+    BigQuerySysProps.DebugAuth.valueOption
+      .map(x => x.toBoolean)
+      .getOrElse(DebugAuthEnabledDefault)
 
   def cacheDirectory: Path =
     BigQuerySysProps.CacheDirectory.valueOption.map(Paths.get(_)).getOrElse(CacheDirectoryDefault)
@@ -61,6 +69,13 @@ object BigQueryConfig {
 
   def readTimeoutMs: Option[Int] =
     BigQuerySysProps.ReadTimeoutMs.valueOption.map(_.toInt)
+
+  def impersonationInfo: Option[ImpersonationInfo] = {
+    BigQuerySysProps.ActAs.valueOption.map { actAs =>
+      val lifetime = BigQuerySysProps.ImpersonationLifetimeSec.valueOption.map(_.toInt)
+      ImpersonationInfo(actAs, lifetime.getOrElse(0))
+    }
+  }
 
   def priority: QueryPriority = {
     lazy val isCompilingOrTesting = Thread

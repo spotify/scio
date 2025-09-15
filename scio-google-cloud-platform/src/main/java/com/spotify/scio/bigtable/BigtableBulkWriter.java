@@ -38,7 +38,7 @@ import org.apache.beam.sdk.transforms.windowing.Window;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PDone;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.annotations.VisibleForTesting;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.annotations.VisibleForTesting;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,8 +94,10 @@ public class BigtableBulkWriter
                     KV<Long, Iterable<KV<ByteString, Iterable<Mutation>>>>,
                     Iterable<KV<ByteString, Iterable<Mutation>>>>() {
                   @ProcessElement
-                  public void process(ProcessContext c) {
-                    c.output(c.element().getValue());
+                  public void process(
+                      @Element KV<Long, Iterable<KV<ByteString, Iterable<Mutation>>>> element,
+                      OutputReceiver<Iterable<KV<ByteString, Iterable<Mutation>>>> out) {
+                    out.output(element.getValue());
                   }
                 }));
   }
@@ -113,16 +115,17 @@ public class BigtableBulkWriter
 
     @StartBundle
     public void startBundle(StartBundleContext c) throws IOException {
-      if (bigtableWriter == null) {
-        bigtableWriter = new BigtableServiceHelper(bigtableOptions).openForWriting(tableName);
-      }
+      bigtableWriter =
+          new BigtableServiceHelper(bigtableOptions, c.getPipelineOptions())
+              .openForWriting(tableName);
       recordsWritten = 0;
     }
 
     @ProcessElement
-    public void processElement(ProcessContext c) throws Exception {
+    public void processElement(@Element Iterable<KV<ByteString, Iterable<Mutation>>> element)
+        throws Exception {
       checkForFailures(failures);
-      for (KV<ByteString, Iterable<Mutation>> r : c.element()) {
+      for (KV<ByteString, Iterable<Mutation>> r : element) {
         bigtableWriter
             .writeRecord(r)
             .whenComplete(
@@ -137,17 +140,10 @@ public class BigtableBulkWriter
 
     @FinishBundle
     public void finishBundle() throws Exception {
-      bigtableWriter.flush();
+      // close the writer and wait for all writes to complete
+      bigtableWriter.close();
       checkForFailures(failures);
       LOG.debug("Wrote {} records", recordsWritten);
-    }
-
-    @Teardown
-    public void tearDown() throws Exception {
-      if (bigtableWriter != null) {
-        bigtableWriter.close();
-        bigtableWriter = null;
-      }
     }
 
     @Override
@@ -213,10 +209,12 @@ public class BigtableBulkWriter
     }
 
     @ProcessElement
-    public void processElement(ProcessContext c) {
+    public void processElement(
+        @Element KV<ByteString, Iterable<Mutation>> element,
+        OutputReceiver<KV<Long, KV<ByteString, Iterable<Mutation>>>> out) {
       // assign this element to a random shard
       final long shard = ThreadLocalRandom.current().nextLong(numOfShards);
-      c.output(KV.of(shard, c.element()));
+      out.output(KV.of(shard, element));
     }
   }
 }

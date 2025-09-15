@@ -17,13 +17,17 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
+import org.apache.avro.Schema;
+import org.apache.avro.SchemaBuilder;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.Pipeline;
-import org.apache.beam.sdk.io.AvroGeneratedUser;
+import org.apache.beam.sdk.extensions.avro.io.AvroGeneratedUser;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.util.SerializableUtils;
 import org.apache.beam.sdk.values.TupleTag;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.parquet.filter2.predicate.FilterApi;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -34,18 +38,28 @@ public class ParquetAvroSortedBucketIOTest {
 
   @Test
   public void testReadSerializable() {
+    final Configuration conf = new Configuration();
+    final Schema projection =
+        SchemaBuilder.record("Record").fields().requiredString("name").endRecord();
+
     SerializableUtils.ensureSerializable(
         SortedBucketIO.read(String.class)
             .of(
                 ParquetAvroSortedBucketIO.read(new TupleTag<>("input"), AvroGeneratedUser.class)
-                    .from(folder.toString())));
+                    .from(folder.toString())
+                    .withConfiguration(conf)
+                    .withFilterPredicate(FilterApi.lt(FilterApi.intColumn("test"), 5))
+                    .withProjection(projection)));
 
     SerializableUtils.ensureSerializable(
         SortedBucketIO.read(String.class)
             .of(
                 ParquetAvroSortedBucketIO.read(
                         new TupleTag<>("input"), AvroGeneratedUser.getClassSchema())
-                    .from(folder.toString())));
+                    .from(folder.toString())
+                    .withConfiguration(conf)
+                    .withFilterPredicate(FilterApi.lt(FilterApi.intColumn("test"), 5))
+                    .withProjection(projection)));
   }
 
   @Test
@@ -80,7 +94,7 @@ public class ParquetAvroSortedBucketIOTest {
     final ResourceId tempDirectory = TestUtils.fromFolder(temporaryFolder);
     pipeline.getOptions().setTempLocation(tempDirectory.toString());
 
-    final SortedBucketIO.Write<String, GenericRecord> write =
+    final SortedBucketIO.Write<String, Void, GenericRecord> write =
         ParquetAvroSortedBucketIO.write(String.class, "name", AvroGeneratedUser.getClassSchema())
             .to(folder.toString());
 

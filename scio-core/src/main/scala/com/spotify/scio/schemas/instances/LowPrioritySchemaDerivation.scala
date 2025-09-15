@@ -20,8 +20,8 @@ package com.spotify.scio.schemas.instances
 import com.spotify.scio.schemas._
 
 private object Derived extends Serializable {
-  import magnolia._
-  def combineSchema[T](ps: Seq[Param[Schema, T]], rawConstruct: Seq[Any] => T): Record[T] = {
+  import magnolia1._
+  def joinSchema[T](ps: Seq[Param[Schema, T]], rawConstruct: Seq[Any] => T): Record[T] = {
     @inline def destruct(v: T): Array[Any] = {
       val arr = new Array[Any](ps.length)
       var i = 0
@@ -39,11 +39,11 @@ private object Derived extends Serializable {
 }
 
 trait LowPrioritySchemaDerivation {
-  import magnolia._
+  import magnolia1._
   type Typeclass[T] = Schema[T]
 
-  def combine[T](ctx: CaseClass[Schema, T]): Record[T] =
-    Derived.combineSchema(ctx.parameters, ctx.rawConstruct)
+  def join[T](ctx: CaseClass[Schema, T]): Record[T] =
+    Derived.joinSchema(ctx.parameters, ctx.rawConstruct)
 
   import com.spotify.scio.MagnoliaMacros
   implicit def gen[T]: Schema[T] = macro MagnoliaMacros.genWithoutAnnotations[T]

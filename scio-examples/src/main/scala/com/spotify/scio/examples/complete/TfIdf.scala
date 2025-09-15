@@ -19,7 +19,7 @@
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.complete.TfIdf
-// --project=[PROJECT] --runner=DataflowPRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowPRunner --region=[REGION NAME]
 // --input=gs://apache-beam-samples/shakespeare/?*.txt
 // --output=gs://[BUCKET]/[PATH]/tf_idf"`
 package com.spotify.scio.examples.complete

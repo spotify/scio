@@ -25,8 +25,10 @@ package object metrics {
   /**
    * Contains the aggregated value of a metric. See [[ScioResult.allCounters]],
    * [[ScioResult.allDistributions]] and [[ScioResult.allGauges]].
-   * @param attempted The value across all attempts of executing all parts of the pipeline.
-   * @param committed The value across all successfully completed parts of the pipeline.
+   * @param attempted
+   *   The value across all attempts of executing all parts of the pipeline.
+   * @param committed
+   *   The value across all successfully completed parts of the pipeline.
    */
   final case class MetricValue[T](attempted: T, committed: Option[T])
 

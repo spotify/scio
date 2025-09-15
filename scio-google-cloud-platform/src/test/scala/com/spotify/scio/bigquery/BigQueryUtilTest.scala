@@ -17,7 +17,7 @@
 
 package com.spotify.scio.bigquery
 
-import com.google.api.client.json.jackson2.JacksonFactory
+import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
@@ -61,7 +61,7 @@ class BigQueryUtilTest extends AnyFlatSpec with Matchers {
           )
       ).asJava
     )
-    schema.setFactory(new JacksonFactory)
+    schema.setFactory(GsonFactory.getDefaultInstance)
     BigQueryUtil.parseSchema(schema.toString) shouldBe schema
   }
 }

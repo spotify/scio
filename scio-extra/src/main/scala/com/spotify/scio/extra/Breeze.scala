@@ -21,11 +21,13 @@ import breeze.linalg.operators.OpAdd
 import breeze.linalg.support.CanCopy
 import com.twitter.algebird.Semigroup
 
+import scala.collection.compat._
+
 /**
  * Utilities for Breeze.
  *
- * Includes [[com.twitter.algebird.Semigroup Semigroup]]s for Breeze data types like
- * [[breeze.linalg.DenseVector DenseVector]]s and [[breeze.linalg.DenseMatrix DenseMatrix]]s.
+ * Includes [[com.twitter.algebird.Semigroup Semigroup]] s for Breeze data types like
+ * [[breeze.linalg.DenseVector DenseVector]] s and [[breeze.linalg.DenseMatrix DenseMatrix]] s.
  *
  * {{{
  * import com.spotify.scio.extra.Breeze._
@@ -44,7 +46,7 @@ object Breeze {
       override def plus(l: M[T], r: M[T]): M[T] = add(l, r)
       override def sumOption(xs: TraversableOnce[M[T]]): Option[M[T]] = {
         var s: M[T] = null.asInstanceOf[M[T]]
-        val i = xs.toIterator
+        val i = xs.iterator
         while (i.hasNext) {
           val a = i.next()
           if (s == null) {

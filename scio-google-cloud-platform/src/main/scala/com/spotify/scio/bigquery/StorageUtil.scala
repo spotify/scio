@@ -18,7 +18,7 @@
 package com.spotify.scio.bigquery
 
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
-import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
+import com.google.cloud.bigquery.storage.v1.ReadSession.TableReadOptions
 import org.apache.avro.Schema
 import org.apache.avro.Schema.Type
 
@@ -66,23 +66,31 @@ object StorageUtil {
   private def setRawType(tableField: TableFieldSchema, schema: Schema): Unit = {
     val tpe = schema.getType match {
       case Type.BOOLEAN => "BOOLEAN"
-      case Type.LONG =>
+      case Type.LONG    =>
         schema.getLogicalType match {
           case null                                 => "INT64"
           case t if t.getName == "timestamp-micros" => "TIMESTAMP"
           case t if t.getName == "time-micros"      => "TIME"
-          case t =>
+          case t                                    =>
             throw new IllegalStateException(s"Unsupported logical type: $t")
         }
       case Type.DOUBLE => "FLOAT64"
-      case Type.BYTES =>
+      case Type.BYTES  =>
         schema.getLogicalType match {
-          case null => "BYTES"
+          case null                        => "BYTES"
           case t if t.getName == "decimal" =>
-            assert(schema.getObjectProp("precision").asInstanceOf[Int] == 38)
-            assert(schema.getObjectProp("scale").asInstanceOf[Int] == 9)
-            "NUMERIC"
-          case t => s"Unsupported logical type: $t"
+            val precision = schema.getObjectProp("precision").asInstanceOf[Int]
+            val scale = schema.getObjectProp("scale").asInstanceOf[Int]
+            (precision, scale) match {
+              case (38, 9)  => "NUMERIC"
+              case (77, 38) => "BIGNUMERIC"
+              case _        =>
+                throw new IllegalStateException(
+                  s"Unsupported decimal precision and scale: ($precision, $scale)"
+                )
+            }
+          case t =>
+            throw new IllegalStateException(s"Unsupported logical type: $t")
         }
       case Type.INT =>
         schema.getLogicalType match {
@@ -91,16 +99,13 @@ object StorageUtil {
         }
       case Type.STRING =>
         // FIXME: schema.getLogicalType == null in this case, BigQuery service side bug?
-        if (schema.getProp("logicalType") == "datetime") {
-          "DATETIME"
-        } else {
-          schema.getLogicalType match {
-            case null                          => "STRING"
-            case t if t.getName == "datetime"  => "DATETIME"
-            case t if t.getName == "geography" => "GEOGRAPHY"
-            case t =>
-              throw new IllegalStateException(s"Unsupported logical type: $t")
-          }
+        val logicalType = schema.getProp("logicalType")
+        val sqlType = schema.getProp("sqlType")
+        (logicalType, sqlType) match {
+          case ("datetime", _)  => "DATETIME"
+          case (_, "GEOGRAPHY") => "GEOGRAPHY"
+          case (_, "JSON")      => "JSON"
+          case _                => "STRING"
         }
       case Type.RECORD =>
         tableField.setFields(getFieldSchemas(schema).asJava)

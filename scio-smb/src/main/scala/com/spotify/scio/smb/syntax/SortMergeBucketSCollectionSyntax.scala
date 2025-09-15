@@ -18,10 +18,13 @@
 package com.spotify.scio.smb.syntax
 
 import com.spotify.scio.annotations.experimental
-import com.spotify.scio.io.{ClosedTap, EmptyTap}
+import com.spotify.scio.coders.Coder
+import com.spotify.scio.io.{ClosedTap, TapOf}
+import com.spotify.scio.smb.SmbIO
+import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.values._
 import org.apache.beam.sdk.coders.KvCoder
-import org.apache.beam.sdk.extensions.smb.SortedBucketIO
+import org.apache.beam.sdk.extensions.smb.{SortedBucketIO, SortedBucketIOUtil}
 import org.apache.beam.sdk.values.KV
 
 trait SortMergeBucketSCollectionSyntax {
@@ -37,48 +40,65 @@ trait SortMergeBucketSCollectionSyntax {
 final class SortedBucketSCollection[T](private val self: SCollection[T]) {
 
   /**
-   * Save an `SCollection[T]` to a filesystem, where each file represents a bucket
-   * whose records are lexicographically sorted by some key specified in the
+   * Save an `SCollection[T]` to a filesystem, where each file represents a bucket whose records are
+   * lexicographically sorted by some key specified in the
    * [[org.apache.beam.sdk.extensions.smb.BucketMetadata]] corresponding to the provided
    * [[SortedBucketSink]] transform.
    *
-   * @param write the [[PTransform]] that applies a [[SortedBucketSink]] transform to the input
-   *              data. It contains information about key function, bucket and shard size, etc.
+   * @param write
+   *   the [[PTransform]] that applies a [[SortedBucketSink]] transform to the input data. It
+   *   contains information about key function, bucket and shard size, etc.
    */
   @experimental
-  def saveAsSortedBucket(write: SortedBucketIO.Write[_, T]): ClosedTap[Nothing] = {
-    self.applyInternal(write)
+  def saveAsSortedBucket(
+    write: SortedBucketIO.Write[_, _, T]
+  ): ClosedTap[T] = {
+    import self.coder
 
-    // @Todo: Implement taps for metadata/bucket elements
-    ClosedTap[Nothing](EmptyTap)
+    if (self.context.isTest) {
+      TestDataManager.getOutput(self.context.testId.get)(SortedBucketIOUtil.testId(write))(self)
+      ClosedTap(TapOf[T].saveForTest(self))
+    } else {
+      val writeResult = self.applyInternal(write)
+
+      ClosedTap(SmbIO.tap(write.getFileOperations, writeResult).apply(self.context))
+    }
   }
 }
 
 final class SortedBucketPairSCollection[K, V](private val self: SCollection[KV[K, V]]) {
 
   /**
-   * Save an `SCollection[(K, V)]` to a filesystem, where each file represents a bucket
-   * whose records are lexicographically sorted by some key specified in the
+   * Save an `SCollection[(K, V)]` to a filesystem, where each file represents a bucket whose
+   * records are lexicographically sorted by some key specified in the
    * [[org.apache.beam.sdk.extensions.smb.BucketMetadata]] corresponding to the provided
    * [[SortedBucketSink]] transform and to the key K of each KV pair in this `SCollection`.
    *
-   * @param write the [[PTransform]] that applies a [[SortedBucketSink]] transform to the input
-   *              data. It contains information about key function, bucket and shard size, etc.
-   * @param verifyKeyExtraction if set, the SMB Sink will add two additional nodes to the job
-   *                            graph to sample this SCollection and verify that each key K
-   *                            in the collection matches the result of the given
-   *                            [[org.apache.beam.sdk.extensions.smb.BucketMetadata]]'s
-   *                            `extractKey` function.
+   * @param write
+   *   the [[PTransform]] that applies a [[SortedBucketSink]] transform to the input data. It
+   *   contains information about key function, bucket and shard size, etc.
+   * @param verifyKeyExtraction
+   *   if set, the SMB Sink will add two additional nodes to the job graph to sample this
+   *   SCollection and verify that each key K in the collection matches the result of the given
+   *   [[org.apache.beam.sdk.extensions.smb.BucketMetadata]] 's `extractKey` function.
    */
   @experimental
   def saveAsPreKeyedSortedBucket(
-    write: SortedBucketIO.Write[K, V],
+    write: SortedBucketIO.Write[K, Void, V],
     verifyKeyExtraction: Boolean = true
-  ): ClosedTap[Nothing] = {
-    val vCoder = self.internal.getCoder.asInstanceOf[KvCoder[K, V]].getValueCoder
-    self.applyInternal(write.onKeyedCollection(vCoder, verifyKeyExtraction))
+  ): ClosedTap[V] = {
+    val beamValueCoder = self.internal.getCoder.asInstanceOf[KvCoder[K, V]].getValueCoder
+    implicit val valueCoder: Coder[V] = Coder.beam(beamValueCoder)
 
-    // @Todo: Implement taps for metadata/bucket elements
-    ClosedTap[Nothing](EmptyTap)
+    if (self.context.isTest) {
+      val data = self.map(_.getValue)
+      TestDataManager.getOutput(self.context.testId.get)(SortedBucketIOUtil.testId(write))(data)
+      ClosedTap(TapOf[V].saveForTest(data))
+    } else {
+      val writeResult =
+        self.applyInternal(write.onKeyedCollection(beamValueCoder, verifyKeyExtraction))
+
+      ClosedTap(SmbIO.tap(write.getFileOperations, writeResult).apply(self.context))
+    }
   }
 }

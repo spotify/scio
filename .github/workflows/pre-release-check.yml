@@ -1,0 +1,28 @@
+name: Pre Release Check
+
+on:
+  workflow_dispatch # Manually triggered
+
+jobs:
+  test-dataflow:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          export_environment_variables: true
+          create_credentials_file: true
+      - name: cache SBT
+        uses: coursier/cache-action@v6
+      - name: Java setup
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 11
+      - name: set JVM opts
+        run: scripts/gha_setup.sh
+        env:
+          BEAM_RUNNERS: DataflowRunner
+      - name: Run Dataflow jobs
+        run: sbt "scio-examples/Test/runMain com.spotify.scio.examples.RunPreReleaseIT --runId=${{ github.run_id }}"
