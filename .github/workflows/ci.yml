@@ -87,7 +87,7 @@ jobs:
 
       - name: gcloud auth
         if: (github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork)
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
           export_environment_variables: true
@@ -433,7 +433,7 @@ jobs:
 
       - name: gcloud auth
         if: (github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork)
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
           export_environment_variables: true
@@ -481,7 +481,7 @@ jobs:
 
       - name: gcloud auth
         if: (github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork)
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
           export_environment_variables: true
