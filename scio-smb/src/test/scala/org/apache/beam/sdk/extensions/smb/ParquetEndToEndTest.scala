@@ -22,6 +22,7 @@ import java.util.UUID
 import com.spotify.scio._
 import com.spotify.scio.avro._
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.parquet._
 import com.spotify.scio.smb._
 import com.spotify.scio.testing._
 import org.apache.avro.{Schema, SchemaBuilder}
@@ -173,6 +174,49 @@ class ParquetEndToEndTest extends PipelineSpec {
     }
     implicit val c: Coder[(String, (GenericRecord, GenericRecord))] = actual.coder
     actual should containInAnyOrder(expected)
+    sc2.run()
+
+    eventsDir.delete()
+    usersDir.delete()
+  }
+
+  it should "support cogrouping typed Parquet" in {
+    val eventsDir = tmpDir
+    val usersDir = tmpDir
+    val sc1 = ScioContext()
+    sc1
+      .parallelize(events)
+      .saveAsSortedBucket(
+        ParquetTypeSortedBucketIO
+          .write[String, Event]("user")
+          .to(eventsDir.toString)
+          .withNumBuckets(1)
+      )
+    sc1
+      .parallelize(users)
+      .saveAsSortedBucket(
+        ParquetTypeSortedBucketIO
+          .write[String, User]("name")
+          .to(usersDir.toString)
+          .withNumBuckets(1)
+      )
+    sc1.run()
+
+    val sc2 = ScioContext()
+    val actual = sc2
+      .sortMergeCoGroup(
+        classOf[String],
+        ParquetTypeSortedBucketIO
+          .read[Event](new TupleTag[Event]("event"))
+          .from(eventsDir.toString)
+          .withConfiguration(ParquetConfiguration.of("foo" -> "Bar")),
+        ParquetTypeSortedBucketIO
+          .read[User](new TupleTag[User]("user"))
+          .from(usersDir.toString)
+      )
+
+    actual should haveSize(15) // todo replace with actual expected value
+
     sc2.run()
 
     eventsDir.delete()
