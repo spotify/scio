@@ -24,6 +24,7 @@ import org.joda.time.Instant
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import java.lang
 import scala.jdk.CollectionConverters._
 
 class BatchDoFnTest extends AnyFlatSpec with Matchers {
@@ -90,16 +91,36 @@ class BatchDoFnTest extends AnyFlatSpec with Matchers {
     val builder = Map.newBuilder[BoundedWindow, Iterable[Int]]
     val finishContext = new batchFn.FinishBundleContext {
       override def getPipelineOptions: PipelineOptions = ???
+
       override def output(
         output: java.lang.Iterable[Int],
         timestamp: Instant,
         window: BoundedWindow
       ): Unit = builder += (window -> output.asScala)
+
+      override def output(
+        t: java.lang.Iterable[Int],
+        timestamp: Instant,
+        window: BoundedWindow,
+        currentRecordId: String,
+        currentRecordOffset: lang.Long
+      ): Unit =
+        output(t, timestamp, window)
+
       override def output[T](
         tag: TupleTag[T],
-        output: T,
+        t: T,
         timestamp: Instant,
         window: BoundedWindow
+      ): Unit = ???
+
+      override def output[T](
+        tag: TupleTag[T],
+        t: T,
+        timestamp: Instant,
+        window: BoundedWindow,
+        currentRecordId: String,
+        currentRecordOffset: lang.Long
       ): Unit = ???
     }
 
