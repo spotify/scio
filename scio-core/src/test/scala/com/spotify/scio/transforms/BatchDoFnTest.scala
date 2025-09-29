@@ -96,7 +96,7 @@ class BatchDoFnTest extends AnyFlatSpec with Matchers {
         output: java.lang.Iterable[Int],
         timestamp: Instant,
         window: BoundedWindow
-      ): Unit = window -> output.asScala
+      ): Unit = builder += (window -> output.asScala)
 
       override def output(
         t: java.lang.Iterable[Int],
@@ -107,16 +107,16 @@ class BatchDoFnTest extends AnyFlatSpec with Matchers {
       ): Unit =
         output(t, timestamp, window)
 
-      override def output[T <: AnyRef](
+      override def output[T](
         tag: TupleTag[T],
-        output: T,
+        t: T,
         timestamp: Instant,
         window: BoundedWindow
       ): Unit = ???
 
-      override def output[T <: AnyRef](
+      override def output[T](
         tag: TupleTag[T],
-        output: T,
+        t: T,
         timestamp: Instant,
         window: BoundedWindow,
         currentRecordId: String,

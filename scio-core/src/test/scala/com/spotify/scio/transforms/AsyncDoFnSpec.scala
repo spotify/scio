@@ -199,14 +199,14 @@ abstract class AsyncDoFnTester[P[_], F[_]] extends BaseDoFnTester {
       currentRecordOffset: lang.Long
     ): Unit = output(s, timestamp, window)
 
-    override def output[T <: AnyRef](
+    override def output[T](
       tag: TupleTag[T],
       output: T,
       timestamp: Instant,
       window: BoundedWindow
     ): Unit = ???
 
-    override def output[T <: AnyRef](
+    override def output[T](
       tag: TupleTag[T],
       output: T,
       timestamp: Instant,
