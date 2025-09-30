@@ -53,7 +53,7 @@ val httpCoreVersion = "4.4.14"
 val jacksonVersion = "2.15.4"
 val jodaTimeVersion = "2.10.14"
 val nettyVersion = "4.1.118.Final"
-val protobufVersion = "4.29.4"
+val protobufVersion = "4.32.1"
 val slf4jVersion = "1.7.30"
 val zstdJniVersion = "1.5.6-3"
 // dependent versions
