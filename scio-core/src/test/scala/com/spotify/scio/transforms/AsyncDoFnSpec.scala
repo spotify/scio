@@ -29,7 +29,7 @@ import org.scalacheck.Prop.propBoolean
 import org.scalacheck._
 import org.scalacheck.commands.Commands
 
-import java.util
+import java.{lang, util}
 import scala.collection.mutable.{Buffer => MBuffer}
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
@@ -188,14 +188,32 @@ abstract class AsyncDoFnTester[P[_], F[_]] extends BaseDoFnTester {
 
   private val finishBundleContext = new fn.FinishBundleContext {
     override def getPipelineOptions: PipelineOptions = ???
+    override def output(output: String, timestamp: Instant, window: BoundedWindow): Unit =
+      outputBuffer.append(output)
+
+    override def output(
+      s: String,
+      timestamp: Instant,
+      window: BoundedWindow,
+      currentRecordId: String,
+      currentRecordOffset: lang.Long
+    ): Unit = output(s, timestamp, window)
+
     override def output[T](
       tag: TupleTag[T],
       output: T,
       timestamp: Instant,
       window: BoundedWindow
     ): Unit = ???
-    override def output(output: String, timestamp: Instant, window: BoundedWindow): Unit =
-      outputBuffer.append(output)
+
+    override def output[T](
+      tag: TupleTag[T],
+      output: T,
+      timestamp: Instant,
+      window: BoundedWindow,
+      currentRecordId: String,
+      currentRecordOffset: lang.Long
+    ): Unit = ???
   }
 
   // make a new request

@@ -7,7 +7,7 @@ jobs:
   test-dataflow:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
@@ -16,7 +16,7 @@ jobs:
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java setup
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 11

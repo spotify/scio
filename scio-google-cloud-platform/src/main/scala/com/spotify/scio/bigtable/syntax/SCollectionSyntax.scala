@@ -34,11 +34,32 @@ final class SCollectionMutationOps[T <: Mutation](
 
   /** Save this SCollection as a Bigtable table. Note that elements must be of type `Mutation`. */
   def saveAsBigtable(projectId: String, instanceId: String, tableId: String): ClosedTap[Nothing] =
-    self.write(BigtableWrite[T](projectId, instanceId, tableId))(BigtableWrite.Default)
+    self.write(BigtableWrite[T](projectId, instanceId, tableId))(BigtableWrite.Default())
+
+  /** Save this SCollection as a Bigtable table. Note that elements must be of type `Mutation`. */
+  def saveAsBigtable(
+    projectId: String,
+    instanceId: String,
+    tableId: String,
+    flowControlEnabled: Boolean
+  ): ClosedTap[Nothing] =
+    self.write(BigtableWrite[T](projectId, instanceId, tableId))(
+      BigtableWrite.Default(flowControlEnabled)
+    )
 
   /** Save this SCollection as a Bigtable table. Note that elements must be of type `Mutation`. */
   def saveAsBigtable(bigtableOptions: BigtableOptions, tableId: String): ClosedTap[Nothing] =
-    self.write(BigtableWrite[T](bigtableOptions, tableId))(BigtableWrite.Default)
+    self.write(BigtableWrite[T](bigtableOptions, tableId))(BigtableWrite.Default())
+
+  /** Save this SCollection as a Bigtable table. Note that elements must be of type `Mutation`. */
+  def saveAsBigtable(
+    bigtableOptions: BigtableOptions,
+    tableId: String,
+    flowControlEnabled: Boolean
+  ): ClosedTap[Nothing] =
+    self.write(BigtableWrite[T](bigtableOptions, tableId))(
+      BigtableWrite.Default(flowControlEnabled)
+    )
 
   /**
    * Save this SCollection as a Bigtable table. This version supports batching. Note that elements
