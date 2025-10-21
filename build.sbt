@@ -53,7 +53,7 @@ val httpCoreVersion = "4.4.14"
 val jacksonVersion = "2.15.4"
 val jodaTimeVersion = "2.10.14"
 val nettyVersion = "4.1.118.Final"
-val protobufVersion = "4.32.1"
+val protobufVersion = "4.33.0"
 val slf4jVersion = "1.7.30"
 val zstdJniVersion = "1.5.6-3"
 // dependent versions
@@ -116,6 +116,7 @@ val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.2.19"
 val shapelessVersion = "2.3.13"
 val sparkeyVersion = "3.2.5"
+val tensorFlowVersion = "0.4.2"
 val tensorFlowMetadataVersion = "1.16.1"
 val testContainersVersion = "0.43.0"
 val voyagerVersion = "2.1.0"
@@ -1019,7 +1020,8 @@ lazy val `scio-test-parquet` = project
       "org.apache.parquet" % "parquet-avro" % parquetVersion,
       "org.apache.parquet" % "parquet-column" % parquetVersion,
       "org.apache.parquet" % "parquet-common" % parquetVersion,
-      "org.apache.parquet" % "parquet-hadoop" % parquetVersion
+      "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
+      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided
     )
   )
 
@@ -1393,6 +1395,7 @@ lazy val `scio-parquet` = project
       "org.slf4j" % "log4j-over-slf4j" % slf4jVersion, // log4j is excluded from hadoop
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // provided
+      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided,
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Provided,
       // runtime
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion % Runtime excludeAll (Exclude.metricsCore),
@@ -1424,7 +1427,6 @@ lazy val `scio-snowflake` = project
 val tensorFlowMetadataSourcesDir =
   settingKey[File]("Directory containing TensorFlow metadata proto files")
 val tensorFlowMetadata = taskKey[Seq[File]]("Retrieve TensorFlow metadata proto files")
-val tensorflowPackage = taskKey[File]("Produce an artifact containing raw Tensorflow proto files")
 
 lazy val `scio-tensorflow` = project
   .in(file("scio-tensorflow"))
@@ -1444,6 +1446,7 @@ lazy val `scio-tensorflow` = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
+      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion,
       // test
       "com.spotify" %% "featran-core" % featranVersion % Test,
       "com.spotify" %% "featran-scio" % featranVersion % Test,
@@ -1481,22 +1484,7 @@ lazy val `scio-tensorflow` = project
       val metadataDep = ProtocPlugin.UnpackedDependency(protoFiles, Seq.empty)
       val deps = (Compile / PB.unpackDependencies).value
       new ProtocPlugin.UnpackedDependencies(deps.mappedFiles ++ Map(root -> metadataDep))
-    },
-    // Package TF proto files as standalone proto artifact
-    inConfig(Compile) {
-      Defaults.packageTaskSettings(
-        tensorflowPackage,
-        Def.task {
-          (
-            ((Compile / tensorFlowMetadata).value ** "*.proto").allPaths.get
-              .map(file => (file, (Compile / tensorFlowMetadataSourcesDir).value)) ++
-              (sourceDirectory.value / "protobuf" ** "*.proto").allPaths.get
-                .map(file => (file, (sourceDirectory.value / "protobuf")))
-          ).map { case (file, relativeDir) => (file, file.relativeTo(relativeDir).get.getPath) }
-        }
-      ) :+ (tensorflowPackage / artifactClassifier := Some("proto"))
-    },
-    addArtifact(Artifact("scio-tensorflow", "proto"), Compile / tensorflowPackage)
+    }
   )
 
 lazy val `scio-examples` = project
@@ -1595,6 +1583,7 @@ lazy val `scio-examples` = project
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
       "org.neo4j.driver" % "neo4j-java-driver" % neo4jDriverVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion,
       "redis.clients" % "jedis" % jedisVersion,
       // runtime
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
@@ -1825,6 +1814,7 @@ lazy val `scio-smb` = project
       "org.apache.parquet" % "parquet-column" % parquetVersion % Provided, // scio-parquet
       "org.apache.parquet" % "parquet-common" % parquetVersion % Provided, // scio-parquet
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion % Provided, // scio-parquet
+      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided, // scio-tensorflow
       // test
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % Test classifier "tests",
       "org.hamcrest" % "hamcrest" % hamcrestVersion % Test,
