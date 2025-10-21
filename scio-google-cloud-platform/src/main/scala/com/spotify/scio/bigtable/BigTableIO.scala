@@ -152,12 +152,13 @@ final case class BigtableTypedIO[K: Coder, T: BigtableType: Coder](
     params: WriteP
   ): Tap[Nothing] = {
     val bigtableType: BigtableType[T] = implicitly
-    val btParams = params.numOfShards match {
-      case None            => BigtableWrite.Default
-      case Some(numShards) =>
+    val btParams = params match {
+      case d: BigtableTypedIO.Default[T] =>
+        BigtableWrite.Default(d.flowControlEnabled)
+      case b: BigtableTypedIO.Bulk[T] =>
         BigtableWrite.Bulk(
-          numShards,
-          Option(params.flushInterval).getOrElse(BigtableWrite.Bulk.DefaultFlushInterval)
+          b.numOfShards,
+          Option(b.flushInterval).getOrElse(BigtableWrite.Bulk.DefaultFlushInterval)
         )
     }
     val cf = params.columnFamily
@@ -194,19 +195,32 @@ object BigtableTypedIO {
     maxBufferElementCount: Option[Int] = ReadParam.DefaultMaxBufferElementCount
   )
 
+  sealed trait WriteParam[K] {
+    val columnFamily: String
+    val keyFn: K => ByteString
+    val timestamp: Long
+  }
   object WriteParam {
     val DefaultTimestamp: Long = 0L
     val DefaultNumOfShards: Option[Int] = None
     val DefaultFlushInterval: Duration = null
+    val DefaultFlowControlEnabled = false
   }
 
-  final case class WriteParam[K] private (
+  final case class Default[K] private (
     columnFamily: String,
     keyFn: K => ByteString,
     timestamp: Long = WriteParam.DefaultTimestamp,
-    numOfShards: Option[Int] = WriteParam.DefaultNumOfShards,
-    flushInterval: Duration = WriteParam.DefaultFlushInterval
-  )
+    flowControlEnabled: Boolean = WriteParam.DefaultFlowControlEnabled
+  ) extends WriteParam[K]
+
+  final case class Bulk[K] private (
+    columnFamily: String,
+    keyFn: K => ByteString,
+    timestamp: Long,
+    numOfShards: Int,
+    flushInterval: Duration
+  ) extends WriteParam[K]
 }
 
 final case class BigtableWrite[T <: Mutation](bigtableOptions: BigtableOptions, tableId: String)
