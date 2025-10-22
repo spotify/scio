@@ -53,7 +53,7 @@ val httpCoreVersion = "4.4.14"
 val jacksonVersion = "2.15.4"
 val jodaTimeVersion = "2.10.14"
 val nettyVersion = "4.1.118.Final"
-val protobufVersion = "3.25.5" // stuck on Protobuf 3: https://github.com/spotify/scio/issues/5617
+val protobufVersion = "4.33.0"
 val slf4jVersion = "1.7.30"
 val zstdJniVersion = "1.5.6-3"
 // dependent versions
