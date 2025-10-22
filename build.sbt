@@ -1214,7 +1214,6 @@ lazy val `scio-parquet` = project
       "org.slf4j" % "log4j-over-slf4j" % slf4jVersion, // log4j is excluded from hadoop
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // provided
-      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided,
       "org.tensorflow" % "tensorflow-core-native" % tensorFlowVersion % Provided,
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Provided,
       // runtime
