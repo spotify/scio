@@ -153,9 +153,9 @@ final case class BigtableTypedIO[K: Coder, T: BigtableType: Coder](
   ): Tap[Nothing] = {
     val bigtableType: BigtableType[T] = implicitly
     val btParams = params match {
-      case d: BigtableTypedIO.Default[T] =>
+      case d: BigtableTypedIO.Default[_] =>
         BigtableWrite.Default(d.flowControlEnabled)
-      case b: BigtableTypedIO.Bulk[T] =>
+      case b: BigtableTypedIO.Bulk[_] =>
         BigtableWrite.Bulk(
           b.numOfShards,
           Option(b.flushInterval).getOrElse(BigtableWrite.Bulk.DefaultFlushInterval)
