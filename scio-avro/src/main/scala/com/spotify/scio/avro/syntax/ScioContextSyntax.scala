@@ -24,6 +24,8 @@ import com.spotify.scio.avro._
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values._
+import magnolify.protobuf.ProtobufType
+import magnolify.avro.{AvroType => AvroMagnolifyType}
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
@@ -168,6 +170,16 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(AvroTypedIO[T](path))(AvroTypedIO.ReadParam(suffix))
 
   /**
+   * Read avro data from `path` as `GenericRecord` and convert to `T` via the implicitly-available
+   * `magnolify.avro.AvroType[T]`
+   */
+  def typedAvroFileMagnolify[T: AvroMagnolifyType: Coder](
+    path: String,
+    suffix: String = AvroMagnolifyTypedIO.ReadParam.DefaultSuffix
+  ): SCollection[T] =
+    self.read(AvroMagnolifyTypedIO[T](path))(AvroMagnolifyTypedIO.ReadParam(suffix))
+
+  /**
    * Get an SCollection for a Protobuf file.
    *
    * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage Avro's
@@ -175,9 +187,19 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   def protobufFile[T <: Message: ClassTag](
     path: String,
-    suffix: String = ProtobufIO.ReadParam.DefaultSuffix
+    suffix: String = ProtobufObjectFileIO.ReadParam.DefaultSuffix
   ): SCollection[T] =
-    self.read(ProtobufIO[T](path))(ProtobufIO.ReadParam(suffix))
+    self.read(ProtobufObjectFileIO[T](path))(ProtobufObjectFileIO.ReadParam(suffix))
+
+  /**
+   * Read back protobuf messages serialized to `Array[Byte]` and stored in Avro files then map them
+   * automatically to type `T` via the implicit [[magnolify.protobuf.ProtobufType]]
+   */
+  def typedProtobufFile[T: Coder, U <: Message: ClassTag](
+    path: String,
+    suffix: String = ProtobufObjectFileIO.ReadParam.DefaultSuffix
+  )(implicit pt: ProtobufType[T, U]): SCollection[T] =
+    self.read(ProtobufTypedObjectFileIO[T, U](path))(ProtobufObjectFileIO.ReadParam(suffix))
 }
 
 /** Enhanced with Avro methods. */

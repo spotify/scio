@@ -87,7 +87,6 @@ private[scio] class TestOutput(val m: Map[String, SCollection[_] => Any]) {
     java.util.concurrent.ConcurrentHashMap.newKeySet[String]().asScala
   def apply[T](io: ScioIO[T]): SCollection[T] => Any = apply(io.testId)
   def apply[T](key: String): SCollection[T] => Any = {
-    // TODO: support Materialize outputs, maybe Materialized[T]?
     require(
       m.contains(key),
       s"Missing test output: $key, available: ${m.keys.mkString("[", ", ", "]")}"

@@ -38,6 +38,8 @@ object BigQueryIOTest {
   @BigQueryType.toTable
   case class BQRecord(i: Int, s: String, r: List[String])
 
+  case class MagnolifyRecord(i: Int, s: String)
+
   // BQ Write transform display id data for tableDescription
   private val TableDescriptionId = DisplayData.Identifier.of(
     DisplayData.Path.root(),
@@ -191,6 +193,58 @@ final class BigQueryIOTest extends ScioIOSpec {
     testJobTest(xs)(TableRowJsonIO(_))(_.tableRowJsonFile(_))(_.saveAsTableRowJsonFile(_))
   }
 
+  "MagnolifyBigQuerySelect" should "work" in {
+    // unsafe implicits must be explicitly imported for TableRowType[MagnolifyRecord] to be derived
+    import magnolify.bigquery.unsafe._
+    val xs = (1 to 100).map(x => MagnolifyRecord(x, x.toString))
+    testJobTest(xs, in = "select * from x", out = "project:dataset.out_table") {
+      BigQueryIO(_)
+    } { (coll, s) =>
+      coll.typedBigQuerySelect[MagnolifyRecord](Query(s))
+    } { (coll, s) =>
+      coll.saveAsBigQueryTable(Table.Spec(s))
+    }
+  }
+
+  "MagnolifyBigQueryTable" should "work" in {
+    // unsafe implicits must be explicitly imported for TableRowType[MagnolifyRecord] to be derived
+    import magnolify.bigquery.unsafe._
+    val xs = (1 to 100).map(x => MagnolifyRecord(x, x.toString))
+    testJobTest(xs, in = "project:dataset.in_table", out = "project:dataset.out_table") {
+      BigQueryIO(_)
+    } { (coll, s) =>
+      coll.typedBigQueryTable[MagnolifyRecord](Table.Spec(s))
+    } { (coll, s) =>
+      coll.saveAsBigQueryTable(Table.Spec(s))
+    }
+  }
+
+  "MagnolifyBigQueryStorage" should "work with Table" in {
+    // unsafe implicits must be explicitly imported for TableRowType[MagnolifyRecord] to be derived
+    import magnolify.bigquery.unsafe._
+    val xs = (1 to 100).map(x => MagnolifyRecord(x, x.toString))
+    testJobTest(xs, in = "project:dataset.in_table", out = "project:dataset.out_table")(
+      BigQueryIO(_, List(), None),
+      Some(BigQueryIO(_))
+    ) { (coll, s) =>
+      coll.typedBigQueryStorageMagnolify[MagnolifyRecord](Table.Spec(s))
+    } { (coll, s) =>
+      coll.saveAsBigQueryTable(Table.Spec(s))
+    }
+  }
+
+  it should "work with Query" in {
+    // unsafe implicits must be explicitly imported for TableRowType[MagnolifyRecord] to be derived
+    import magnolify.bigquery.unsafe._
+    val xs = (1 to 100).map(x => MagnolifyRecord(x, x.toString))
+    testJobTest(xs, in = "select x, y from z", out = "project:dataset.out_table") {
+      BigQueryIO(_)
+    } { (coll, s) =>
+      coll.typedBigQueryStorageMagnolify[MagnolifyRecord](Query(s))
+    } { (coll, s) =>
+      coll.saveAsBigQueryTable(Table.Spec(s))
+    }
+  }
 }
 
 object JobWithDuplicateInput {

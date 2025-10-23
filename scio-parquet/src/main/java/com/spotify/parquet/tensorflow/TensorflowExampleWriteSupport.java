@@ -33,7 +33,7 @@ import org.apache.parquet.schema.Type;
 import org.tensorflow.metadata.v0.Feature;
 import org.tensorflow.metadata.v0.FeatureType;
 import org.tensorflow.metadata.v0.Schema;
-import org.tensorflow.proto.example.Example;
+import org.tensorflow.proto.Example;
 
 public class TensorflowExampleWriteSupport extends WriteSupport<Example> {
 
@@ -98,17 +98,16 @@ public class TensorflowExampleWriteSupport extends WriteSupport<Example> {
   private void writeRecordFields(GroupType schema, Schema tfSchema, Example example) {
     List<Type> fields = schema.getFields();
     List<Feature> mdFeatures = tfSchema.getFeatureList();
-    Map<String, org.tensorflow.proto.example.Feature> features =
-        example.getFeatures().getFeatureMap();
+    Map<String, org.tensorflow.proto.Feature> features = example.getFeatures().getFeatureMap();
 
     for (int index = 0; index < mdFeatures.size(); index++) {
       Feature mdFeature = mdFeatures.get(index);
       FeatureType type = mdFeature.getType();
 
       // if feature is missing in the example, return an empty tensor
-      org.tensorflow.proto.example.Feature value =
+      org.tensorflow.proto.Feature value =
           features.getOrDefault(
-              mdFeature.getName(), org.tensorflow.proto.example.Feature.getDefaultInstance());
+              mdFeature.getName(), org.tensorflow.proto.Feature.getDefaultInstance());
       Type fieldType = fields.get(index);
       String fieldName = fieldType.getName();
       switch (type) {
