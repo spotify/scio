@@ -1733,6 +1733,9 @@ lazy val `scio-repl` = project
             ) =>
           // merge conflicting netty config files
           MergeStrategy.filterDistinctLines
+        case PathList("META-INF", "license", "LICENSE.boringssl.txt") =>
+          // drop conflicting netty-tcnative-boringssl license
+          MergeStrategy.discard
         case s => old(s)
       }
     }
