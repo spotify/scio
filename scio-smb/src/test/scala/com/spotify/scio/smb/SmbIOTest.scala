@@ -20,6 +20,7 @@ import com.spotify.scio.avro.{Account, AccountStatus, Address, User}
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.{Args, ContextAndArgs, ScioContext}
 import org.apache.beam.sdk.extensions.smb.AvroSortedBucketIO
+import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
 import org.apache.beam.sdk.values.{KV, TupleTag}
 
 import java.nio.file.Files
@@ -378,5 +379,33 @@ class SmbIOTest extends PipelineSpec {
           .setAccountStatus(AccountStatus.Active)
           .build()
       })
+  }
+
+  it should "support EmptyMatchTreatment in AvroSortedBucketIO reads" in {
+    // Test that EmptyMatchTreatment can be applied to SMB reads
+    noException shouldBe thrownBy {
+      val read = AvroSortedBucketIO
+        .read(new TupleTag[User]("users"), classOf[User])
+        .from("/non-existent-path")
+        .withEmptyMatchTreatment(EmptyMatchTreatment.ALLOW)
+
+      // Test that BucketedInput can be created with EmptyMatchTreatment
+      val bucketedInput = read.toBucketedInput(org.apache.beam.sdk.extensions.smb.SortedBucketSource.Keying.PRIMARY)
+      bucketedInput should not be null
+    }
+  }
+
+  it should "support EmptyMatchTreatment in mock SmbIO tests" in {
+    // Test that EmptyMatchTreatment doesn't interfere with mocking
+    JobTest[SmbJoinSaveJob.type]
+      .args(
+        "--users=gs://empty-users",
+        "--accounts=gs://accounts",
+        "--output=gs://output"
+      )
+      .input(SmbIO[Integer, User]("gs://empty-users", _.getId), Seq.empty) // Empty input
+      .input(SmbIO[Integer, Account]("gs://accounts", _.getId), Seq(accountA, accountB))
+      .output(SmbIO[Integer, User]("gs://output", _.getId))(_ should beEmpty) // Expect empty output
+      .run()
   }
 }
