@@ -302,7 +302,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     }
   }
 
-  private static class BucketSource<FinalKeyT> extends BoundedSource<BucketItem> {
+  static class BucketSource<FinalKeyT> extends BoundedSource<BucketItem> {
     // Dataflow calls split() with a suggested byte size that assumes a higher throughput than
     // SMB joins have. By adjusting this suggestion we can arrive at a more optimal parallelism.
 
