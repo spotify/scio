@@ -75,16 +75,8 @@ private[scio] class SpecificRecordDatumFactory[T <: SpecificRecord](recordType: 
     datumWriter
   }
 
-  // TODO move this to companion object
-  private class ScioSpecificDatumReader extends SpecificDatumReader[T](recordType) {
-    override def findStringClass(schema: Schema): Class[_] = super.findStringClass(schema) match {
-      case cls if cls == classOf[CharSequence] => classOf[String]
-      case cls                                 => cls
-    }
-  }
-
   override def apply(writer: Schema, reader: Schema): DatumReader[T] = {
-    val datumReader = new ScioSpecificDatumReader()
+    val datumReader = SpecificRecordDatumFactory.createDatumReader(recordType)
     // avro 1.8 generated code does not add conversions to the data
     if (runtimeAvroVersion.exists(_.startsWith("1.8."))) {
       addLogicalTypeConversions(datumReader.getData.asInstanceOf[SpecificData], reader)
@@ -100,6 +92,19 @@ private[scio] object SpecificRecordDatumFactory {
 
   @transient private lazy val runtimeAvroVersion: Option[String] =
     Option(classOf[Schema].getPackage.getImplementationVersion)
+
+  // Moved from inner class to make it properly serializable by Beam
+  private class ScioSpecificDatumReader[T <: SpecificRecord](recordType: Class[T])
+      extends SpecificDatumReader[T](recordType) {
+
+    override def findStringClass(schema: Schema): Class[_] = super.findStringClass(schema) match {
+      case cls if cls == classOf[CharSequence] => classOf[String]
+      case cls                                 => cls
+    }
+  }
+
+  def createDatumReader[T <: SpecificRecord](recordType: Class[T]): SpecificDatumReader[T] =
+    new ScioSpecificDatumReader[T](recordType)
 
   private def addLogicalTypeConversions[T <: SpecificRecord](
     data: SpecificData,
