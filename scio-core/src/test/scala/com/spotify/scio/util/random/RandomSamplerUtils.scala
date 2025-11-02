@@ -122,7 +122,7 @@ object RandomSamplerUtils extends Serializable {
   }
 
   // Returns the median KS 'D' statistic between two samples, over (m) sampling trials
-  def medianKSD(data1: => Array[Int], data2: => Array[Int], m: Int = 5): Double = {
+  def medianKSD(data1: => Array[Int], data2: => Array[Int], m: Int = 21): Double = {
     val t = Array
       .fill[Double](m) {
         val (c1, c2) = cumulants(data1.take(sampleSize), data2.take(sampleSize))
