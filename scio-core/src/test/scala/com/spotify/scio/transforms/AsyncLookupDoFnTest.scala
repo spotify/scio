@@ -100,15 +100,16 @@ class AsyncLookupDoFnTest extends PipelineSpec {
       // try to use a single bundle so we can check
       // elements flushed in processElement as well as
       // elements flushed in finishBundle
+      val ts = System.currentTimeMillis()
       val data = sc
         .parallelize(Seq[Seq[Int]](1 to 10))
         .flatten
-        .timestampBy(x => Instant.ofEpochMilli(x.toLong))
+        .timestampBy(x => Instant.ofEpochMilli(ts - x.toLong))
         .parDo(new GuavaLookupDoFn)
         .map(kv => (kv.getKey, kv.getValue))
         .withTimestamp
         .map { case ((k, v), ts) => (k, v.get(), ts.getMillis) }
-      data should containInAnyOrder((1 to 10).map(x => (x, x.toString, x.toLong)))
+      data should containInAnyOrder((1 to 10).map(x => (x, x.toString, ts - x.toLong)))
     }
   }
 

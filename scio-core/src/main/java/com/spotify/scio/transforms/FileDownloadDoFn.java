@@ -29,10 +29,6 @@ import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 import org.apache.beam.sdk.transforms.windowing.PaneInfo;
 import org.apache.beam.sdk.values.ValueInSingleWindow;
-import org.checkerframework.checker.initialization.qual.Initialized;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
-import org.joda.time.Duration;
 import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,13 +72,6 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
     this.batch = new ArrayList<>();
     this.batchSize = batchSize;
     this.keep = keep;
-  }
-
-  // Required to preserve timestamp of original element
-  // Deprecated; see https://github.com/apache/beam/issues/18065
-  @Override
-  public @UnknownKeyFor @NonNull @Initialized Duration getAllowedTimestampSkew() {
-    return Duration.millis(Long.MAX_VALUE);
   }
 
   @StartBundle

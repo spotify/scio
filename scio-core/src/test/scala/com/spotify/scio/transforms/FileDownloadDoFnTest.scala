@@ -46,6 +46,7 @@ class FileDownloadDoFnTest extends PipelineSpec {
   it should "support batch" in {
     val tmpDir = Files.createTempDirectory("filedofn-")
     val files = createFiles(tmpDir, 100)
+    val currentTs = System.currentTimeMillis()
     runWithContext { sc =>
       // try to use a single bundle so we can check
       // elements flushed in processElement as well as
@@ -53,7 +54,7 @@ class FileDownloadDoFnTest extends PipelineSpec {
       val p = sc
         .parallelize(Seq(files.map(_.toUri).zipWithIndex))
         .flatten
-        .timestampBy { case (_, i) => new Instant(i + 1) }
+        .timestampBy { case (_, i) => Instant.ofEpochMilli(currentTs - (i + 1)) }
         .keys
         .flatMapFile(fn, 10, false)
         .withTimestamp
@@ -61,7 +62,7 @@ class FileDownloadDoFnTest extends PipelineSpec {
       val contentAndTimestamp = p.map { case ((i, _), ts) => (i, ts.getMillis) }
       val paths = p.map { case ((_, f), _) => f }.distinct
 
-      val expected = (1L to 100L).map(i => (i.toString, i))
+      val expected = (1L to 100L).map(i => (i.toString, currentTs - i))
       contentAndTimestamp should containInAnyOrder(expected)
       paths should forAll { f: Path => !Files.exists(f) }
     }
