@@ -66,8 +66,8 @@ object SbtSoccoPlugin extends AutoPlugin {
     )
 
   private[this] def projectsWithSocco(
-                                       state: State
-                                     ): Seq[(ProjectRef, Boolean)] = {
+    state: State
+  ): Seq[(ProjectRef, Boolean)] = {
     val extracted = Project.extract(state)
     for {
       p <- extracted.structure.allProjectRefs
@@ -75,24 +75,23 @@ object SbtSoccoPlugin extends AutoPlugin {
     } yield p -> onCompile
   }
 
-  private[this] lazy val enableSoccoCommand = Command.command("enableSocco") {
-    s =>
-      val extracted = Project.extract(s)
-      val settings: Seq[Setting[_]] = for {
-        (p, onCompile) <- projectsWithSocco(s)
-        if !onCompile
-        setting <- soccoSettings(p, onCompile = true)
-      } yield setting
+  private[this] lazy val enableSoccoCommand = Command.command("enableSocco") { s =>
+    val extracted = Project.extract(s)
+    val settings: Seq[Setting[_]] = for {
+      (p, onCompile) <- projectsWithSocco(s)
+      if !onCompile
+      setting <- soccoSettings(p, onCompile = true)
+    } yield setting
 
-      extracted.appendWithoutSession(settings, s)
+    extracted.appendWithoutSession(settings, s)
   }
 
   private[this] case class ExampleSource(
-                                          file: String,
-                                          section: String,
-                                          title: String,
-                                          url: String
-                                        )
+    file: String,
+    section: String,
+    title: String,
+    url: String
+  )
 
   private[this] val read: File => Option[List[String]] =
     file => Try(Source.fromFile(file).getLines.toList).toOption
@@ -112,10 +111,10 @@ object SbtSoccoPlugin extends AutoPlugin {
         .map { case (section, scs) =>
           s"""### $section
              |${scs
-            .map { s =>
-              s"- [${s.file}](${s.file}.html) ([source](${s.url})) - ${s.title}"
-            }
-            .mkString("\n")}""".stripMargin
+              .map { s =>
+                s"- [${s.file}](${s.file}.html) ([source](${s.url})) - ${s.title}"
+              }
+              .mkString("\n")}""".stripMargin
         }
         .mkString("\n")
 
