@@ -2027,21 +2027,21 @@ lazy val site = project
   )
 
 lazy val soccoIndex = taskKey[File]("Generates examples/index.html")
-lazy val soccoSettings = if (sys.env.contains("SOCCO")) {
-  Seq(
-    scalacOptions ++= Seq(
-      "-P:socco:out:scio-examples/target/site",
-      "-P:socco:package_com.spotify.scio:https://spotify.github.io/scio/api"
-    ),
-    autoCompilerPlugins := true,
-    addCompilerPlugin(("io.regadas" %% "socco-ng" % "0.1.14").cross(CrossVersion.full)),
-    // Generate scio-examples/target/site/index.html
-    soccoIndex := SoccoIndex.generate(target.value / "site" / "index.html"),
-    Compile / compile := {
-      val _ = soccoIndex.value
-      (Compile / compile).value
-    }
-  )
-} else {
-  Nil
+lazy val soccoSettings = {
+  if (sys.env.contains("SOCCO")) {
+    Seq(
+      autoCompilerPlugins := true,
+      // Generate scio-examples/target/site/index.html
+      soccoIndex := SoccoIndex.generate(target.value / "site" / "index.html"),
+      soccoPackage := List("com.spotify.scio:https://spotify.github.io/scio/api"),
+      soccoOut := file("scio-examples/target/site"),
+      Compile / compile := {
+        val _ = soccoIndex.value
+        (Compile / compile).value
+      }
+    )
+  } else {
+    Nil
+  }
 }
+
