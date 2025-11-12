@@ -45,7 +45,7 @@ class RandomSamplerTest extends PipelineSpec {
   private def newOutputReceiver[T](buffer: MBuffer[T]) = new OutputReceiver[T] {
     override def output(output: T): Unit = buffer.append(output)
     override def outputWithTimestamp(output: T, timestamp: Instant): Unit = ???
-    override def builder(value: T): OutputBuilder[T] = ???
+    override def builder(value: T): OutputBuilder[T] = this.asInstanceOf[OutputBuilder[T]]
   }
 
   def testSampler(
