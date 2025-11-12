@@ -35,7 +35,7 @@ val beamVersion = "2.68.0"
 // https://github.com/apache/beam/blob/v2.68.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
-val avroVersion = sys.props.getOrElse("avro.version", "1.11.4")
+val avroVersion = sys.props.getOrElse("avro.version", "1.11.5")
 val bigdataossVersion = "2.2.26"
 val bigdataoss3Version = "3.1.3"
 val bigtableClientVersion = "1.28.0"
@@ -1556,7 +1556,7 @@ lazy val `scio-examples` = project
       "com.google.http-client" % "google-http-client" % gcpBom.key.value,
       "com.google.oauth-client" % "google-oauth-client" % gcpBom.key.value,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
-      "com.mysql" % "mysql-connector-j" % "9.4.0",
+      "com.mysql" % "mysql-connector-j" % "9.5.0",
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
       "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
@@ -1587,7 +1587,7 @@ lazy val `scio-examples` = project
       "redis.clients" % "jedis" % jedisVersion,
       // runtime
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
-      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.25.3" % Runtime,
+      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.27.0" % Runtime,
       // test
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
     ),
@@ -1900,7 +1900,7 @@ lazy val integration = project
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // runtime
-      "com.google.cloud.sql" % "cloud-sql-connector-jdbc-sqlserver" % "1.25.3" % Runtime,
+      "com.google.cloud.sql" % "cloud-sql-connector-jdbc-sqlserver" % "1.27.0" % Runtime,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Runtime,
       // test
