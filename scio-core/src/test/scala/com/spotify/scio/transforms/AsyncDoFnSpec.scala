@@ -211,7 +211,8 @@ abstract class AsyncDoFnTester[P[_], F[_]] extends BaseDoFnTester {
       ): Unit =
         outputBuffer.append(output)
 
-      override def builder(value: String): OutputBuilder[String] = ???
+      override def builder(value: String): OutputBuilder[String] =
+        this.asInstanceOf[OutputBuilder[String]]
     }
     val input: Int = nextElement
     val timestamp = DateTime.parse("2022-08-31").toInstant

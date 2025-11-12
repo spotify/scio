@@ -41,7 +41,8 @@ class BatchDoFnTest extends AnyFlatSpec with Matchers {
     def values: List[Iterable[T]] = builder.result().map(_._1)
     def valuesWithTimestamp: List[(Iterable[T], Instant)] = builder.result()
 
-    override def builder(value: lang.Iterable[T]): OutputBuilder[lang.Iterable[T]] = ???
+    override def builder(value: lang.Iterable[T]): OutputBuilder[lang.Iterable[T]] =
+      this.asInstanceOf[OutputBuilder[lang.Iterable[T]]]
   }
 
   def intervalWindow(
