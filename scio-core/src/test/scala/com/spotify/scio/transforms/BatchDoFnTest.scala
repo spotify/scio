@@ -19,7 +19,7 @@ package com.spotify.scio.transforms
 import org.apache.beam.sdk.options.PipelineOptions
 import org.apache.beam.sdk.transforms.DoFn.OutputReceiver
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, GlobalWindow, IntervalWindow}
-import org.apache.beam.sdk.values.TupleTag
+import org.apache.beam.sdk.values.{OutputBuilder, TupleTag}
 import org.joda.time.Instant
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -40,6 +40,8 @@ class BatchDoFnTest extends AnyFlatSpec with Matchers {
 
     def values: List[Iterable[T]] = builder.result().map(_._1)
     def valuesWithTimestamp: List[(Iterable[T], Instant)] = builder.result()
+
+    override def builder(value: lang.Iterable[T]): OutputBuilder[lang.Iterable[T]] = ???
   }
 
   def intervalWindow(
@@ -91,36 +93,16 @@ class BatchDoFnTest extends AnyFlatSpec with Matchers {
     val builder = Map.newBuilder[BoundedWindow, Iterable[Int]]
     val finishContext = new batchFn.FinishBundleContext {
       override def getPipelineOptions: PipelineOptions = ???
-
       override def output(
         output: java.lang.Iterable[Int],
         timestamp: Instant,
         window: BoundedWindow
       ): Unit = builder += (window -> output.asScala)
-
-      override def output(
-        t: java.lang.Iterable[Int],
-        timestamp: Instant,
-        window: BoundedWindow,
-        currentRecordId: String,
-        currentRecordOffset: lang.Long
-      ): Unit =
-        output(t, timestamp, window)
-
       override def output[T](
         tag: TupleTag[T],
-        t: T,
+        output: T,
         timestamp: Instant,
         window: BoundedWindow
-      ): Unit = ???
-
-      override def output[T](
-        tag: TupleTag[T],
-        t: T,
-        timestamp: Instant,
-        window: BoundedWindow,
-        currentRecordId: String,
-        currentRecordOffset: lang.Long
       ): Unit = ???
     }
 
