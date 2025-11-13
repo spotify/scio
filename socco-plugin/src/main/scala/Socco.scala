@@ -28,9 +28,9 @@ class Socco(val global: Global) extends Plugin {
   }
 
   override def init(
-                     options: List[String],
-                     callback: (String) => Unit
-                   ): Boolean = {
+    options: List[String],
+    callback: (String) => Unit
+  ): Boolean = {
     import scala.util.Try
     import scala.io.Source
 
@@ -116,8 +116,8 @@ class Socco(val global: Global) extends Plugin {
       }
 
       def splitInBlocks(
-                         unit: CompilationUnit
-                       ): (Int, Option[String], Seq[(Block, Block)]) = {
+        unit: CompilationUnit
+      ): (Int, Option[String], Seq[(Block, Block)]) = {
         val src = new String(unit.source.content)
         val headerOffset = src.indexOf("\n// Example:") + 1
         val lines = src.substring(headerOffset).split("\n")
@@ -210,9 +210,9 @@ class Socco(val global: Global) extends Plugin {
                 case x if isLiteral(x)                        => NumberLiteral
                 case x if isIdentifier(x)                     => Identifier(None)
                 case ABSTRACT | CASE | CATCH | CLASS | DEF | DO | ELSE | EXTENDS | FINAL | FINALLY |
-                     FOR | IF | IMPLICIT | IMPORT | LAZY | NEW | MACRO | MATCH | OBJECT | PACKAGE |
-                     PRIVATE | PROTECTED | RETURN | SUPER | TRY | VAL | VAR | WHILE | YIELD |
-                     CASECLASS =>
+                    FOR | IF | IMPLICIT | IMPORT | LAZY | NEW | MACRO | MATCH | OBJECT | PACKAGE |
+                    PRIVATE | PROTECTED | RETURN | SUPER | TRY | VAL | VAR | WHILE | YIELD |
+                    CASECLASS =>
                   Keyword
                 case _ => Default
               }
@@ -222,10 +222,10 @@ class Socco(val global: Global) extends Plugin {
       }
 
       def typeTokens(
-                      unit: CompilationUnit,
-                      tokens: Seq[Token],
-                      headerOffset: Int
-                    ): Seq[Token] = {
+        unit: CompilationUnit,
+        tokens: Seq[Token],
+        headerOffset: Int
+      ): Seq[Token] = {
         import collection.mutable._
         val tokenSymbols = HashMap(
           tokens.map(_ -> ListBuffer.empty[Symbol]): _*
@@ -370,7 +370,7 @@ class Socco(val global: Global) extends Plugin {
                   TypeAnnotation(
                     s"$link/$encodedMethodName",
                     s"${m.fullName}${m.info.toString
-                      .replaceAll(s"(=>\\s*)?\\Q$returnType\\E${'$'}", s": $returnType")}"
+                        .replaceAll(s"(=>\\s*)?\\Q$returnType\\E${'$'}", s": $returnType")}"
                   )
                 }
               }
@@ -429,11 +429,11 @@ class Socco(val global: Global) extends Plugin {
       }
 
       def generate(
-                    unit: CompilationUnit,
-                    tokens: Seq[Token],
-                    title: String,
-                    blocks: Seq[(Block, Block)]
-                  ): Unit = {
+        unit: CompilationUnit,
+        tokens: Seq[Token],
+        title: String,
+        blocks: Seq[(Block, Block)]
+      ): Unit = {
         // Format a code block as HTML, by colorizing tokens and linking identifiers
         // to the scalaDoc.
         def formatSourceCode(block: Block, tokens: Seq[Token]): String = {
@@ -456,8 +456,8 @@ class Socco(val global: Global) extends Plugin {
                 s"""<span class="identifier">${escape(token)}</span>"""
               case Identifier(Some(t)) =>
                 s"""<span class="identifier"><a target="doc" href="${t.link}" data-tooltip="<span>${t.display}</span>">${escape(
-                  token
-                )}</a></span>"""
+                    token
+                  )}</a></span>"""
               case _ => escape(token)
             }
 
@@ -468,7 +468,7 @@ class Socco(val global: Global) extends Plugin {
                   if (token.start > i) {
                     text + block.text.substring(i, token.start) + style(token)
                   } else text + style(token)
-                  )
+                )
             }
 
           html + block.text.substring(lastPosition) + "&nbsp;"
@@ -476,9 +476,9 @@ class Socco(val global: Global) extends Plugin {
 
         // Format a comment block by styling it using markdown.
         def formatComments(
-                            block: Block,
-                            packages: Map[String, String]
-                          ): String = {
+          block: Block,
+          packages: Map[String, String]
+        ): String = {
           import laika.api._
           import laika.format.{Markdown, HTML}
           import laika.ast._
@@ -523,17 +523,17 @@ class Socco(val global: Global) extends Plugin {
             <div class="code"></div>
           </section>
           ${blocks.map { case (comment, code) =>
-          s"""
+            s"""
               <section class="${if (comment.text.trim.matches("@\\w+"))
-            comment.text.trim.drop(1)
-          else ""}">
+                comment.text.trim.drop(1)
+              else ""}">
                 <div class="comment ${if (comment.text.trim.isEmpty) "empty"
-          else ""}">${formatComments(comment, packages)}</p></div>
+              else ""}">${formatComments(comment, packages)}</p></div>
                 <div class="code ${if (code.text.trim.isEmpty) "empty"
-          else ""}">${formatSourceCode(code, tokens)}</div>
+              else ""}">${formatSourceCode(code, tokens)}</div>
               </section>
             """
-        }.mkString}
+          }.mkString}
           <section id="footer">
             <div class="comment"></div>
             <div class="code"></div>
