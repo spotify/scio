@@ -399,6 +399,10 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ProblemFilters.exclude[MissingClassProblem](
     "com.spotify.scio.coders.instances.kryo.BigtableRetriesExhaustedExceptionSerializer"
   ),
+  // moved private ScioSpecificDatumReader from inner class to companion object for serialization
+  ProblemFilters.exclude[IncompatibleMethTypeProblem](
+    "com.spotify.scio.avro.SpecificRecordDatumFactory#ScioSpecificDatumReader.this"
+  ),
   // added new Cache.get method
   ProblemFilters.exclude[ReversedMissingMethodProblem](
     "com.spotify.scio.util.Cache.get"
@@ -1796,6 +1800,7 @@ lazy val `scio-smb` = project
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
+      "com.twitter" %% "chill" % chillVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       // #3260 work around for sorter memory limit until we patch upstream
