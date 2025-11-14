@@ -27,7 +27,7 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
 import org.tensorflow.metadata.{v0 => tfmd}
-import org.tensorflow.proto.example.Example
+import org.tensorflow.proto.Example
 
 package object tensorflow {
   implicit def toParquetExampleHelpers(
