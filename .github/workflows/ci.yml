@@ -301,7 +301,7 @@ jobs:
       - name: Submit Dependencies
         uses: scalacenter/sbt-dependency-submission@v2
         with:
-          modules-ignore: scio_2.13 scio_2.12 scio-examples_2.13 scio-examples_2.12 integration_2.13 integration_2.12 scio-jmh_2.13 scio-jmh_2.12
+          modules-ignore: scio_2.13 scio_2.12 scio-examples_2.13 scio-examples_2.12 integration_2.13 integration_2.12 scio-jmh_2.13 scio-jmh_2.12 socco-plugin_2.13 socco-plugin_2.12
           configs-ignore: test scala-tool scala-doc-tool test-internal
 
   validate-steward:

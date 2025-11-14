@@ -1487,6 +1487,20 @@ lazy val `scio-tensorflow` = project
     }
   )
 
+lazy val `socco-plugin` = project
+  .in(file("socco-plugin"))
+  .enablePlugins(NoPublishPlugin)
+  .settings(
+    scalaVersion := scala213,
+    crossScalaVersions := Seq(scala213, scala212),
+    libraryDependencies ++= Seq(
+      "org.scala-lang" % "scala-compiler" % scalaVersion.value % Provided,
+      "org.planet42" %% "laika-core" % "0.19.5"
+    ),
+    assembly / assemblyOption := (assembly / assemblyOption).value.withIncludeScala(false),
+    Compile / packageBin := (assembly / assembly).value
+  )
+
 lazy val `scio-examples` = project
   .in(file("scio-examples"))
   .enablePlugins(NoPublishPlugin)
@@ -1502,7 +1516,8 @@ lazy val `scio-examples` = project
     `scio-tensorflow`,
     `scio-smb`,
     `scio-redis`,
-    `scio-parquet`
+    `scio-parquet`,
+    `socco-plugin`
   )
   .settings(commonSettings)
   .settings(soccoSettings)
@@ -2029,13 +2044,14 @@ lazy val site = project
 lazy val soccoIndex = taskKey[File]("Generates examples/index.html")
 lazy val soccoSettings = if (sys.env.contains("SOCCO")) {
   Seq(
-    scalacOptions ++= Seq(
-      "-P:socco:out:scio-examples/target/site",
-      "-P:socco:package_com.spotify.scio:https://spotify.github.io/scio/api"
-    ),
-    autoCompilerPlugins := true,
-    addCompilerPlugin(("io.regadas" %% "socco-ng" % "0.1.14").cross(CrossVersion.full)),
-    // Generate scio-examples/target/site/index.html
+    scalacOptions ++= {
+      val pluginJar = (`socco-plugin` / Compile / packageBin).value
+      Seq(
+        s"-Xplugin:${pluginJar.getAbsolutePath}",
+        "-P:socco:out:scio-examples/target/site",
+        "-P:socco:package_com.spotify.scio:https://spotify.github.io/scio/api"
+      )
+    },
     soccoIndex := SoccoIndex.generate(target.value / "site" / "index.html"),
     Compile / compile := {
       val _ = soccoIndex.value
