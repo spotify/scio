@@ -276,6 +276,7 @@ public class LeaderBoard extends HourlyTeamScore {
           .apply("ExtractTeamScore", new ExtractAndSumScore("team"));
     }
   }
+
   // [END DocInclude_WindowAndTrigger]
 
   // [START DocInclude_ProcTimeTrigger]
