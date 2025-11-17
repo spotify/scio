@@ -104,14 +104,14 @@ val magnoliaVersion = "1.1.10"
 val magnolifyVersion = "0.7.4"
 val metricsVersion = "4.2.37"
 val munitVersion = "1.2.1"
-val neo4jDriverVersion = "4.4.20"
+val neo4jDriverVersion = "4.4.21"
 val ndArrayVersion = "0.3.3"
 val parquetExtraVersion = "0.4.3"
 val parquetVersion = "1.16.0"
-val pprintVersion = "0.9.0"
+val pprintVersion = "0.9.4"
 val protobufGenericVersion = "0.2.9"
-val scalacheckVersion = "1.18.1"
-val scalaCollectionCompatVersion = "2.13.0"
+val scalacheckVersion = "1.19.0"
+val scalaCollectionCompatVersion = "2.14.0"
 val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.2.19"
 val shapelessVersion = "2.3.13"
@@ -1909,7 +1909,7 @@ lazy val integration = project
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client" % gcpBom.key.value,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
-      "com.microsoft.sqlserver" % "mssql-jdbc" % "13.2.0.jre11",
+      "com.microsoft.sqlserver" % "mssql-jdbc" % "13.2.1.jre11",
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
