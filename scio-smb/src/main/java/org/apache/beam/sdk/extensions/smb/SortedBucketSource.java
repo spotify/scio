@@ -150,7 +150,9 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
 
   protected abstract Function<SortedBucketIO.ComparableKeyBytes, KeyType> toKeyFn();
 
-  /** @return A split source of the implementing subtype */
+  /**
+   * @return A split source of the implementing subtype
+   */
   protected abstract SortedBucketSource<KeyType> createSplitSource(
       int splitNum, int totalParallelism, long estSplitSize);
 
@@ -210,7 +212,8 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
     final long estSplitSize = estimatedSizeBytes / numSplits;
     final DecimalFormat sizeFormat = new DecimalFormat("0.00");
     LOG.info(
-        "Parallelism was adjusted by {}splitting source of size {} MB into {} source(s) of size {} MB",
+        "Parallelism was adjusted by {}splitting source of size {} MB into {} source(s) of size {}"
+            + " MB",
         effectiveParallelism > 1 ? "further " : "",
         sizeFormat.format(estimatedSizeBytes / 1000000.0),
         numSplits,
@@ -331,7 +334,8 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
     public Iterator<V> iterator() {
       Preconditions.checkArgument(
           !called,
-          "CoGbkResult .iterator() can only be called once. To be re-iterable, it must be materialized as a List.");
+          "CoGbkResult .iterator() can only be called once. To be re-iterable, it must be"
+              + " materialized as a List.");
       called = true;
       return underlying;
     }
@@ -549,9 +553,7 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
     }
 
     long getOrSampleByteSize() {
-      return getInputs()
-          .entrySet()
-          .parallelStream()
+      return getInputs().entrySet().parallelStream()
           .mapToLong(
               entry -> {
                 // Take at most 10 buckets from the directory to sample

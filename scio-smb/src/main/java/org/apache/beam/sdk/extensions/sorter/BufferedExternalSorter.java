@@ -135,7 +135,8 @@ public class BufferedExternalSorter implements Sorter {
         // Flushing contents of in memory sorter to external sorter so we can rely on external
         // from here on out
         LOG.info(
-            "InMemorySorter buffer exceeded memoryMb limit. Transferring from in-memory to external sort.");
+            "InMemorySorter buffer exceeded memoryMb limit. Transferring from in-memory to external"
+                + " sort.");
         transferToExternalSorter();
       }
     }

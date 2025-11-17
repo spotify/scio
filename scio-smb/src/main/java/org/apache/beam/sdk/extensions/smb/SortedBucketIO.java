@@ -301,7 +301,8 @@ public class SortedBucketIO {
           "One of TransformFn<K, V> or TransformFnWithSideInputContext<K, V> must be set by via()");
       Preconditions.checkState(
           !((toFinalResultT != null) && (toFinalResultTWithSides != null)), // only one defined
-          "At most one of of TransformFn<K, V> or TransformFnWithSideInputContext<K, V> may be set");
+          "At most one of of TransformFn<K, V> or TransformFnWithSideInputContext<K, V> may be"
+              + " set");
       if (toFinalResultTWithSides != null) {
         Preconditions.checkNotNull(
             this.sides,
