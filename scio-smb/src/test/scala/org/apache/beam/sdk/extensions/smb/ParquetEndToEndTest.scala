@@ -172,12 +172,14 @@ class ParquetEndToEndTest extends PipelineSpec {
           .read(new TupleTag[GenericRecord]("rhs"), userSchema)
           .from(usersDir.toString)
       )(Coder[String], avroEventCoder, avroUserCoder)
+
     val userMap = avroUsers.groupBy(_.get("name").toString).view.mapValues(_.head).toMap
     val expected = avroEvents.groupBy(_.get("user").toString).toSeq.flatMap { case (k, es) =>
       es.map(e => (k, (e, userMap(k))))
     }
     implicit val c: Coder[(String, (GenericRecord, GenericRecord))] = actual.coder
     actual should containInAnyOrder(expected)
+    () // Suppress unused warnings - test is verifying containInAnyOrder assertion
     sc2.run()
 
     eventsDir.delete()

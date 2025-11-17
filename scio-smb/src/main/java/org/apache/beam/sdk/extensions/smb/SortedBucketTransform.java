@@ -302,7 +302,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     }
   }
 
-  private static class BucketSource<FinalKeyT> extends BoundedSource<BucketItem> {
+  static class BucketSource<FinalKeyT> extends BoundedSource<BucketItem> {
     // Dataflow calls split() with a suggested byte size that assumes a higher throughput than
     // SMB joins have. By adjusting this suggestion we can arrive at a more optimal parallelism.
 
@@ -601,6 +601,19 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     @Override
     public BoundedSource<BucketItem> getCurrentSource() {
       return currentSource;
+    }
+
+    @Override
+    public long getSplitPointsConsumed() {
+      // Signal that this reader has consumed 0 split points (not splittable)
+      // This helps Dataflow avoid repeatedly trying to split this work
+      return 0L;
+    }
+
+    @Override
+    public long getSplitPointsRemaining() {
+      // Signal that there are 0 remaining split points (not splittable)
+      return 0L;
     }
   }
 

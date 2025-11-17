@@ -31,13 +31,19 @@ trait SmbJob {
   val keyClass: Class[Integer] = classOf
   val keyField: String = "id"
 
-  def avroUsers(args: Args): AvroSortedBucketIO.Read[User] = AvroSortedBucketIO
-    .read(new TupleTag[User]("user"), classOf[User])
-    .from(args("users"))
+  def avroUsers(args: Args)(implicit sc: ScioContext): AvroSortedBucketIO.Read[User] = {
+    val path = SmbIO.resolvePath(args("users"))
+    AvroSortedBucketIO
+      .read(new TupleTag[User]("user"), classOf[User])
+      .from(path)
+  }
 
-  def avroAccounts(args: Args): AvroSortedBucketIO.Read[Account] = AvroSortedBucketIO
-    .read(new TupleTag[Account]("account"), classOf[Account])
-    .from(args("accounts"))
+  def avroAccounts(args: Args)(implicit sc: ScioContext): AvroSortedBucketIO.Read[Account] = {
+    val path = SmbIO.resolvePath(args("accounts"))
+    AvroSortedBucketIO
+      .read(new TupleTag[Account]("account"), classOf[Account])
+      .from(path)
+  }
 
   def avroOutput(args: Args): AvroSortedBucketIO.Write[Integer, Void, User] = AvroSortedBucketIO
     .write(keyClass, keyField, classOf[User])
@@ -49,8 +55,10 @@ trait SmbJob {
       .to(args("output"))
 
   def setUserAccounts(users: Iterable[User], accounts: Iterable[Account]): User = {
-    val u :: Nil = users.toList
-    setUserAccounts(u, accounts)
+    users.toList match {
+      case u :: Nil => setUserAccounts(u, accounts)
+      case _        => throw new IllegalArgumentException("Expected exactly one user")
+    }
   }
 
   def setUserAccounts(user: User, accounts: Iterable[Account]): User = {
@@ -69,6 +77,7 @@ object SmbJoinSaveJob extends SmbJob {
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
+    implicit val scImpl: ScioContext = sc
 
     sc.sortMergeJoin(
       keyClass,
@@ -87,6 +96,8 @@ object SmbCoGroupSavePreKeyedJob extends SmbJob {
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
+    implicit val scImpl: ScioContext = sc
+
     sc.sortMergeCoGroup(
       keyClass,
       avroUsers(args),
@@ -103,6 +114,7 @@ object SmbTransformJob extends SmbJob {
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
+    implicit val scImpl: ScioContext = sc
 
     sc.sortMergeTransform(
       keyClass,
@@ -122,6 +134,7 @@ object SmbTransformWithSideInputsJob extends SmbJob {
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
+    implicit val scImpl: ScioContext = sc
     val side = sc.parallelize(List(7)).asSingletonSideInput
 
     sc.sortMergeTransform(
@@ -139,6 +152,30 @@ object SmbTransformWithSideInputsJob extends SmbJob {
     sc.run().waitUntilDone()
   }
 
+}
+
+object SmbCollectionDirectJob extends SmbJob {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    implicit val scImpl: ScioContext = sc
+
+    val result = SMBCollection
+      .cogroup2(
+        SMBKey.primary[Integer],
+        avroUsers(args),
+        avroAccounts(args)
+      )
+      .flatMapValues { case (users, accounts) =>
+        users.flatMap(u => accounts.map(a => setUserAccounts(u, Iterable(a))))
+      }
+      .toSCollectionAndSeal()
+
+    result
+      .map { case ((k, _), v) => KV.of(k, v) }
+      .saveAsPreKeyedSortedBucket(avroOutput(args))
+
+    sc.run().waitUntilDone()
+  }
 }
 
 class SmbIOTest extends PipelineSpec {
@@ -316,6 +353,29 @@ class SmbIOTest extends PipelineSpec {
 
     val result = sc.run().waitUntilDone()
     tap.get(result).value.toSeq should contain theSameElementsAs accountsIterable
+  }
+
+  it should "work with SMBCollection cogroup directly" in {
+    // Test job using SMBCollection API directly (not sortMerge* wrapper)
+    // Prepare test inputs by writing SMB files
+    SmbIO.prepareTestInput("gs://users", classOf[Integer], "id", Seq(user))
+    SmbIO.prepareTestInput("gs://accounts", classOf[Integer], "id", Seq(accountA, accountB))
+
+    JobTest[SmbCollectionDirectJob.type]
+      .args(
+        "--users=gs://users",
+        "--accounts=gs://accounts",
+        "--output=gs://output"
+      )
+      .output(SmbIO[Integer, User]("gs://output", _.getId))(
+        _ should containInAnyOrder(
+          Seq(
+            User.newBuilder(user).setAccounts(Collections.singletonList(accountA)).build(),
+            User.newBuilder(user).setAccounts(Collections.singletonList(accountB)).build()
+          )
+        )
+      )
+      .run()
   }
 
   it should "work with SMB transforms" in {

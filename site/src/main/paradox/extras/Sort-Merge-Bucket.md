@@ -46,10 +46,96 @@ Two sources can be joined by opening file readers on corresponding buckets of ea
     Scala APIs (see: @scaladoc[SortedBucketScioContext](com.spotify.scio.smb.syntax.SortedBucketScioContext)):
 
       * `ScioContext#sortMergeTransform` (1-22 sources)
-    
+
     Note that each @javadoc[TupleTag](org.apache.beam.sdk.values.TupleTag) used to create the @javadoc[SortedBucketIO.Read](org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read)s needs to have a unique Id.
-            
+
     @@snip [SortMergeBucketExample.scala](/scio-examples/src/main/scala/com/spotify/scio/examples/extra/SortMergeBucketExample.scala) { #SortMergeBucketExample_transform }
+
+## SMBCollection: Fluent API for SMB operations
+
+_Since Scio 0.15.0_ (experimental).
+
+@scaladoc[SMBCollection](com.spotify.scio.smb.SMBCollection) provides a fluent, `SCollection`-like API for SMB operations with built-in support for **zero-shuffle multi-output** transforms.
+
+### Key Features
+
+- **Fluent transformations**: Chain operations like `mapValues`, `filter`, `flatMapValues` while preserving SMB structure
+- **Zero-shuffle multi-output**: Multiple outputs from the same base read SMB data once with shared computation
+- **Auto-execution**: Outputs execute automatically via `sc.onClose()` hook (no explicit `.run()` needed)
+- **Type-safe**: Full Scala type safety with coders
+
+### Why Use Multi-Output?
+
+Multi-output SMB transforms solve a common problem: creating multiple derived datasets from the same expensive cogroup or computation. Traditional approaches have significant overhead:
+
+**Problem: Traditional Approach (N reads + N shuffles)**
+```scala
+// Approach 1: Separate transforms - reads data 3 times, 3 shuffles
+sc.sortMergeTransform(users, accounts).to(summaryOutput).via(expensiveCompute)
+sc.sortMergeTransform(users, accounts).to(detailsOutput).via(expensiveCompute)
+sc.sortMergeTransform(users, accounts).to(highValueOutput).via(expensiveCompute)
+
+// Approach 2: SCollection fanout - 1 read, but 3 shuffles (GroupByKey in each saveAsSortedBucket)
+val result = sc.sortMergeJoin(users, accounts).map(expensiveCompute)
+result.map(_.summary).saveAsSortedBucket(summaryOutput)
+result.map(_.details).saveAsSortedBucket(detailsOutput)
+result.filter(_.isHighValue).saveAsSortedBucket(highValueOutput)
+```
+
+**Solution: SMBCollection Multi-Output (1 read + 0 shuffles)**
+```scala
+val base = SMBCollection.cogroup(users, accounts)
+  .mapValues(expensiveCompute)  // Runs ONCE per key group
+
+// Fan out to multiple outputs - all data already bucketed!
+base.mapValues(_.summary).saveAsSortedBucket(summaryOutput)
+base.mapValues(_.details).saveAsSortedBucket(detailsOutput)
+base.filter(_.isHighValue).saveAsSortedBucket(highValueOutput)
+
+sc.run()  // Executes in single pass with shared I/O
+```
+
+### Complete Example: Multi-Output Transform
+
+This example demonstrates creating three different outputs from a single expensive join:
+
+@@snip [SortMergeBucketExample.scala](/scio-examples/src/main/scala/com/spotify/scio/examples/extra/SortMergeBucketExample.scala) { #SortMergeBucketExample_multi_output }
+
+**Performance characteristics:**
+- ✅ SMB data read **once** (not 3 times)
+- ✅ Expensive cogroup computation runs **once** per key group (not 3 times)
+- ✅ **Zero shuffles** - data stays bucketed through entire pipeline
+- ✅ Automatically fuses transformations at runtime
+
+**When to use this pattern:**
+- Multiple downstream datasets derived from the same join
+- Expensive aggregations or computations that feed multiple outputs
+- Reducing pipeline cost and latency by eliminating redundant work
+
+**Cost savings example:**
+For a 1TB user-account join producing 3 outputs:
+- Traditional: 3TB read, 3x shuffle costs, 3x compute time
+- SMBCollection: 1TB read, 0 shuffles, 1x compute time
+
+### Value-only API
+
+For cleaner code when keys aren't needed in transformations:
+
+```scala
+val result = SMBCollection.read(classOf[String], usersRead)
+  .values  // Switch to value-only view
+  .filter(_.isActive)
+  .map(_.email)
+  .saveAsSortedBucket(output)
+```
+
+### Limitations
+
+- **Key preservation required**: Transformations must not change the embedded key value
+- **Experimental API**: Subject to changes in future Scio versions
+- **Avro-focused**: Currently optimized for Avro (Parquet/JSON support TBD)
+
+See @scaladoc[SMBCollection](com.spotify.scio.smb.SMBCollection) for full API documentation.
 
 ## What kind of data can I write using SMB?
 

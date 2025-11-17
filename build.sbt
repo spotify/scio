@@ -35,7 +35,7 @@ val beamVersion = "2.68.0"
 // https://github.com/apache/beam/blob/v2.68.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
-val avroVersion = sys.props.getOrElse("avro.version", "1.11.5")
+val avroVersion = sys.props.getOrElse("avro.version", "1.11.4")
 val bigdataossVersion = "2.2.26"
 val bigdataoss3Version = "3.1.3"
 val bigtableClientVersion = "1.28.0"
@@ -87,13 +87,13 @@ val chillVersion = "0.10.0"
 val circeVersion = "0.14.15"
 val commonsTextVersion = "1.10.0"
 val elasticsearch7Version = "7.17.21"
-val elasticsearch8Version = "8.19.7"
+val elasticsearch8Version = "8.19.5"
 val fansiVersion = "0.5.1"
 val featranVersion = "0.8.0"
 val httpAsyncClientVersion = "4.1.5"
 val jakartaJsonVersion = "2.1.3"
 val javaLshVersion = "0.12"
-val jedisVersion = "7.0.0"
+val jedisVersion = "6.2.0"
 val jnaVersion = "5.18.1"
 val junitInterfaceVersion = "0.13.3"
 val junitVersion = "4.13.2"
@@ -118,7 +118,7 @@ val shapelessVersion = "2.3.13"
 val sparkeyVersion = "3.2.5"
 val tensorFlowVersion = "0.4.2"
 val tensorFlowMetadataVersion = "1.16.1"
-val testContainersVersion = "0.43.6"
+val testContainersVersion = "0.43.0"
 val voyagerVersion = "2.1.0"
 
 // dependent versions
@@ -206,7 +206,7 @@ ThisBuild / developers := List(
 )
 
 // scala versions
-val scala213 = "2.13.17"
+val scala213 = "2.13.16"
 val scala212 = "2.12.20"
 val scalaDefault = scala213
 
@@ -398,6 +398,10 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ),
   ProblemFilters.exclude[MissingClassProblem](
     "com.spotify.scio.coders.instances.kryo.BigtableRetriesExhaustedExceptionSerializer"
+  ),
+  // moved private ScioSpecificDatumReader from inner class to companion object for serialization
+  ProblemFilters.exclude[IncompatibleMethTypeProblem](
+    "com.spotify.scio.avro.SpecificRecordDatumFactory#ScioSpecificDatumReader.this"
   ),
   // added new Cache.get method
   ProblemFilters.exclude[ReversedMissingMethodProblem](
@@ -1487,20 +1491,6 @@ lazy val `scio-tensorflow` = project
     }
   )
 
-lazy val `socco-plugin` = project
-  .in(file("socco-plugin"))
-  .enablePlugins(NoPublishPlugin)
-  .settings(
-    scalaVersion := scala213,
-    crossScalaVersions := Seq(scala213, scala212),
-    libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value % Provided,
-      "org.planet42" %% "laika-core" % "0.19.5"
-    ),
-    assembly / assemblyOption := (assembly / assemblyOption).value.withIncludeScala(false),
-    Compile / packageBin := (assembly / assembly).value
-  )
-
 lazy val `scio-examples` = project
   .in(file("scio-examples"))
   .enablePlugins(NoPublishPlugin)
@@ -1516,8 +1506,7 @@ lazy val `scio-examples` = project
     `scio-tensorflow`,
     `scio-smb`,
     `scio-redis`,
-    `scio-parquet`,
-    `socco-plugin`
+    `scio-parquet`
   )
   .settings(commonSettings)
   .settings(soccoSettings)
@@ -1571,7 +1560,7 @@ lazy val `scio-examples` = project
       "com.google.http-client" % "google-http-client" % gcpBom.key.value,
       "com.google.oauth-client" % "google-oauth-client" % gcpBom.key.value,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
-      "com.mysql" % "mysql-connector-j" % "9.5.0",
+      "com.mysql" % "mysql-connector-j" % "9.4.0",
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
       "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
@@ -1602,7 +1591,7 @@ lazy val `scio-examples` = project
       "redis.clients" % "jedis" % jedisVersion,
       // runtime
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
-      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.27.0" % Runtime,
+      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.25.3" % Runtime,
       // test
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
     ),
@@ -1811,6 +1800,7 @@ lazy val `scio-smb` = project
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
+      "com.twitter" %% "chill" % chillVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       // #3260 work around for sorter memory limit until we patch upstream
@@ -1915,7 +1905,7 @@ lazy val integration = project
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // runtime
-      "com.google.cloud.sql" % "cloud-sql-connector-jdbc-sqlserver" % "1.27.0" % Runtime,
+      "com.google.cloud.sql" % "cloud-sql-connector-jdbc-sqlserver" % "1.25.3" % Runtime,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Runtime,
       // test
@@ -2044,14 +2034,13 @@ lazy val site = project
 lazy val soccoIndex = taskKey[File]("Generates examples/index.html")
 lazy val soccoSettings = if (sys.env.contains("SOCCO")) {
   Seq(
-    scalacOptions ++= {
-      val pluginJar = (`socco-plugin` / Compile / packageBin).value
-      Seq(
-        s"-Xplugin:${pluginJar.getAbsolutePath}",
-        "-P:socco:out:scio-examples/target/site",
-        "-P:socco:package_com.spotify.scio:https://spotify.github.io/scio/api"
-      )
-    },
+    scalacOptions ++= Seq(
+      "-P:socco:out:scio-examples/target/site",
+      "-P:socco:package_com.spotify.scio:https://spotify.github.io/scio/api"
+    ),
+    autoCompilerPlugins := true,
+    addCompilerPlugin(("io.regadas" %% "socco-ng" % "0.1.14").cross(CrossVersion.full)),
+    // Generate scio-examples/target/site/index.html
     soccoIndex := SoccoIndex.generate(target.value / "site" / "index.html"),
     Compile / compile := {
       val _ = soccoIndex.value
