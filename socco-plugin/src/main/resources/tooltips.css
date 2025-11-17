@@ -1,0 +1,150 @@
+/*! tooltips 0.1.0 - 20th Dec 2013 | https://github.com/darsain/tooltip */
+.tooltip {
+    position: absolute;
+    padding: .8em 1em;
+    top: 10px; /* Defines the spacing between tooltip and target position */
+    max-width: 70vw;
+    color: #fff;
+    background: #3a3c47;
+    border-radius: 2px;
+    text-shadow: -1px -1px 0 rgba(0,0,0,.2);
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    pointer-events: none;
+}
+
+/* Arrow styles */
+.tooltip:after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    margin: -5px;
+    background: inherit;
+    -webkit-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    transform: rotate(45deg);
+}
+
+.tooltip.top:after, .tooltip.top-left:after, .tooltip.top-right:after { bottom: 0; }
+.tooltip.bottom:after, .tooltip.bottom-left:after, .tooltip.bottom-right:after { top: 0; }
+.tooltip.top:after, .tooltip.bottom:after { left: 50%; }
+.tooltip.top-left:after, .tooltip.bottom-left:after { right: 15px; }
+.tooltip.top-right:after, .tooltip.bottom-right:after { left: 15px; }
+
+.tooltip.left:after, .tooltip.left-top:after, .tooltip.left-bottom:after { right: 0; }
+.tooltip.right:after, .tooltip.right-top:after, .tooltip.right-bottom:after { left: 0; }
+.tooltip.left:after, .tooltip.right:after { top: 50%; }
+.tooltip.left-top:after, .tooltip.right-top:after { bottom: 15px; }
+.tooltip.left-bottom:after, .tooltip.right-bottom:after { top: 15px; }
+
+/* Fade */
+.tooltip.fade { opacity: 0; transition: opacity 200ms ease-out; }
+.tooltip.fade.in { opacity: 1; transition-duration: 100ms; }
+
+/* Slide */
+.tooltip.slide {
+    opacity: 0;
+    transition: -webkit-transform 200ms ease-out;
+    transition: transform 200ms ease-out;
+    transition-property: -webkit-transform, opacity;
+    transition-property: transform, opacity;
+}
+.tooltip.slide.top,
+.tooltip.slide.top-left,
+.tooltip.slide.top-right {
+    -webkit-transform: translateY(15px);
+    transform: translateY(15px);
+}
+.tooltip.slide.bottom,
+.tooltip.slide.bottom-left,
+.tooltip.slide.bottom-right {
+    -webkit-transform: translateY(-15px);
+    transform: translateY(-15px);
+}
+.tooltip.slide.left,
+.tooltip.slide.left-top,
+.tooltip.slide.left-bottom {
+    -webkit-transform: translateX(15px);
+    transform: translateX(15px);
+}
+.tooltip.slide.right,
+.tooltip.slide.right-top,
+.tooltip.slide.right-bottom {
+    -webkit-transform: translateX(-15px);
+    transform: translateX(-15px);
+}
+.tooltip.slide.in {
+    opacity: 1;
+    -webkit-transform: none;
+    transform: none;
+    transition-duration: 100ms;
+}
+
+/* Grow */
+.tooltip.grow {
+    -webkit-transform: scale(0);
+    transform: scale(0);
+    transition: -webkit-transform 200ms ease-out;
+    transition: transform 200ms ease-out;
+}
+.tooltip.grow.top {
+    -webkit-transform: translateY(60%) scale(0);
+    transform: translateY(60%) scale(0);
+}
+.tooltip.grow.top-left {
+    -webkit-transform: translateY(60%) translateX(40%) scale(0);
+    transform: translateY(60%) translateX(40%) scale(0);
+}
+.tooltip.grow.top-right {
+    -webkit-transform: translateY(60%) translateX(-40%) scale(0);
+    transform: translateY(60%) translateX(-40%) scale(0);
+}
+.tooltip.grow.bottom {
+    -webkit-transform: translateY(-60%) scale(0);
+    transform: translateY(-60%) scale(0);
+}
+.tooltip.grow.bottom-left {
+    -webkit-transform: translateY(-60%) translateX(40%) scale(0);
+    transform: translateY(-60%) translateX(40%) scale(0);
+}
+.tooltip.grow.bottom-right {
+    -webkit-transform: translateY(-60%) translateX(-40%) scale(0);
+    transform: translateY(-60%) translateX(-40%) scale(0);
+}
+.tooltip.grow.left {
+    -webkit-transform: translateX(53%) scale(0);
+    transform: translateX(53%) scale(0);
+}
+.tooltip.grow.left-top {
+    -webkit-transform: translateX(53%) translateY(40%) scale(0);
+    transform: translateX(53%) translateY(40%) scale(0);
+}
+.tooltip.grow.left-bottom {
+    -webkit-transform: translateX(53%) translateY(-40%) scale(0);
+    transform: translateX(53%) translateY(-40%) scale(0);
+}
+.tooltip.grow.right {
+    -webkit-transform: translateX(-53%) scale(0);
+    transform: translateX(-53%) scale(0);
+}
+.tooltip.grow.right-top {
+    -webkit-transform: translateX(-53%) translateY(40%) scale(0);
+    transform: translateX(-53%) translateY(40%) scale(0);
+}
+.tooltip.grow.right-bottom {
+    -webkit-transform: translateX(-53%) translateY(-40%) scale(0);
+    transform: translateX(-53%) translateY(-40%) scale(0);
+}
+.tooltip.grow.in {
+    -webkit-transform: none;
+    transform: none;
+    transition-duration: 100ms;
+}
+
+/* Types */
+.tooltip.light { color: #3a3c47; background: #fff; text-shadow: none; }
+.tooltip.success { background: #8dc572; }
+.tooltip.warning { background: #ddc12e; }
+.tooltip.error { background: #be6464; }
