@@ -18,6 +18,8 @@
 package org.apache.beam.sdk.extensions.smb;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
@@ -44,7 +46,8 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
   private final AvroDatumFactory<ValueT> datumFactory;
   private final SerializableSchemaSupplier schemaSupplier;
-  private PatchedSerializableAvroCodecFactory codec;
+  private transient CodecFactory codec;
+  private PatchedSerializableAvroCodecFactory serializableCodec;
   private Map<String, Object> metadata;
 
   static CodecFactory defaultCodec() {
@@ -55,7 +58,7 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
     super(Compression.UNCOMPRESSED, MimeTypes.BINARY); // Avro has its own compression via codec
     this.schemaSupplier = new SerializableSchemaSupplier(schema);
     this.datumFactory = datumFactory;
-    this.codec = new PatchedSerializableAvroCodecFactory(defaultCodec());
+    this.codec = defaultCodec();
   }
 
   public static <V extends IndexedRecord> AvroFileOperations<V> of(
@@ -64,7 +67,7 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
   }
 
   public AvroFileOperations<ValueT> withCodec(CodecFactory codec) {
-    this.codec = new PatchedSerializableAvroCodecFactory(codec);
+    this.codec = codec;
     return this;
   }
 
@@ -76,7 +79,7 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
   @Override
   public void populateDisplayData(Builder builder) {
     super.populateDisplayData(builder);
-    builder.add(DisplayData.item("codecFactory", codec.getCodec().getClass()));
+    builder.add(DisplayData.item("codecFactory", codec.getClass()));
     builder.add(DisplayData.item("schema", schemaSupplier.schema.getFullName()));
   }
 
@@ -91,7 +94,7 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
     final AvroIO.Sink<ValueT> sink =
         ((AvroIO.Sink<ValueT>) AvroIO.sink(getSchema()))
             .withDatumWriterFactory(datumFactory)
-            .withCodec(codec.getCodec());
+            .withCodec(codec);
 
     if (metadata != null) {
       return sink.withMetadata(metadata);
@@ -108,6 +111,23 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
   Schema getSchema() {
     return schemaSupplier.get();
+  }
+
+  /**
+   * Custom serialization to handle non-serializable CodecFactory. Converts codec to
+   * PatchedSerializableAvroCodecFactory before serialization.
+   */
+  private void writeObject(ObjectOutputStream out) throws IOException {
+    // Convert CodecFactory to serializable form
+    serializableCodec = new PatchedSerializableAvroCodecFactory(codec);
+    out.defaultWriteObject();
+  }
+
+  /** Custom deserialization to restore CodecFactory from PatchedSerializableAvroCodecFactory. */
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    in.defaultReadObject();
+    // Restore CodecFactory from serializable form
+    codec = serializableCodec.getCodec();
   }
 
   private static class SerializableSchemaString implements Serializable {

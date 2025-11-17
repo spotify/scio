@@ -503,7 +503,7 @@ public class SortedBucketIO {
   }
 
   @FunctionalInterface
-  interface KeyFn<K> extends Function<ComparableKeyBytes, K>, Serializable {
+  public interface KeyFn<K> extends Function<ComparableKeyBytes, K>, Serializable {
     @Override
     K apply(ComparableKeyBytes input);
   }
