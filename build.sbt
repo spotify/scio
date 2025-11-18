@@ -1899,6 +1899,7 @@ lazy val integration = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "com.spotify" %% "magnolify-bigquery" % magnolifyVersion,
       // runtime
       "com.google.cloud.sql" % "cloud-sql-connector-jdbc-sqlserver" % "1.27.0" % Runtime,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
