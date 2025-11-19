@@ -1924,6 +1924,7 @@ lazy val integration = project
       "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainersVersion % Test,
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion % Test,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion % Test,
+      "com.spotify" %% "magnolify-bigquery" % magnolifyVersion % Test,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion % Test,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Test
     )
