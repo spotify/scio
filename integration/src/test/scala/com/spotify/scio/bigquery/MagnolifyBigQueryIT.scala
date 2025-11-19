@@ -19,6 +19,7 @@ package com.spotify.scio.bigquery
 
 import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import com.spotify.scio.bigquery.client.BigQuery
+import com.spotify.scio.bigquery.validation.SetProperty
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.testing._
 import magnolify.bigquery._
@@ -97,13 +98,19 @@ class MagnolifyBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
 
   private val bq = BigQuery.defaultInstance()
 
-  override protected def afterAll(): Unit =
-    bq.client
-      .execute(
-        _.tables().list("data-integration-test", "bigquery_avro_it")
-      )
-      .getTables
-      .forEach(t => bq.tables.delete(t.getTableReference))
+  override def beforeAll(): Unit = {
+    // We need this at runtime as well and tests are run in a fork
+    SetProperty.setSystemProperty()
+    ()
+  }
+
+  override protected def afterAll(): Unit = {
+    Option(
+      bq.client
+        .execute(_.tables().list("data-integration-test", "bigquery_avro_it"))
+        .getTables
+    ).foreach(_.forEach(t => bq.tables.delete(t.getTableReference)))
+  }
 
   def testRoundtrip[T: Coder: TableRowType](
     writeMethod: WriteMethod,
@@ -147,7 +154,7 @@ class MagnolifyBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
   }
 
   it should "read case classes written using legacy BigQueryType" in {
-    val tableRef = table("magnolify_bqt_compat")
+    val tableRef = table("bqt_compat")
     val records: Seq[TypedBigQueryIT.Record] = TypedBigQueryIT.records
 
     runWithRealContext(options) { sc =>
