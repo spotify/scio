@@ -61,7 +61,7 @@ class ParquetMetadataDoFnTest extends PipelineSpec with BeforeAndAfterAll {
     files.head
   }
 
-  "ParquetMetadataDoFn" should "read metadata from local parquet file" in {
+  "ParquetMetadataDoFn" should "read and parse parquet file metadata" in {
     val parquetFile = getParquetFile
     val filePath = parquetFile.getAbsolutePath
 
@@ -72,84 +72,45 @@ class ParquetMetadataDoFnTest extends PipelineSpec with BeforeAndAfterAll {
 
     metadataResults should satisfySingleValue[(String, Try[ParquetMetadata])] {
       case (filename, Success(metadata)) =>
-        // Verify filename
         filename shouldBe filePath
 
-        // Verify schema contains expected fields
-        List("int_field", "long_field", "string_field").foreach { f =>
-          assert(metadata.schema.contains(f))
+        // Verify schema contains all expected fields
+        List(
+          "int_field",
+          "long_field",
+          "float_field",
+          "double_field",
+          "boolean_field",
+          "string_field",
+          "array_field"
+        ).foreach { f =>
+          assert(metadata.schema.contains(f), s"schema should contain $f")
         }
-        assert(metadata.blocks.nonEmpty, "blocks should not be empty")
 
-        // Verify total row count
+        // Verify row count
         metadata.numRows shouldBe numRecords
 
-        // Verify each block has reasonable size
+        // Verify block metadata
+        val numBlocks = metadata.blocks.size
+        val totalBytes = metadata.blocks.map(_.totalByteSize).sum
+        assert(numBlocks > 0, s"numBlocks should be > 0 but was $numBlocks")
+        assert(totalBytes > 0L, s"totalBytes should be > 0 but was $totalBytes")
+
         metadata.blocks.foreach { block =>
           assert(
             block.totalByteSize > 0L,
             s"totalByteSize should be > 0 but was ${block.totalByteSize}"
           )
           assert(block.rowCount > 0L, s"rowCount should be > 0 but was ${block.rowCount}")
-          assert(block.numColumns > 0, s"numColumns should be > 0 but was ${block.numColumns}")
+          assert(block.numColumns == 7, s"numColumns should be 7 but was ${block.numColumns}")
         }
+
+        // Verify key-value metadata exists
+        assert(metadata.keyValueMetaData != null, "keyValueMetaData should not be null")
 
         true
       case (filename, Failure(error)) =>
         fail(s"Expected Success but got Failure for $filename: ${error.getMessage}")
-    }
-
-    sc.run().waitUntilDone()
-  }
-
-  it should "verify local file schema fields in metadata" in {
-    val parquetFile = getParquetFile
-    val sc = ScioContext()
-
-    val metadataResults = sc
-      .parallelize(Seq(parquetFile.getAbsolutePath))
-      .applyTransform(ParDo.of(new ParquetMetadataDoFn))
-
-    metadataResults should satisfySingleValue[(String, Try[ParquetMetadata])] {
-      case (_, Success(metadata)) =>
-        val schemaStr = metadata.schema
-        assert(schemaStr.contains("int_field"))
-        assert(schemaStr.contains("long_field"))
-        assert(schemaStr.contains("float_field"))
-        assert(schemaStr.contains("double_field"))
-        assert(schemaStr.contains("boolean_field"))
-        assert(schemaStr.contains("string_field"))
-        assert(schemaStr.contains("array_field"))
-        true
-      case (_, Failure(error)) =>
-        fail(s"Expected Success but got Failure: ${error.getMessage}")
-    }
-
-    sc.run().waitUntilDone()
-  }
-
-  it should "verify local file block metadata" in {
-    val parquetFile = getParquetFile
-    val sc = ScioContext()
-
-    val metadataResults = sc
-      .parallelize(Seq(parquetFile.getAbsolutePath))
-      .applyTransform(ParDo.of(new ParquetMetadataDoFn))
-
-    metadataResults should satisfySingleValue[(String, Try[ParquetMetadata])] {
-      case (_, Success(metadata)) =>
-        val numBlocks = metadata.blocks.size
-        val totalRows = metadata.numRows
-        val totalBytes = metadata.blocks.map(_.totalByteSize).sum
-        val numColumns = metadata.blocks.head.numColumns
-
-        assert(numBlocks > 0, s"numBlocks should be > 0 but was $numBlocks")
-        assert(totalRows == numRecords, s"totalRows should be $numRecords but was $totalRows")
-        assert(totalBytes > 0L, s"totalBytes should be > 0 but was $totalBytes")
-        assert(numColumns == 7, s"numColumns should be 7 but was $numColumns")
-        true
-      case (_, Failure(error)) =>
-        fail(s"Expected Success but got Failure: ${error.getMessage}")
     }
 
     sc.run().waitUntilDone()
@@ -170,27 +131,6 @@ class ParquetMetadataDoFnTest extends PipelineSpec with BeforeAndAfterAll {
         true
       case (filename, Success(_)) =>
         fail(s"Expected Failure but got Success for invalid path $filename")
-    }
-
-    sc.run().waitUntilDone()
-  }
-
-  it should "include key-value metadata from file" in {
-    val parquetFile = getParquetFile
-    val sc = ScioContext()
-
-    val metadataResults = sc
-      .parallelize(Seq(parquetFile.getAbsolutePath))
-      .applyTransform(ParDo.of(new ParquetMetadataDoFn))
-
-    metadataResults should satisfySingleValue[(String, Try[ParquetMetadata])] {
-      case (_, Success(metadata)) =>
-        // keyValueMetaData should be present (even if empty)
-        assert(metadata.keyValueMetaData != null)
-        assert(metadata.keyValueMetaData.isInstanceOf[Map[_, _]])
-        true
-      case (_, Failure(error)) =>
-        fail(s"Expected Success but got Failure: ${error.getMessage}")
     }
 
     sc.run().waitUntilDone()
