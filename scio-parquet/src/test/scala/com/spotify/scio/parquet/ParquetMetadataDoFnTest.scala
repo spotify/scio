@@ -37,7 +37,6 @@ class ParquetMetadataDoFnTest extends PipelineSpec with BeforeAndAfterAll {
   private val numRecords = testRecords.size
 
   override protected def beforeAll(): Unit = {
-    // Write test data to local parquet file
     val sc = ScioContext()
     implicit val coder: com.spotify.scio.coders.Coder[org.apache.avro.generic.GenericRecord] =
       com.spotify.scio.avro.avroGenericRecordCoder(AvroUtils.schema)
@@ -73,8 +72,9 @@ class ParquetMetadataDoFnTest extends PipelineSpec with BeforeAndAfterAll {
     metadataResults should satisfySingleValue[(String, Try[ParquetMetadata])] {
       case (filename, Success(metadata)) =>
         filename shouldBe filePath
+        metadata.numRows shouldBe numRecords
+        assert(metadata.keyValueMetaData != null, "keyValueMetaData should not be null")
 
-        // Verify schema contains all expected fields
         List(
           "int_field",
           "long_field",
@@ -87,10 +87,6 @@ class ParquetMetadataDoFnTest extends PipelineSpec with BeforeAndAfterAll {
           assert(metadata.schema.contains(f), s"schema should contain $f")
         }
 
-        // Verify row count
-        metadata.numRows shouldBe numRecords
-
-        // Verify block metadata
         val numBlocks = metadata.blocks.size
         val totalBytes = metadata.blocks.map(_.totalByteSize).sum
         assert(numBlocks > 0, s"numBlocks should be > 0 but was $numBlocks")
@@ -104,9 +100,6 @@ class ParquetMetadataDoFnTest extends PipelineSpec with BeforeAndAfterAll {
           assert(block.rowCount > 0L, s"rowCount should be > 0 but was ${block.rowCount}")
           assert(block.numColumns == 7, s"numColumns should be 7 but was ${block.numColumns}")
         }
-
-        // Verify key-value metadata exists
-        assert(metadata.keyValueMetaData != null, "keyValueMetaData should not be null")
 
         true
       case (filename, Failure(error)) =>
