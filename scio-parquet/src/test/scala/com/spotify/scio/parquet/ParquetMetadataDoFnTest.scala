@@ -17,8 +17,9 @@
 
 package com.spotify.scio.parquet
 
-import com.spotify.scio.ScioContext
-import com.spotify.scio.avro.AvroUtils
+import com.spotify.scio._
+import com.spotify.scio.avro._
+import com.spotify.scio.parquet.avro._
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.transforms.ParDo
 import org.apache.commons.io.FileUtils
@@ -26,20 +27,20 @@ import org.scalatest.BeforeAndAfterAll
 
 import java.io.File
 import java.nio.file.Files
-import scala.jdk.CollectionConverters._
+import scala.util.{Failure, Success, Try}
 
 class ParquetMetadataDoFnTest extends PipelineSpec with BeforeAndAfterAll {
+  import ParquetMetadataDoFn._
+
   private val tempDir = Files.createTempDirectory("parquet-metadata-test-").toFile
   private val testRecords = (1 to 100).map(AvroUtils.newGenericRecord)
   private val numRecords = testRecords.size
 
-  // GCS bucket for integration test (set via environment variable or skip test)
-  private val gcsTestBucket = sys.env.get("SCIO_TEST_GCS_BUCKET")
-
   override protected def beforeAll(): Unit = {
     // Write test data to local parquet file
     val sc = ScioContext()
-    implicit val coder = com.spotify.scio.avro.avroGenericRecordCoder(AvroUtils.schema)
+    implicit val coder: com.spotify.scio.coders.Coder[org.apache.avro.generic.GenericRecord] =
+      com.spotify.scio.avro.avroGenericRecordCoder(AvroUtils.schema)
     sc.parallelize(testRecords)
       .saveAsParquetAvroFile(
         tempDir.getAbsolutePath,
@@ -49,218 +50,149 @@ class ParquetMetadataDoFnTest extends PipelineSpec with BeforeAndAfterAll {
     sc.run().waitUntilDone()
   }
 
-  override protected def afterAll(): Unit = {
+  override protected def afterAll(): Unit =
     FileUtils.deleteDirectory(tempDir)
-  }
 
   private def getParquetFile: File = {
-    val files = tempDir.listFiles()
+    val files = tempDir
+      .listFiles()
       .filter(_.getName.endsWith(".parquet"))
     require(files.nonEmpty, "No parquet files found in test directory")
     files.head
   }
 
-  // This test requires GCS credentials and a bucket to run
-  // Set SCIO_TEST_GCS_BUCKET environment variable to enable
-  "ParquetMetadataDoFn" should "read metadata from GCS parquet file" in {
-    assume(gcsTestBucket.isDefined, "SCIO_TEST_GCS_BUCKET not set, skipping GCS integration test")
+  "ParquetMetadataDoFn" should "read metadata from local parquet file" in {
+    val parquetFile = getParquetFile
+    val filePath = parquetFile.getAbsolutePath
 
-    val bucket = gcsTestBucket.get
-    val gcsPath = s"gs://$bucket/parquet-metadata-test-${System.currentTimeMillis()}"
+    val sc = ScioContext()
+    val metadataResults = sc
+      .parallelize(Seq(filePath))
+      .applyTransform(ParDo.of(new ParquetMetadataDoFn))
 
-    try {
-      // Write test data to GCS
-      val writeContext = ScioContext()
-      implicit val coder = com.spotify.scio.avro.avroGenericRecordCoder(AvroUtils.schema)
-      writeContext
-        .parallelize(testRecords)
-        .saveAsParquetAvroFile(
-          gcsPath,
-          numShards = 1,
-          schema = AvroUtils.schema
-        )
-      writeContext.run().waitUntilDone()
+    metadataResults should satisfySingleValue[(String, Try[ParquetMetadata])] {
+      case (filename, Success(metadata)) =>
+        // Verify filename
+        filename shouldBe filePath
 
-      // Find the written file
-      val readContext = ScioContext()
-      val gcsFilePattern = s"$gcsPath/*.parquet"
-      val files = org.apache.beam.sdk.io.FileSystems
-        .`match`(gcsFilePattern)
-        .metadata()
-        .asScala
-        .map(_.resourceId().toString)
-        .toSeq
-
-      require(files.nonEmpty, "No parquet files found in GCS")
-
-      // Read metadata using ParquetMetadataDoFn
-      val metadataResults = readContext
-        .parallelize(files)
-        .applyTransform(ParDo.of(new ParquetMetadataDoFn))
-
-      metadataResults should satisfySingleValue[(String, org.apache.parquet.hadoop.metadata.ParquetMetadata)] {
-        case (filename, metadata) =>
-          // Verify filename
-          filename should startWith("gs://")
-          filename should include(bucket)
-
-          // Verify schema contains expected fields
-          val schema = metadata.getFileMetaData.getSchema
-          schema.getFieldCount should be > 0
-          schema.containsField("int_field") shouldBe true
-          schema.containsField("long_field") shouldBe true
-          schema.containsField("string_field") shouldBe true
-
-          // Verify row groups (blocks)
-          val blocks = metadata.getBlocks
-          blocks should not be empty
-
-          // Verify total row count across all row groups
-          val totalRows = blocks.asScala.map(_.getRowCount).sum
-          totalRows shouldBe numRecords
-
-          // Verify each block has reasonable size
-          blocks.asScala.foreach { block =>
-            block.getTotalByteSize should be > 0L
-            block.getRowCount should be > 0L
-          }
-
-          true
-      }
-
-      readContext.run().waitUntilDone()
-    } finally {
-      // Clean up GCS files
-      try {
-        val cleanupContext = ScioContext()
-        org.apache.beam.sdk.io.FileSystems
-          .`match`(s"$gcsPath/*.parquet")
-          .metadata()
-          .asScala
-          .foreach(m => org.apache.beam.sdk.io.FileSystems.delete(Seq(m.resourceId()).asJava))
-      } catch {
-        case _: Exception => // Ignore cleanup errors
-      }
-    }
-  }
-
-  it should "verify schema fields in metadata" in {
-    assume(gcsTestBucket.isDefined, "SCIO_TEST_GCS_BUCKET not set, skipping GCS integration test")
-
-    val bucket = gcsTestBucket.get
-    val gcsPath = s"gs://$bucket/parquet-schema-test-${System.currentTimeMillis()}"
-
-    try {
-      // Write test data
-      val writeContext = ScioContext()
-      implicit val coder = com.spotify.scio.avro.avroGenericRecordCoder(AvroUtils.schema)
-      writeContext
-        .parallelize(testRecords)
-        .saveAsParquetAvroFile(gcsPath, numShards = 1, schema = AvroUtils.schema)
-      writeContext.run().waitUntilDone()
-
-      // Read and verify
-      val readContext = ScioContext()
-      val files = org.apache.beam.sdk.io.FileSystems
-        .`match`(s"$gcsPath/*.parquet")
-        .metadata()
-        .asScala
-        .map(_.resourceId().toString)
-        .toSeq
-
-      val metadataResults = readContext
-        .parallelize(files)
-        .applyTransform(ParDo.of(new ParquetMetadataDoFn))
-        .map { case (_, metadata) =>
-          val schema = metadata.getFileMetaData.getSchema
-          (schema.getFieldCount, schema.toString)
+        // Verify schema contains expected fields
+        List("int_field", "long_field", "string_field").foreach { f =>
+          assert(metadata.schema.contains(f))
         }
+        assert(metadata.blocks.nonEmpty, "blocks should not be empty")
 
-      metadataResults should satisfySingleValue[(Int, String)] { case (fieldCount, schemaStr) =>
-        fieldCount shouldBe 7 // int, long, float, double, boolean, string, array
-        schemaStr should include("int_field")
-        schemaStr should include("long_field")
-        schemaStr should include("float_field")
-        schemaStr should include("double_field")
-        schemaStr should include("boolean_field")
-        schemaStr should include("string_field")
-        schemaStr should include("array_field")
-        true
-      }
+        // Verify total row count
+        metadata.numRows shouldBe numRecords
 
-      readContext.run().waitUntilDone()
-    } finally {
-      // Cleanup
-      try {
-        org.apache.beam.sdk.io.FileSystems
-          .`match`(s"$gcsPath/*.parquet")
-          .metadata()
-          .asScala
-          .foreach(m => org.apache.beam.sdk.io.FileSystems.delete(Seq(m.resourceId()).asJava))
-      } catch {
-        case _: Exception => // Ignore cleanup errors
-      }
-    }
-  }
-
-  it should "verify block metadata" in {
-    assume(gcsTestBucket.isDefined, "SCIO_TEST_GCS_BUCKET not set, skipping GCS integration test")
-
-    val bucket = gcsTestBucket.get
-    val gcsPath = s"gs://$bucket/parquet-blocks-test-${System.currentTimeMillis()}"
-
-    try {
-      // Write test data
-      val writeContext = ScioContext()
-      implicit val coder = com.spotify.scio.avro.avroGenericRecordCoder(AvroUtils.schema)
-      writeContext
-        .parallelize(testRecords)
-        .saveAsParquetAvroFile(gcsPath, numShards = 1, schema = AvroUtils.schema)
-      writeContext.run().waitUntilDone()
-
-      // Read and verify block metadata
-      val readContext = ScioContext()
-      val files = org.apache.beam.sdk.io.FileSystems
-        .`match`(s"$gcsPath/*.parquet")
-        .metadata()
-        .asScala
-        .map(_.resourceId().toString)
-        .toSeq
-
-      val blockStats = readContext
-        .parallelize(files)
-        .applyTransform(ParDo.of(new ParquetMetadataDoFn))
-        .map { case (_, metadata) =>
-          val blocks = metadata.getBlocks.asScala
-          (
-            blocks.size,
-            blocks.map(_.getRowCount).sum,
-            blocks.map(_.getTotalByteSize).sum,
-            blocks.head.getColumns.size()
+        // Verify each block has reasonable size
+        metadata.blocks.foreach { block =>
+          assert(
+            block.totalByteSize > 0L,
+            s"totalByteSize should be > 0 but was ${block.totalByteSize}"
           )
+          assert(block.rowCount > 0L, s"rowCount should be > 0 but was ${block.rowCount}")
+          assert(block.numColumns > 0, s"numColumns should be > 0 but was ${block.numColumns}")
         }
 
-      blockStats should satisfySingleValue[(Int, Long, Long, Int)] {
-        case (numBlocks, totalRows, totalBytes, numColumns) =>
-          numBlocks should be > 0
-          totalRows shouldBe numRecords
-          totalBytes should be > 0L
-          numColumns shouldBe 7 // 7 fields in schema
-          true
-      }
-
-      readContext.run().waitUntilDone()
-    } finally {
-      // Cleanup
-      try {
-        org.apache.beam.sdk.io.FileSystems
-          .`match`(s"$gcsPath/*.parquet")
-          .metadata()
-          .asScala
-          .foreach(m => org.apache.beam.sdk.io.FileSystems.delete(Seq(m.resourceId()).asJava))
-      } catch {
-        case _: Exception => // Ignore cleanup errors
-      }
+        true
+      case (filename, Failure(error)) =>
+        fail(s"Expected Success but got Failure for $filename: ${error.getMessage}")
     }
+
+    sc.run().waitUntilDone()
+  }
+
+  it should "verify local file schema fields in metadata" in {
+    val parquetFile = getParquetFile
+    val sc = ScioContext()
+
+    val metadataResults = sc
+      .parallelize(Seq(parquetFile.getAbsolutePath))
+      .applyTransform(ParDo.of(new ParquetMetadataDoFn))
+
+    metadataResults should satisfySingleValue[(String, Try[ParquetMetadata])] {
+      case (_, Success(metadata)) =>
+        val schemaStr = metadata.schema
+        assert(schemaStr.contains("int_field"))
+        assert(schemaStr.contains("long_field"))
+        assert(schemaStr.contains("float_field"))
+        assert(schemaStr.contains("double_field"))
+        assert(schemaStr.contains("boolean_field"))
+        assert(schemaStr.contains("string_field"))
+        assert(schemaStr.contains("array_field"))
+        true
+      case (_, Failure(error)) =>
+        fail(s"Expected Success but got Failure: ${error.getMessage}")
+    }
+
+    sc.run().waitUntilDone()
+  }
+
+  it should "verify local file block metadata" in {
+    val parquetFile = getParquetFile
+    val sc = ScioContext()
+
+    val metadataResults = sc
+      .parallelize(Seq(parquetFile.getAbsolutePath))
+      .applyTransform(ParDo.of(new ParquetMetadataDoFn))
+
+    metadataResults should satisfySingleValue[(String, Try[ParquetMetadata])] {
+      case (_, Success(metadata)) =>
+        val numBlocks = metadata.blocks.size
+        val totalRows = metadata.numRows
+        val totalBytes = metadata.blocks.map(_.totalByteSize).sum
+        val numColumns = metadata.blocks.head.numColumns
+
+        assert(numBlocks > 0, s"numBlocks should be > 0 but was $numBlocks")
+        assert(totalRows == numRecords, s"totalRows should be $numRecords but was $totalRows")
+        assert(totalBytes > 0L, s"totalBytes should be > 0 but was $totalBytes")
+        assert(numColumns == 7, s"numColumns should be 7 but was $numColumns")
+        true
+      case (_, Failure(error)) =>
+        fail(s"Expected Success but got Failure: ${error.getMessage}")
+    }
+
+    sc.run().waitUntilDone()
+  }
+
+  it should "handle errors gracefully for invalid files" in {
+    val sc = ScioContext()
+    val invalidPath = "/path/to/nonexistent/file.parquet"
+
+    val results = sc
+      .parallelize(Seq(invalidPath))
+      .applyTransform(ParDo.of(new ParquetMetadataDoFn))
+
+    results should satisfySingleValue[(String, Try[ParquetMetadata])] {
+      case (filename, Failure(error)) =>
+        filename shouldBe invalidPath
+        error shouldBe a[Throwable]
+        true
+      case (filename, Success(_)) =>
+        fail(s"Expected Failure but got Success for invalid path $filename")
+    }
+
+    sc.run().waitUntilDone()
+  }
+
+  it should "include key-value metadata from file" in {
+    val parquetFile = getParquetFile
+    val sc = ScioContext()
+
+    val metadataResults = sc
+      .parallelize(Seq(parquetFile.getAbsolutePath))
+      .applyTransform(ParDo.of(new ParquetMetadataDoFn))
+
+    metadataResults should satisfySingleValue[(String, Try[ParquetMetadata])] {
+      case (_, Success(metadata)) =>
+        // keyValueMetaData should be present (even if empty)
+        assert(metadata.keyValueMetaData != null)
+        assert(metadata.keyValueMetaData.isInstanceOf[Map[_, _]])
+        true
+      case (_, Failure(error)) =>
+        fail(s"Expected Success but got Failure: ${error.getMessage}")
+    }
+
+    sc.run().waitUntilDone()
   }
 }

@@ -17,98 +17,106 @@
 
 package com.spotify.scio.parquet
 
-import com.google.cloud.storage.{Blob, BlobId, Storage, StorageOptions}
+import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn._
 import org.apache.parquet.format.converter.ParquetMetadataConverter
-import org.apache.parquet.hadoop.metadata.ParquetMetadata
-import org.slf4j.LoggerFactory
 
 import java.io.ByteArrayInputStream
 import java.nio.{ByteBuffer, ByteOrder}
+import java.nio.channels.{ReadableByteChannel, SeekableByteChannel}
+import scala.jdk.CollectionConverters._
+import scala.util.Try
 
-/**
- * A [[DoFn]] that reads only the metadata section of a Parquet file from GCS using efficient range
- * reads to avoid downloading the entire file.
- *
- * The DoFn takes GCS URIs (gs://bucket/path) as input and outputs a tuple of (filename, metadata)
- * for each file.
- */
-class ParquetMetadataDoFn extends DoFn[String, (String, ParquetMetadata)] {
-  @transient
-  private lazy val logger = LoggerFactory.getLogger(classOf[ParquetMetadataDoFn])
+object ParquetMetadataDoFn {
+  case class BlockMetadata(
+    rowCount: Long,
+    totalByteSize: Long,
+    numColumns: Int
+  )
 
-  @transient
-  private lazy val storage: Storage = StorageOptions.getDefaultInstance.getService
+  case class ParquetMetadata(
+    schema: String,
+    blocks: Seq[BlockMetadata],
+    createdBy: String,
+    numRows: Long,
+    keyValueMetaData: Map[String, String]
+  )
+}
 
-  private val ParquetMagic = "PAR1".getBytes
-  private val FooterLengthSize = 4
-  private val MagicLength = 4
+/** Reads a parquet file and emits its metadata */
+class ParquetMetadataDoFn extends DoFn[String, (String, Try[ParquetMetadataDoFn.ParquetMetadata])] {
+  import ParquetMetadataDoFn._
+  private val MagicBytes = "PAR1".getBytes
 
   @ProcessElement
   def processElement(
-    @Element gcsUri: String,
-    out: OutputReceiver[(String, ParquetMetadata)]
-  ): Unit = {
-    logger.debug(s"Reading Parquet metadata from: $gcsUri")
+    @Element filePath: String,
+    out: OutputReceiver[(String, Try[ParquetMetadata])]
+  ): Unit = out.output((filePath, Try(readMetadata(filePath))))
 
-    val (bucketName, blobName) = parseGcsUri(gcsUri)
-    val metadata = readMetadata(bucketName, blobName)
+  private def readMetadata(filePath: String): ParquetMetadata = {
+    val resourceId = FileSystems.matchSingleFileSpec(filePath).resourceId()
+    val fileSize = FileSystems.matchSingleFileSpec(filePath).sizeBytes()
 
-    out.output((gcsUri, metadata))
+    val rbc: ReadableByteChannel = FileSystems.open(resourceId)
+    try {
+      val channel = rbc match {
+        case seekable: SeekableByteChannel => seekable
+        case _                             =>
+          throw new IllegalArgumentException(s"Filesystem does not support seek. Path: $filePath")
+      }
+
+      // parquet files suffixed with "PAR1" (4 bytes) and a 4-byte footer length
+      val footerBytes = readBytesAt(channel, fileSize - 8, 8)
+      if (!java.util.Arrays.equals(footerBytes.slice(4, 8), MagicBytes)) {
+        throw new IllegalArgumentException(s"Invalid parquet file. Path: $filePath")
+      }
+      // extract the little-endian footer length
+      val buffer = ByteBuffer.wrap(footerBytes, 0, 4)
+      buffer.order(ByteOrder.LITTLE_ENDIAN)
+      val footerLength = buffer.getInt()
+      val bytes = readBytesAt(channel, fileSize - 8 - footerLength, footerLength)
+      val metadata = new ParquetMetadataConverter()
+        .readParquetMetadata(new ByteArrayInputStream(bytes), ParquetMetadataConverter.NO_FILTER)
+
+      ParquetMetadata(
+        schema = metadata.getFileMetaData.getSchema.toString,
+        blocks = metadata.getBlocks.asScala.map { b =>
+          BlockMetadata(
+            rowCount = b.getRowCount,
+            totalByteSize = b.getTotalByteSize,
+            numColumns = b.getColumns.size()
+          )
+        }.toSeq,
+        createdBy = metadata.getFileMetaData.getCreatedBy,
+        numRows = metadata.getBlocks.asScala.map(_.getRowCount).sum,
+        keyValueMetaData = Option(metadata.getFileMetaData.getKeyValueMetaData)
+          .map(_.asScala.toMap)
+          .getOrElse(Map.empty[String, String])
+      )
+    } finally {
+      if (rbc != null) rbc.close()
+    }
   }
 
-  private def parseGcsUri(uri: String): (String, String) = {
-    val cleaned = uri.stripPrefix("gs://")
-    val parts = cleaned.split("/", 2)
-    require(parts.length == 2, s"Invalid GCS URI: $uri")
-    (parts(0), parts(1))
-  }
-
-  private def readMetadata(bucketName: String, blobName: String): ParquetMetadata = {
-    val blobId = BlobId.of(bucketName, blobName)
-    val blob = storage.get(blobId)
-
-    require(blob != null && blob.exists(), s"Blob not found: gs://$bucketName/$blobName")
-
-    val fileSize = blob.getSize
-
-    // Step 1: Read the last 8 bytes to get footer length
-    // Format: 4 bytes footer length + 4 bytes magic "PAR1"
-    val footerReadStart = fileSize - MagicLength - FooterLengthSize
-    val footerLengthBytes = blob.getContent(
-      Storage.BlobSourceOption.offset(footerReadStart),
-      Storage.BlobSourceOption.limit(FooterLengthSize + MagicLength)
-    )
-
-    // Verify magic bytes
-    val magicBytes = new Array[Byte](MagicLength)
-    System.arraycopy(footerLengthBytes, FooterLengthSize, magicBytes, 0, MagicLength)
-    require(
-      java.util.Arrays.equals(magicBytes, ParquetMagic),
-      "Not a valid Parquet file - magic bytes mismatch"
-    )
-
-    // Extract footer length (little-endian)
-    val buffer = ByteBuffer.wrap(footerLengthBytes, 0, FooterLengthSize)
-    buffer.order(ByteOrder.LITTLE_ENDIAN)
-    val footerLength = buffer.getInt()
-
-    logger.debug(s"Parquet footer length: $footerLength bytes")
-
-    // Step 2: Read the actual footer metadata
-    val metadataStart = fileSize - MagicLength - FooterLengthSize - footerLength
-    val metadataBytes = blob.getContent(
-      Storage.BlobSourceOption.offset(metadataStart),
-      Storage.BlobSourceOption.limit(footerLength)
-    )
-
-    // Step 3: Parse the metadata using Parquet libraries
-    val converter = new ParquetMetadataConverter()
-    val fileMetaData = ParquetMetadataConverter.readFileMetaData(
-      new ByteArrayInputStream(metadataBytes)
-    )
-
-    converter.fromParquetMetadata(fileMetaData)
+  private def readBytesAt(
+    channel: SeekableByteChannel,
+    position: Long,
+    length: Int
+  ): Array[Byte] = {
+    channel.position(position)
+    val buffer = ByteBuffer.allocate(length)
+    var bytesRead = 0
+    while (bytesRead < length) {
+      val read = channel.read(buffer)
+      if (read == -1) {
+        throw new IllegalStateException(
+          s"Unexpected EOF at position $position, expected $length bytes but got $bytesRead"
+        )
+      }
+      bytesRead += read
+    }
+    buffer.array()
   }
 }
