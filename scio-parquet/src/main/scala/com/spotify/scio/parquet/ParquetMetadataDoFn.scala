@@ -21,6 +21,7 @@ import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn._
 import org.apache.parquet.format.converter.ParquetMetadataConverter
+import org.apache.parquet.hadoop.ParquetFileReader
 
 import java.io.ByteArrayInputStream
 import java.nio.{ByteBuffer, ByteOrder}
@@ -56,47 +57,27 @@ class ParquetMetadataDoFn extends DoFn[String, (String, Try[ParquetMetadataDoFn.
   ): Unit = out.output((filePath, Try(readMetadata(filePath))))
 
   private def readMetadata(filePath: String): ParquetMetadata = {
-    val resourceId = FileSystems.matchSingleFileSpec(filePath).resourceId()
-    val fileSize = FileSystems.matchSingleFileSpec(filePath).sizeBytes()
-
-    val rbc: ReadableByteChannel = FileSystems.open(resourceId)
+    var reader: ParquetFileReader = null
     try {
-      val channel = rbc match {
-        case seekable: SeekableByteChannel => seekable
-        case _                             =>
-          throw new IllegalArgumentException(s"Filesystem does not support seek. Path: $filePath")
-      }
-
-      // parquet files suffixed with "PAR1" (4 bytes) and a 4-byte footer length
-      val footerBytes = readBytesAt(channel, fileSize - 8, 8)
-      if (!java.util.Arrays.equals(footerBytes.slice(4, 8), MagicBytes)) {
-        throw new IllegalArgumentException(s"Invalid parquet file. Path: $filePath")
-      }
-      // extract the little-endian footer length
-      val buffer = ByteBuffer.wrap(footerBytes, 0, 4)
-      buffer.order(ByteOrder.LITTLE_ENDIAN)
-      val footerLength = buffer.getInt()
-      val bytes = readBytesAt(channel, fileSize - 8 - footerLength, footerLength)
-      val metadata = new ParquetMetadataConverter()
-        .readParquetMetadata(new ByteArrayInputStream(bytes), ParquetMetadataConverter.NO_FILTER)
-
+      reader = ParquetFileReader.open(BeamInputFile.of(filePath))
+      val md = reader.getFooter
       ParquetMetadata(
-        schema = metadata.getFileMetaData.getSchema.toString,
-        blocks = metadata.getBlocks.asScala.map { b =>
+        schema = md.getFileMetaData.getSchema.toString,
+        blocks = md.getBlocks.asScala.map { b =>
           BlockMetadata(
             rowCount = b.getRowCount,
             totalByteSize = b.getTotalByteSize,
             numColumns = b.getColumns.size()
           )
         }.toSeq,
-        createdBy = metadata.getFileMetaData.getCreatedBy,
-        numRows = metadata.getBlocks.asScala.map(_.getRowCount).sum,
-        keyValueMetaData = Option(metadata.getFileMetaData.getKeyValueMetaData)
+        createdBy = md.getFileMetaData.getCreatedBy,
+        numRows = md.getBlocks.asScala.map(_.getRowCount).sum,
+        keyValueMetaData = Option(md.getFileMetaData.getKeyValueMetaData)
           .map(_.asScala.toMap)
           .getOrElse(Map.empty[String, String])
       )
     } finally {
-      if (rbc != null) rbc.close()
+      if (reader != null) reader.close()
     }
   }
 
