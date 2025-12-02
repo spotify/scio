@@ -128,6 +128,15 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
     return schemaSupplier.get();
   }
 
+  // parquet-java requires that serializable classes be explicitly configured; pass the value in from
+  // existing Avro JVM property
+  private static void setSerializableClassProperty(Configuration conf) {
+      final String serializableClasses = System.getProperty("org.apache.avro.SERIALIZABLE_CLASSES");
+      if (!serializableClasses.isEmpty() && conf.get(AvroReadSupport.SERIALIZABLE_CLASSES) == null) {
+          AvroReadSupport.setSerializableClasses(conf, serializableClasses.split(","));
+      }
+  }
+
   ////////////////////////////////////////
   // Reader
   ////////////////////////////////////////
@@ -186,6 +195,8 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
             AvroReadSupport.AVRO_DATA_SUPPLIER, GenericDataSupplier.class, AvroDataSupplier.class);
       }
 
+      setSerializableClassProperty(configuration);
+
       ParquetReader.Builder<ValueT> builder =
           AvroParquetReader.<ValueT>builder(parquetInputFile).withConf(configuration);
       if (predicate != null) {
@@ -240,6 +251,8 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
       AvroParquetWriter.Builder<ValueT> builder =
           AvroParquetWriter.<ValueT>builder(new ParquetOutputFile(channel))
               .withSchema(schemaSupplier.get());
+
+      setSerializableClassProperty(configuration);
 
       // Workaround for PARQUET-2265
       if (configuration.getClass(AvroWriteSupport.AVRO_DATA_SUPPLIER, null) != null) {

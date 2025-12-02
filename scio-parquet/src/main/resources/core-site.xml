@@ -27,10 +27,6 @@
     <value>false</value>
   </property>
   <property>
-    <name>parquet.avro.serializable.classes</name>
-    <value>java.math.BigDecimal,java.math.BigInteger,java.net.URI,java.net.URL,java.io.File,java.lang.Integer</value>
-  </property>
-  <property>
     <name>parquet.avro.compatible</name>
     <value>false</value>
   </property>
