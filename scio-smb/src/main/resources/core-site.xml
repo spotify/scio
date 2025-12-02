@@ -23,6 +23,10 @@
     <value>SEQUENTIAL</value>
   </property>
   <property>
+    <name>fs.gs.inputstream.fast.fail.on.not.found.enable</name>
+    <value>false</value>
+  </property>
+  <property>
     <name>parquet.avro.compatible</name>
     <value>false</value>
   </property>
