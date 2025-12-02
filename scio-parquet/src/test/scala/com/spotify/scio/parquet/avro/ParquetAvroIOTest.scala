@@ -354,6 +354,30 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     }
   }
 
+  it should "read/write records with java-class annotations" in withTempDir { dir =>
+    forAllCases(readConfigs) { case (readConf, testCase) =>
+      val testCaseDir = new File(dir, testCase)
+      val records = (1 to 10).map { i =>
+        JavaClassTest.newBuilder().setAmount(BigDecimal.valueOf(i.toLong).bigDecimal).build()
+      }
+
+      val sc1 = ScioContext()
+      sc1
+        .parallelize(records)
+        .saveAsParquetAvroFile(testCaseDir.getAbsolutePath)
+      sc1.run()
+
+      val sc2 = ScioContext()
+      sc2
+        .parquetAvroFile[JavaClassTest](
+          s"${testCaseDir.getAbsolutePath}/*.parquet",
+          conf = readConf()
+        )
+        .map(identity) should containInAnyOrder(records)
+      sc2.run()
+    }
+  }
+
   class TestRecordProjection(@unused str: String)
 
   "tap" should "use projection schema and GenericDataSupplier" in {
