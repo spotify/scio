@@ -129,8 +129,7 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
   }
 
   // parquet-java requires that serializable classes be explicitly configured; pass the value in
-  // from
-  // existing Avro JVM property
+  // from existing Avro JVM property
   private static void setSerializableClassProperty(Configuration conf) {
     final String serializableClasses = System.getProperty("org.apache.avro.SERIALIZABLE_CLASSES");
     if (!serializableClasses.isEmpty() && conf.get(AvroReadSupport.SERIALIZABLE_CLASSES) == null) {
