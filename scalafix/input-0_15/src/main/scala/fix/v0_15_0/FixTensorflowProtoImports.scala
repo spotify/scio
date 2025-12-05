@@ -7,7 +7,7 @@ import org.tensorflow.proto.example.Example
 import org.tensorflow.proto.example.Feature
 import org.tensorflow.proto.example.Features
 
-object FixTensorflowProtoImportsExample {
+object FixTensorflowProtoImports {
   def process(example: Example): Features = {
     example.getFeatures
   }
