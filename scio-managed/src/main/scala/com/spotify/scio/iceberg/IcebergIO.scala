@@ -25,6 +25,33 @@ import org.apache.beam.sdk.managed.Managed
 import com.spotify.scio.managed.ManagedIO
 import org.apache.beam.sdk.coders.RowCoder
 import org.apache.beam.sdk.values.Row
+import magnolia1._
+
+private[scio] object ConfigMap {
+  type Typeclass[T] = ConfigMapType[T]
+
+  trait ConfigMapType[T] {
+    def toMap(value: T): Map[String, AnyRef]
+  }
+  implicit def gen[T]: ConfigMapType[T] = macro Magnolia.gen[T]
+
+  // just needed to satisfy magnolia
+  implicit val stringToMap: ConfigMapType[String] = _ => Map.empty
+  implicit val intToMap: ConfigMapType[Int] = _ => Map.empty
+  implicit val mapToMap: ConfigMapType[Map[String, String]] = _ => Map.empty
+  implicit val listToMap: ConfigMapType[List[String]] = _ => Map.empty
+
+  private def toSnakeCase(s: String): String =
+    s.replaceAll("([A-Z]+)", "_$1").toLowerCase.replaceFirst("^_", "")
+
+  def join[T](caseClass: CaseClass[ConfigMapType, T]): ConfigMapType[T] = (value: T) => {
+    caseClass.parameters.flatMap { p =>
+      val fieldValue = p.dereference(value)
+      if (fieldValue == null) None
+      else Some(toSnakeCase(p.label) -> fieldValue.asInstanceOf[AnyRef])
+    }.toMap
+  }
+}
 
 final case class IcebergIO[T: RowType: Coder](table: String, catalogName: Option[String])
     extends ScioIO[T] {
@@ -38,27 +65,23 @@ final case class IcebergIO[T: RowType: Coder](table: String, catalogName: Option
 
   override def testId: String = s"IcebergIO(${(Some(table) ++ catalogName).mkString(", ")})"
 
-  private def config(
-    catalogProperties: Map[String, String],
-    configProperties: Map[String, String]
-  ): Map[String, AnyRef] = {
+  private[scio] def config[P](
+    params: P
+  )(implicit mapper: ConfigMap.ConfigMapType[P]): Map[String, AnyRef] = {
     val b = Map.newBuilder[String, AnyRef]
     b += ("table" -> table)
     catalogName.foreach(name => b += ("catalog_name" -> name))
-    // TODO This is untenable
-
-    Option(catalogProperties).foreach(p => b += ("catalog_properties" -> p))
-    Option(configProperties).foreach(p => b += ("config_properties" -> p))
+    b ++= mapper.toMap(params)
     b.result()
   }
 
   override protected def read(sc: ScioContext, params: IcebergIO.ReadParam): SCollection[T] = {
-    val io = ManagedIO(Managed.ICEBERG, config(params.catalogProperties, params.configProperties))
+    val io = ManagedIO(Managed.ICEBERG, config(params))
     sc.transform(_.read(io)(ManagedIO.ReadParam(rowType.schema)).map(rowType.from))
   }
 
   override protected def write(data: SCollection[T], params: IcebergIO.WriteParam): Tap[tapT.T] = {
-    val io = ManagedIO(Managed.ICEBERG, config(params.catalogProperties, params.configProperties))
+    val io = ManagedIO(Managed.ICEBERG, config(params))
     data.map(rowType.to).setCoder(beamRowCoder).write(io).underlying
   }
 
@@ -79,6 +102,8 @@ object IcebergIO {
     val DefaultKeep: List[String] = null
     val DefaultDrop: List[String] = null
     val DefaultFilter: String = null
+
+    implicit val configMap: ConfigMap.ConfigMapType[ReadParam] = ConfigMap.gen[ReadParam]
   }
   case class WriteParam private (
     catalogProperties: Map[String, String] = WriteParam.DefaultCatalogProperties,
@@ -97,5 +122,7 @@ object IcebergIO {
     val DefaultKeep: List[String] = null
     val DefaultDrop: List[String] = null
     val DefaultOnly: String = null
+
+    implicit val configMap: ConfigMap.ConfigMapType[WriteParam] = ConfigMap.gen[WriteParam]
   }
 }

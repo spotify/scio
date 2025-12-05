@@ -27,7 +27,7 @@ class IcebergScioContextSyntax(self: ScioContext) {
   /**
    * @see
    *   [[org.apache.beam.sdk.io.iceberg.IcebergReadSchemaTransformProvider IcebergReadSchemaTransformProvider]]
-   * https://github.com/apache/beam/blob/v2.68.0/sdks/java/io/iceberg/src/main/java/org/apache/beam/sdk/io/iceberg/IcebergReadSchemaTransformProvider.java#L107-L139
+   *   https://github.com/apache/beam/blob/v2.68.0/sdks/java/io/iceberg/src/main/java/org/apache/beam/sdk/io/iceberg/IcebergReadSchemaTransformProvider.java#L107-L139
    */
   def iceberg[T: Coder](
     table: String,
