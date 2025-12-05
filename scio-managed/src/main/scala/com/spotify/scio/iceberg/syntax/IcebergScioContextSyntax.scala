@@ -26,15 +26,19 @@ class IcebergScioContextSyntax(self: ScioContext) {
 
   /**
    * @see
-   *   [[org.apache.beam.sdk.io.iceberg.SchemaTransformConfiguration SchemaTransformConfiguration]]
+   *   [[org.apache.beam.sdk.io.iceberg.IcebergReadSchemaTransformProvider IcebergReadSchemaTransformProvider]]
+   *   https://github.com/apache/beam/blob/v2.68.0/sdks/java/io/iceberg/src/main/java/org/apache/beam/sdk/io/iceberg/IcebergReadSchemaTransformProvider.java#L107-L139
    */
   def iceberg[T: Coder](
     table: String,
     catalogName: String = null,
     catalogProperties: Map[String, String] = IcebergIO.ReadParam.DefaultCatalogProperties,
-    configProperties: Map[String, String] = IcebergIO.ReadParam.DefaultConfigProperties
+    configProperties: Map[String, String] = IcebergIO.ReadParam.DefaultConfigProperties,
+    keep: List[String] = IcebergIO.ReadParam.DefaultKeep,
+    drop: List[String] = IcebergIO.ReadParam.DefaultDrop,
+    filter: String = IcebergIO.ReadParam.DefaultFilter
   )(implicit rt: RowType[T]): SCollection[T] = {
-    val params = IcebergIO.ReadParam(catalogProperties, configProperties)
+    val params = IcebergIO.ReadParam(catalogProperties, configProperties, keep, drop, filter)
     self.read(IcebergIO(table, Option(catalogName)))(params)
   }
 }
