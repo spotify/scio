@@ -45,6 +45,8 @@ final case class IcebergIO[T: RowType: Coder](table: String, catalogName: Option
     val b = Map.newBuilder[String, AnyRef]
     b += ("table" -> table)
     catalogName.foreach(name => b += ("catalog_name" -> name))
+    // TODO This is untenable
+
     Option(catalogProperties).foreach(p => b += ("catalog_properties" -> p))
     Option(configProperties).foreach(p => b += ("config_properties" -> p))
     b.result()
@@ -66,18 +68,34 @@ final case class IcebergIO[T: RowType: Coder](table: String, catalogName: Option
 object IcebergIO {
   case class ReadParam private (
     catalogProperties: Map[String, String] = ReadParam.DefaultCatalogProperties,
-    configProperties: Map[String, String] = ReadParam.DefaultConfigProperties
+    configProperties: Map[String, String] = ReadParam.DefaultConfigProperties,
+    keep: List[String] = ReadParam.DefaultKeep,
+    drop: List[String] = ReadParam.DefaultDrop,
+    filter: String = ReadParam.DefaultFilter
   )
   object ReadParam {
     val DefaultCatalogProperties: Map[String, String] = null
     val DefaultConfigProperties: Map[String, String] = null
+    val DefaultKeep: List[String] = null
+    val DefaultDrop: List[String] = null
+    val DefaultFilter: String = null
   }
   case class WriteParam private (
     catalogProperties: Map[String, String] = WriteParam.DefaultCatalogProperties,
-    configProperties: Map[String, String] = WriteParam.DefaultConfigProperties
+    configProperties: Map[String, String] = WriteParam.DefaultConfigProperties,
+    triggeringFrequencySeconds: Int = WriteParam.DefaultTriggeringFrequencySeconds,
+    directWriteByteLimit: Int = WriteParam.DefaultDirectWriteByteLimit,
+    keep: List[String] = WriteParam.DefaultKeep,
+    drop: List[String] = WriteParam.DefaultDrop,
+    only: String = WriteParam.DefaultOnly
   )
   object WriteParam {
     val DefaultCatalogProperties: Map[String, String] = null
     val DefaultConfigProperties: Map[String, String] = null
+    val DefaultTriggeringFrequencySeconds: Int = null.asInstanceOf[Int]
+    val DefaultDirectWriteByteLimit: Int = null.asInstanceOf[Int]
+    val DefaultKeep: List[String] = null
+    val DefaultDrop: List[String] = null
+    val DefaultOnly: String = null
   }
 }
