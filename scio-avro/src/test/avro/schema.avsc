@@ -90,5 +90,20 @@
           }
         }
     ]
+},
+{
+  "name": "JavaClassTest",
+  "type": "record",
+  "namespace": "com.spotify.scio.avro",
+  "doc": "Record for testing java-class annotations",
+  "fields": [
+    {
+      "name": "amount",
+      "type": {
+        "type": "string",
+        "java-class": "java.math.BigDecimal"
+      }
+    }
+  ]
 }
 ]

@@ -79,7 +79,11 @@ object JavaOptions {
 
   private lazy val runScioDefaults = Set(
     property("scio.ignoreVersionWarning", "true"),
-    property("org.slf4j.simpleLogger.defaultLogLevel", "info")
+    property("org.slf4j.simpleLogger.defaultLogLevel", "info"),
+    property(
+      "org.apache.avro.SERIALIZABLE_CLASSES",
+      "java.math.BigDecimal,java.math.BigInteger,java.net.URI,java.net.URL,java.io.File,java.lang.Integer"
+    )
   ) ++ Set(
     "bigquery.project",
     "bigquery.secret",
