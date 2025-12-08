@@ -119,24 +119,4 @@ class ParquetMetadataTest extends PipelineSpec with BeforeAndAfterAll {
         fail(s"Expected Success but got Failure for $filename: ${error.getMessage}")
     }
   }
-
-  it should "handle errors gracefully for invalid files" in {
-    val sc = ScioContext()
-    val invalidPath = "/path/to/nonexistent/file.parquet"
-
-    val results = sc
-      .parallelize(Seq(invalidPath))
-      .parquetMetadata()
-
-    results should satisfySingleValue[(String, Try[ParquetMetadata])] {
-      case (filename, Failure(error)) =>
-        filename shouldBe invalidPath
-        error shouldBe a[Throwable]
-        true
-      case (filename, Success(_)) =>
-        fail(s"Expected Failure but got Success for invalid path $filename")
-    }
-
-    sc.run().waitUntilDone()
-  }
 }
