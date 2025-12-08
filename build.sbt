@@ -1374,6 +1374,7 @@ lazy val `scio-parquet` = project
     ).reduce(_ | _),
     libraryDependencies ++= Seq(
       // compile
+      "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       "com.google.auth" % "google-auth-library-oauth2-http" % gcpBom.key.value,
       "com.google.cloud.bigdataoss" % "util-hadoop" % s"hadoop2-$bigdataossVersion",
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
