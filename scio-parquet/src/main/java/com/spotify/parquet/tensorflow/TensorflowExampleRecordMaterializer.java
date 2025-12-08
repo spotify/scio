@@ -20,7 +20,7 @@ import org.apache.parquet.io.api.GroupConverter;
 import org.apache.parquet.io.api.RecordMaterializer;
 import org.apache.parquet.schema.MessageType;
 import org.tensorflow.metadata.v0.Schema;
-import org.tensorflow.proto.example.Example;
+import org.tensorflow.proto.Example;
 
 public class TensorflowExampleRecordMaterializer extends RecordMaterializer<Example> {
 

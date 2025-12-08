@@ -64,7 +64,8 @@ class SCollectionOps[T <: IndexedRecord](private val self: SCollection[T]) exten
     shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = WriteParam.DefaultTempDirectory,
     filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier,
-    prefix: String = WriteParam.DefaultPrefix
+    prefix: String = WriteParam.DefaultPrefix,
+    metadata: Map[String, String] = WriteParam.DefaultMetadata
   )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
     val param = WriteParam(
       schema = schema,
@@ -75,7 +76,8 @@ class SCollectionOps[T <: IndexedRecord](private val self: SCollection[T]) exten
       filenamePolicySupplier = filenamePolicySupplier,
       prefix = prefix,
       shardNameTemplate = shardNameTemplate,
-      tempDirectory = tempDirectory
+      tempDirectory = tempDirectory,
+      metadata = metadata
     )
     self.write(ParquetAvroIO[T](path))(param)
   }

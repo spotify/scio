@@ -22,7 +22,7 @@ import com.spotify.scio.testing._
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import magnolify.tensorflow._
-import org.tensorflow.proto.example.Example
+import org.tensorflow.proto.Example
 
 object TFExampleIOTest {
   case class Record(i: Int, s: String)
@@ -38,6 +38,13 @@ class TFExampleIOTest extends ScioIOSpec {
     val xs = (1 to 100).map(x => recordT(Record(x, x.toString)))
     testTap(xs)(_.saveAsTfRecordFile(_))(".tfrecords")
     testJobTest(xs)(TFExampleIO(_))(_.tfRecordExampleFile(_))(_.saveAsTfRecordFile(_))
+  }
+
+  it should "work with typed records" in {
+    val xs = (1 to 100).map(x => Record(x, x.toString))
+    implicit val exampleType: ExampleType[Record] = recordT
+    testTap(xs)(_.saveAsTfRecordFile(_))(".tfrecords")
+    testJobTest(xs)(TFExampleTypedIO(_))(_.typedTfRecordFile(_))(_.saveAsTfRecordFile(_))
   }
 }
 
@@ -65,7 +72,7 @@ class TFExampleIOFileNamePolicyTest extends FileNamePolicySpec[Example] {
     _.map(x => recordT(Record(x, x.toString))).saveAsTfRecordFile(
       "nonsense",
       shardNameTemplate = "SSS-of-NNN",
-      filenamePolicySupplier = testFilenamePolicySupplier
+      filenamePolicySupplier = testFilenamePolicySupplier(_, _)
     )
   )
 }

@@ -25,7 +25,7 @@ import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
-import org.tensorflow.proto.example.Example
+import org.tensorflow.proto.Example
 import org.tensorflow.metadata.v0.Schema
 
 final class DynamicParquetExampleSCollectionOps(
@@ -44,7 +44,8 @@ final class DynamicParquetExampleSCollectionOps(
     compression: CompressionCodecName = ParquetExampleIO.WriteParam.DefaultCompression,
     conf: Configuration = ParquetExampleIO.WriteParam.DefaultConfiguration,
     tempDirectory: String = ParquetExampleIO.WriteParam.DefaultTempDirectory,
-    prefix: String = ParquetExampleIO.WriteParam.DefaultPrefix
+    prefix: String = ParquetExampleIO.WriteParam.DefaultPrefix,
+    metadata: Map[String, String] = ParquetExampleIO.WriteParam.DefaultMetadata
   )(
     destinationFn: Example => String
   ): ClosedTap[Nothing] = {
@@ -56,7 +57,8 @@ final class DynamicParquetExampleSCollectionOps(
       val sink = new ParquetExampleSink(
         schema,
         compression,
-        new SerializableConfiguration(ParquetConfiguration.ofNullable(conf))
+        new SerializableConfiguration(ParquetConfiguration.ofNullable(conf)),
+        metadata
       )
       val write = writeDynamic(
         path = path,

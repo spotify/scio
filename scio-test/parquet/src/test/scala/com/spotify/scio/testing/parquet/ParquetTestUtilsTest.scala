@@ -24,7 +24,7 @@ import org.apache.parquet.filter2.predicate.FilterApi
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.tensorflow.metadata.{v0 => tfmd}
-import org.tensorflow.proto.example._
+import org.tensorflow.proto._
 
 import scala.jdk.CollectionConverters._
 

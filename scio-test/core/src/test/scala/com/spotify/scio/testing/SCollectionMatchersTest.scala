@@ -108,6 +108,9 @@ class SCollectionMatchersTest extends PipelineSpec {
     // lambda ser/de
     runWithContext(_.parallelize(Seq(newTR(1))) should containInAnyOrder(Seq(newTR(1))))
     runWithContext(_.parallelize(Seq(newTR(1))) shouldNot containInAnyOrder(Seq(newTR(2))))
+    runWithContext(
+      _.parallelize(Seq(newTR(1))) should satisfy[TestRecord](_.toList.contains(newTR(1)))
+    )
   }
 
   it should "support containsInAnyOrder containing %" in {
