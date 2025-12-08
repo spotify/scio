@@ -42,7 +42,7 @@ private[scio] object ConfigMap {
   implicit val listToMap: ConfigMapType[List[String]] = _ => Map.empty
 
   private def toSnakeCase(s: String): String =
-    s.replaceAll("([^A-Z])([A-Z]+)", "$1_$2").toLowerCase
+    s.replaceAll("([^A-Z])([A-Z])", "$1_$2").toLowerCase
 
   def join[T](caseClass: CaseClass[ConfigMapType, T]): ConfigMapType[T] = (value: T) => {
     caseClass.parameters.flatMap { p =>
