@@ -21,8 +21,9 @@ import org.apache.parquet.io.{OutputFile, PositionOutputStream}
 
 import java.io.OutputStream
 import java.nio.channels.{Channels, WritableByteChannel}
+import com.spotify.scio.parquet.syntax.AllSyntax
 
-package object parquet {
+package object parquet extends AllSyntax {
   class ParquetOutputStream(outputStream: OutputStream) extends PositionOutputStream {
     private var position = 0L
     override def getPos: Long = position
@@ -74,4 +75,18 @@ package object parquet {
     private[parquet] def ofNullable(conf: Configuration): Configuration =
       Option(conf).getOrElse(empty())
   }
+
+  case class ParquetBlockMetadata(
+    rowCount: Long,
+    totalByteSize: Long,
+    numColumns: Int
+  )
+
+  case class ParquetMetadata(
+    schema: String,
+    blocks: Seq[ParquetBlockMetadata],
+    createdBy: String,
+    numRows: Long,
+    keyValueMetaData: Map[String, String]
+  )
 }

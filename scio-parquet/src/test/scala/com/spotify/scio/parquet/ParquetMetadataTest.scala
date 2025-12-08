@@ -21,6 +21,7 @@ import com.spotify.scio._
 import com.spotify.scio.avro._
 import com.spotify.scio.parquet.avro._
 import com.spotify.scio.testing.PipelineSpec
+import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.transforms.ParDo
 import org.apache.commons.io.FileUtils
 import org.scalatest.BeforeAndAfterAll
@@ -29,8 +30,7 @@ import java.io.File
 import java.nio.file.Files
 import scala.util.{Failure, Success, Try}
 
-class ParquetMetadataDoFnTest extends PipelineSpec with BeforeAndAfterAll {
-  import ParquetMetadataDoFn._
+class ParquetMetadataTest extends PipelineSpec with BeforeAndAfterAll {
 
   private val tempDir = Files.createTempDirectory("parquet-metadata-test-").toFile
   private val testRecords = (1 to 100).map(AvroUtils.newGenericRecord)
@@ -63,12 +63,26 @@ class ParquetMetadataDoFnTest extends PipelineSpec with BeforeAndAfterAll {
   "ParquetMetadataDoFn" should "read and parse parquet file metadata" in {
     val parquetFile = getParquetFile
     val filePath = parquetFile.getAbsolutePath
-
     val sc = ScioContext()
-    val metadataResults = sc
+    val metadataResults: SCollection[(String, Try[ParquetMetadata])] = sc
       .parallelize(Seq(filePath))
-      .applyTransform(ParDo.of(new ParquetMetadataDoFn))
+      .parquetMetadata()
+    verify(metadataResults, filePath)
+    sc.run().waitUntilDone()
+  }
 
+  it should "read and parse parquet file metadata from a glob" in {
+    val parquetFile = getParquetFile
+    val filePath = parquetFile.getAbsolutePath
+    val sc = ScioContext()
+    val metadataResults: SCollection[(String, Try[ParquetMetadata])] = sc
+      .parallelize(Seq(s"${tempDir.getAbsolutePath}/*.parquet"))
+      .parquetMetadata()
+    verify(metadataResults, filePath)
+    sc.run().waitUntilDone()
+  }
+
+  def verify(metadataResults: SCollection[(String, Try[ParquetMetadata])], filePath: String) = {
     metadataResults should satisfySingleValue[(String, Try[ParquetMetadata])] {
       case (filename, Success(metadata)) =>
         filename shouldBe filePath
@@ -105,8 +119,6 @@ class ParquetMetadataDoFnTest extends PipelineSpec with BeforeAndAfterAll {
       case (filename, Failure(error)) =>
         fail(s"Expected Success but got Failure for $filename: ${error.getMessage}")
     }
-
-    sc.run().waitUntilDone()
   }
 
   it should "handle errors gracefully for invalid files" in {
@@ -115,7 +127,7 @@ class ParquetMetadataDoFnTest extends PipelineSpec with BeforeAndAfterAll {
 
     val results = sc
       .parallelize(Seq(invalidPath))
-      .applyTransform(ParDo.of(new ParquetMetadataDoFn))
+      .parquetMetadata()
 
     results should satisfySingleValue[(String, Try[ParquetMetadata])] {
       case (filename, Failure(error)) =>
