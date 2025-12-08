@@ -16,6 +16,4 @@
 
 package com.spotify.scio.parquet.syntax
 
-import com.spotify.scio.SCollectionSyntax
-
 trait AllSyntax extends SCollectionSyntax
