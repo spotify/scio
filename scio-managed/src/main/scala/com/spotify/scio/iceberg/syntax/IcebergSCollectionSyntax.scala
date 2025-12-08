@@ -23,13 +23,32 @@ import com.spotify.scio.values.SCollection
 import magnolify.beam.RowType
 
 class IcebergSCollectionSyntax[T: RowType: Coder](self: SCollection[T]) {
+
+  /**
+   * @see
+   *   [[org.apache.beam.sdk.io.iceberg.IcebergWriteSchemaTransformProvider IcebergWriteSchemaTransformProvider]]
+   *   https://github.com/apache/beam/blob/v2.68.0/sdks/java/io/iceberg/src/main/java/org/apache/beam/sdk/io/iceberg/IcebergWriteSchemaTransformProvider.java#L135-L153
+   */
   def saveAsIceberg(
     table: String,
     catalogName: String = null,
     catalogProperties: Map[String, String] = IcebergIO.WriteParam.DefaultCatalogProperties,
-    configProperties: Map[String, String] = IcebergIO.WriteParam.DefaultConfigProperties
+    configProperties: Map[String, String] = IcebergIO.WriteParam.DefaultConfigProperties,
+    triggeringFrequencySeconds: Int = IcebergIO.WriteParam.DefaultTriggeringFrequencySeconds,
+    directWriteByteLimit: Int = IcebergIO.WriteParam.DefaultDirectWriteByteLimit,
+    keep: List[String] = IcebergIO.WriteParam.DefaultKeep,
+    drop: List[String] = IcebergIO.WriteParam.DefaultDrop,
+    only: String = IcebergIO.WriteParam.DefaultOnly
   ): ClosedTap[Nothing] = {
-    val params = IcebergIO.WriteParam(catalogProperties, configProperties)
+    val params = IcebergIO.WriteParam(
+      catalogProperties,
+      configProperties,
+      triggeringFrequencySeconds,
+      directWriteByteLimit,
+      keep,
+      drop,
+      only
+    )
     self.write(IcebergIO(table, Option(catalogName)))(params)
   }
 }

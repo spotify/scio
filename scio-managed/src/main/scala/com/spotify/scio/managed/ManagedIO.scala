@@ -29,20 +29,7 @@ final case class ManagedIO(ioName: String, config: Map[String, Object]) extends 
   override type WriteP = ManagedIO.WriteParam
   override val tapT: TapT.Aux[Row, Nothing] = EmptyTapOf[Row]
 
-  private lazy val _config: java.util.Map[String, Object] = {
-    // recursively convert this yaml-compatible nested scala map to java map
-    // we either do this or the user has to create nested java maps in scala code
-    // both are bad
-    def _convert(a: Object): Object = {
-      a match {
-        case m: Map[_, _] =>
-          m.asInstanceOf[Map[_, Object]].map { case (k, v) => k -> _convert(v) }.asJava
-        case i: Iterable[_] => i.map(o => _convert(o.asInstanceOf[Object])).asJava
-        case _              => a
-      }
-    }
-    config.map { case (k, v) => k -> _convert(v) }.asJava
-  }
+  private lazy val _config: java.util.Map[String, Object] = ManagedIO.convertConfig(config)
 
   // not-ideal IO naming, but we have no identifier except the config map
   override def testId: String = s"ManagedIO($ioName, ${config.toString})"
@@ -68,4 +55,19 @@ final case class ManagedIO(ioName: String, config: Map[String, Object]) extends 
 object ManagedIO {
   final case class ReadParam(schema: Schema)
   type WriteParam = Unit
+
+  private[scio] def convertConfig(config: Map[String, Object]): java.util.Map[String, Object] = {
+    // recursively convert this yaml-compatible nested scala map to java map
+    // we either do this or the user has to create nested java maps in scala code
+    // both are bad
+    def _convert(a: Object): Object = {
+      a match {
+        case m: Map[_, _] =>
+          m.asInstanceOf[Map[_, Object]].map { case (k, v) => k -> _convert(v) }.asJava
+        case i: Iterable[_] => i.map(o => _convert(o.asInstanceOf[Object])).asJava
+        case _              => a
+      }
+    }
+    config.map { case (k, v) => k -> _convert(v) }.asJava
+  }
 }
