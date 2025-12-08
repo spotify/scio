@@ -22,7 +22,6 @@ import com.spotify.scio.avro._
 import com.spotify.scio.parquet.avro._
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.transforms.ParDo
 import org.apache.commons.io.FileUtils
 import org.scalatest.BeforeAndAfterAll
 
