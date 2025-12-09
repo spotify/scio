@@ -47,8 +47,8 @@ class IcebergIOTest extends ScioIOSpec {
       IcebergIO.WriteParam(
         Map.empty,
         Map.empty,
-        null.asInstanceOf[Int],
-        null.asInstanceOf[Int],
+        None,
+        None,
         List.empty,
         List.empty,
         ""
@@ -56,8 +56,8 @@ class IcebergIOTest extends ScioIOSpec {
       IcebergIO.WriteParam(
         Map("catalogProp1" -> "catalogProp1Value"),
         Map("configProp1" -> "configProp1Value", "configProp2" -> "configProp2Value"),
-        10,
-        100,
+        Some(10),
+        Some(100),
         List("keep1", "keep2", "keep3"),
         List("drop1", "drop2", "drop3"),
         "only"

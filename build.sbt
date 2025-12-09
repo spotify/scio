@@ -119,7 +119,7 @@ val shapelessVersion = "2.3.13"
 val sparkeyVersion = "3.2.5"
 val tensorFlowVersion = "1.0.0"
 val tensorFlowMetadataVersion = "1.16.1"
-val testContainersVersion = "0.43.6"
+val testContainersVersion = "0.44.0"
 val voyagerVersion = "2.1.0"
 
 // dependent versions
@@ -269,7 +269,8 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
           .withEnv(
             Map(
               "BQ_READ_TIMEOUT" -> "30000",
-              "CLOUDSQL_SQLSERVER_PASSWORD" -> "${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}"
+              "CLOUDSQL_SQLSERVER_PASSWORD" -> "${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}",
+              "JAVA_OPTS" -> "-Davro.version=1.12.0" // beam-sdks-java-io-iceberg requires avro 1.12
             )
           ),
         WorkflowStep.Sbt(
