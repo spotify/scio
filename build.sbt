@@ -102,7 +102,7 @@ val kantanCodecsVersion = "0.6.0"
 val kantanCsvVersion = "0.8.0"
 val kryoVersion = "4.0.3"
 val magnoliaVersion = "1.1.10"
-val magnolifyVersion = "0.9.0"
+val magnolifyVersion = "0.9.2"
 val metricsVersion = "4.2.37"
 val munitVersion = "1.2.1"
 val neo4jDriverVersion = "4.4.21"
@@ -394,7 +394,7 @@ val commonSettings = bomSettings ++ Def.settings(
     javacOptions.value.filterNot(exclude.contains)
   },
   javaOptions := JavaOptions.defaults(javaMajorVersion),
-  resolvers ++= Resolver.sonatypeOssRepos("public"),
+  resolvers += Resolver.sonatypeCentralSnapshots,
   excludeDependencies += Exclude.beamKafka,
   excludeDependencies ++= Exclude.loggerImplementations,
   excludeDependencies ++= Exclude.jacksonCrossBuilt(scalaVersion.value),
