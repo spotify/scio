@@ -40,15 +40,21 @@ private[scio] object ConfigMap {
   implicit val intToMap: ConfigMapType[Int] = _ => Map.empty
   implicit val mapToMap: ConfigMapType[Map[String, String]] = _ => Map.empty
   implicit val listToMap: ConfigMapType[List[String]] = _ => Map.empty
+  implicit def optionToMap[T]: ConfigMapType[Option[T]] = _ => Map.empty
 
   private def toSnakeCase(s: String): String =
     s.replaceAll("([^A-Z])([A-Z])", "$1_$2").toLowerCase
 
   def join[T](caseClass: CaseClass[ConfigMapType, T]): ConfigMapType[T] = (value: T) => {
     caseClass.parameters.flatMap { p =>
+      val label = toSnakeCase(p.label)
       val fieldValue = p.dereference(value)
-      if (fieldValue == null) None
-      else Some(toSnakeCase(p.label) -> fieldValue.asInstanceOf[AnyRef])
+      fieldValue match {
+        case null => None
+        case x: Option[_] => x.map { v => label -> v.asInstanceOf[AnyRef] }
+        case _ =>
+          Some(label -> fieldValue.asInstanceOf[AnyRef])
+      }
     }.toMap
   }
 }
@@ -108,8 +114,8 @@ object IcebergIO {
   case class WriteParam private (
     catalogProperties: Map[String, String] = WriteParam.DefaultCatalogProperties,
     configProperties: Map[String, String] = WriteParam.DefaultConfigProperties,
-    triggeringFrequencySeconds: Int = WriteParam.DefaultTriggeringFrequencySeconds,
-    directWriteByteLimit: Int = WriteParam.DefaultDirectWriteByteLimit,
+    triggeringFrequencySeconds: Option[Int] = None,
+    directWriteByteLimit: Option[Int] = None,
     keep: List[String] = WriteParam.DefaultKeep,
     drop: List[String] = WriteParam.DefaultDrop,
     only: String = WriteParam.DefaultOnly
@@ -117,8 +123,8 @@ object IcebergIO {
   object WriteParam {
     val DefaultCatalogProperties: Map[String, String] = null
     val DefaultConfigProperties: Map[String, String] = null
-    val DefaultTriggeringFrequencySeconds: Int = null.asInstanceOf[Int]
-    val DefaultDirectWriteByteLimit: Int = null.asInstanceOf[Int]
+    val DefaultTriggeringFrequencySeconds: Int = -1
+    val DefaultDirectWriteByteLimit: Int = -1
     val DefaultKeep: List[String] = null
     val DefaultDrop: List[String] = null
     val DefaultOnly: String = null

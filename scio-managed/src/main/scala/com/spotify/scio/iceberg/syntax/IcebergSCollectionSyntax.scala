@@ -40,11 +40,12 @@ class IcebergSCollectionSyntax[T: RowType: Coder](self: SCollection[T]) {
     drop: List[String] = IcebergIO.WriteParam.DefaultDrop,
     only: String = IcebergIO.WriteParam.DefaultOnly
   ): ClosedTap[Nothing] = {
+
     val params = IcebergIO.WriteParam(
       catalogProperties,
       configProperties,
-      triggeringFrequencySeconds,
-      directWriteByteLimit,
+      Option(triggeringFrequencySeconds).filter(_ != IcebergIO.WriteParam.DefaultTriggeringFrequencySeconds),
+      Option(directWriteByteLimit).filter(_ != IcebergIO.WriteParam.DefaultDirectWriteByteLimit),
       keep,
       drop,
       only
