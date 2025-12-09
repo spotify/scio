@@ -394,7 +394,6 @@ val commonSettings = bomSettings ++ Def.settings(
     javacOptions.value.filterNot(exclude.contains)
   },
   javaOptions := JavaOptions.defaults(javaMajorVersion),
-  resolvers += Resolver.sonatypeCentralSnapshots,
   excludeDependencies += Exclude.beamKafka,
   excludeDependencies ++= Exclude.loggerImplementations,
   excludeDependencies ++= Exclude.jacksonCrossBuilt(scalaVersion.value),
