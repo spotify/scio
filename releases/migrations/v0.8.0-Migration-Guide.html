@@ -151,10 +151,12 @@ spotify/scio
     <li><a href="../../io/Cassandra.html" class="page">Cassandra</a></li>
     <li><a href="../../io/Csv.html" class="page">CSV</a></li>
     <li><a href="../../io/Datastore.html" class="page">Datastore</a></li>
-    <li><a href="../../io/Grpc.html" class="page">GRPC</a></li>
     <li><a href="../../io/Elasticsearch.html" class="page">Elasticsearch</a></li>
+    <li><a href="../../io/Grpc.html" class="page">GRPC</a></li>
+    <li><a href="../../io/Iceberg.html" class="page">Iceberg</a></li>
     <li><a href="../../io/Jdbc.html" class="page">JDBC</a></li>
     <li><a href="../../io/Json.html" class="page">Json</a></li>
+    <li><a href="../../io/Managed.html" class="page">Managed IO</a></li>
     <li><a href="../../io/Neo4J.html" class="page">Neo4J</a></li>
     <li><a href="../../io/Object.html" class="page">Object file</a></li>
     <li><a href="../../io/Parquet.html" class="page">Parquet</a></li>
@@ -229,7 +231,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.14.19-23-4daeffd-20251023T204536Z*
+<i class="md-icon" title="Version">label_outline</i> 0.15-88294b9-20251209T212543Z*
 </label>
 </li>
 </ul>
@@ -485,8 +487,8 @@ def safe: SCollection[ToExample] = examples.to[ToExample](To.safe)
 </code></pre>
 <h2><a href="#deprecations-and-breaking-changes" name="deprecations-and-breaking-changes" class="anchor"><span class="anchor-link"></span></a>Deprecations and Breaking changes</h2>
 <h3><a href="#scala-concurrent-future-removed-from-scioios" name="scala-concurrent-future-removed-from-scioios" class="anchor"><span class="anchor-link"></span></a>scala.concurrent.Future removed from <code>ScioIO</code>s</h3>
-<p>The removal of <a href="http://www.scala-lang.org/api/2.13.16/scala/concurrent/Future.html" title="scala.concurrent.Future"><code>Future</code></a> led to some semantic and behaviour changes.</p>
-<p><code>ScioIO</code>s no longer return <a href="http://www.scala-lang.org/api/2.13.16/scala/concurrent/Future.html" title="scala.concurrent.Future"><code>Future</code></a></p>
+<p>The removal of <a href="http://www.scala-lang.org/api/2.13.17/scala/concurrent/Future.html" title="scala.concurrent.Future"><code>Future</code></a> led to some semantic and behaviour changes.</p>
+<p><code>ScioIO</code>s no longer return <a href="http://www.scala-lang.org/api/2.13.17/scala/concurrent/Future.html" title="scala.concurrent.Future"><code>Future</code></a></p>
 <pre class="prettyprint"><code class="language-diff">trait ScioIO[T] {
   ....
 - protected def write(data: SCollection[T], params: WriteP): Future[Tap[tapT.T]]
@@ -576,7 +578,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.14.19-23-4daeffd-20251023T204536Z*
+0.15-88294b9-20251209T212543Z*
 </span>
 </div>
 </article>
