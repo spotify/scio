@@ -443,10 +443,11 @@ jobs:
         env:
           BQ_READ_TIMEOUT: 30000
           CLOUDSQL_SQLSERVER_PASSWORD: ${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}
-          JAVA_OPTS: '-Davro.version=1.12.0'
         run: scripts/gha_setup.sh
 
       - name: Test
+        env:
+          JAVA_OPTS: '-Davro.version=1.12.0'
         run: 'sbt ''++ ${{ matrix.scala }}'' ''set integration/test/skip := false'' integration/test'
 
   site:

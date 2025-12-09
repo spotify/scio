@@ -269,12 +269,13 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
           .withEnv(
             Map(
               "BQ_READ_TIMEOUT" -> "30000",
-              "CLOUDSQL_SQLSERVER_PASSWORD" -> "${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}",
-              "JAVA_OPTS" -> "-Davro.version=1.12.0" // beam-sdks-java-io-iceberg requires avro 1.12
+              "CLOUDSQL_SQLSERVER_PASSWORD" -> "${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}"
             )
           ),
         WorkflowStep.Sbt(
           List("set integration/test/skip := false", "integration/test"),
+          // beam-sdks-java-io-iceberg requires avro 1.12
+          env = Map("JAVA_OPTS" -> "-Davro.version=1.12.0"),
           name = Some("Test")
         )
       ),
