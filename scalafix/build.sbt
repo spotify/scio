@@ -2,7 +2,6 @@ lazy val V = _root_.scalafix.sbt.BuildInfo
 
 inThisBuild(
   List(
-    resolvers += Resolver.sonatypeCentralSnapshots,
     organization := "com.spotify",
     scalaVersion := V.scala212,
     scalacOptions ++= List("-Yrangepos"),
