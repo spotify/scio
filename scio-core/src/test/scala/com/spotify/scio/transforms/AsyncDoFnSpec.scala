@@ -23,13 +23,13 @@ import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import org.apache.beam.sdk.options.PipelineOptions
 import org.apache.beam.sdk.transforms.DoFn.OutputReceiver
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, GlobalWindow, PaneInfo}
-import org.apache.beam.sdk.values.TupleTag
+import org.apache.beam.sdk.values.{OutputBuilder, TupleTag}
 import org.joda.time.{DateTime, Instant}
 import org.scalacheck.Prop.propBoolean
 import org.scalacheck._
 import org.scalacheck.commands.Commands
 
-import java.{lang, util}
+import java.util
 import scala.collection.mutable.{Buffer => MBuffer}
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
@@ -188,32 +188,14 @@ abstract class AsyncDoFnTester[P[_], F[_]] extends BaseDoFnTester {
 
   private val finishBundleContext = new fn.FinishBundleContext {
     override def getPipelineOptions: PipelineOptions = ???
-    override def output(output: String, timestamp: Instant, window: BoundedWindow): Unit =
-      outputBuffer.append(output)
-
-    override def output(
-      s: String,
-      timestamp: Instant,
-      window: BoundedWindow,
-      currentRecordId: String,
-      currentRecordOffset: lang.Long
-    ): Unit = output(s, timestamp, window)
-
     override def output[T](
       tag: TupleTag[T],
       output: T,
       timestamp: Instant,
       window: BoundedWindow
     ): Unit = ???
-
-    override def output[T](
-      tag: TupleTag[T],
-      output: T,
-      timestamp: Instant,
-      window: BoundedWindow,
-      currentRecordId: String,
-      currentRecordOffset: lang.Long
-    ): Unit = ???
+    override def output(output: String, timestamp: Instant, window: BoundedWindow): Unit =
+      outputBuffer.append(output)
   }
 
   // make a new request
@@ -228,6 +210,9 @@ abstract class AsyncDoFnTester[P[_], F[_]] extends BaseDoFnTester {
         paneInfo: PaneInfo
       ): Unit =
         outputBuffer.append(output)
+
+      override def builder(value: String): OutputBuilder[String] =
+        this.asInstanceOf[OutputBuilder[String]]
     }
     val input: Int = nextElement
     val timestamp = DateTime.parse("2022-08-31").toInstant

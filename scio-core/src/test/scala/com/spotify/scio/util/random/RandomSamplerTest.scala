@@ -19,6 +19,7 @@ package com.spotify.scio.util.random
 
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.transforms.DoFn.OutputReceiver
+import org.apache.beam.sdk.values.OutputBuilder
 import org.joda.time.Instant
 
 import scala.collection.compat._
@@ -44,6 +45,7 @@ class RandomSamplerTest extends PipelineSpec {
   private def newOutputReceiver[T](buffer: MBuffer[T]) = new OutputReceiver[T] {
     override def output(output: T): Unit = buffer.append(output)
     override def outputWithTimestamp(output: T, timestamp: Instant): Unit = ???
+    override def builder(value: T): OutputBuilder[T] = this.asInstanceOf[OutputBuilder[T]]
   }
 
   def testSampler(
