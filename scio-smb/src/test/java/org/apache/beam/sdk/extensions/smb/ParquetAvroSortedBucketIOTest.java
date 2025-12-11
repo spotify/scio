@@ -22,6 +22,7 @@ import org.apache.avro.SchemaBuilder;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.extensions.avro.io.AvroGeneratedUser;
+import org.apache.beam.sdk.io.fs.EmptyMatchTreatment;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.util.SerializableUtils;
@@ -111,5 +112,36 @@ public class ParquetAvroSortedBucketIOTest {
 
     Assert.assertEquals(tempDirectory, write.getTempDirectoryOrDefault(pipeline));
     Assert.assertEquals(tempDirectory, transform.getTempDirectoryOrDefault(pipeline));
+  }
+
+  @Test
+  public void testEmptyMatchTreatment() {
+    // Test that EmptyMatchTreatment can be set without throwing exceptions
+    final ParquetAvroSortedBucketIO.Read<GenericRecord> read =
+        ParquetAvroSortedBucketIO.read(new TupleTag<>("input"), AvroGeneratedUser.getClassSchema())
+            .from(folder.toString())
+            .withEmptyMatchTreatment(EmptyMatchTreatment.ALLOW);
+
+    // Verify that the parameter is stored correctly
+    Assert.assertEquals(EmptyMatchTreatment.ALLOW, read.getEmptyMatchTreatment());
+
+    // Test default behavior
+    final ParquetAvroSortedBucketIO.Read<GenericRecord> defaultRead =
+        ParquetAvroSortedBucketIO.read(new TupleTag<>("input"), AvroGeneratedUser.getClassSchema())
+            .from(folder.toString());
+    Assert.assertNull(defaultRead.getEmptyMatchTreatment());
+
+    // Test all EmptyMatchTreatment values
+    final ParquetAvroSortedBucketIO.Read<GenericRecord> disallowRead =
+        ParquetAvroSortedBucketIO.read(new TupleTag<>("input"), AvroGeneratedUser.getClassSchema())
+            .from(folder.toString())
+            .withEmptyMatchTreatment(EmptyMatchTreatment.DISALLOW);
+    Assert.assertEquals(EmptyMatchTreatment.DISALLOW, disallowRead.getEmptyMatchTreatment());
+
+    final ParquetAvroSortedBucketIO.Read<GenericRecord> wildcardRead =
+        ParquetAvroSortedBucketIO.read(new TupleTag<>("input"), AvroGeneratedUser.getClassSchema())
+            .from(folder.toString())
+            .withEmptyMatchTreatment(EmptyMatchTreatment.ALLOW_IF_WILDCARD);
+    Assert.assertEquals(EmptyMatchTreatment.ALLOW_IF_WILDCARD, wildcardRead.getEmptyMatchTreatment());
   }
 }
