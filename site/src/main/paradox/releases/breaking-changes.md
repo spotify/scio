@@ -1,6 +1,18 @@
 # Breaking Changelog
 
-## Breaking changes since 0.13.0
+## Breaking changes since 0.15.0 (@ref:[v0.15.0 Migration Guide](migrations/v0.15.0-Migration-Guide.md))
+- Now uses Tensorflow 1.0, requires imports from `org.tensorflow.proto`
+- DatastoreIO requires type annotation `DatastoreIO[Entity]`
+- Java 8 targeting dropped
+
+## Breaking changes since 0.14.0 (@ref:[v0.14.0 Migration Guide](migrations/v0.14.0-Migration-Guide.md))
+- Avro, kryo coders removed from default implicit scope
+- Avro coders moved to `com.spotify.scio.avro`
+- `materialize` no longer splittable
+- Using tensorflow with `scio-parquet` also requires dependency on `scio-tensorflow`
+- Using SMB requires a dependency on the relevant scio module, e.g. `scio-avro` or `scio-parquet`
+
+## Breaking changes since 0.13.0 (@ref:[v0.13.0 Migration Guide](migrations/v0.13.0-Migration-Guide.md))
 - Removed `scio-elasticsearch6`
 - Migrated `scio-elasticsearch7` to new [java client](https://www.elastic.co/guide/en/elasticsearch/client/java-api-client/7.17/introduction.html)
 - Changed `skewedJoin` API (scalafix @github[rule](scalafix/rules/src/main/scala/fix/v0_13_0/FixSkewedJoins.scala) provided)
