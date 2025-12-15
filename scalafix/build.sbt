@@ -2,7 +2,7 @@ lazy val V = _root_.scalafix.sbt.BuildInfo
 
 inThisBuild(
   List(
-    resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
+    resolvers += Resolver.sonatypeCentralSnapshots,
     organization := "com.spotify",
     scalaVersion := V.scala212,
     scalacOptions ++= List("-Yrangepos"),
@@ -22,28 +22,9 @@ inThisBuild(
 lazy val root = project
   .in(file("."))
   .aggregate(
-    tests.projectRefs ++ Seq[sbt.ProjectReference](
-      // 0.7
-      `input-0_7`,
-      `output-0_7`,
-      // 0.8
-      `input-0_8`,
-      `output-0_8`,
-      // 0.10
-      `input-0_10`,
-      `output-0_10`,
-      // 0.12
-      `input-0_12`,
-      `output-0_12`,
-      // 0.13
-      `input-0_13`,
-      `output-0_13`,
-      // 0.14
-      `input-0_14`,
-      `output-0_14`,
-      // scalafix
-      rules
-    ): _*
+    tests.projectRefs ++
+      scalafixProjects.values.flatMap(p => Seq[sbt.ProjectReference](p.input, p.output)) ++
+      Seq[sbt.ProjectReference](rules): _*
   )
 
 lazy val rules = project
@@ -53,6 +34,12 @@ lazy val rules = project
       "ch.epfl.scala" %% "scalafix-core" % V.scalafixVersion
     )
   )
+
+import ScalafixProject._
+lazy val tests = projectMatrix
+  .in(file("tests"))
+  .enablePlugins(ScalafixTestkitPlugin)
+  .scalafixRows(scalafixProjects.values.toList, rules)
 
 def scio(version: String): List[ModuleID] = {
   val modules = List(
@@ -78,133 +65,34 @@ def scio(version: String): List[ModuleID] = {
   modules.map("com.spotify" %% _ % version)
 }
 
-lazy val `input-0_7` = project
-  .settings(
-    libraryDependencies ++= scio(Scio.`0.6`)
-  )
+def scalafix(target: String, inputScio: String, outputScio: String): (String, ScalafixProject) = {
+  val under = target.replace(".", "_")
+  def p(prefix: String, dep: String) = sbt.Project
+    .apply(s"$prefix-$under", file(s"$prefix-$under")).settings(libraryDependencies ++= scio(dep))
+  target -> ScalafixProject(p("input", inputScio), p("output", outputScio), ConfigAxis(s"-scio-$under", s"-$under-"))
+}
 
-lazy val `output-0_7` = project
-  .settings(
-    libraryDependencies ++= scio(Scio.`0.7`)
-  )
+lazy val scalafixProjects = Map(
+  scalafix("0.7", Scio.`0.6`, Scio.`0.7`),    // Scio 0.7
+  scalafix("0.8", Scio.`0.7`, Scio.`0.8`),    // Scio 0.8
+  scalafix("0.10", Scio.`0.9`, Scio.`0.11`),  // Scio 0.10
+  scalafix("0.12", Scio.`0.11`, Scio.`0.12`), // Scio 0.12
+  scalafix("0.13", Scio.`0.12`, Scio.`0.13`), // Scio 0.13
+  scalafix("0.14", Scio.`0.13`, Scio.`0.14`), // Scio 0.14
+  scalafix("0.15", Scio.`0.14`, Scio.`0.15`), // Scio 0.15
+)
 
-lazy val `input-0_8` = project
-  .settings(
-    libraryDependencies ++= scio(Scio.`0.7`)
-  )
-
-lazy val `output-0_8` = project
-  .settings(
-    libraryDependencies ++= scio(Scio.`0.8`)
-  )
-
-lazy val `input-0_10` = project
-  .settings(
-    libraryDependencies ++= scio(Scio.`0.9`)
-  )
-
-lazy val `output-0_10` = project
-  .settings(
-    libraryDependencies ++= scio(Scio.`0.11`)
-  )
-
-lazy val `input-0_12` = project
-  .settings(
-    libraryDependencies ++= scio(Scio.`0.11`)
-  )
-
-lazy val `output-0_12` = project
-  .settings(
-    libraryDependencies ++= scio(Scio.`0.12`)
-  )
-
-lazy val `input-0_13` = project
-  .settings(
-    libraryDependencies ++= scio(Scio.`0.12`)
-  )
-
-lazy val `output-0_13` = project
-  .settings(
-    libraryDependencies ++= scio(Scio.`0.13`)
-  )
-
-lazy val `input-0_14` = project
-  .settings(
-    libraryDependencies ++= scio(Scio.`0.13`)
-  )
-
-lazy val `output-0_14` = project
-  .settings(
-    libraryDependencies ++= scio(Scio.`0.14`)
-  )
-
-lazy val scio0_7 = ConfigAxis("-scio-0_7", "-0_7-")
-lazy val scio0_8 = ConfigAxis("-scio-0_8", "-0_8-")
-lazy val scio0_10 = ConfigAxis("-scio-0_10", "-0_10-")
-lazy val scio0_12 = ConfigAxis("-scio-0_12", "-0_12-")
-lazy val scio0_13 = ConfigAxis("-scio-0_13", "-0_13-")
-lazy val scio0_14 = ConfigAxis("-scio-0_14", "-0_14-")
-
-lazy val tests = projectMatrix
-  .in(file("tests"))
-  .enablePlugins(ScalafixTestkitPlugin)
-  .customRow(
-    scalaVersions = Seq(V.scala212),
-    axisValues = Seq(scio0_7, VirtualAxis.jvm),
-    _.settings(
-      moduleName := name.value + scio0_7.idSuffix,
-      scalafixTestkitOutputSourceDirectories := (`output-0_7` / Compile / unmanagedSourceDirectories).value,
-      scalafixTestkitInputSourceDirectories := (`input-0_7` / Compile / unmanagedSourceDirectories).value,
-      scalafixTestkitInputClasspath := (`input-0_7` / Compile / fullClasspath).value
-    ).dependsOn(rules)
-  )
-  .customRow(
-    scalaVersions = Seq(V.scala212),
-    axisValues = Seq(scio0_8, VirtualAxis.jvm),
-    _.settings(
-      moduleName := name.value + scio0_8.idSuffix,
-      scalafixTestkitOutputSourceDirectories := (`output-0_8` / Compile / unmanagedSourceDirectories).value,
-      scalafixTestkitInputSourceDirectories := (`input-0_8` / Compile / unmanagedSourceDirectories).value,
-      scalafixTestkitInputClasspath := (`input-0_8` / Compile / fullClasspath).value
-    ).dependsOn(rules)
-  )
-  .customRow(
-    scalaVersions = Seq(V.scala212),
-    axisValues = Seq(scio0_10, VirtualAxis.jvm),
-    _.settings(
-      moduleName := name.value + scio0_10.idSuffix,
-      scalafixTestkitOutputSourceDirectories := (`output-0_10` / Compile / unmanagedSourceDirectories).value,
-      scalafixTestkitInputSourceDirectories := (`input-0_10` / Compile / unmanagedSourceDirectories).value,
-      scalafixTestkitInputClasspath := (`input-0_10` / Compile / fullClasspath).value
-    ).dependsOn(rules)
-  )
-  .customRow(
-    scalaVersions = Seq(V.scala212),
-    axisValues = Seq(scio0_12, VirtualAxis.jvm),
-    _.settings(
-      moduleName := name.value + scio0_12.idSuffix,
-      scalafixTestkitOutputSourceDirectories := (`output-0_12` / Compile / unmanagedSourceDirectories).value,
-      scalafixTestkitInputSourceDirectories := (`input-0_12` / Compile / unmanagedSourceDirectories).value,
-      scalafixTestkitInputClasspath := (`input-0_12` / Compile / fullClasspath).value
-    ).dependsOn(rules)
-  )
-  .customRow(
-    scalaVersions = Seq(V.scala212),
-    axisValues = Seq(scio0_13, VirtualAxis.jvm),
-    _.settings(
-      moduleName := name.value + scio0_13.idSuffix,
-      scalafixTestkitOutputSourceDirectories := (`output-0_13` / Compile / unmanagedSourceDirectories).value,
-      scalafixTestkitInputSourceDirectories := (`input-0_13` / Compile / unmanagedSourceDirectories).value,
-      scalafixTestkitInputClasspath := (`input-0_13` / Compile / fullClasspath).value
-    ).dependsOn(rules)
-  )
-  .customRow(
-    scalaVersions = Seq(V.scala212),
-    axisValues = Seq(scio0_14, VirtualAxis.jvm),
-    _.settings(
-      moduleName := name.value + scio0_14.idSuffix,
-      scalafixTestkitOutputSourceDirectories := (`output-0_14` / Compile / unmanagedSourceDirectories).value,
-      scalafixTestkitInputSourceDirectories := (`input-0_14` / Compile / unmanagedSourceDirectories).value,
-      scalafixTestkitInputClasspath := (`input-0_14` / Compile / fullClasspath).value
-    ).dependsOn(rules)
-  )
+lazy val `input-0_7` = scalafixProjects("0.7").input
+lazy val `output-0_7` = scalafixProjects("0.7").output
+lazy val `input-0_8` = scalafixProjects("0.8").input
+lazy val `output-0_8` = scalafixProjects("0.8").output
+lazy val `input-0_10` = scalafixProjects("0.10").input
+lazy val `output-0_10` = scalafixProjects("0.10").output
+lazy val `input-0_12` = scalafixProjects("0.12").input
+lazy val `output-0_12` = scalafixProjects("0.12").output
+lazy val `input-0_13` = scalafixProjects("0.13").input
+lazy val `output-0_13` = scalafixProjects("0.13").output
+lazy val `input-0_14` = scalafixProjects("0.14").input
+lazy val `output-0_14` = scalafixProjects("0.14").output
+lazy val `input-0_15` = scalafixProjects("0.15").input
+lazy val `output-0_15` = scalafixProjects("0.15").output
