@@ -64,7 +64,7 @@ jobs:
         run: sbt +update
 
       - name: Download target directories (2.13)
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: target-${{ matrix.os }}-${{ matrix.java }}-2.13
 
@@ -74,7 +74,7 @@ jobs:
           rm targets.tar
 
       - name: Download target directories (2.12)
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: target-${{ matrix.os }}-${{ matrix.java }}-2.12
 
