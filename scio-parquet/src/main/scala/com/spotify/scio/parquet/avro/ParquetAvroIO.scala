@@ -186,16 +186,18 @@ object ParquetAvroIO {
         Option(projection).getOrElse(readSchema)
       )
 
-      val serializableClasses = System.getProperty("org.apache.avro.SERIALIZABLE_CLASSES")
-      if (
-        serializableClasses.nonEmpty && confOrDefault.get(
-          AvroReadSupport.SERIALIZABLE_CLASSES
-        ) == null
-      ) {
-        AvroReadSupport.setSerializableClasses(
-          confOrDefault,
-          serializableClasses.split(",").toSeq: _*
-        )
+      val serializableClassesProp = System.getProperty("org.apache.avro.SERIALIZABLE_CLASSES")
+      Option(serializableClassesProp).filter(_.nonEmpty).foreach { serializableClasses =>
+        if (
+          confOrDefault.get(
+            AvroReadSupport.SERIALIZABLE_CLASSES
+          ) == null
+        ) {
+          AvroReadSupport.setSerializableClasses(
+            confOrDefault,
+            serializableClasses.split(",").toSeq: _*
+          )
+        }
       }
 
       if (predicate != null) {
