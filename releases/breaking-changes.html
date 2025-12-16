@@ -220,7 +220,9 @@ spotify/scio
 <ul>
   <li><a href="../releases/breaking-changes.html#breaking-changelog" class="header">Breaking Changelog</a>
   <ul>
-    <li><a href="../releases/breaking-changes.html#breaking-changes-since-0-13-0" class="header">Breaking changes since 0.13.0</a></li>
+    <li><a href="../releases/breaking-changes.html#breaking-changes-since-0-15-0-" class="header">Breaking changes since 0.15.0 (<a href="migrations/v0.15.0-Migration-Guide.html">v0.15.0 Migration Guide</a>)</a></li>
+    <li><a href="../releases/breaking-changes.html#breaking-changes-since-0-14-0-" class="header">Breaking changes since 0.14.0 (<a href="migrations/v0.14.0-Migration-Guide.html">v0.14.0 Migration Guide</a>)</a></li>
+    <li><a href="../releases/breaking-changes.html#breaking-changes-since-0-13-0-" class="header">Breaking changes since 0.13.0 (<a href="migrations/v0.13.0-Migration-Guide.html">v0.13.0 Migration Guide</a>)</a></li>
     <li><a href="../releases/breaking-changes.html#breaking-changes-since-0-12-0-" class="header">Breaking changes since 0.12.0 (<a href="migrations/v0.12.0-Migration-Guide.html">v0.12.0 Migration Guide</a>)</a></li>
     <li><a href="../releases/breaking-changes.html#important-changes-in-0-11-3" class="header">Important changes in 0.11.3</a></li>
     <li><a href="../releases/breaking-changes.html#breaking-changes-since-scio-0-10-0-" class="header">Breaking changes since Scio 0.10.0 (<a href="migrations/v0.10.0-Migration-Guide.html">v0.10.0 Migration Guide</a>)</a></li>
@@ -239,7 +241,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.15-88294b9-20251209T212543Z*
+<i class="md-icon" title="Version">label_outline</i> 0.15.0-13-c234ba6-20251216T210656Z*
 </label>
 </li>
 </ul>
@@ -254,7 +256,9 @@ spotify/scio
 <ul>
   <li><a href="../releases/breaking-changes.html#breaking-changelog" class="header">Breaking Changelog</a>
   <ul>
-    <li><a href="../releases/breaking-changes.html#breaking-changes-since-0-13-0" class="header">Breaking changes since 0.13.0</a></li>
+    <li><a href="../releases/breaking-changes.html#breaking-changes-since-0-15-0-" class="header">Breaking changes since 0.15.0 (<a href="migrations/v0.15.0-Migration-Guide.html">v0.15.0 Migration Guide</a>)</a></li>
+    <li><a href="../releases/breaking-changes.html#breaking-changes-since-0-14-0-" class="header">Breaking changes since 0.14.0 (<a href="migrations/v0.14.0-Migration-Guide.html">v0.14.0 Migration Guide</a>)</a></li>
+    <li><a href="../releases/breaking-changes.html#breaking-changes-since-0-13-0-" class="header">Breaking changes since 0.13.0 (<a href="migrations/v0.13.0-Migration-Guide.html">v0.13.0 Migration Guide</a>)</a></li>
     <li><a href="../releases/breaking-changes.html#breaking-changes-since-0-12-0-" class="header">Breaking changes since 0.12.0 (<a href="migrations/v0.12.0-Migration-Guide.html">v0.12.0 Migration Guide</a>)</a></li>
     <li><a href="../releases/breaking-changes.html#important-changes-in-0-11-3" class="header">Important changes in 0.11.3</a></li>
     <li><a href="../releases/breaking-changes.html#breaking-changes-since-scio-0-10-0-" class="header">Breaking changes since Scio 0.10.0 (<a href="migrations/v0.10.0-Migration-Guide.html">v0.10.0 Migration Guide</a>)</a></li>
@@ -276,7 +280,21 @@ spotify/scio
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
 <h1><a href="#breaking-changelog" name="breaking-changelog" class="anchor"><span class="anchor-link"></span></a>Breaking Changelog</h1>
-<h2><a href="#breaking-changes-since-0-13-0" name="breaking-changes-since-0-13-0" class="anchor"><span class="anchor-link"></span></a>Breaking changes since 0.13.0</h2>
+<h2><a href="#breaking-changes-since-0-15-0-" name="breaking-changes-since-0-15-0-" class="anchor"><span class="anchor-link"></span></a>Breaking changes since 0.15.0 (<a href="migrations/v0.15.0-Migration-Guide.html">v0.15.0 Migration Guide</a>)</h2>
+<ul>
+  <li>Now uses Tensorflow 1.0, requires imports from <code>org.tensorflow.proto</code></li>
+  <li>DatastoreIO requires type annotation <code>DatastoreIO[Entity]</code></li>
+  <li>Java 8 targeting dropped</li>
+</ul>
+<h2><a href="#breaking-changes-since-0-14-0-" name="breaking-changes-since-0-14-0-" class="anchor"><span class="anchor-link"></span></a>Breaking changes since 0.14.0 (<a href="migrations/v0.14.0-Migration-Guide.html">v0.14.0 Migration Guide</a>)</h2>
+<ul>
+  <li>Avro, kryo coders removed from default implicit scope</li>
+  <li>Avro coders moved to <code>com.spotify.scio.avro</code></li>
+  <li><code>materialize</code> no longer splittable</li>
+  <li>Using tensorflow with <code>scio-parquet</code> also requires dependency on <code>scio-tensorflow</code></li>
+  <li>Using SMB requires a dependency on the relevant scio module, e.g. <code>scio-avro</code> or <code>scio-parquet</code></li>
+</ul>
+<h2><a href="#breaking-changes-since-0-13-0-" name="breaking-changes-since-0-13-0-" class="anchor"><span class="anchor-link"></span></a>Breaking changes since 0.13.0 (<a href="migrations/v0.13.0-Migration-Guide.html">v0.13.0 Migration Guide</a>)</h2>
 <ul>
   <li>Removed <code>scio-elasticsearch6</code></li>
   <li>Migrated <code>scio-elasticsearch7</code> to new <a href="https://www.elastic.co/guide/en/elasticsearch/client/java-api-client/7.17/introduction.html">java client</a></li>
@@ -361,7 +379,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.15-88294b9-20251209T212543Z*
+0.15.0-13-c234ba6-20251216T210656Z*
 </span>
 </div>
 </article>
@@ -371,7 +389,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="../releases/migrations/v0.14.0-Migration-Guide.html" title="Scio v0.14.0" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="../releases/migrations/v0.15.0-Migration-Guide.html" title="Scio v0.15.0" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -380,7 +398,7 @@ Edit this page
 <span class="md-footer-nav__direction">
 Previous
 </span>
-Scio v0.14.0
+Scio v0.15.0
 </span>
 </div>
 </a>
