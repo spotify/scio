@@ -163,6 +163,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * [[com.spotify.scio.avro.types.AvroType AvroType.fromPath]], or
    * [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
    */
+  @deprecated("Use magnolify API instead.", "0.15.0")
   def typedAvroFile[T <: HasAvroAnnotation: TypeTag: Coder](
     path: String,
     suffix: String = AvroTypedIO.ReadParam.DefaultSuffix
