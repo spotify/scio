@@ -147,6 +147,7 @@ final class TypedAvroSCollectionOps[T <: HasAvroAnnotation](private val self: SC
    * Save this SCollection as an Avro file. Note that element type `T` must be a case class
    * annotated with [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
    */
+  @deprecated("Use magnolify API instead.", "0.15.0")
   def saveAsTypedAvroFile(
     path: String,
     numShards: Int = AvroTypedIO.WriteParam.DefaultNumShards,
