@@ -132,7 +132,9 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
   // from existing Avro JVM property
   private static void setSerializableClassProperty(Configuration conf) {
     final String serializableClasses = System.getProperty("org.apache.avro.SERIALIZABLE_CLASSES");
-    if (!serializableClasses.isEmpty() && conf.get(AvroReadSupport.SERIALIZABLE_CLASSES) == null) {
+    if (serializableClasses != null
+        && !serializableClasses.isEmpty()
+        && conf.get(AvroReadSupport.SERIALIZABLE_CLASSES) == null) {
       AvroReadSupport.setSerializableClasses(conf, serializableClasses.split(","));
     }
   }
