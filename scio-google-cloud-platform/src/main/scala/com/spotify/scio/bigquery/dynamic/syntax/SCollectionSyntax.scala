@@ -143,6 +143,7 @@ final class DynamicTypedBigQueryOps[T <: HasAnnotation](private val self: SColle
    * element type `T` must be annotated with
    * [[com.spotify.scio.bigquery.types.BigQueryType BigQueryType]].
    */
+  @deprecated("Use magnolify API instead.", "0.15.0")
   def saveAsTypedBigQuery(
     writeDisposition: WriteDisposition = DynamicWriteParam.DefaultWriteDisposition,
     createDisposition: CreateDisposition = DynamicWriteParam.DefaultCreateDisposition,
