@@ -226,7 +226,7 @@ object AvroType {
    * @group converters
    */
   def fromGenericRecord[T]: GenericRecord => T =
-     macro ConverterProvider.fromGenericRecordImpl[T]
+    macro ConverterProvider.fromGenericRecordImpl[T]
 
   /**
    * Generate a converter function from the given case class `T` to
