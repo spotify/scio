@@ -146,7 +146,7 @@ ThisBuild / licenses := Seq(License.Apache2)
 
 // scala versions
 val scala213 = "2.13.17"
-val scala212 = "2.12.20"
+val scala212 = "2.12.21"
 val scalaDefault = scala213
 
 // compiler settings
