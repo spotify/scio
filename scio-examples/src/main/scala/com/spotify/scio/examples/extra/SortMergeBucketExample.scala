@@ -280,3 +280,104 @@ object SortMergeBucketTransformExample {
     ()
   }
 }
+
+object SortMergeBucketMultiOutputExample {
+  import com.spotify.scio.smb._
+
+  case class AccountProjection(id: Int, amount: Double)
+  case class UserSummary(userId: Int, age: Int, totalAmount: Double, accountCount: Int)
+  case class UserDetails(userId: Int, age: Int, accounts: Seq[AccountProjection])
+  case class HighValueUser(userId: Int, age: Int, totalAmount: Double)
+
+  def pipeline(cmdLineArgs: Array[String]): ScioContext = {
+    val (sc, args) = ContextAndArgs(cmdLineArgs)
+    pipeline(sc, args)
+    sc
+  }
+
+  def pipeline(sc: ScioContext, args: Args): Unit = {
+    implicit val coder: Coder[GenericRecord] = avroGenericRecordCoder(
+      SortMergeBucketExample.UserDataSchema
+    )
+    implicit val scImpl: ScioContext = sc
+
+    // #SortMergeBucketExample_multi_output
+    // Create base collection with expensive shared computation
+    // This cogroup and map runs ONCE, results are shared across all outputs
+    val base = SMBCollection
+      .cogroup2(
+        classOf[Integer],
+        ParquetAvroSortedBucketIO
+          .read(new TupleTag[GenericRecord]("users"), SortMergeBucketExample.UserDataSchema)
+          .withFilterPredicate(FilterApi.lt(FilterApi.intColumn("age"), Int.box(50)))
+          .from(args("users")),
+        ParquetTypeSortedBucketIO
+          .read(new TupleTag[AccountProjection]("accounts"))
+          .from(args("accounts"))
+      )
+      .map { case (_, (users, accounts)) =>
+        // Expensive computation happens ONCE per key group
+        // Results are pushed to all three outputs below
+        val accountList = accounts.toSeq
+        val totalAmount = accountList.map(_.amount).sum
+        (users.toSeq, accountList, totalAmount)
+      }
+
+    // Output 1: Summary - just the aggregated metrics
+    base
+      .map { case (users, accounts, total) =>
+        UserSummary(
+          userId = users.head.get("userId").asInstanceOf[Int],
+          age = users.head.get("age").asInstanceOf[Int],
+          totalAmount = total,
+          accountCount = accounts.size
+        )
+      }
+      .saveAsSortedBucket(
+        ParquetTypeSortedBucketIO
+          .transformOutput[Integer, UserSummary]("userId")
+          .to(args("summaryOutput"))
+      )
+
+    // Output 2: Details - full account information
+    base
+      .map { case (users, accounts, _) =>
+        UserDetails(
+          userId = users.head.get("userId").asInstanceOf[Int],
+          age = users.head.get("age").asInstanceOf[Int],
+          accounts = accounts
+        )
+      }
+      .saveAsSortedBucket(
+        ParquetTypeSortedBucketIO
+          .transformOutput[Integer, UserDetails]("userId")
+          .to(args("detailsOutput"))
+      )
+
+    // Output 3: High value users only - filtered subset
+    base
+      .filter { case (_, _, total) => total > 1000.0 }
+      .map { case (users, _, total) =>
+        HighValueUser(
+          userId = users.head.get("userId").asInstanceOf[Int],
+          age = users.head.get("age").asInstanceOf[Int],
+          totalAmount = total
+        )
+      }
+      .saveAsSortedBucket(
+        ParquetTypeSortedBucketIO
+          .transformOutput[Integer, HighValueUser]("userId")
+          .to(args("highValueOutput"))
+      )
+
+    // All outputs execute automatically when sc.run() is called
+    // SMB data is read ONCE, expensive computation runs ONCE, zero shuffles!
+    // #SortMergeBucketExample_multi_output
+  }
+
+  def main(cmdLineArgs: Array[String]): Unit = {
+    val sc = pipeline(cmdLineArgs)
+    sc.run().waitUntilDone()
+    ()
+  }
+}

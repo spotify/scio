@@ -46,10 +46,179 @@ Two sources can be joined by opening file readers on corresponding buckets of ea
     Scala APIs (see: @scaladoc[SortedBucketScioContext](com.spotify.scio.smb.syntax.SortedBucketScioContext)):
 
       * `ScioContext#sortMergeTransform` (1-22 sources)
-    
+
     Note that each @javadoc[TupleTag](org.apache.beam.sdk.values.TupleTag) used to create the @javadoc[SortedBucketIO.Read](org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read)s needs to have a unique Id.
-            
+
     @@snip [SortMergeBucketExample.scala](/scio-examples/src/main/scala/com/spotify/scio/examples/extra/SortMergeBucketExample.scala) { #SortMergeBucketExample_transform }
+
+## SMBCollection: Fluent API for SMB operations
+
+_Since Scio 0.15.0_ (experimental).
+
+@scaladoc[SMBCollection](com.spotify.scio.smb.SMBCollection) provides a fluent, `SCollection`-like API for SMB operations with built-in support for **zero-shuffle multi-output** transforms.
+
+### Key Features
+
+- **Fluent transformations**: Chain operations like `map`, `filter`, `flatMap` while preserving SMB structure
+- **Zero-shuffle multi-output**: Multiple outputs from the same base read SMB data once with shared computation
+- **Auto-execution**: Outputs execute automatically via `sc.onClose()` hook (no explicit `.run()` needed)
+- **Type-safe**: Full Scala type safety with coders
+
+### Why Use Multi-Output?
+
+Multi-output SMB transforms solve a common problem: creating multiple derived datasets from the same expensive cogroup or computation. Traditional approaches have significant overhead:
+
+**Problem: Traditional Approach (N reads + N shuffles)**
+```scala
+// Approach 1: Separate transforms - reads data 3 times, 3 shuffles
+sc.sortMergeTransform(users, accounts).to(summaryOutput).via(expensiveCompute)
+sc.sortMergeTransform(users, accounts).to(detailsOutput).via(expensiveCompute)
+sc.sortMergeTransform(users, accounts).to(highValueOutput).via(expensiveCompute)
+
+// Approach 2: SCollection fanout - 1 read, but 3 shuffles (GroupByKey in each saveAsSortedBucket)
+val result = sc.sortMergeJoin(users, accounts).map(expensiveCompute)
+result.map(_.summary).saveAsSortedBucket(summaryOutput)
+result.map(_.details).saveAsSortedBucket(detailsOutput)
+result.filter(_.isHighValue).saveAsSortedBucket(highValueOutput)
+```
+
+**Solution: SMBCollection Multi-Output (1 read + 0 shuffles)**
+```scala
+val base = SMBCollection.cogroup2(classOf[String], usersRead, accountsRead)
+  .map { case (_, (users, accounts)) => expensiveCompute(users, accounts) }  // Runs ONCE per key group
+
+// Fan out to multiple outputs - all data already bucketed!
+base.map(_.summary).saveAsSortedBucket(summaryOutput)
+base.map(_.details).saveAsSortedBucket(detailsOutput)
+base.filter(_.isHighValue).saveAsSortedBucket(highValueOutput)
+
+sc.run()  // Executes in single pass with shared I/O
+```
+
+### Complete Example: Multi-Output Transform
+
+This example demonstrates creating three different outputs from a single expensive join:
+
+@@snip [SortMergeBucketExample.scala](/scio-examples/src/main/scala/com/spotify/scio/examples/extra/SortMergeBucketExample.scala) { #SortMergeBucketExample_multi_output }
+
+**Performance characteristics:**
+- ✅ SMB data read **once** (not 3 times)
+- ✅ Expensive cogroup computation runs **once** per key group (not 3 times)
+- ✅ **Zero shuffles** - data stays bucketed through entire pipeline
+- ✅ Automatically fuses transformations at runtime
+
+**When to use this pattern:**
+- Multiple downstream datasets derived from the same join
+- Expensive aggregations or computations that feed multiple outputs
+- Reducing pipeline cost and latency by eliminating redundant work
+
+**Cost savings examples:**
+
+| Scenario | Traditional (SCollection fanout) | Fluent Multi-Output | Cost Reduction |
+|----------|----------------------------------|---------------------|----------------|
+| 1TB → 3 SMB outputs | 1TB read + ~3TB shuffle | 1TB read, 0 shuffle | **~4× savings** |
+| 2TB join → 5 outputs | 2TB read + ~10TB shuffle | 2TB read, 0 shuffle | **~6× savings** |
+| 500GB → 10 outputs | 500GB read + ~5TB shuffle | 500GB read, 0 shuffle | **~11× savings** |
+
+The savings scale with the number of outputs - each additional output adds another shuffle in traditional approach, but costs nothing with fluent multi-output.
+
+### Transforming Values
+
+Transformations work directly on values:
+
+```scala
+val result = SMBCollection.read(classOf[String], usersRead)
+  .filter(_.isActive)
+  .map(_.email)
+  .saveAsSortedBucket(output)
+```
+
+### Converting to SCollection
+
+SMBCollection can convert to regular `SCollection` for operations that require it:
+
+```scala
+// Option 1: Deferred execution (allows multi-output)
+val deferred = SMBCollection.read(classOf[Integer], usersRead)
+  .map(transform)
+  .toDeferredSCollection()
+
+val sc = deferred.get  // Materialize when ready
+
+// Option 2: Immediate conversion
+val sc = SMBCollection.read(classOf[Integer], usersRead)
+  .toSCollectionAndSeal()  // Equivalent to .toDeferredSCollection().get
+```
+
+You can even **mix SMB and SCollection outputs** from the same base:
+
+```scala
+val base = SMBCollection.cogroup2(classOf[Integer], usersRead, accountsRead)
+  .map { case (_, (users, accounts)) => expensiveJoin(users, accounts) }  // Runs ONCE
+
+// SMB outputs (stay bucketed)
+base.map(_.summary).saveAsSortedBucket(summaryOutput)
+base.map(_.details).saveAsSortedBucket(detailsOutput)
+
+// SCollection output (for non-SMB operations)
+val sc = base.toDeferredSCollection().get
+sc.filter(_.needsProcessing).saveAsTextFile(textOutput)
+
+sc.run()  // All outputs execute in one pass!
+```
+
+### Side Inputs
+
+SMBCollection supports side inputs via `.withSideInputs()`:
+
+```scala
+val sideInput = sc.parallelize(List("config")).asSingletonSideInput
+
+SMBCollection.read(classOf[Integer], usersRead)
+  .withSideInputs(sideInput)
+  .map { (ctx, values) =>
+    val config = ctx(sideInput)
+    values.map(v => transform(v, config))
+  }
+  .saveAsSortedBucket(output)
+```
+
+### Limitations
+
+- **Cogroup arity**: Currently supports up to 4-way cogroups (`cogroup2`, `cogroup3`, `cogroup4`). For 5-22 way cogroups, use traditional `sortMergeCoGroup` API. Note: this is not a systemic limitation - the API can be easily extended to support higher arity by adding `cogroup5` through `cogroup22` methods.
+- **Key preservation required**: Transformations must not change the embedded key value
+- **Experimental API**: Subject to changes in future Scio versions
+
+### When to Use Fluent vs Traditional API
+
+**Use SMBCollection (Fluent API)** - Default choice for most SMB operations:
+- ✅ Any SMB → SMB transformation (cleaner functional syntax vs imperative callbacks)
+- ✅ Multiple SMB outputs from same computation (**massive cost savings** via zero-shuffle)
+- ✅ Mixed SMB + SCollection outputs (via `toDeferredSCollection()`)
+- ✅ 2-4 source cogroups
+- ✅ Clean functional operations (`map`, `filter`, `flatMap`) directly on values
+
+**Use Traditional API** - Only when required:
+- ✅ 5-22 way cogroups (fluent API limitation - though easily extensible)
+
+**Note**: For SMB → SCollection conversions, both APIs are effectively equivalent. Fluent uses `.toSCollectionAndSeal()` vs traditional's direct `SCollection` return - the difference is trivial.
+
+The fluent API uses familiar functional operations (`map`, `flatMap`, `filter`) instead of traditional API's imperative `outputCollector.accept()` callbacks, making it more idiomatic for Scala developers.
+
+See @scaladoc[SMBCollection](com.spotify.scio.smb.SMBCollection) for full API documentation.
+
+### API Comparison
+
+Quick reference for choosing between fluent and traditional APIs:
+
+| Feature | Fluent API | Traditional API | Notes |
+|---------|------------|-----------------|-------|
+| 2-4 source cogroups | ✅ | ✅ | Both work equally well |
+| 5-22 source cogroups | ❌ | ✅ | Traditional only (fluent limitation - easily extensible) |
+| SMB → multiple SMB outputs | ✅ Zero shuffle | ⚠️ Requires shuffles | **Fluent major advantage** |
+| SMB → mixed SMB + SCollection | ✅ | ❌ | Fluent only |
+| Functional syntax | ✅ `map`/`filter`/`flatMap` | ❌ `outputCollector.accept()` | Fluent more idiomatic |
+| SMB → SCollection | ✅ `.toSCollectionAndSeal()` | ✅ Direct return | Effectively equivalent |
 
 ## What kind of data can I write using SMB?
 
