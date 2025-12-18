@@ -56,10 +56,8 @@ trait SmbJob {
       .to(args("output"))
 
   def setUserAccounts(users: Iterable[User], accounts: Iterable[Account]): User = {
-    users.toList match {
-      case u :: Nil => setUserAccounts(u, accounts)
-      case _        => throw new IllegalArgumentException("Expected exactly one user")
-    }
+    val u :: Nil = users.toList
+    setUserAccounts(u, accounts)
   }
 
   def setUserAccounts(user: User, accounts: Iterable[Account]): User = {

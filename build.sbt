@@ -1643,6 +1643,7 @@ lazy val `scio-smb` = project
       "org.checkerframework" % "checker-qual" % checkerQualVersion,
       "org.slf4j" % "log4j-over-slf4j" % slf4jVersion, // log4j is excluded from hadoop
       "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "com.twitter" %% "chill" % chillVersion,
       // provided
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion % Provided, // scio-gcp
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % Provided,
