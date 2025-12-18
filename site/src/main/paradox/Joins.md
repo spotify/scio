@@ -209,6 +209,24 @@ val elements: SCollection[(String, (Int, String))] = a.skewedJoin(b)
 Sort-Merge Buckets allow for shuffle-free joins of large datasets.
 See @ref[Sort Merge Bucket](extras/Sort-Merge-Bucket.md)
 
+_Since Scio 0.15.0_ (experimental), @scaladoc[SMBCollection](com.spotify.scio.smb.SMBCollection) provides a fluent `SCollection`-like API for SMB operations with zero-shuffle multi-output support:
+
+```scala
+import com.spotify.scio.smb.SMBCollection
+
+// Create base with expensive join
+val base = SMBCollection.cogroup2(classOf[String], usersRead, eventsRead)
+  .map { case (_, (users, events)) => expensiveJoin(users, events) }
+
+// Fan out to multiple outputs (shared I/O + computation!)
+base.map(_.summary).saveAsSortedBucket(summaryOutput)
+base.map(_.details).saveAsSortedBucket(detailsOutput)
+
+sc.run()  // Outputs execute automatically
+```
+
+See @ref[SMBCollection](extras/Sort-Merge-Bucket.md#smbcollection-fluent-api-for-smb-operations) for more details.
+
 ## See also
 
 * [Join Optimizations at Spotify](https://youtu.be/cGvaQp_h5ek?t=6257) How Scio can save you time and money with clever join strategies and approximate algorithms, Apache Beam Summit 2022
