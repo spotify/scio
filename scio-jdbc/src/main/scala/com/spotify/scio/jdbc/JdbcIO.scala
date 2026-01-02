@@ -50,16 +50,32 @@ object JdbcIO {
   private[jdbc] def dataSourceConfiguration(
     opts: JdbcConnectionOptions
   ): BJdbcIO.DataSourceConfiguration =
-    opts.password match {
-      case Some(pass) =>
-        BJdbcIO.DataSourceConfiguration
-          .create(opts.driverClass.getCanonicalName, opts.connectionUrl)
-          .withUsername(opts.username)
-          .withPassword(pass)
-      case None =>
-        BJdbcIO.DataSourceConfiguration
-          .create(opts.driverClass.getCanonicalName, opts.connectionUrl)
-          .withUsername(opts.username)
+    BJdbcIO.DataSourceConfiguration
+      .create(opts.driverClass.getCanonicalName, opts.connectionUrl)
+      .withUsername(opts.username)
+      .pipe { c =>
+        opts.password.fold(c)(c.withPassword)
+      }
+      .pipe { c =>
+        getUrlParameters(opts.connectionUrl)
+          .get("cloudSqlInstance")
+          .flatten
+          .map(instance => "cloudSqlInstance=" + instance)
+          .fold(c)(c.withConnectionProperties)
+      }
+
+  private def getUrlParameters(connectionUrl: String): Map[String, Option[String]] =
+    connectionUrl.split('?').toList match {
+      case _ :: parameters :: _ =>
+        parameters
+          .split('&')
+          .map { x =>
+            val pair = x.split('=')
+            (pair(0), if (pair.length > 1) Some(pair(1)) else None)
+          }
+          .toMap
+      case _ =>
+        Map.empty
     }
 
   object ReadParam {
