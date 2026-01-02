@@ -22,19 +22,23 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.parquet.read.{ParquetRead, ParquetReadConfiguration, ReadSupportFactory}
-import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil, ParquetConfiguration}
+import com.spotify.scio.parquet.{
+  BeamInputFile,
+  GcsConnectorUtil,
+  LineageReportingDoFn,
+  ParquetConfiguration
+}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import magnolify.parquet.ParquetType
 import org.apache.beam.sdk.io.fs.ResourceId
-import org.apache.beam.sdk.transforms.SerializableFunctions
-import org.apache.beam.sdk.transforms.SimpleFunction
+import org.apache.beam.sdk.transforms.{ParDo, SerializableFunctions, SimpleFunction}
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
 import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.io.{DynamicFileDestinations, FileSystems, WriteFiles}
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
-import org.apache.beam.sdk.values.TypeDescriptor
+import org.apache.beam.sdk.values.{KV, TypeDescriptor}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.filter2.predicate.FilterPredicate
@@ -119,7 +123,12 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
           true
         )
       )
-    sc.applyTransform(source).map(_.getValue)
+
+    sc.applyTransform(source)
+      .applyTransform(
+        ParDo.of(new LineageReportingDoFn[KV[JBoolean, T]](filePattern))
+      )
+      .map(_.getValue)
   }
 
   private def parquetOut(

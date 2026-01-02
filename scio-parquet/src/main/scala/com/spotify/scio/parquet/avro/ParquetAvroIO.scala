@@ -22,7 +22,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.parquet.read.{ParquetRead, ParquetReadConfiguration, ReadSupportFactory}
-import com.spotify.scio.parquet.{GcsConnectorUtil, ParquetConfiguration}
+import com.spotify.scio.parquet.{GcsConnectorUtil, LineageReportingDoFn, ParquetConfiguration}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.{FilenamePolicySupplier, Functions, ScioUtil}
 import com.spotify.scio.values.SCollection
@@ -264,7 +264,12 @@ object ParquetAvroIO {
         })
         .withConfiguration(job.getConfiguration)
 
-      sc.applyTransform(transform).map(_.getValue)
+      sc.applyTransform(transform)
+        .applyTransform(
+          org.apache.beam.sdk.transforms.ParDo
+            .of(new LineageReportingDoFn[org.apache.beam.sdk.values.KV[JBoolean, T]](filePattern))
+        )
+        .map(_.getValue)
     }
   }
 
