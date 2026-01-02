@@ -39,8 +39,8 @@ import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.io._
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
-import org.apache.beam.sdk.transforms.SerializableFunctions
-import org.apache.beam.sdk.transforms.SimpleFunction
+import org.apache.beam.sdk.transforms.{ParDo, SerializableFunctions, SimpleFunction}
+import org.apache.beam.sdk.values.KV
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.filter2.predicate.FilterPredicate
@@ -101,7 +101,6 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
   ): SCollection[Example] = {
     val job = Job.getInstance(conf)
     val filePattern = ScioUtil.filePattern(path, params.suffix)
-
     GcsConnectorUtil.setInputPaths(sc, job, filePattern)
     job.setInputFormatClass(classOf[TensorflowExampleParquetInputFormat])
     job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
@@ -125,10 +124,11 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
       })
       .withConfiguration(job.getConfiguration)
 
-    // Report lineage during execution (not construction time)
     sc.applyTransform(source)
       .applyTransform(
-        org.apache.beam.sdk.transforms.ParDo.of(new LineageReportingDoFn[org.apache.beam.sdk.values.KV[JBoolean, Example]](filePattern))
+        ParDo.of(
+          new LineageReportingDoFn[KV[JBoolean, Example]](filePattern)
+        )
       )
       .map(_.getValue)
   }

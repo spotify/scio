@@ -240,7 +240,6 @@ object ParquetAvroIO {
     ): SCollection[T] = {
       val job = Job.getInstance(confOrDefault)
       val filePattern = ScioUtil.filePattern(path, suffix)
-
       GcsConnectorUtil.setInputPaths(sc, job, filePattern)
       job.setInputFormatClass(classOf[AvroParquetInputFormat[T]])
       job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
@@ -260,15 +259,15 @@ object ParquetAvroIO {
           // `SCollection#map` might throw NPE on incomplete Avro objects when the runner tries
           // to serialized them. Lifting the mapping function here fixes the problem.
           override def apply(input: A): T = g(input)
-          override def getInputTypeDescriptor: TypeDescriptor[A] = TypeDescriptor.of(aCls)
-          override def getOutputTypeDescriptor: TypeDescriptor[T] = TypeDescriptor.of(oCls)
+          override def getInputTypeDescriptor = TypeDescriptor.of(aCls)
+          override def getOutputTypeDescriptor = TypeDescriptor.of(oCls)
         })
         .withConfiguration(job.getConfiguration)
 
-      // Report lineage during execution (not construction time)
       sc.applyTransform(transform)
         .applyTransform(
-          org.apache.beam.sdk.transforms.ParDo.of(new LineageReportingDoFn[org.apache.beam.sdk.values.KV[JBoolean, T]](filePattern))
+          org.apache.beam.sdk.transforms.ParDo
+            .of(new LineageReportingDoFn[org.apache.beam.sdk.values.KV[JBoolean, T]](filePattern))
         )
         .map(_.getValue)
     }
