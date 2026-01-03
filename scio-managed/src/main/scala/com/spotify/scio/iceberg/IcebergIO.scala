@@ -50,9 +50,9 @@ private[scio] object ConfigMap {
       val label = toSnakeCase(p.label)
       val fieldValue = p.dereference(value)
       fieldValue match {
-        case null => None
-        case x: Option[_] => x.map { v => label -> v.asInstanceOf[AnyRef] }
-        case _ =>
+        case null         => None
+        case x: Option[_] => x.map(v => label -> v.asInstanceOf[AnyRef])
+        case _            =>
           Some(label -> fieldValue.asInstanceOf[AnyRef])
       }
     }.toMap
