@@ -24,7 +24,7 @@ object ScalafixProject {
   implicit class ScalafixRowImplicit(pm: ProjectMatrix) {
     def scalafixRows(scalafixes: List[ScalafixProject], rules: Project): ProjectMatrix = {
       scalafixes match {
-        case Nil => pm
+        case Nil          => pm
         case head :: tail => head.scalafixRow(pm, rules).scalafixRows(tail, rules)
       }
     }
