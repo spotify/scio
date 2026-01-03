@@ -119,7 +119,7 @@ val shapelessVersion = "2.3.13"
 val sparkeyVersion = "3.5.0"
 val tensorFlowVersion = "1.0.0"
 val tensorFlowMetadataVersion = "1.16.1"
-val testContainersVersion = "0.44.0"
+val testContainersVersion = "0.44.1"
 val voyagerVersion = "2.1.0"
 
 // dependent versions
