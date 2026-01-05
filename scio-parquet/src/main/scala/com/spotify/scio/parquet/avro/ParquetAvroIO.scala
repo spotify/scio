@@ -17,12 +17,11 @@
 
 package com.spotify.scio.parquet.avro
 
-import java.lang.{Boolean => JBoolean}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.parquet.read.{ParquetRead, ParquetReadConfiguration, ReadSupportFactory}
-import com.spotify.scio.parquet.{GcsConnectorUtil, LineageReportingDoFn, ParquetConfiguration}
+import com.spotify.scio.parquet.{GcsConnectorUtil, HadoopParquet, ParquetConfiguration}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.{FilenamePolicySupplier, Functions, ScioUtil}
 import com.spotify.scio.values.SCollection
@@ -32,12 +31,9 @@ import org.apache.avro.reflect.ReflectData
 import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.io._
 import org.apache.beam.sdk.transforms.SerializableFunctions
-import org.apache.beam.sdk.transforms.SimpleFunction
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
-import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
-import org.apache.beam.sdk.values.TypeDescriptor
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.avro.{
@@ -245,31 +241,14 @@ object ParquetAvroIO {
       job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
       job.getConfiguration.setClass("value.class", avroClass, avroClass)
 
-      val g = ClosureCleaner.clean(projectionFn) // defeat closure
-      val aCls = avroClass
-      val oCls = ScioUtil.classOf[T]
-      val transform = HadoopFormatIO
-        .read[JBoolean, T]()
-        // Hadoop input always emit key-value, and `Void` causes NPE in Beam coder
-        .withKeyTranslation(new SimpleFunction[Void, JBoolean]() {
-          override def apply(input: Void): JBoolean = true
-        })
-        .withValueTranslation(new SimpleFunction[A, T]() {
-          // Workaround for incomplete Avro objects
-          // `SCollection#map` might throw NPE on incomplete Avro objects when the runner tries
-          // to serialized them. Lifting the mapping function here fixes the problem.
-          override def apply(input: A): T = g(input)
-          override def getInputTypeDescriptor = TypeDescriptor.of(aCls)
-          override def getOutputTypeDescriptor = TypeDescriptor.of(oCls)
-        })
-        .withConfiguration(job.getConfiguration)
-
-      sc.applyTransform(transform)
-        .applyTransform(
-          org.apache.beam.sdk.transforms.ParDo
-            .of(new LineageReportingDoFn[org.apache.beam.sdk.values.KV[JBoolean, T]](filePattern))
+      HadoopParquet
+        .readHadoopFormatIO[A, T](
+          sc,
+          job.getConfiguration,
+          Some(projectionFn),
+          None
         )
-        .map(_.getValue)
+        .parDo(HadoopParquet.reportLineage(filePattern))
     }
   }
 
