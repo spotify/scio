@@ -16,7 +16,7 @@ addSbtPlugin("com.github.sbt" % "sbt-ghpages" % "0.9.0")
 addSbtPlugin("com.github.sbt" % "sbt-site" % "1.7.0")
 addSbtPlugin("com.github.sbt" % "sbt-site-paradox" % "1.7.0")
 addSbtPlugin("com.github.sbt" % "sbt-paradox-material-theme" % "0.7.0")
-addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.8.0")
+addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.8.2")
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.4.3")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.8")
 
