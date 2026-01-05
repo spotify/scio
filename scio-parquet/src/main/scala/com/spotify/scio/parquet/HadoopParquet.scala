@@ -34,29 +34,7 @@ import scala.reflect.ClassTag
 
 private[parquet] object HadoopParquet {
 
-  /**
-   * Read data from Hadoop format using HadoopFormatIO.
-   *
-   * This method provides low-level access to Hadoop format reading with optional projection and
-   * value cloning configuration.
-   *
-   * @param sc
-   *   ScioContext for the pipeline
-   * @param conf
-   *   Hadoop Configuration for the input format
-   * @param projectionFn
-   *   Optional projection function to transform records from type A to type T. This is applied
-   *   during the read to work around issues with incomplete Avro objects that might cause NPE
-   *   during serialization if mapped after the read.
-   * @param skipValueClone
-   *   Optional flag to skip cloning values during read
-   * @tparam A
-   *   The input record type read from Hadoop format
-   * @tparam T
-   *   The output record type after optional projection
-   * @return
-   *   SCollection of records of type T
-   */
+  /** Read data from Hadoop format using HadoopFormatIO. */
   def readHadoopFormatIO[A: ClassTag, T: ClassTag](
     sc: ScioContext,
     conf: Configuration,
