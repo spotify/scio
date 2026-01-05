@@ -57,15 +57,13 @@ object JdbcIO {
         opts.password.fold(c)(c.withPassword)
       }
       .pipe { c =>
-        getUrlParameters(opts.connectionUrl)
-          .get("cloudSqlInstance")
-          .flatten
+        getCloudSqlInstance(opts.connectionUrl)
           .map(instance => "cloudSqlInstance=" + instance)
           .fold(c)(c.withConnectionProperties)
       }
 
-  private def getUrlParameters(connectionUrl: String): Map[String, Option[String]] =
-    connectionUrl.split('?').toList match {
+  private def getCloudSqlInstance(connectionUrl: String): Option[String] = {
+    val m = connectionUrl.split('?').toList match {
       case _ :: parameters :: _ =>
         parameters
           .split('&')
@@ -75,8 +73,10 @@ object JdbcIO {
           }
           .toMap
       case _ =>
-        Map.empty
+        Map.empty[String, Option[String]]
     }
+    m.get("cloudSqlInstance").flatten
+  }
 
   object ReadParam {
     val BeamDefaultFetchSize: Int = -1
