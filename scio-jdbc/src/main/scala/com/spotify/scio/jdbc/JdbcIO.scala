@@ -69,13 +69,13 @@ object JdbcIO {
           .split('&')
           .map { x =>
             val pair = x.split('=')
-            (pair(0), if (pair.length > 1) Some(pair(1)) else None)
+            (pair(0).toLowerCase, if (pair.length > 1) Some(pair(1)) else None)
           }
           .toMap
       case _ =>
         Map.empty[String, Option[String]]
     }
-    m.get("cloudSqlInstance").flatten
+    m.get("cloudsqlinstance").flatten
   }
 
   object ReadParam {
