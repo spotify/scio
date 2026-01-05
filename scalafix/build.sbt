@@ -68,18 +68,23 @@ def scio(version: String): List[ModuleID] = {
 def scalafix(target: String, inputScio: String, outputScio: String): (String, ScalafixProject) = {
   val under = target.replace(".", "_")
   def p(prefix: String, dep: String) = sbt.Project
-    .apply(s"$prefix-$under", file(s"$prefix-$under")).settings(libraryDependencies ++= scio(dep))
-  target -> ScalafixProject(p("input", inputScio), p("output", outputScio), ConfigAxis(s"-scio-$under", s"-$under-"))
+    .apply(s"$prefix-$under", file(s"$prefix-$under"))
+    .settings(libraryDependencies ++= scio(dep))
+  target -> ScalafixProject(
+    p("input", inputScio),
+    p("output", outputScio),
+    ConfigAxis(s"-scio-$under", s"-$under-")
+  )
 }
 
 lazy val scalafixProjects = Map(
-  scalafix("0.7", Scio.`0.6`, Scio.`0.7`),    // Scio 0.7
-  scalafix("0.8", Scio.`0.7`, Scio.`0.8`),    // Scio 0.8
-  scalafix("0.10", Scio.`0.9`, Scio.`0.11`),  // Scio 0.10
+  scalafix("0.7", Scio.`0.6`, Scio.`0.7`), // Scio 0.7
+  scalafix("0.8", Scio.`0.7`, Scio.`0.8`), // Scio 0.8
+  scalafix("0.10", Scio.`0.9`, Scio.`0.11`), // Scio 0.10
   scalafix("0.12", Scio.`0.11`, Scio.`0.12`), // Scio 0.12
   scalafix("0.13", Scio.`0.12`, Scio.`0.13`), // Scio 0.13
   scalafix("0.14", Scio.`0.13`, Scio.`0.14`), // Scio 0.14
-  scalafix("0.15", Scio.`0.14`, Scio.`0.15`), // Scio 0.15
+  scalafix("0.15", Scio.`0.14`, Scio.`0.15`) // Scio 0.15
 )
 
 lazy val `input-0_7` = scalafixProjects("0.7").input
