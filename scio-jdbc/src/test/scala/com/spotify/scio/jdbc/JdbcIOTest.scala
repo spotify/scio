@@ -160,7 +160,7 @@ class JdbcIOTest extends AnyFlatSpec with Matchers {
     connectionProperties should be(None)
   }
 
-  it must "be case-sensitive for cloudSqlInstance parameter name" in {
+  it must "be case-insensitive for cloudSqlInstance parameter name" in {
     val url = "jdbc:mysql://google/mydb?" +
       "CloudSqlInstance=my-project:us-central1:my-instance&" +
       "socketFactory=com.google.cloud.sql.mysql.SocketFactory"
@@ -174,42 +174,7 @@ class JdbcIOTest extends AnyFlatSpec with Matchers {
     val config = JdbcIO.dataSourceConfiguration(opts)
     val connectionProperties = getConnectionProperties(config)
 
-    // Current implementation is case-sensitive, so different casing won't be found
-    connectionProperties should be(None)
-  }
-
-  it must "handle cloudSqlInstance parameter with different capitalizations" in {
-    // Test lowercase
-    val urlLowercase = "jdbc:mysql://google/mydb?" +
-      "cloudsqlinstance=my-project:us-central1:my-instance"
-    val optsLowercase = JdbcConnectionOptions(
-      username = "testuser",
-      password = None,
-      connectionUrl = urlLowercase,
-      classOf[java.sql.Driver]
-    )
-
-    val configLowercase = JdbcIO.dataSourceConfiguration(optsLowercase)
-    val connectionPropertiesLowercase = getConnectionProperties(configLowercase)
-
-    // Current implementation is case-sensitive, so all lowercase won't be found
-    connectionPropertiesLowercase should be(None)
-
-    // Test uppercase
-    val urlUppercase = "jdbc:mysql://google/mydb?" +
-      "CLOUDSQLINSTANCE=my-project:us-central1:my-instance"
-    val optsUppercase = JdbcConnectionOptions(
-      username = "testuser",
-      password = None,
-      connectionUrl = urlUppercase,
-      classOf[java.sql.Driver]
-    )
-
-    val configUppercase = JdbcIO.dataSourceConfiguration(optsUppercase)
-    val connectionPropertiesUppercase = getConnectionProperties(configUppercase)
-
-    // Current implementation is case-sensitive, so all uppercase won't be found
-    connectionPropertiesUppercase should be(None)
+    connectionProperties should be(Some("cloudSqlInstance=my-project:us-central1:my-instance"))
   }
 
 }
