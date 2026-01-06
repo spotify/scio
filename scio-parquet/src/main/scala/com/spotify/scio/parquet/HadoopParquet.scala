@@ -58,7 +58,9 @@ private[parquet] object HadoopParquet {
       withSkipClone.withValueTranslation(
         new SimpleFunction[T, T]() {
           override def apply(input: T): T = input
+
           override def getInputTypeDescriptor: TypeDescriptor[T] = TypeDescriptor.of(outputType)
+
           override def getOutputTypeDescriptor = TypeDescriptor.of(outputType)
         },
         bcoder
@@ -71,7 +73,9 @@ private[parquet] object HadoopParquet {
           // `SCollection#map` might throw NPE on incomplete Avro objects when the runner tries
           // to serialized them. Lifting the mapping function here fixes the problem.
           override def apply(input: A): T = g(input)
+
           override def getInputTypeDescriptor = TypeDescriptor.of(inputType)
+
           override def getOutputTypeDescriptor = TypeDescriptor.of(outputType)
         },
         bcoder
@@ -80,6 +84,9 @@ private[parquet] object HadoopParquet {
 
     sc.applyTransform(withValueTranslation.withConfiguration(conf)).map(_.getValue)
   }
+}
+
+private[parquet] object LineageUtil {
 
   /**
    * DoFn that reports directory-level source lineage for legacy Parquet reads.
@@ -87,7 +94,7 @@ private[parquet] object HadoopParquet {
    * @param filePattern
    *   The file pattern or path to report lineage for
    */
-  def reportLineage[T](filePattern: String): DoFn[T, T] = new LineageReportDoFn(filePattern)
+  def reportSourceDoFn[T](filePattern: String): DoFn[T, T] = new LineageReportDoFn(filePattern)
 
   class LineageReportDoFn[T](filePattern: String) extends DoFn[T, T] {
 

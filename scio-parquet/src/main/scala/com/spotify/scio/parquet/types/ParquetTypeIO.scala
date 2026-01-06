@@ -25,6 +25,7 @@ import com.spotify.scio.parquet.{
   BeamInputFile,
   GcsConnectorUtil,
   HadoopParquet,
+  LineageUtil,
   ParquetConfiguration
 }
 import com.spotify.scio.util.{FilenamePolicySupplier, ScioUtil}
@@ -111,7 +112,7 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
           )
         )
       )
-      .parDo(HadoopParquet.reportLineage(filePattern))
+      .parDo(LineageUtil.reportSourceDoFn(filePattern))
   }
 
   private def parquetOut(

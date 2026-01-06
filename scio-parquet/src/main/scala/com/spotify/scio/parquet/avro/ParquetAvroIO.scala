@@ -21,7 +21,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.parquet.read.{ParquetRead, ParquetReadConfiguration, ReadSupportFactory}
-import com.spotify.scio.parquet.{GcsConnectorUtil, HadoopParquet, ParquetConfiguration}
+import com.spotify.scio.parquet.{GcsConnectorUtil, HadoopParquet, LineageUtil, ParquetConfiguration}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.{FilenamePolicySupplier, Functions, ScioUtil}
 import com.spotify.scio.values.SCollection
@@ -248,7 +248,7 @@ object ParquetAvroIO {
           Some(projectionFn),
           None
         )
-        .parDo(HadoopParquet.reportLineage(filePattern))
+        .parDo(LineageUtil.reportSourceDoFn(filePattern))
     }
   }
 

@@ -30,6 +30,7 @@ import com.spotify.scio.parquet.{
   BeamInputFile,
   GcsConnectorUtil,
   HadoopParquet,
+  LineageUtil,
   ParquetConfiguration
 }
 import com.spotify.scio.testing.TestDataManager
@@ -122,7 +123,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
         projectionFn = None,
         skipValueClone = None
       )
-      .parDo(HadoopParquet.reportLineage(filePattern))
+      .parDo(LineageUtil.reportSourceDoFn(filePattern))
   }
 
   override protected def readTest(sc: ScioContext, params: ReadP): SCollection[Example] = {
