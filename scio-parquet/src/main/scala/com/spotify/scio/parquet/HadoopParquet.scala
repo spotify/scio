@@ -86,39 +86,34 @@ private[parquet] object HadoopParquet {
   }
 }
 
-private[parquet] object LineageUtil {
+/**
+ * DoFn that reports directory-level source lineage for legacy Parquet reads.
+ *
+ * @param filePattern
+ *   The file pattern or path to report lineage for
+ */
+private[parquet] class LineageReportDoFn[T](filePattern: String) extends DoFn[T, T] {
 
-  /**
-   * DoFn that reports directory-level source lineage for legacy Parquet reads.
-   *
-   * @param filePattern
-   *   The file pattern or path to report lineage for
-   */
-  def reportSourceDoFn[T](filePattern: String): DoFn[T, T] = new LineageReportDoFn(filePattern)
+  @transient
+  private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
-  class LineageReportDoFn[T](filePattern: String) extends DoFn[T, T] {
-
-    @transient
-    private lazy val logger = LoggerFactory.getLogger(this.getClass)
-
-    @Setup
-    def setup(): Unit = {
-      try {
-        val isDirectory = filePattern.endsWith("/")
-        val resourceId = FileSystems.matchNewResource(filePattern, isDirectory)
-        val directory = resourceId.getCurrentDirectory
-        FileSystems.reportSourceLineage(directory)
-      } catch {
-        case e: Exception =>
-          logger.warn(
-            s"Error when reporting lineage for pattern: $filePattern",
-            e
-          )
-      }
+  @Setup
+  def setup(): Unit = {
+    try {
+      val isDirectory = filePattern.endsWith("/")
+      val resourceId = FileSystems.matchNewResource(filePattern, isDirectory)
+      val directory = resourceId.getCurrentDirectory
+      FileSystems.reportSourceLineage(directory)
+    } catch {
+      case e: Exception =>
+        logger.warn(
+          s"Error when reporting lineage for pattern: $filePattern",
+          e
+        )
     }
-
-    @ProcessElement
-    def processElement(@DoFn.Element element: T, out: DoFn.OutputReceiver[T]): Unit =
-      out.output(element)
   }
+
+  @ProcessElement
+  def processElement(@DoFn.Element element: T, out: DoFn.OutputReceiver[T]): Unit =
+    out.output(element)
 }
