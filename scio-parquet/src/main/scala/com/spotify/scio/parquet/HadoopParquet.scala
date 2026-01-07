@@ -24,12 +24,13 @@ import com.spotify.scio.values.SCollection
 import com.twitter.chill.ClosureCleaner
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
-import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, Setup}
+import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, SimpleFunction}
 import org.apache.beam.sdk.values.TypeDescriptor
 import org.apache.hadoop.conf.Configuration
 import org.slf4j.LoggerFactory
 
+import java.util.concurrent.atomic.AtomicBoolean
 import scala.reflect.ClassTag
 
 private[parquet] object HadoopParquet {
@@ -86,6 +87,11 @@ private[parquet] object HadoopParquet {
   }
 }
 
+private[parquet] object LineageReportDoFn {
+  // Atomic flag to ensure lineage is reported only once per JVM
+  private val lineageReported = new AtomicBoolean(false)
+}
+
 /**
  * DoFn that reports directory-level source lineage for legacy Parquet reads.
  *
@@ -97,23 +103,22 @@ private[parquet] class LineageReportDoFn[T](filePattern: String) extends DoFn[T,
   @transient
   private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
-  @Setup
-  def setup(): Unit = {
-    try {
-      val isDirectory = filePattern.endsWith("/")
-      val resourceId = FileSystems.matchNewResource(filePattern, isDirectory)
-      val directory = resourceId.getCurrentDirectory
-      FileSystems.reportSourceLineage(directory)
-    } catch {
-      case e: Exception =>
-        logger.warn(
-          s"Error when reporting lineage for pattern: $filePattern",
-          e
-        )
-    }
-  }
-
   @ProcessElement
-  def processElement(@DoFn.Element element: T, out: DoFn.OutputReceiver[T]): Unit =
+  def processElement(@DoFn.Element element: T, out: DoFn.OutputReceiver[T]): Unit = {
+    if (LineageReportDoFn.lineageReported.compareAndSet(false, true)) {
+      try {
+        val isDirectory = filePattern.endsWith("/")
+        val resourceId = FileSystems.matchNewResource(filePattern, isDirectory)
+        val directory = resourceId.getCurrentDirectory
+        FileSystems.reportSourceLineage(directory)
+      } catch {
+        case e: Exception =>
+          logger.warn(
+            s"Error when reporting lineage for pattern: $filePattern",
+            e
+          )
+      }
+    }
     out.output(element)
+  }
 }
