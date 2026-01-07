@@ -29,10 +29,10 @@ import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 // To test release candidates, find the beam repo and add it as a resolver
 // ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.69.0"
+val beamVersion = "2.70.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.69.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.70.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = sys.props.getOrElse("avro.version", "1.11.5")
@@ -44,14 +44,14 @@ val commonsCompressVersion = "1.26.2"
 val commonsIoVersion = "2.16.1"
 val commonsLang3Version = "3.18.0"
 val commonsMath3Version = "3.6.1"
-val gcpLibrariesVersion = "26.65.0"
+val gcpLibrariesVersion = "26.71.0"
 val googleClientsVersion = "2.0.0"
 val guavaVersion = "33.1.0-jre"
 val hamcrestVersion = "2.1"
 val httpClientVersion = "4.5.13"
 val httpCoreVersion = "4.4.14"
 val jacksonVersion = "2.15.4"
-val jodaTimeVersion = "2.10.14"
+val jodaTimeVersion = "2.14.0"
 val nettyVersion = "4.1.128.Final"
 val protobufVersion = "4.33.0"
 val slf4jVersion = "1.7.30"
