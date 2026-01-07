@@ -80,6 +80,7 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
 
   // Set to arbitrarily high value; required to preserve timestamp of original element
   // See: https://github.com/apache/beam/pull/34902#discussion_r2527777237
+  // See: https://github.com/apache/beam/pull/36838#issuecomment-3558736022
   @Override
   public @UnknownKeyFor @NonNull @Initialized Duration getAllowedTimestampSkew() {
     return Duration.standardDays(30);
