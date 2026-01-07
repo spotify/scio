@@ -1643,7 +1643,9 @@ lazy val `scio-smb` = project
       "org.checkerframework" % "checker-qual" % checkerQualVersion,
       "org.slf4j" % "log4j-over-slf4j" % slf4jVersion, // log4j is excluded from hadoop
       "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
       // provided
+      "com.google.auto.value" % "auto-value" % autoValueVersion % Provided,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion % Provided, // scio-gcp
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % Provided,
       "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion % Provided, // scio-avro
