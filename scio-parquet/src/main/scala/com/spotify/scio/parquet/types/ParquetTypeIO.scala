@@ -17,24 +17,25 @@
 
 package com.spotify.scio.parquet.types
 
-import java.lang.{Boolean => JBoolean}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.parquet.read.{ParquetRead, ParquetReadConfiguration, ReadSupportFactory}
-import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil, ParquetConfiguration}
-import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.util.FilenamePolicySupplier
+import com.spotify.scio.parquet.{
+  BeamInputFile,
+  GcsConnectorUtil,
+  HadoopParquet,
+  LineageReportDoFn,
+  ParquetConfiguration
+}
+import com.spotify.scio.util.{FilenamePolicySupplier, ScioUtil}
 import com.spotify.scio.values.SCollection
 import magnolify.parquet.ParquetType
 import org.apache.beam.sdk.io.fs.ResourceId
-import org.apache.beam.sdk.transforms.SerializableFunctions
-import org.apache.beam.sdk.transforms.SimpleFunction
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
-import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.io.{DynamicFileDestinations, FileSystems, WriteFiles}
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
-import org.apache.beam.sdk.values.TypeDescriptor
+import org.apache.beam.sdk.transforms.SerializableFunctions
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.filter2.predicate.FilterPredicate
@@ -99,27 +100,19 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
       ParquetInputFormat.setFilterPredicate(job.getConfiguration, params.predicate)
     }
 
-    val source = HadoopFormatIO
-      .read[JBoolean, T]
-      // Hadoop input always emit key-value, and `Void` causes NPE in Beam coder
-      .withKeyTranslation(new SimpleFunction[Void, JBoolean]() {
-        override def apply(input: Void): JBoolean = true
-      })
-      .withValueTranslation(
-        new SimpleFunction[T, T]() {
-          override def apply(input: T): T = input
-          override def getInputTypeDescriptor: TypeDescriptor[T] = TypeDescriptor.of(cls)
-        },
-        CoderMaterializer.beam(sc, Coder[T])
-      )
-      .withConfiguration(job.getConfiguration)
-      .withSkipValueClone(
-        job.getConfiguration.getBoolean(
-          ParquetReadConfiguration.SkipClone: @nowarn("cat=deprecation"),
-          true
+    HadoopParquet
+      .readHadoopFormatIO[T, T](
+        sc,
+        job.getConfiguration,
+        projectionFn = None,
+        skipValueClone = Some(
+          job.getConfiguration.getBoolean(
+            ParquetReadConfiguration.SkipClone: @nowarn("cat=deprecation"),
+            true
+          )
         )
       )
-    sc.applyTransform(source).map(_.getValue)
+      .parDo(new LineageReportDoFn(filePattern))
   }
 
   private def parquetOut(

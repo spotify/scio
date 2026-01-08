@@ -19,6 +19,7 @@ package com.spotify.scio.parquet.read
 import com.spotify.scio.parquet.BeamInputFile
 import com.spotify.scio.parquet.read.ParquetReadFn._
 import org.apache.beam.sdk.io.FileIO.ReadableFile
+import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
 import org.apache.beam.sdk.io.range.OffsetRange
 import org.apache.beam.sdk.transforms.DoFn._
@@ -167,6 +168,8 @@ class ParquetReadFn[T, R](
       tracker.currentRestriction.getFrom,
       if (splitGranularity == SplitGranularity.File) "end" else tracker.currentRestriction().getTo
     )
+    FileSystems.reportSourceLineage(file.getMetadata.resourceId())
+
     val reader = parquetFileReader(file)
     try {
       val filter = options.getRecordFilter
