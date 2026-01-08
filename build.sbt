@@ -425,7 +425,8 @@ val commonSettings = bomSettings ++ Def.settings(
     moduleFilter("com.chuusai", "shapeless"),
     moduleFilter("org.scala-lang", "scala-reflect"),
     moduleFilter("org.scala-lang.modules", "scala-collection-compat"),
-    moduleFilter("org.typelevel", "scalac-compat-annotation")
+    moduleFilter("org.typelevel", "scalac-compat-annotation"),
+    moduleFilter("com.google.auto.value", "auto-value")
   ).reduce(_ | _),
   fork := true,
   run / outputStrategy := Some(OutputStrategy.StdoutOutput),
