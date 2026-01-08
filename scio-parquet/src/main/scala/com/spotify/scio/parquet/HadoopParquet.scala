@@ -60,7 +60,7 @@ private[parquet] object HadoopParquet {
         new SimpleFunction[T, T]() {
           override def apply(input: T): T = input
 
-          override def getInputTypeDescriptor: TypeDescriptor[T] = TypeDescriptor.of(outputType)
+          override def getInputTypeDescriptor = TypeDescriptor.of(outputType)
 
           override def getOutputTypeDescriptor = TypeDescriptor.of(outputType)
         },
