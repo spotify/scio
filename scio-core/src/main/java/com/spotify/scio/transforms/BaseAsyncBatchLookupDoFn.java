@@ -46,6 +46,10 @@ import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.ValueInSingleWindow;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions;
 import org.apache.commons.lang3.tuple.Pair;
+import org.checkerframework.checker.initialization.qual.Initialized;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.UnknownKeyFor;
+import org.joda.time.Duration;
 import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,6 +130,14 @@ public abstract class BaseAsyncBatchLookupDoFn<
   public abstract TryWrapper success(Output output);
 
   public abstract TryWrapper failure(Throwable throwable);
+
+  // Set to arbitrarily high value; required to preserve timestamp of original element
+  // See: https://github.com/apache/beam/pull/34902#discussion_r2527777237
+  // See: https://github.com/apache/beam/pull/36838#issuecomment-3558736022
+  @Override
+  public @UnknownKeyFor @NonNull @Initialized Duration getAllowedTimestampSkew() {
+    return Duration.standardDays(30);
+  }
 
   @Override
   public Pair<ClientType, Cache<String, Output>> createResource() {
