@@ -97,12 +97,27 @@ public class MultiSourceKeyGroupReader<KeyType> {
     this.resultSchema = resultSchema;
     this.bucketedInputs =
         sources.stream()
+            .filter(src -> hasValidDirectories(src))
             .map(src -> new BucketIterator<>(src, bucketId, effectiveParallelism, options))
             .collect(Collectors.toList());
     // this only operates on the primary key
     this.keyGroupFilter =
         (bytes) ->
             someArbitraryBucketMetadata.rehashBucket(bytes, effectiveParallelism) == bucketId;
+  }
+
+  /**
+   * Check if a source has valid directories with metadata files.
+   * This is needed to handle EmptyMatchTreatment.ALLOW cases where some directories might be empty.
+   */
+  private static boolean hasValidDirectories(SortedBucketSource.BucketedInput<?> source) {
+    try {
+      source.getSourceMetadata();
+      return true;
+    } catch (Exception e) {
+      // If we can't get source metadata, the directory is likely empty or invalid
+      return false;
+    }
   }
 
   public KV<KeyType, CoGbkResult> readNext() {
