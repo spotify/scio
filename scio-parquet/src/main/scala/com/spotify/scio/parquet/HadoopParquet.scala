@@ -44,7 +44,7 @@ private[parquet] object HadoopParquet {
   )(implicit coder: Coder[T]): SCollection[T] = {
     val inputType = ScioUtil.classOf[A]
     val outputType = ScioUtil.classOf[T]
-    val bcoder = CoderMaterializer.beam(sc, Coder[T])
+    val bcoder = CoderMaterializer.beam(sc, coder)
 
     val hadoop = HadoopFormatIO
       .read[java.lang.Boolean, T]()
