@@ -69,7 +69,6 @@ val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
 val sparkMajorVersion = VersionNumber(sparkVersion).numbers.take(1).mkString(".")
 
 // check recommended versions from libraries-bom
-// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.65.0/index.html
 val failureAccessVersion = "1.0.2"
 val checkerQualVersion = "3.49.0"
 val jsr305Version = "3.0.2"
