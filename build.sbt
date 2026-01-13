@@ -29,10 +29,10 @@ import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 // To test release candidates, find the beam repo and add it as a resolver
 // ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.69.0"
+val beamVersion = "2.70.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.69.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.70.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = sys.props.getOrElse("avro.version", "1.11.5")
@@ -44,14 +44,14 @@ val commonsCompressVersion = "1.26.2"
 val commonsIoVersion = "2.16.1"
 val commonsLang3Version = "3.18.0"
 val commonsMath3Version = "3.6.1"
-val gcpLibrariesVersion = "26.65.0"
+val gcpLibrariesVersion = "26.71.0"
 val googleClientsVersion = "2.0.0"
 val guavaVersion = "33.1.0-jre"
 val hamcrestVersion = "2.1"
 val httpClientVersion = "4.5.13"
 val httpCoreVersion = "4.4.14"
 val jacksonVersion = "2.15.4"
-val jodaTimeVersion = "2.10.14"
+val jodaTimeVersion = "2.14.0"
 val nettyVersion = "4.1.128.Final"
 val protobufVersion = "4.33.0"
 val slf4jVersion = "1.7.30"
@@ -69,8 +69,7 @@ val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
 val sparkMajorVersion = VersionNumber(sparkVersion).numbers.take(1).mkString(".")
 
 // check recommended versions from libraries-bom
-// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.65.0/index.html
-val failureAccessVersion = "1.0.2"
+val failureAccessVersion = "1.0.3"
 val checkerQualVersion = "3.49.0"
 val jsr305Version = "3.0.2"
 val perfmarkVersion = "0.27.0"
@@ -426,7 +425,8 @@ val commonSettings = bomSettings ++ Def.settings(
     moduleFilter("com.chuusai", "shapeless"),
     moduleFilter("org.scala-lang", "scala-reflect"),
     moduleFilter("org.scala-lang.modules", "scala-collection-compat"),
-    moduleFilter("org.typelevel", "scalac-compat-annotation")
+    moduleFilter("org.typelevel", "scalac-compat-annotation"),
+    moduleFilter("com.google.auto.value", "auto-value")
   ).reduce(_ | _),
   fork := true,
   run / outputStrategy := Some(OutputStrategy.StdoutOutput),
@@ -1643,7 +1643,9 @@ lazy val `scio-smb` = project
       "org.checkerframework" % "checker-qual" % checkerQualVersion,
       "org.slf4j" % "log4j-over-slf4j" % slf4jVersion, // log4j is excluded from hadoop
       "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
       // provided
+      "com.google.auto.value" % "auto-value" % autoValueVersion % Provided,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion % Provided, // scio-gcp
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % Provided,
       "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion % Provided, // scio-avro
