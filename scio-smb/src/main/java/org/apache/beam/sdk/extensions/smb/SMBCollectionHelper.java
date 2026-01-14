@@ -143,8 +143,8 @@ public class SMBCollectionHelper {
   }
 
   /**
-   * Extract secondary key coder from SMB metadata using keyClassSecondaryMatches. This searches all
-   * BucketedInput sources for a metadata with matching secondary key class.
+   * Extract secondary key coder from SMB metadata using keyClassSecondaryMatches. This searches
+   * all BucketedInput sources for a metadata with matching secondary key class.
    */
   public static <K2> Coder<K2> getSecondaryKeyCoder(
       List<SortedBucketSource.BucketedInput<?>> inputs, Class<K2> keyClassSecondary) {
