@@ -19,7 +19,6 @@ package org.apache.beam.sdk.extensions.smb;
 
 import java.util.List;
 import java.util.Optional;
-import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.io.fs.ResourceId;
 
@@ -143,8 +142,8 @@ public class SMBCollectionHelper {
   }
 
   /**
-   * Extract secondary key coder from SMB metadata using keyClassSecondaryMatches. This searches
-   * all BucketedInput sources for a metadata with matching secondary key class.
+   * Extract secondary key coder from SMB metadata using keyClassSecondaryMatches. This searches all
+   * BucketedInput sources for a metadata with matching secondary key class.
    */
   public static <K2> Coder<K2> getSecondaryKeyCoder(
       List<SortedBucketSource.BucketedInput<?>> inputs, Class<K2> keyClassSecondary) {
@@ -166,5 +165,4 @@ public class SMBCollectionHelper {
                     + keyClassSecondary
                     + " from SMB metadata"));
   }
-
 }
