@@ -37,82 +37,25 @@ import scala.jdk.CollectionConverters._
 /** Implementation logic for SMBCollection. */
 private[smb] object SMBCollectionImpl {
 
-  /** Serializable metadata for reconstructing SortedBucketIO.Read in @Setup */
-  private[smb] case class SourceMetadata(
-    tupleTag: org.apache.beam.sdk.values.TupleTag[_],
-    schema: org.apache.avro.Schema,
-    inputDirectories: java.util.List[String],
-    isParquet: Boolean // Track whether this is Parquet or Avro
-  ) extends Serializable
-
-  /** Serializable metadata for reconstructing FileOperations in tap */
-  private[smb] case class OutputMetadata(
-    schema: org.apache.avro.Schema,
+  /** Serializable info for writing output files - stores FileOperations directly */
+  private[smb] case class OutputInfo(
+    fileOperations: org.apache.beam.sdk.extensions.smb.FileOperations[_],
     outputDirectory: String,
     filenamePrefix: String,
-    filenameSuffix: String,
-    isParquet: Boolean // Track whether this is Parquet or Avro
+    filenameSuffix: String
   ) extends Serializable
 
-  /** Extract serializable metadata from a SortedBucketIO.Read */
-  private[smb] def extractSourceMetadata(read: SortedBucketIO.Read[_]): SourceMetadata = {
-    import org.apache.beam.sdk.extensions.smb.SMBCollectionHelper
-    val tupleTag = SMBCollectionHelper.getTupleTag(read)
-    val schema = SMBCollectionHelper.getSchema(read)
-    val inputDirectories = SMBCollectionHelper.getInputDirectories(read)
-    val isParquet =
-      read.isInstanceOf[org.apache.beam.sdk.extensions.smb.ParquetAvroSortedBucketIO.Read[_]]
-    SourceMetadata(tupleTag, schema, inputDirectories, isParquet)
-  }
-
-  /** Extract serializable metadata from a TransformOutput */
-  private[smb] def extractOutputMetadata(
+  /** Extract serializable output info from a TransformOutput */
+  private[smb] def extractOutputInfo(
     output: SortedBucketIO.TransformOutput[_, _, _]
-  ): OutputMetadata = {
+  ): OutputInfo = {
     import org.apache.beam.sdk.extensions.smb.SMBCollectionHelper
-    val fileOps = SMBCollectionHelper.getFileOperations(output)
-    val avroCoder =
-      fileOps.getCoder().asInstanceOf[org.apache.beam.sdk.extensions.avro.coders.AvroCoder[_]]
-    val schema = avroCoder.getSchema
-    val outputDir = SMBCollectionHelper.getOutputDirectory(output).toString
-    val prefix = SMBCollectionHelper.getFilenamePrefix(output)
-    val suffix = SMBCollectionHelper.getFilenameSuffix(output)
-    val isParquet = output.isInstanceOf[
-      org.apache.beam.sdk.extensions.smb.ParquetAvroSortedBucketIO.TransformOutput[_, _, _]
-    ]
-    OutputMetadata(schema, outputDir, prefix, suffix, isParquet)
-  }
-
-  /** Reconstruct SortedBucketIO.Read from metadata */
-  private[smb] def reconstructRead(meta: SourceMetadata): SortedBucketIO.Read[_] = {
-    // Reconstruct fresh Read with new FileOperations (preserves DatumFactory)
-    // Get the record class from the schema
-    // TODO: Consider caching schema→class lookups if profiling shows significant overhead.
-    //       Currently happens once per worker in @Setup, so likely not a bottleneck.
-    val specificData = new org.apache.avro.specific.SpecificData()
-    val recordClass = Option(specificData.getClass(meta.schema))
-      .getOrElse(
-        throw new IllegalStateException(
-          s"Cannot resolve SpecificRecord class for schema '${meta.schema.getFullName}'. " +
-            s"Ensure the Avro schema has 'namespace' and 'name' properties and the corresponding " +
-            s"class is available on the classpath."
-        )
-      )
-      .asInstanceOf[Class[org.apache.avro.specific.SpecificRecord]]
-    val tupleTag = meta.tupleTag
-      .asInstanceOf[org.apache.beam.sdk.values.TupleTag[org.apache.avro.specific.SpecificRecord]]
-
-    if (meta.isParquet) {
-      // Reconstruct ParquetAvroSortedBucketIO.Read
-      org.apache.beam.sdk.extensions.smb.ParquetAvroSortedBucketIO
-        .read(tupleTag, recordClass)
-        .from(meta.inputDirectories)
-    } else {
-      // Reconstruct AvroSortedBucketIO.Read
-      org.apache.beam.sdk.extensions.smb.AvroSortedBucketIO
-        .read(tupleTag, recordClass)
-        .from(meta.inputDirectories)
-    }
+    OutputInfo(
+      SMBCollectionHelper.getFileOperations(output),
+      SMBCollectionHelper.getOutputDirectory(output).toString,
+      SMBCollectionHelper.getFilenamePrefix(output),
+      SMBCollectionHelper.getFilenameSuffix(output)
+    )
   }
 
   // Explicit fail-fast coder for types that should never be serialized (e.g. CoGbkResult)
@@ -220,43 +163,26 @@ private[smb] object SMBCollectionImpl {
   }
 
   class SortedBucketMultiTransformDoFn[K1, K2](
-    sourceMetadata: List[SourceMetadata], // Serializable metadata only, no Beam objects!
-    keying: SortedBucketSource.Keying,
+    bucketedInputs: java.util.List[SortedBucketSource.BucketedInput[_]], // Serializable!
     keyFn: SortedBucketIO.ComparableKeyBytes => (K1, K2),
     keyComparator: java.util.Comparator[SortedBucketIO.ComparableKeyBytes],
     rootConsumer: SMBConsumer[K1, K2, List[Iterable[Any]]],
     sideInputs: Seq[SideInput[_]],
-    metricsPrefix: String,
-    fileOutputConsumersWithTags: Seq[
-      (TupleTag[KV[BucketShardId, ResourceId]], SMBFileOutputConsumer[K1, K2, _])
-    ]
+    metricsPrefix: String
   ) extends org.apache.beam.sdk.transforms.DoFn[
         org.apache.beam.sdk.extensions.smb.SortedBucketTransform.BucketItem,
         Void // Unused main output
       ] {
-
-    // Reconstruct everything fresh in @Setup to avoid serializing Beam objects (which lose DatumFactory)
-    @transient private var sources: List[SortedBucketIO.Read[_]] = _
-    @transient private var bucketedInputs: java.util.List[SortedBucketSource.BucketedInput[_]] = _
 
     // Metrics for progress tracking
     private val keyGroupsProcessed: org.apache.beam.sdk.metrics.Counter =
       org.apache.beam.sdk.metrics.Metrics
         .counter(metricsPrefix, s"$metricsPrefix-KeyGroupsProcessed")
     private val elementsReadPerSource: List[org.apache.beam.sdk.metrics.Counter] =
-      sourceMetadata.indices.map { idx =>
+      bucketedInputs.asScala.indices.map { idx =>
         org.apache.beam.sdk.metrics.Metrics
           .counter(metricsPrefix, s"$metricsPrefix-ElementsRead-Source-$idx")
       }.toList
-
-    @org.apache.beam.sdk.transforms.DoFn.Setup
-    def setup(): Unit = {
-      // Suppress unused warning - fileOutputConsumersWithTags not needed since we write files directly
-      val _ = fileOutputConsumersWithTags
-      // Reconstruct Read objects fresh - this creates new FileOperations with DatumFactory
-      sources = sourceMetadata.map(reconstructRead)
-      bucketedInputs = sources.map(_.toBucketedInput(keying)).asJava
-    }
 
     @org.apache.beam.sdk.transforms.DoFn.ProcessElement
     def processElement(
@@ -330,12 +256,8 @@ private[smb] object SMBCollectionImpl {
       }
 
       // Finish all consumers after processing all key groups
-      // Consumer.finish() writes files AND metadata.json directly to final location
-      rootConsumer.finish()
-
-      // Skip outputting bucket file metadata - files are already in final location
-      // and metadata.json is written by consumer.finish()
-      // No finalization needed!
+      // Consumers output bucket files to their tags for RenameBuckets transform
+      rootConsumer.finish(out)
     }
   }
 
@@ -349,7 +271,7 @@ private[smb] object SMBCollectionImpl {
     val metricsPrefix = "SMBCollection"
     val outputNodes = mutable.Buffer.empty[SMBToSCollectionOutput[K1, K2, _]]
     val fileOutputConsumers = mutable.Buffer
-      .empty[(SMBSaveAsSortedBucketOutput[K1, K2, _], SMBFileOutputConsumer[K1, K2, _])]
+      .empty[(SMBSaveAsSortedBucketOutput[K1, K2, _], SMBFileOutputConsumer[K1, K2, _], TupleTag[KV[BucketShardId, ResourceId]])]
 
     val childConsumers: Seq[SMBConsumer[K1, K2, List[Iterable[Any]]]] = root.children.map { child =>
       child.buildConsumer(outputNodes, fileOutputConsumers, metricsPrefix)
@@ -361,21 +283,8 @@ private[smb] object SMBCollectionImpl {
         children = childConsumers
       )
 
-    val bucketFileTags
-      : Map[SMBSaveAsSortedBucketOutput[_, _, _], TupleTag[KV[BucketShardId, ResourceId]]] =
-      fileOutputConsumers.map { case (fileOutput, _) =>
-        (
-          fileOutput,
-          new TupleTag[KV[BucketShardId, ResourceId]](
-            s"bucket-files-${System.identityHashCode(fileOutput)}"
-          )
-        )
-      }.toMap
-
-    // Pair consumers with tags to avoid capturing SMBSaveAsSortedBucketOutput in DoFn
-    val fileOutputConsumersWithTags = fileOutputConsumers.map { case (fileOutput, consumer) =>
-      (bucketFileTags(fileOutput), consumer)
-    }.toSeq
+    // Extract bucket file tags from file output consumers
+    val bucketFileTags = fileOutputConsumers.map(_._3).toSeq
 
     val pCollectionTuple = createSMBTransform(
       sources,
@@ -385,34 +294,18 @@ private[smb] object SMBCollectionImpl {
       rootConsumer,
       sideInputs,
       outputNodes.toSeq,
-      fileOutputConsumersWithTags,
+      bucketFileTags,
       keyClassSecondary,
       metricsPrefix
     )
 
-    val writeResults: Map[
-      SMBSaveAsSortedBucketOutput[_, _, _],
-      org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult
-    ] =
-      fileOutputConsumers.map { case (fileOutput, _) =>
-        val bucketFilesTag = bucketFileTags(fileOutput)
-        val bucketFiles = pCollectionTuple
-          .get(bucketFilesTag)
-          .setCoder(org.apache.beam.sdk.extensions.smb.SMBCollectionHelper.getBucketFilesCoder())
-
-        val writeResult = applyFinalization(fileOutput, bucketFiles)(sc)
-
-        (fileOutput.asInstanceOf[SMBSaveAsSortedBucketOutput[_, _, _]], writeResult)
-      }.toMap
-
-    // Populate deferred taps - create taps from metadata (no WriteResult needed)
+    // Populate deferred taps - taps read files directly from final location
     root.rootContext.deferredTaps.foreach { deferredTap =>
       // Use helper to preserve types while working with existential DeferredTap[_]
       def populateTap[V](dt: DeferredTap[V]): Unit = {
         // Files are written directly to final location, so tap can read them immediately
-        // Pass output metadata to SmbIO.tap - it will reconstruct FileOperations fresh
-        // This avoids closing over FileOperations which loses DatumFactory when serialized
-        val tap = SmbIO.tap(dt.outputMetadata)(dt.valueCoder).apply(sc)
+        // Pass output info to SmbIO.tap - FileOperations is already available
+        val tap = SmbIO.tap(dt.outputInfo)(dt.valueCoder).apply(sc)
         val closedTap = com.spotify.scio.io.ClosedTap(tap)
         dt.setTap(closedTap)
       }
@@ -421,8 +314,7 @@ private[smb] object SMBCollectionImpl {
     }
 
     SMBExecutionResult(
-      pCollectionTuple = if (outputNodes.nonEmpty) Some(pCollectionTuple) else None,
-      writeResults = writeResults
+      pCollectionTuple = if (outputNodes.nonEmpty) Some(pCollectionTuple) else None
     )
   }
 
@@ -434,25 +326,27 @@ private[smb] object SMBCollectionImpl {
     rootConsumer: SMBConsumer[K1, K2, List[Iterable[Any]]],
     sideInputs: Seq[SideInput[_]],
     outputNodes: Seq[SMBToSCollectionOutput[K1, K2, _]],
-    fileOutputConsumersWithTags: Seq[
-      (TupleTag[KV[BucketShardId, ResourceId]], SMBFileOutputConsumer[K1, K2, _])
-    ],
+    bucketFileTags: Seq[TupleTag[KV[BucketShardId, ResourceId]]],
     keyClassSecondary: Class[K2],
     metricsPrefix: String = "SMBCollection"
   )(implicit sc: ScioContext): org.apache.beam.sdk.values.PCollectionTuple = {
-    val keying = if (keyClassSecondary == classOf[Void]) {
+    val isPrimaryOnly = keyClassSecondary == classOf[Void]
+
+    val keying = if (isPrimaryOnly) {
       SortedBucketSource.Keying.PRIMARY
     } else {
       SortedBucketSource.Keying.PRIMARY_AND_SECONDARY
     }
-    val bucketedInputs = sources.map(_.toBucketedInput(keying))
+
+    // Convert sources to BucketedInput using polymorphism - no instanceof checks needed!
+    val bucketedInputs = sources.map(_.toBucketedInput(keying)).asJava
 
     import org.apache.beam.sdk.extensions.smb.SMBCollectionHelper
-    val sourceSpec = SMBCollectionHelper.createSourceSpec(bucketedInputs.asJava)
+    val sourceSpec = SMBCollectionHelper.createSourceSpec(bucketedInputs)
 
     // Use KV[K1, K2] for Beam compatibility
     val bucketSource = SMBCollectionHelper.createBucketSource[KV[K1, K2]](
-      bucketedInputs.asJava,
+      bucketedInputs,
       targetParallelism,
       1, // numShards
       0, // bucketOffset
@@ -463,10 +357,10 @@ private[smb] object SMBCollectionImpl {
     val buckets =
       sc.pipeline.apply("SMB-Read-Buckets", org.apache.beam.sdk.io.Read.from(bucketSource))
 
-    val someMetadata = bucketedInputs.head.getSourceMetadata.mapping.values.iterator.next.metadata
+    val someMetadata = bucketedInputs.asScala.head.getSourceMetadata.mapping.values.iterator.next.metadata
 
     // Use java.util.function.Function to avoid referencing package-private KeyFn type
-    val keyFnAndComparator = if (keyClassSecondary == classOf[Void]) {
+    val keyFnAndComparator = if (isPrimaryOnly) {
       // Primary key only: use primary key function and comparator
       val primaryKeyCoder = SMBCollectionHelper.getPrimaryKeyCoder(someMetadata)
       val fn: java.util.function.Function[SortedBucketIO.ComparableKeyBytes, _] =
@@ -491,7 +385,7 @@ private[smb] object SMBCollectionImpl {
     // Convert Beam KV to Scala tuple for consumer
     val keyFn: SortedBucketIO.ComparableKeyBytes => (K1, K2) = { kb =>
       val beamKv = javaKeyFn.apply(kb)
-      if (keyClassSecondary == classOf[Void]) {
+      if (isPrimaryOnly) {
         // Primary only - beamKv is just K1, pair with Void
         (beamKv.asInstanceOf[K1], null.asInstanceOf[K2])
       } else {
@@ -501,28 +395,21 @@ private[smb] object SMBCollectionImpl {
       }
     }
 
-    // Extract serializable metadata from sources - do NOT serialize Beam objects!
-    val sourceMetadata = sources.map(extractSourceMetadata)
-
     // Main tag for unused main output (Void output)
     val mainTag = new TupleTag[Void]("main-unused")
 
     val doFn = new SortedBucketMultiTransformDoFn[K1, K2](
-      sourceMetadata, // Only serializable metadata, no Beam objects
-      keying,
+      bucketedInputs, // BucketedInput is designed to be serializable
       keyFn,
       keyComparator,
       rootConsumer,
       sideInputs,
-      metricsPrefix,
-      fileOutputConsumersWithTags
+      metricsPrefix
     )
 
-    // Upcast to TupleTag[_] to allow combining different tag types
-    val allSideTags = outputNodes.map(_.tag.asInstanceOf[TupleTag[_]]) ++
-      fileOutputConsumersWithTags.map(_._1.asInstanceOf[TupleTag[_]])
-    val sideTagList =
-      allSideTags.foldLeft(org.apache.beam.sdk.values.TupleTagList.empty) { (list, tag) =>
+    // Include both PCollection output tags and bucket file tags
+    val sideTagList = (outputNodes.map(_.tag.asInstanceOf[TupleTag[_]]) ++ bucketFileTags)
+      .foldLeft(org.apache.beam.sdk.values.TupleTagList.empty) { (list, tag) =>
         list.and(tag)
       }
 
@@ -552,7 +439,7 @@ private[smb] object SMBCollectionImpl {
       val beamValueCoder = com.spotify.scio.coders.CoderMaterializer.beam(sc, valueCoder)
 
       // Create beam key coder for output nodes - use KV[K1, K2] for Beam
-      val beamKeyCoder = if (keyClassSecondary == classOf[Void]) {
+      val beamKeyCoder = if (isPrimaryOnly) {
         beamKey1Coder
       } else {
         org.apache.beam.sdk.coders.KvCoder.of(beamKey1Coder, beamKey2Coder)
@@ -566,24 +453,17 @@ private[smb] object SMBCollectionImpl {
         .setCoder(kvCoder.asInstanceOf[org.apache.beam.sdk.coders.Coder[Any]])
     }
 
-    result
-  }
+    // Set coders for bucket file PCollections (KV[BucketShardId, ResourceId])
+    bucketFileTags.foreach { tag =>
+      val bucketFilesPc = result.get(tag)
+      bucketFilesPc.setCoder(
+        org.apache.beam.sdk.coders.KvCoder.of(
+          org.apache.beam.sdk.extensions.smb.BucketShardId.BucketShardIdCoder.of(),
+          org.apache.beam.sdk.io.fs.ResourceIdCoder.of()
+        )
+      )
+    }
 
-  /**
-   * Finalization is skipped for SMBCollection because files are written directly to their final
-   * location with metadata.json during consumer.finish().
-   *
-   * WriteResult is unused - taps are populated from OutputMetadata instead of Beam's file moving
-   * infrastructure.
-   *
-   * @return
-   *   null (safe because Scio never dereferences WriteResult for SMB taps)
-   */
-  def applyFinalization[K, K2, V](
-    fileOutput: SMBSaveAsSortedBucketOutput[K, K2, V],
-    bucketFiles: org.apache.beam.sdk.values.PCollection[KV[BucketShardId, ResourceId]]
-  )(implicit sc: ScioContext): org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult = {
-    val _ = (fileOutput, bucketFiles) // Suppress unused warnings
-    null
+    result
   }
 }

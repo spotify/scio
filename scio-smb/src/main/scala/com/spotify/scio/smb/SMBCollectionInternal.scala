@@ -31,7 +31,13 @@ import scala.collection.mutable
 private[smb] trait SMBConsumer[K1, K2, -V] extends Serializable {
   def init(bucketId: Int, effectiveParallelism: Int): Unit
   def accept(key1: K1, key2: K2, value: V, receiver: MultiOutputReceiver): Unit
-  def finish(): Unit
+
+  /**
+   * Finish processing and output bucket files for temp-to-final move.
+   * File output consumers output (BucketShardId, ResourceId) to their bucket file tags.
+   * Other consumers propagate to children.
+   */
+  def finish(receiver: MultiOutputReceiver): Unit
 
   // Default no-op; FanOutTransformingConsumer propagates to children
   def setSideInputContext(ctx: SideInputContext[_]): Unit = ()
@@ -54,20 +60,18 @@ private[smb] class SMBPCollectionConsumer[K1, K2, V](
         .output(KV.of(KV.of(key1, key2), value))
     }
   }
-  override def finish(): Unit = ()
+  override def finish(receiver: MultiOutputReceiver): Unit = ()
 }
 
-/** Writes to temp SMB files (finalization DoFn moves them to final location). */
+/** Writes to SMB files (temp or final, depending on usesTempFiles flag). */
 private[smb] class SMBFileOutputConsumer[K1, K2, V](
-  outputMetadata: SMBCollectionImpl.OutputMetadata, // Store metadata, not FileOperations
+  fileOperations: org.apache.beam.sdk.extensions.smb.FileOperations[V], // Serializable!
   fileAssignment: org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment,
-  sourceBucketMetadata: org.apache.beam.sdk.extensions.smb.BucketMetadata[
-    _,
-    _,
-    _
-  ], // For writing metadata.json
+  sourceBucketMetadata: Option[org.apache.beam.sdk.extensions.smb.BucketMetadata[_, _, _]], // For writing metadata.json when not using temp files
   metricsPrefix: String,
-  outputIndex: Int // Index to identify this output in metrics
+  outputIndex: Int, // Index to identify this output in metrics
+  bucketFileTag: TupleTag[KV[BucketShardId, ResourceId]],
+  usesTempFiles: Boolean // If true, output bucket files; if false, write metadata.json directly
 ) extends SMBConsumer[K1, K2, V] {
   @transient private var writer: org.apache.beam.sdk.extensions.smb.FileOperations.Writer[V] = _
   @transient private var destination: ResourceId = _
@@ -86,26 +90,8 @@ private[smb] class SMBFileOutputConsumer[K1, K2, V](
     destination =
       SMBCollectionHelper.forBucket(fileAssignment, bucketShardId, effectiveParallelism, 1)
 
-    // Reconstruct FileOperations fresh from metadata to preserve DatumFactory
-    val specificData = new org.apache.avro.specific.SpecificData()
-    val recordClass = specificData
-      .getClass(outputMetadata.schema)
-      .asInstanceOf[Class[org.apache.avro.specific.SpecificRecord]]
-
-    val fileOps = if (outputMetadata.isParquet) {
-      // Reconstruct ParquetAvroFileOperations
-      org.apache.beam.sdk.extensions.smb.ParquetAvroFileOperations
-        .of(recordClass)
-        .asInstanceOf[org.apache.beam.sdk.extensions.smb.FileOperations[V]]
-    } else {
-      // Reconstruct AvroFileOperations
-      val datumFactory = new com.spotify.scio.avro.SpecificRecordDatumFactory(recordClass)
-      org.apache.beam.sdk.extensions.smb.AvroFileOperations
-        .of(datumFactory, outputMetadata.schema)
-        .asInstanceOf[org.apache.beam.sdk.extensions.smb.FileOperations[V]]
-    }
-
-    writer = fileOps.createWriter(destination)
+    // Use FileOperations directly - no reconstruction needed!
+    writer = fileOperations.createWriter(destination)
   }
 
   override def accept(key1: K1, key2: K2, value: V, receiver: MultiOutputReceiver): Unit = {
@@ -113,23 +99,26 @@ private[smb] class SMBFileOutputConsumer[K1, K2, V](
     recordsWritten.inc()
   }
 
-  override def finish(): Unit = {
+  override def finish(receiver: MultiOutputReceiver): Unit = {
     writer.close()
 
-    // Write metadata.json for bucket 0 only (metadata is same for all buckets)
-    if (bucketId == 0) {
-      val metadataFile = fileAssignment.getDirectory.resolve(
-        "metadata.json",
-        org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions.RESOLVE_FILE
-      )
-
-      // Write metadata using Beam's serialization
-      val channel = org.apache.beam.sdk.io.FileSystems.create(metadataFile, "application/json")
-      val outputStream = java.nio.channels.Channels.newOutputStream(channel)
-      try {
-        org.apache.beam.sdk.extensions.smb.BucketMetadata.to(sourceBucketMetadata, outputStream)
-      } finally {
-        outputStream.close()
+    if (usesTempFiles) {
+      // Output bucket file info for RenameBuckets transform to move from temp to final
+      receiver.get(bucketFileTag).output(KV.of(bucketShardId, destination))
+    } else {
+      // Write metadata.json directly to final location for bucket 0 only
+      if (bucketId == 0) {
+        val metadataFile = fileAssignment.getDirectory.resolve(
+          "metadata.json",
+          org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions.RESOLVE_FILE
+        )
+        val channel = org.apache.beam.sdk.io.FileSystems.create(metadataFile, "application/json")
+        val outputStream = java.nio.channels.Channels.newOutputStream(channel)
+        try {
+          org.apache.beam.sdk.extensions.smb.BucketMetadata.to(sourceBucketMetadata.get, outputStream)
+        } finally {
+          outputStream.close()
+        }
       }
     }
   }
@@ -152,8 +141,8 @@ private[smb] class TransformConsumer[K1, K2, In, Out](
     }
   }
 
-  override def finish(): Unit =
-    child.finish()
+  override def finish(receiver: MultiOutputReceiver): Unit =
+    child.finish(receiver)
 
   override def setSideInputContext(ctx: SideInputContext[_]): Unit = {
     sideInputCtx = ctx
@@ -166,7 +155,7 @@ private[smb] object NoOpConsumer {
   def apply[K1, K2, V]: SMBConsumer[K1, K2, V] = new SMBConsumer[K1, K2, V] {
     override def init(bucketId: Int, effectiveParallelism: Int): Unit = ()
     override def accept(key1: K1, key2: K2, value: V, receiver: MultiOutputReceiver): Unit = ()
-    override def finish(): Unit = ()
+    override def finish(receiver: MultiOutputReceiver): Unit = ()
     override def setSideInputContext(ctx: SideInputContext[_]): Unit = ()
   }
 }
@@ -192,10 +181,10 @@ private[smb] class PassThroughConsumer[K1, K2, V](
     }
   }
 
-  override def finish(): Unit = {
+  override def finish(receiver: MultiOutputReceiver): Unit = {
     var i = 0
     while (i < children.length) {
-      children(i).finish()
+      children(i).finish(receiver)
       i += 1
     }
   }
@@ -209,13 +198,9 @@ private[smb] class PassThroughConsumer[K1, K2, V](
   }
 }
 
-/** Result of executing an SMB graph (PCollection outputs + file write results). */
+/** Result of executing an SMB graph (PCollection outputs only). */
 private[smb] case class SMBExecutionResult(
-  pCollectionTuple: Option[org.apache.beam.sdk.values.PCollectionTuple],
-  writeResults: Map[
-    SMBSaveAsSortedBucketOutput[_, _, _],
-    org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult
-  ]
+  pCollectionTuple: Option[org.apache.beam.sdk.values.PCollectionTuple]
 )
 
 /**
@@ -248,7 +233,7 @@ private[smb] class DeferredTap[V](
   rootContext: SMBRootContext[_, _],
   val outputNode: SMBSaveAsSortedBucketOutput[_, _, V],
   val valueCoder: Coder[V], // Explicitly store coder to preserve type information
-  val outputMetadata: SMBCollectionImpl.OutputMetadata // Metadata for reconstructing FileOperations
+  val outputInfo: SMBCollectionImpl.OutputInfo // Output info with FileOperations
 ) extends Deferred[com.spotify.scio.io.ClosedTap[V]] {
   @volatile private var tapOption: Option[com.spotify.scio.io.ClosedTap[V]] = None
 
@@ -480,18 +465,17 @@ sealed private[smb] class SMBCollectionCore[K1: Coder, K2: Coder, In, Out: Coder
     val outputNode = new SMBSaveAsSortedBucketOutput[K1, K2, Out](output, rootContext)
     children += outputNode
 
-    // Get FileOperations to create coder with DatumFactory
-    import org.apache.beam.sdk.extensions.smb.SMBCollectionHelper
-    val fileOps = SMBCollectionHelper.getFileOperations(output)
-    val beamCoder = fileOps.getCoder()
-    val coderWithDatumFactory = Coder.beam[Out](beamCoder)
+    // Extract output info with FileOperations
+    val outputInfo = SMBCollectionImpl.extractOutputInfo(output)
 
-    // Extract output metadata for reconstructing FileOperations in tap
-    val outputMetadata = SMBCollectionImpl.extractOutputMetadata(output)
+    // Get FileOperations to create coder with DatumFactory
+    // Cast to the correct type - we know it's FileOperations[Out] because it came from TransformOutput[K1, K2, Out]
+    val fileOps = outputInfo.fileOperations.asInstanceOf[org.apache.beam.sdk.extensions.smb.FileOperations[Out]]
+    val coderWithDatumFactory = Coder.beam[Out](fileOps.getCoder())
 
     // Create deferred tap and register it with root context
     val deferredTap =
-      new DeferredTap[Out](rootContext, outputNode, coderWithDatumFactory, outputMetadata)
+      new DeferredTap[Out](rootContext, outputNode, coderWithDatumFactory, outputInfo)
     rootContext.deferredTaps += deferredTap
 
     deferredTap
@@ -516,7 +500,7 @@ sealed private[smb] class SMBCollectionCore[K1: Coder, K2: Coder, In, Out: Coder
   def buildConsumer(
     outputNodes: mutable.Buffer[SMBToSCollectionOutput[K1, K2, _]],
     fileOutputConsumers: mutable.Buffer[
-      (SMBSaveAsSortedBucketOutput[K1, K2, _], SMBFileOutputConsumer[K1, K2, _])
+      (SMBSaveAsSortedBucketOutput[K1, K2, _], SMBFileOutputConsumer[K1, K2, _], TupleTag[KV[BucketShardId, ResourceId]])
     ],
     metricsPrefix: String = "SMBCollection" // Default prefix for metrics
   ): SMBConsumer[K1, K2, In] = {
@@ -570,7 +554,7 @@ private[smb] class SMBToSCollectionOutput[K1: Coder, K2: Coder, V: Coder](
   override def buildConsumer(
     outputNodes: mutable.Buffer[SMBToSCollectionOutput[K1, K2, _]],
     fileOutputConsumers: mutable.Buffer[
-      (SMBSaveAsSortedBucketOutput[K1, K2, _], SMBFileOutputConsumer[K1, K2, _])
+      (SMBSaveAsSortedBucketOutput[K1, K2, _], SMBFileOutputConsumer[K1, K2, _], TupleTag[KV[BucketShardId, ResourceId]])
     ],
     metricsPrefix: String = "SMBCollection"
   ): SMBConsumer[K1, K2, V] = {
@@ -593,53 +577,63 @@ private[smb] class SMBSaveAsSortedBucketOutput[K1: Coder, K2: Coder, V: Coder](
   override def buildConsumer(
     outputNodes: mutable.Buffer[SMBToSCollectionOutput[K1, K2, _]],
     fileOutputConsumers: mutable.Buffer[
-      (SMBSaveAsSortedBucketOutput[K1, K2, _], SMBFileOutputConsumer[K1, K2, _])
+      (SMBSaveAsSortedBucketOutput[K1, K2, _], SMBFileOutputConsumer[K1, K2, _], TupleTag[KV[BucketShardId, ResourceId]])
     ],
     metricsPrefix: String = "SMBCollection"
   ): SMBConsumer[K1, K2, V] = {
-    // Use helper to access package-private methods
-    import org.apache.beam.sdk.extensions.smb.SMBCollectionHelper
-    val outputDir = SMBCollectionHelper.getOutputDirectory(output)
-
-    // Extract metadata for reconstructing FileOperations later
-    val outputMetadata = SMBCollectionImpl.extractOutputMetadata(output)
+    // Extract output info with FileOperations
+    val outputInfo = SMBCollectionImpl.extractOutputInfo(output)
 
     // Create filename policy for this output
     val filenamePolicy = new org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy(
-      outputDir,
-      SMBCollectionHelper.getFilenamePrefix(output),
-      SMBCollectionHelper.getFilenameSuffix(output)
+      org.apache.beam.sdk.io.FileSystems.matchNewResource(
+        outputInfo.outputDirectory,
+        true /* isDirectory */
+      ),
+      outputInfo.filenamePrefix,
+      outputInfo.filenameSuffix
     )
 
-    // Write directly to final location (skip temp/finalization to avoid RenameBuckets reading files)
-    // This avoids the DatumFactory serialization issue in RenameBuckets
-    val fileAssignment = filenamePolicy.forDestination()
-
-    // Get source bucket metadata for writing metadata.json
-    val sourceMetadata = SMBCollectionImpl.extractSourceMetadata(rootContext.sources.head)
-    val sourceBucketMetadata = {
-      val freshSource = SMBCollectionImpl.reconstructRead(sourceMetadata)
-      val bucketedInput = freshSource.toBucketedInput(
-        org.apache.beam.sdk.extensions.smb.SortedBucketSource.Keying.PRIMARY
-      )
-      bucketedInput.getSourceMetadata.mapping.values.iterator.next.metadata
+    // Get temp directory from TransformOutput and create file assignment
+    val tempDirectory = org.apache.beam.sdk.extensions.smb.SMBCollectionHelper.getTempDirectory(output)
+    val (fileAssignment, usesTempFiles) = if (tempDirectory != null) {
+      // Write to temp directory first, then RenameBuckets will move to final
+      (org.apache.beam.sdk.extensions.smb.SMBCollectionHelper.forTempFiles(filenamePolicy, tempDirectory), true)
+    } else {
+      // No temp directory configured - write directly to final location
+      (filenamePolicy.forDestination(), false)
     }
 
     // outputIndex is the current number of file outputs (used for unique metric names)
     val outputIndex = fileOutputConsumers.size
 
-    // Create the file output consumer with metadata instead of FileOperations
+    // Create bucket file tag for this output
+    val bucketFileTag = new TupleTag[KV[BucketShardId, ResourceId]](s"bucket-files-$outputIndex")
+
+    // Get source bucket metadata (needed for writing metadata.json when not using temp files)
+    val sourceBucketMetadata = if (!usesTempFiles) {
+      val bucketedInput = rootContext.sources.head.toBucketedInput(
+        org.apache.beam.sdk.extensions.smb.SortedBucketSource.Keying.PRIMARY
+      )
+      Some(bucketedInput.getSourceMetadata.mapping.values.iterator.next.metadata)
+    } else {
+      None
+    }
+
+    // Create the file output consumer with FileOperations directly - no reconstruction needed!
     val consumer =
       new SMBFileOutputConsumer[K1, K2, V](
-        outputMetadata,
+        outputInfo.fileOperations.asInstanceOf[org.apache.beam.sdk.extensions.smb.FileOperations[V]],
         fileAssignment,
         sourceBucketMetadata,
         metricsPrefix,
-        outputIndex
+        outputIndex,
+        bucketFileTag,
+        usesTempFiles
       )
 
-    // Track this consumer for finalization
-    fileOutputConsumers += ((this, consumer))
+    // Track this consumer and its tag for finalization
+    fileOutputConsumers += ((this, consumer, bucketFileTag))
 
     consumer
   }

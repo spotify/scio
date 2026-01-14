@@ -161,35 +161,20 @@ object SmbIO {
     tempPath
   }
 
-  // Overload for SMBCollection (uses OutputMetadata to avoid materializing bucket files)
+  // Overload for SMBCollection (uses OutputInfo to avoid materializing bucket files)
   private[scio] def tap[T: Coder](
-    outputMetadata: com.spotify.scio.smb.SMBCollectionImpl.OutputMetadata
+    outputInfo: com.spotify.scio.smb.SMBCollectionImpl.OutputInfo
   ): ScioContext => Tap[T] =
     (_: ScioContext) => {
       // Create a lazy tap that doesn't scan files until accessed
       new Tap[T] {
         override def value: Iterator[T] = {
-          // Reconstruct FileOperations fresh from metadata to get AvroCoder/ParquetCoder with DatumFactory
-          // This happens when tap is accessed, after pipeline has run
-          val specificData = new org.apache.avro.specific.SpecificData()
-          val recordClass = specificData
-            .getClass(outputMetadata.schema)
-            .asInstanceOf[Class[org.apache.avro.specific.SpecificRecord]]
-
-          val fileOps = if (outputMetadata.isParquet) {
-            // Reconstruct ParquetAvroFileOperations
-            org.apache.beam.sdk.extensions.smb.ParquetAvroFileOperations.of(recordClass)
-          } else {
-            // Reconstruct AvroFileOperations
-            val datumFactory = new com.spotify.scio.avro.SpecificRecordDatumFactory(recordClass)
-            org.apache.beam.sdk.extensions.smb.AvroFileOperations
-              .of(datumFactory, outputMetadata.schema)
-          }
+          // Use FileOperations directly - no reconstruction needed!
+          val fileOps = outputInfo.fileOperations
 
           // Scan output directory for bucket files (files now exist because pipeline has run)
-          val outputPath = outputMetadata.outputDirectory
           val filePattern =
-            s"$outputPath/${outputMetadata.filenamePrefix}*${outputMetadata.filenameSuffix}"
+            s"${outputInfo.outputDirectory}/${outputInfo.filenamePrefix}*${outputInfo.filenameSuffix}"
 
           import org.apache.beam.sdk.io.FileSystems
           import scala.jdk.CollectionConverters._

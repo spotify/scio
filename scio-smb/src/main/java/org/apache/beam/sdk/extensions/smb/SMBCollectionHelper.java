@@ -56,18 +56,6 @@ public class SMBCollectionHelper {
     return output.getTempDirectory();
   }
 
-  /** Get temp directory with fallback to default. */
-  public static <K1, K2, V> ResourceId getTempDirectoryOrDefault(
-      SortedBucketIO.TransformOutput<K1, K2, V> output, Pipeline pipeline) {
-    ResourceId tempDir = output.getTempDirectory();
-    if (tempDir != null) {
-      return tempDir;
-    }
-    // Use the same fallback logic as SortedBucketIO.Write
-    String tempLocation = pipeline.getOptions().getTempLocation();
-    return org.apache.beam.sdk.io.FileSystems.matchNewResource(tempLocation, true);
-  }
-
   /** Get filename prefix from a TransformOutput. */
   public static <K1, K2, V> String getFilenamePrefix(
       SortedBucketIO.TransformOutput<K1, K2, V> output) {
@@ -80,12 +68,6 @@ public class SMBCollectionHelper {
     return output.getFilenameSuffix();
   }
 
-  /** Get FileAssignment for temp files from an SMBFilenamePolicy. */
-  public static SMBFilenamePolicy.FileAssignment forTempFiles(
-      SMBFilenamePolicy policy, ResourceId tempDirectory) {
-    return policy.forTempFiles(tempDirectory);
-  }
-
   /** Get ResourceId for a bucket from FileAssignment (exposes package-private forBucket). */
   public static ResourceId forBucket(
       SMBFilenamePolicy.FileAssignment fileAssignment,
@@ -93,6 +75,12 @@ public class SMBCollectionHelper {
       int maxNumBuckets,
       int maxNumShards) {
     return fileAssignment.forBucket(id, maxNumBuckets, maxNumShards);
+  }
+
+  /** Create FileAssignment for temp files (exposes package-private forTempFiles). */
+  public static SMBFilenamePolicy.FileAssignment forTempFiles(
+      SMBFilenamePolicy filenamePolicy, ResourceId tempDirectory) {
+    return filenamePolicy.forTempFiles(tempDirectory);
   }
 
   /** Get bucketOffsetId from BucketItem. */
@@ -121,13 +109,6 @@ public class SMBCollectionHelper {
       int keyCacheSize) {
     return new SortedBucketTransform.BucketSource<>(
         inputs, targetParallelism, numShards, bucketOffset, sourceSpec, keyCacheSize);
-  }
-
-  /** Check if an Iterable is a TraversableOnceIterable and exhaust it if so. */
-  public static void exhaustIfTraversableOnce(Iterable<?> iterable) {
-    if (iterable instanceof SortedBucketSource.TraversableOnceIterable) {
-      ((SortedBucketSource.TraversableOnceIterable<?>) iterable).ensureExhausted();
-    }
   }
 
   /** Get primary key coder from BucketMetadata. */
@@ -186,87 +167,4 @@ public class SMBCollectionHelper {
                     + " from SMB metadata"));
   }
 
-  /** Create RenameBuckets transform for finalizing bucket files. */
-  public static <V>
-      org.apache.beam.sdk.transforms.PTransform<
-              org.apache.beam.sdk.values.PCollection<
-                  org.apache.beam.sdk.values.KV<
-                      BucketShardId, org.apache.beam.sdk.io.fs.ResourceId>>,
-              org.apache.beam.sdk.values.PCollectionTuple>
-          createRenameBuckets(
-              org.apache.beam.sdk.io.fs.ResourceId tempDirectory,
-              SMBFilenamePolicy.FileAssignment fileAssignment,
-              BucketMetadata<?, ?, ?> bucketMetadata,
-              FileOperations<V> fileOperations) {
-    return new SortedBucketSink.RenameBuckets<>(
-        tempDirectory, fileAssignment, bucketMetadata, fileOperations);
-  }
-
-  /** Convert PCollectionTuple to WriteResult. */
-  public static SortedBucketSink.WriteResult writeResultFromTuple(
-      org.apache.beam.sdk.values.PCollectionTuple tuple) {
-    return SortedBucketSink.WriteResult.fromTuple(tuple);
-  }
-
-  /** Get the coder for bucket files (KV<BucketShardId, ResourceId>). */
-  public static org.apache.beam.sdk.coders.Coder<
-          org.apache.beam.sdk.values.KV<BucketShardId, org.apache.beam.sdk.io.fs.ResourceId>>
-      getBucketFilesCoder() {
-    return org.apache.beam.sdk.coders.KvCoder.of(
-        org.apache.beam.sdk.extensions.avro.coders.AvroCoder.of(BucketShardId.class),
-        org.apache.beam.sdk.io.fs.ResourceIdCoder.of());
-  }
-
-  /** Get TupleTag from a SortedBucketIO.Read (used for source metadata extraction). */
-  public static org.apache.beam.sdk.values.TupleTag<?> getTupleTag(SortedBucketIO.Read<?> read) {
-    return read.getTupleTag(); // Public method
-  }
-
-  /**
-   * Get Schema from an AvroSortedBucketIO.Read or ParquetAvroSortedBucketIO.Read (used for source
-   * metadata extraction).
-   */
-  public static org.apache.avro.Schema getSchema(SortedBucketIO.Read<?> read) {
-    if (read instanceof AvroSortedBucketIO.Read) {
-      return ((AvroSortedBucketIO.Read<?>) read).getSchema();
-    }
-    if (read instanceof ParquetAvroSortedBucketIO.Read) {
-      ParquetAvroSortedBucketIO.Read<?> parquetRead = (ParquetAvroSortedBucketIO.Read<?>) read;
-      // Try schema first, then derive from record class if needed
-      org.apache.avro.Schema schema = parquetRead.getSchema();
-      if (schema != null) {
-        return schema;
-      }
-      // Derive schema from record class
-      Class<?> recordClass = parquetRead.getRecordClass();
-      if (recordClass != null) {
-        try {
-          return ((org.apache.avro.specific.SpecificRecord)
-                  recordClass.getDeclaredConstructor().newInstance())
-              .getSchema();
-        } catch (Exception e) {
-          throw new RuntimeException("Failed to derive schema from record class " + recordClass, e);
-        }
-      }
-      throw new IllegalArgumentException(
-          "ParquetAvroSortedBucketIO.Read must have either schema or recordClass");
-    }
-    throw new IllegalArgumentException(
-        "Only AvroSortedBucketIO.Read and ParquetAvroSortedBucketIO.Read are currently supported");
-  }
-
-  /**
-   * Get input directories from an AvroSortedBucketIO.Read or ParquetAvroSortedBucketIO.Read (used
-   * for source metadata extraction).
-   */
-  public static java.util.List<String> getInputDirectories(SortedBucketIO.Read<?> read) {
-    if (read instanceof AvroSortedBucketIO.Read) {
-      return ((AvroSortedBucketIO.Read<?>) read).getInputDirectories();
-    }
-    if (read instanceof ParquetAvroSortedBucketIO.Read) {
-      return ((ParquetAvroSortedBucketIO.Read<?>) read).getInputDirectories();
-    }
-    throw new IllegalArgumentException(
-        "Only AvroSortedBucketIO.Read and ParquetAvroSortedBucketIO.Read are currently supported");
-  }
 }
