@@ -271,7 +271,13 @@ private[smb] object SMBCollectionImpl {
     val metricsPrefix = "SMBCollection"
     val outputNodes = mutable.Buffer.empty[SMBToSCollectionOutput[K1, K2, _]]
     val fileOutputConsumers = mutable.Buffer
-      .empty[(SMBSaveAsSortedBucketOutput[K1, K2, _], SMBFileOutputConsumer[K1, K2, _], TupleTag[KV[BucketShardId, ResourceId]])]
+      .empty[
+        (
+          SMBSaveAsSortedBucketOutput[K1, K2, _],
+          SMBFileOutputConsumer[K1, K2, _],
+          TupleTag[KV[BucketShardId, ResourceId]]
+        )
+      ]
 
     val childConsumers: Seq[SMBConsumer[K1, K2, List[Iterable[Any]]]] = root.children.map { child =>
       child.buildConsumer(outputNodes, fileOutputConsumers, metricsPrefix)
@@ -357,7 +363,8 @@ private[smb] object SMBCollectionImpl {
     val buckets =
       sc.pipeline.apply("SMB-Read-Buckets", org.apache.beam.sdk.io.Read.from(bucketSource))
 
-    val someMetadata = bucketedInputs.asScala.head.getSourceMetadata.mapping.values.iterator.next.metadata
+    val someMetadata =
+      bucketedInputs.asScala.head.getSourceMetadata.mapping.values.iterator.next.metadata
 
     // Use java.util.function.Function to avoid referencing package-private KeyFn type
     val keyFnAndComparator = if (isPrimaryOnly) {

@@ -33,9 +33,8 @@ private[smb] trait SMBConsumer[K1, K2, -V] extends Serializable {
   def accept(key1: K1, key2: K2, value: V, receiver: MultiOutputReceiver): Unit
 
   /**
-   * Finish processing and output bucket files for temp-to-final move.
-   * File output consumers output (BucketShardId, ResourceId) to their bucket file tags.
-   * Other consumers propagate to children.
+   * Finish processing and output bucket files for temp-to-final move. File output consumers output
+   * (BucketShardId, ResourceId) to their bucket file tags. Other consumers propagate to children.
    */
   def finish(receiver: MultiOutputReceiver): Unit
 
@@ -67,7 +66,9 @@ private[smb] class SMBPCollectionConsumer[K1, K2, V](
 private[smb] class SMBFileOutputConsumer[K1, K2, V](
   fileOperations: org.apache.beam.sdk.extensions.smb.FileOperations[V], // Serializable!
   fileAssignment: org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment,
-  sourceBucketMetadata: Option[org.apache.beam.sdk.extensions.smb.BucketMetadata[_, _, _]], // For writing metadata.json when not using temp files
+  sourceBucketMetadata: Option[
+    org.apache.beam.sdk.extensions.smb.BucketMetadata[_, _, _]
+  ], // For writing metadata.json when not using temp files
   metricsPrefix: String,
   outputIndex: Int, // Index to identify this output in metrics
   bucketFileTag: TupleTag[KV[BucketShardId, ResourceId]],
@@ -115,7 +116,8 @@ private[smb] class SMBFileOutputConsumer[K1, K2, V](
         val channel = org.apache.beam.sdk.io.FileSystems.create(metadataFile, "application/json")
         val outputStream = java.nio.channels.Channels.newOutputStream(channel)
         try {
-          org.apache.beam.sdk.extensions.smb.BucketMetadata.to(sourceBucketMetadata.get, outputStream)
+          org.apache.beam.sdk.extensions.smb.BucketMetadata
+            .to(sourceBucketMetadata.get, outputStream)
         } finally {
           outputStream.close()
         }
@@ -470,7 +472,8 @@ sealed private[smb] class SMBCollectionCore[K1: Coder, K2: Coder, In, Out: Coder
 
     // Get FileOperations to create coder with DatumFactory
     // Cast to the correct type - we know it's FileOperations[Out] because it came from TransformOutput[K1, K2, Out]
-    val fileOps = outputInfo.fileOperations.asInstanceOf[org.apache.beam.sdk.extensions.smb.FileOperations[Out]]
+    val fileOps =
+      outputInfo.fileOperations.asInstanceOf[org.apache.beam.sdk.extensions.smb.FileOperations[Out]]
     val coderWithDatumFactory = Coder.beam[Out](fileOps.getCoder())
 
     // Create deferred tap and register it with root context
@@ -500,7 +503,11 @@ sealed private[smb] class SMBCollectionCore[K1: Coder, K2: Coder, In, Out: Coder
   def buildConsumer(
     outputNodes: mutable.Buffer[SMBToSCollectionOutput[K1, K2, _]],
     fileOutputConsumers: mutable.Buffer[
-      (SMBSaveAsSortedBucketOutput[K1, K2, _], SMBFileOutputConsumer[K1, K2, _], TupleTag[KV[BucketShardId, ResourceId]])
+      (
+        SMBSaveAsSortedBucketOutput[K1, K2, _],
+        SMBFileOutputConsumer[K1, K2, _],
+        TupleTag[KV[BucketShardId, ResourceId]]
+      )
     ],
     metricsPrefix: String = "SMBCollection" // Default prefix for metrics
   ): SMBConsumer[K1, K2, In] = {
@@ -554,7 +561,11 @@ private[smb] class SMBToSCollectionOutput[K1: Coder, K2: Coder, V: Coder](
   override def buildConsumer(
     outputNodes: mutable.Buffer[SMBToSCollectionOutput[K1, K2, _]],
     fileOutputConsumers: mutable.Buffer[
-      (SMBSaveAsSortedBucketOutput[K1, K2, _], SMBFileOutputConsumer[K1, K2, _], TupleTag[KV[BucketShardId, ResourceId]])
+      (
+        SMBSaveAsSortedBucketOutput[K1, K2, _],
+        SMBFileOutputConsumer[K1, K2, _],
+        TupleTag[KV[BucketShardId, ResourceId]]
+      )
     ],
     metricsPrefix: String = "SMBCollection"
   ): SMBConsumer[K1, K2, V] = {
@@ -577,7 +588,11 @@ private[smb] class SMBSaveAsSortedBucketOutput[K1: Coder, K2: Coder, V: Coder](
   override def buildConsumer(
     outputNodes: mutable.Buffer[SMBToSCollectionOutput[K1, K2, _]],
     fileOutputConsumers: mutable.Buffer[
-      (SMBSaveAsSortedBucketOutput[K1, K2, _], SMBFileOutputConsumer[K1, K2, _], TupleTag[KV[BucketShardId, ResourceId]])
+      (
+        SMBSaveAsSortedBucketOutput[K1, K2, _],
+        SMBFileOutputConsumer[K1, K2, _],
+        TupleTag[KV[BucketShardId, ResourceId]]
+      )
     ],
     metricsPrefix: String = "SMBCollection"
   ): SMBConsumer[K1, K2, V] = {
@@ -595,10 +610,15 @@ private[smb] class SMBSaveAsSortedBucketOutput[K1: Coder, K2: Coder, V: Coder](
     )
 
     // Get temp directory from TransformOutput and create file assignment
-    val tempDirectory = org.apache.beam.sdk.extensions.smb.SMBCollectionHelper.getTempDirectory(output)
+    val tempDirectory =
+      org.apache.beam.sdk.extensions.smb.SMBCollectionHelper.getTempDirectory(output)
     val (fileAssignment, usesTempFiles) = if (tempDirectory != null) {
       // Write to temp directory first, then RenameBuckets will move to final
-      (org.apache.beam.sdk.extensions.smb.SMBCollectionHelper.forTempFiles(filenamePolicy, tempDirectory), true)
+      (
+        org.apache.beam.sdk.extensions.smb.SMBCollectionHelper
+          .forTempFiles(filenamePolicy, tempDirectory),
+        true
+      )
     } else {
       // No temp directory configured - write directly to final location
       (filenamePolicy.forDestination(), false)
@@ -623,7 +643,8 @@ private[smb] class SMBSaveAsSortedBucketOutput[K1: Coder, K2: Coder, V: Coder](
     // Create the file output consumer with FileOperations directly - no reconstruction needed!
     val consumer =
       new SMBFileOutputConsumer[K1, K2, V](
-        outputInfo.fileOperations.asInstanceOf[org.apache.beam.sdk.extensions.smb.FileOperations[V]],
+        outputInfo.fileOperations
+          .asInstanceOf[org.apache.beam.sdk.extensions.smb.FileOperations[V]],
         fileAssignment,
         sourceBucketMetadata,
         metricsPrefix,
