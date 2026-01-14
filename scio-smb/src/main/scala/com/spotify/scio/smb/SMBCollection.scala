@@ -162,6 +162,23 @@ trait SMBCollectionWithSideInputs[K1, K2, V] {
   ): SMBCollectionWithSideInputs[K1, K2, V] =
     flatMap { (ctx, v) => f(ctx, v); Some(v) }
 
+  /**
+   * Convert back to a regular SMBCollection, dropping the side input context requirement.
+   *
+   * After this conversion, subsequent operations won't need the SideInputContext parameter.
+   *
+   * Example:
+   * {{{
+   * val withSideInputs: SMBCollectionWithSideInputs[K, V] = base.withSideInputs(...)
+   * val filtered = withSideInputs.filter((ctx, v) => ctx(sideInput).contains(v.id))
+   *
+   * // After filtering with side inputs, drop the context for cleaner operations
+   * val result: SMBCollection[K, V] = filtered.toSMBCollection
+   * result.map(v => transform(v))  // No context parameter needed
+   * }}}
+   */
+  def toSMBCollection: SMBCollection[K1, K2, V]
+
   def saveAsSortedBucket(output: SortedBucketIO.TransformOutput[K1, K2, V]): Deferred[ClosedTap[V]]
   def toDeferredSCollection()(implicit sc: ScioContext, coder: Coder[V]): Deferred[SCollection[V]]
   def toSCollectionAndSeal()(implicit sc: ScioContext, coder: Coder[V]): SCollection[V] =

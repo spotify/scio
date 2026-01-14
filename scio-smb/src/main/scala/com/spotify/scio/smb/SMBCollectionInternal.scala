@@ -690,4 +690,6 @@ private[smb] class SMBCollectionWithSideInputsWrapper[K1: Coder, K2: Coder, V: C
     coder: Coder[V]
   ): Deferred[SCollection[V]] =
     core.toDeferredSCollectionInternal().map(_.map(_._2)(coder))
+
+  override def toSMBCollection: SMBCollection[K1, K2, V] = core
 }
