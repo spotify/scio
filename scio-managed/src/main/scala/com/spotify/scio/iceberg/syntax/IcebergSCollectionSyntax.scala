@@ -44,7 +44,9 @@ class IcebergSCollectionSyntax[T: RowType: Coder](self: SCollection[T]) {
     val params = IcebergIO.WriteParam(
       catalogProperties,
       configProperties,
-      Option(triggeringFrequencySeconds).filter(_ != IcebergIO.WriteParam.DefaultTriggeringFrequencySeconds),
+      Option(triggeringFrequencySeconds).filter(
+        _ != IcebergIO.WriteParam.DefaultTriggeringFrequencySeconds
+      ),
       Option(directWriteByteLimit).filter(_ != IcebergIO.WriteParam.DefaultDirectWriteByteLimit),
       keep,
       drop,
