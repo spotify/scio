@@ -379,4 +379,46 @@ class SmbIOTest extends PipelineSpec {
           .build()
       })
   }
+
+  it should "use FileOperations coder for tap deserialization" in {
+    // This test validates that SmbIO.tap uses the coder from FileOperations.getCoder()
+    // rather than the implicit Coder[T]. This is critical for Avro SpecificRecords
+    // where FileOperations may have a specialized coder with DatumFactory configured.
+    //
+    // Without the fix, tap would use the implicit Coder[T] which may not have the same
+    // DatumFactory configuration, causing deserialization issues.
+    val tempFolder = Files.createTempDirectory("smb-tap-coder").toFile
+    tempFolder.deleteOnExit()
+
+    val sc = ScioContext()
+
+    // Write Account records using saveAsSortedBucket
+    // This uses FileOperations with Avro-specific coder configuration
+    val tap = sc
+      .parallelize(accountsIterable)
+      .saveAsSortedBucket(
+        AvroSortedBucketIO
+          .write(classOf[Integer], "id", classOf[Account])
+          .to(tempFolder.getAbsolutePath)
+          .withNumBuckets(4)
+          .withNumShards(2)
+      )
+
+    val result = sc.run().waitUntilDone()
+
+    // Read back via tap - this exercises SmbIO.tap which must use FileOperations coder
+    // to correctly deserialize the Avro SpecificRecords
+    val readBack = tap.get(result).value.toSeq
+
+    // Verify all records deserialized correctly
+    // This validates that FileOperations coder (with proper Avro DatumFactory) was used
+    readBack should contain theSameElementsAs accountsIterable
+
+    // Additional verification: check that AccountStatus enum is preserved
+    // This would fail if the wrong coder was used and DatumFactory wasn't properly configured
+    readBack.foreach { account =>
+      account.getAccountStatus should not be null
+      account.getName should not be null
+    }
+  }
 }

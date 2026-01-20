@@ -29,10 +29,10 @@ import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 // To test release candidates, find the beam repo and add it as a resolver
 // ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.68.0"
+val beamVersion = "2.70.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.68.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.70.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = sys.props.getOrElse("avro.version", "1.11.5")
@@ -44,14 +44,14 @@ val commonsCompressVersion = "1.26.2"
 val commonsIoVersion = "2.16.1"
 val commonsLang3Version = "3.18.0"
 val commonsMath3Version = "3.6.1"
-val gcpLibrariesVersion = "26.65.0"
+val gcpLibrariesVersion = "26.71.0"
 val googleClientsVersion = "2.0.0"
 val guavaVersion = "33.1.0-jre"
 val hamcrestVersion = "2.1"
 val httpClientVersion = "4.5.13"
 val httpCoreVersion = "4.4.14"
 val jacksonVersion = "2.15.4"
-val jodaTimeVersion = "2.10.14"
+val jodaTimeVersion = "2.14.0"
 val nettyVersion = "4.1.128.Final"
 val protobufVersion = "4.33.0"
 val slf4jVersion = "1.7.30"
@@ -69,8 +69,7 @@ val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
 val sparkMajorVersion = VersionNumber(sparkVersion).numbers.take(1).mkString(".")
 
 // check recommended versions from libraries-bom
-// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.65.0/index.html
-val failureAccessVersion = "1.0.2"
+val failureAccessVersion = "1.0.3"
 val checkerQualVersion = "3.49.0"
 val jsr305Version = "3.0.2"
 val perfmarkVersion = "0.27.0"
@@ -79,7 +78,7 @@ val algebirdVersion = "0.13.10"
 val annoy4sVersion = "0.10.0"
 val annoyVersion = "0.2.6"
 val breezeVersion = "2.1.0"
-val caffeineVersion = "3.2.0"
+val caffeineVersion = "3.2.3"
 val cassandraDriverVersion = "3.11.5"
 val cassandraVersion = "3.11.19"
 val catsVersion = "2.13.0"
@@ -87,14 +86,14 @@ val chillVersion = "0.10.0"
 val circeVersion = "0.14.15"
 val commonsTextVersion = "1.10.0"
 val elasticsearch7Version = "7.17.21"
-val elasticsearch8Version = "8.19.7"
+val elasticsearch8Version = "8.19.9"
 val fansiVersion = "0.5.1"
 val featranVersion = "0.8.0"
 val httpAsyncClientVersion = "4.1.5"
 val icebergVersion = "1.4.2"
 val jakartaJsonVersion = "2.1.3"
 val javaLshVersion = "0.12"
-val jedisVersion = "7.0.0"
+val jedisVersion = "7.2.0"
 val jnaVersion = "5.18.1"
 val junitInterfaceVersion = "0.13.3"
 val junitVersion = "4.13.2"
@@ -109,14 +108,14 @@ val neo4jDriverVersion = "4.4.21"
 val ndArrayVersion = "0.3.3"
 val parquetExtraVersion = "0.4.3"
 val parquetVersion = "1.16.0"
-val pprintVersion = "0.9.4"
+val pprintVersion = "0.9.6"
 val protobufGenericVersion = "0.2.9"
-val scalacheckVersion = "1.18.0"
+val scalacheckVersion = "1.19.0"
 val scalaCollectionCompatVersion = "2.14.0"
 val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.2.19"
 val shapelessVersion = "2.3.13"
-val sparkeyVersion = "3.2.5"
+val sparkeyVersion = "3.5.0"
 val tensorFlowVersion = "1.1.0"
 val tensorFlowMetadataVersion = "1.16.1"
 val testContainersVersion = "0.44.0"
@@ -145,8 +144,8 @@ ThisBuild / startYear := Some(2016)
 ThisBuild / licenses := Seq(License.Apache2)
 
 // scala versions
-val scala213 = "2.13.17"
-val scala212 = "2.12.20"
+val scala213 = "2.13.18"
+val scala212 = "2.12.21"
 val scalaDefault = scala213
 
 // compiler settings
@@ -426,7 +425,8 @@ val commonSettings = bomSettings ++ Def.settings(
     moduleFilter("com.chuusai", "shapeless"),
     moduleFilter("org.scala-lang", "scala-reflect"),
     moduleFilter("org.scala-lang.modules", "scala-collection-compat"),
-    moduleFilter("org.typelevel", "scalac-compat-annotation")
+    moduleFilter("org.typelevel", "scalac-compat-annotation"),
+    moduleFilter("com.google.auto.value", "auto-value")
   ).reduce(_ | _),
   fork := true,
   run / outputStrategy := Some(OutputStrategy.StdoutOutput),
@@ -1425,7 +1425,7 @@ lazy val `scio-examples` = project
       "redis.clients" % "jedis" % jedisVersion,
       // runtime
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
-      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.27.0" % Runtime,
+      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.27.1" % Runtime,
       // test
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
     ),
@@ -1643,7 +1643,9 @@ lazy val `scio-smb` = project
       "org.checkerframework" % "checker-qual" % checkerQualVersion,
       "org.slf4j" % "log4j-over-slf4j" % slf4jVersion, // log4j is excluded from hadoop
       "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
       // provided
+      "com.google.auto.value" % "auto-value" % autoValueVersion % Provided,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion % Provided, // scio-gcp
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % Provided,
       "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion % Provided, // scio-avro
@@ -1739,7 +1741,7 @@ lazy val integration = project
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // runtime
-      "com.google.cloud.sql" % "cloud-sql-connector-jdbc-sqlserver" % "1.27.0" % Runtime,
+      "com.google.cloud.sql" % "cloud-sql-connector-jdbc-sqlserver" % "1.27.1" % Runtime,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Runtime,
       // test

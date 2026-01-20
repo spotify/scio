@@ -267,6 +267,7 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
    *   - [[BigQueryIO.FailedStorageApiInserts]] if `method` id [[Method.STORAGE_WRITE_API]] or
    *     [[Method.STORAGE_API_AT_LEAST_ONCE]].
    */
+  @deprecated("Use magnolify API instead.", "0.15.0")
   def saveAsTypedBigQueryTable(
     table: Table,
     timePartitioning: TimePartitioning = TableWriteParam.DefaultTimePartitioning,

@@ -51,7 +51,6 @@ import scala.reflect.runtime.universe._
  * @groupname Ungrouped
  * Other Members
  */
-@deprecated("Use magnolify API instead.", "0.15.0")
 object AvroType {
 
   /**
@@ -87,7 +86,6 @@ object AvroType {
   @compileTimeOnly(
     "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
   )
-  @deprecated("Use magnolify API instead.", "0.15.0")
   class fromSchema(schema: String) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.schemaImpl
   }
@@ -131,7 +129,6 @@ object AvroType {
   @compileTimeOnly(
     "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
   )
-  @deprecated("Use magnolify API instead.", "0.15.0")
   class fromPath(folderGlob: String) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.pathImpl
   }
@@ -161,7 +158,6 @@ object AvroType {
   @compileTimeOnly(
     "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
   )
-  @deprecated("Use magnolify API instead.", "0.15.0")
   class fromSchemaFile(schemaFile: String) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.schemaFileImpl
   }
@@ -189,7 +185,6 @@ object AvroType {
   @compileTimeOnly(
     "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
   )
-  @deprecated("Use magnolify API instead.", "0.15.0")
   class toSchema extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.toSchemaImpl
   }
@@ -220,11 +215,9 @@ object AvroType {
    * Trait for case classes with generated companion objects.
    * @group trait
    */
-  @deprecated("Use magnolify API instead.", "0.15.0")
   trait HasAvroAnnotation
 
   /** Generate [[org.apache.avro.Schema Schema]] for a case class. */
-  @deprecated("Use magnolify API instead.", "0.15.0")
   def schemaOf[T: TypeTag]: Schema = SchemaProvider.schemaOf[T]
 
   /**
@@ -232,7 +225,6 @@ object AvroType {
    * the given case class `T`.
    * @group converters
    */
-  @deprecated("Use magnolify API instead.", "0.15.0")
   def fromGenericRecord[T]: GenericRecord => T =
     macro ConverterProvider.fromGenericRecordImpl[T]
 
@@ -241,12 +233,10 @@ object AvroType {
    * [[org.apache.avro.generic.GenericRecord GenericRecord]].
    * @group converters
    */
-  @deprecated("Use magnolify API instead.", "0.15.0")
   def toGenericRecord[T]: T => GenericRecord =
     macro ConverterProvider.toGenericRecordImpl[T]
 
   /** Create a new AvroType instance. */
-  @deprecated("Use magnolify API instead.", "0.15.0")
   def apply[T: TypeTag]: AvroType[T] = new AvroType[T]
 }
 
@@ -255,7 +245,6 @@ object AvroType {
  *
  * This decouples generated fields and methods from macro expansion to keep core macro free.
  */
-@deprecated("Use magnolify API instead.", "0.15.0")
 class AvroType[T: TypeTag] extends Serializable {
   private val instance = runtimeMirror(getClass.getClassLoader)
     .reflectModule(typeOf[T].typeSymbol.companion.asModule)

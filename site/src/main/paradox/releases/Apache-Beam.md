@@ -16,6 +16,7 @@ Also check out the [SDK Version Support Status](https://cloud.google.com/dataflo
 
 | **Scio** | **SDK Dependency** | **Description**                                                                                                                     |
 |:--------:|:------------------:|:------------------------------------------------------------------------------------------------------------------------------------|
+|  0.15.x  | Apache Beam 2.x.x  | drops java 8 targeting                                                                                                              |
 |  0.14.x  | Apache Beam 2.x.x  | avro removed from scio-core, explicit kryo coder fallback, official tensorflow metadata, hadoop 3 and parquet 1.13                  |
 |  0.13.x  | Apache Beam 2.x.x  | scio-elasticsearch6 removed. scio-elasticsearch7 migrated to new client. File based ScioIO param changes.                           |
 |  0.12.x  | Apache Beam 2.x.x  | com.spotify.scio.extra.bigquery, com.spotify.scio.pubsub removed. scio-elasticsearch6 deprecated.                                   |
@@ -31,44 +32,48 @@ Also check out the [SDK Version Support Status](https://cloud.google.com/dataflo
 |  0.2.x   | Dataflow Java SDK  | SQL-2011 support                                                                                                                    |
 |  0.1.x   | Dataflow Java SDK  | First releases                                                                                                                      |
 
-| **Scio Version** | **Beam Version** | **Details**                                           |
-|:----------------:|:----------------:|:------------------------------------------------------|
-|     0.14.19      |      2.67.0      | This version will be deprecated on August 12, 2026.   |
-|     0.14.18      |      2.66.0      | This version will be deprecated on July 1, 2026.      |
-|     0.14.17      |      2.64.0      | This version will be deprecated on March 31, 2026.    |
-|     0.14.16      |      2.64.0      | This version will be deprecated on March 31, 2026.    |
-|     0.14.15      |      2.64.0      | This version will be deprecated on March 31, 2026.    |
-|     0.14.14      |      2.63.0      | This version will be deprecated on February 18, 2026. |
-|     0.14.13      |      2.63.0      | This version will be deprecated on February 18, 2026. |
-|     0.14.12      |      2.62.0      | This version will be deprecated on January 21, 2026.  |
-|     0.14.11      |      2.62.0      | This version will be deprecated on January 21, 2026.  |
-|     0.14.10      |      2.61.0      | This version will be deprecated on November 25, 2025. |
-|      0.14.9      |      2.60.0      | This version will be deprecated on October 17, 2025.  |
-|      0.14.8      |      2.59.0      | This version will be deprecated on August 24, 2025.   |
-|      0.14.7      |      2.58.1      | This version will be deprecated on August 16, 2025.   |
-|      0.14.6      |      2.57.0      | This version will be deprecated on June 26, 2025.     |
-|      0.14.5      |      2.56.0      | This version will be deprecated on May 1, 2025.       |
-|      0.14.4      |      2.55.1      | This version will be deprecated on April 8, 2025.     |
-|      0.14.3      |      2.54.0      | This version will be deprecated on February 14, 2025. |
-|      0.14.2      |      2.54.0      | This version will be deprecated on February 14, 2025. |
-|      0.14.1      |      2.54.0      | This version will be deprecated on February 14, 2025. |
-|      0.14.0      |      2.53.0      | Deprecated on January 4, 2025.                        |
-|      0.13.6      |      2.52.0      | Deprecated on November 17, 2024.                      |
-|      0.13.5      |      2.51.0      | Deprecated on October 12, 2024.                       |
-|      0.13.4      |      2.51.0      | Deprecated on October 12, 2024.                       |
-|      0.13.3      |      2.50.0      | Deprecated on August 30, 2024.                        |
-|      0.13.2      |      2.49.0      | Deprecated on July 17, 2024.                          |
-|      0.13.1      |      2.49.0      | Deprecated onJuly 17, 2024.                           |
-|      0.13.0      |      2.48.0      | Deprecated on May 31, 2024.                           |
-|      0.12.8      |      2.46.0      | Deprecated on March 10, 2024.                         |
-|      0.12.7      |      2.46.0      | Deprecated on March 10, 2024.                         |
-|      0.12.6      |      2.46.0      | Deprecated on March 10, 2024.                         |
-|      0.12.5      |      2.45.0      | Deprecated on February 15, 2024.                      |
-|      0.12.4      |      2.44.0      | Deprecated on January 13, 2024.                       |
-|      0.12.3      |      2.44.0      | Deprecated on January 13, 2024.                       |
-|      0.12.2      |      2.44.0      | Deprecated on January 13, 2024.                       |
-|      0.12.1      |      2.43.0      | Deprecated on November 17, 2023.                      |
-|      0.12.0      |      2.41.0      | Deprecated on August 23rd, 2023.                      |
+| **Scio Version** | **Beam Version** | **Details**                                            |
+|:----------------:|:----------------:|:-------------------------------------------------------|
+|     0.15.2       |      2.70.0      | This version will be deprecated on December 16, 2026.  |
+|     0.15.1       |      2.68.0      | This version will be deprecated on September 22, 2026. |
+|     0.15.0       |      2.68.0      | This version will be deprecated on September 22, 2026. |
+|     0.14.20      |      2.68.0      | This version will be deprecated on September 22, 2026. |
+|     0.14.19      |      2.67.0      | This version will be deprecated on August 12, 2026.    |
+|     0.14.18      |      2.66.0      | This version will be deprecated on July 1, 2026.       |
+|     0.14.17      |      2.64.0      | This version will be deprecated on March 31, 2026.     |
+|     0.14.16      |      2.64.0      | This version will be deprecated on March 31, 2026.     |
+|     0.14.15      |      2.64.0      | This version will be deprecated on March 31, 2026.     |
+|     0.14.14      |      2.63.0      | This version will be deprecated on February 18, 2026.  |
+|     0.14.13      |      2.63.0      | This version will be deprecated on February 18, 2026.  |
+|     0.14.12      |      2.62.0      | This version will be deprecated on January 21, 2026.   |
+|     0.14.11      |      2.62.0      | This version will be deprecated on January 21, 2026.   |
+|     0.14.10      |      2.61.0      | Deprecated on November 25, 2025.                       |
+|      0.14.9      |      2.60.0      | Deprecated on October 17, 2025.                        |
+|      0.14.8      |      2.59.0      | Deprecated on August 24, 2025.                         |
+|      0.14.7      |      2.58.1      | Deprecated on August 16, 2025.                         |
+|      0.14.6      |      2.57.0      | Deprecated on June 26, 2025.                           |
+|      0.14.5      |      2.56.0      | Deprecated on May 1, 2025.                             |
+|      0.14.4      |      2.55.1      | Deprecated on April 8, 2025.                           |
+|      0.14.3      |      2.54.0      | Deprecated on February 14, 2025.                       |
+|      0.14.2      |      2.54.0      | Deprecated on February 14, 2025.                       |
+|      0.14.1      |      2.54.0      | Deprecated on February 14, 2025.                       |
+|      0.14.0      |      2.53.0      | Deprecated on January 4, 2025.                         |
+|      0.13.6      |      2.52.0      | Deprecated on November 17, 2024.                       |
+|      0.13.5      |      2.51.0      | Deprecated on October 12, 2024.                        |
+|      0.13.4      |      2.51.0      | Deprecated on October 12, 2024.                        |
+|      0.13.3      |      2.50.0      | Deprecated on August 30, 2024.                         |
+|      0.13.2      |      2.49.0      | Deprecated on July 17, 2024.                           |
+|      0.13.1      |      2.49.0      | Deprecated onJuly 17, 2024.                            |
+|      0.13.0      |      2.48.0      | Deprecated on May 31, 2024.                            |
+|      0.12.8      |      2.46.0      | Deprecated on March 10, 2024.                          |
+|      0.12.7      |      2.46.0      | Deprecated on March 10, 2024.                          |
+|      0.12.6      |      2.46.0      | Deprecated on March 10, 2024.                          |
+|      0.12.5      |      2.45.0      | Deprecated on February 15, 2024.                       |
+|      0.12.4      |      2.44.0      | Deprecated on January 13, 2024.                        |
+|      0.12.3      |      2.44.0      | Deprecated on January 13, 2024.                        |
+|      0.12.2      |      2.44.0      | Deprecated on January 13, 2024.                        |
+|      0.12.1      |      2.43.0      | Deprecated on November 17, 2023.                       |
+|      0.12.0      |      2.41.0      | Deprecated on August 23rd, 2023.                       |
 
 ## Beam dependencies
 
