@@ -95,7 +95,6 @@ class JdbcIOTest extends AnyFlatSpec with Matchers {
     sc.pipeline.traverseTopologically(finder)
     val transform = finder.result().head
     val displayData = DisplayData.from(transform).asMap().asScala
-    println(displayData)
     displayData should contain key WriteStatementId
     displayData(WriteStatementId).getValue should be("updated statement")
   }

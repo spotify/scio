@@ -54,7 +54,7 @@ val jacksonVersion = "2.15.4"
 val jodaTimeVersion = "2.14.0"
 val nettyVersion = "4.1.128.Final"
 val protobufVersion = "4.33.0"
-val slf4jVersion = "1.7.30"
+val slf4jVersion = "2.0.16"
 val zstdJniVersion = "1.5.6-3"
 // dependent versions
 val googleApiServicesBigQueryVersion = s"v2-rev20250706-$googleClientsVersion"
@@ -133,6 +133,7 @@ lazy val guavaBom = Bom("com.google.guava" % "guava-bom" % guavaVersion)
 lazy val jacksonBom = Bom("com.fasterxml.jackson" % "jackson-bom" % jacksonVersion)
 lazy val magnolifyBom = Bom("com.spotify" % "magnolify-bom" % magnolifyVersion)
 lazy val nettyBom = Bom("io.netty" % "netty-bom" % nettyVersion)
+lazy val slf4jBom = Bom("org.slf4j" % "slf4j-bom" % slf4jVersion)
 
 val NothingFilter: explicitdeps.ModuleFilter = { _ => false }
 
@@ -354,13 +355,15 @@ val bomSettings = Def.settings(
   jacksonBom,
   magnolifyBom,
   nettyBom,
+  slf4jBom,
   dependencyOverrides ++=
     beamBom.key.value.bomDependencies ++
       gcpBom.key.value.bomDependencies ++
       guavaBom.key.value.bomDependencies ++
       jacksonBom.key.value.bomDependencies ++
       magnolifyBom.key.value.bomDependencies ++
-      nettyBom.key.value.bomDependencies
+      nettyBom.key.value.bomDependencies ++
+      slf4jBom.key.value.bomDependencies
 )
 
 val commonSettings = bomSettings ++ Def.settings(
@@ -697,7 +700,7 @@ lazy val `scio-core` = project
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
       "org.apache.commons" % "commons-lang3" % commonsLang3Version,
       "org.apache.commons" % "commons-math3" % commonsMath3Version,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "org.slf4j" % "slf4j-api" % slf4jBom.key.value,
       "org.typelevel" %% "algebra" % algebraVersion,
       // provided
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % Provided,
@@ -727,7 +730,7 @@ lazy val `scio-core` = project
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
       "org.scalatestplus" %% s"scalacheck-$scalacheckMinorVersion" % scalatestplusVersion % Test,
       "org.typelevel" %% "cats-kernel" % catsVersion % Test,
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
+      "org.slf4j" % "slf4j-simple" % slf4jBom.key.value % Test
     ),
     buildInfoKeys := Seq[BuildInfoKey](scalaVersion, version, "beamVersion" -> beamVersion),
     buildInfoPackage := "com.spotify.scio"
@@ -772,7 +775,7 @@ lazy val `scio-test-core` = project
       "junit" % "junit" % junitVersion % Runtime,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
       // test
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
+      "org.slf4j" % "slf4j-simple" % slf4jBom.key.value % Test
     )
   )
 
@@ -793,7 +796,7 @@ lazy val `scio-test-google-cloud-platform` = project
       "org.scalatest" %% "scalatest" % scalatestVersion,
       "org.typelevel" %% "cats-kernel" % catsVersion,
       // test
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
+      "org.slf4j" % "slf4j-simple" % slf4jBom.key.value % Test
     )
   )
 
@@ -857,7 +860,7 @@ lazy val `scio-avro` = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "org.slf4j" % "slf4j-api" % slf4jBom.key.value,
       // test
       "com.spotify" %% "magnolify-cats" % magnolifyVersion % Test,
       "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % Test,
@@ -865,7 +868,7 @@ lazy val `scio-avro` = project
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
       "org.scalatestplus" %% s"scalacheck-$scalacheckMinorVersion" % scalatestplusVersion % Test,
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test,
+      "org.slf4j" % "slf4j-simple" % slf4jBom.key.value % Test,
       "org.typelevel" %% "cats-core" % catsVersion % Test
     ),
     Test / unmanagedSourceDirectories += {
@@ -939,7 +942,7 @@ lazy val `scio-google-cloud-platform` = project
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "org.slf4j" % "slf4j-api" % slf4jBom.key.value,
       // test
       "com.google.cloud" % "google-cloud-storage" % gcpBom.key.value % Test,
       "com.spotify" %% "magnolify-cats" % magnolifyVersion % Test,
@@ -948,7 +951,7 @@ lazy val `scio-google-cloud-platform` = project
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
       "org.scalatestplus" %% s"scalacheck-$scalacheckMinorVersion" % scalatestplusVersion % Test,
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test,
+      "org.slf4j" % "slf4j-simple" % slf4jBom.key.value % Test,
       "org.typelevel" %% "cats-core" % catsVersion % Test,
       "org.scalameta" %% "munit" % munitVersion % Test
     )
@@ -976,7 +979,7 @@ lazy val `scio-cassandra3` = project
       // test
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % Test,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
+      "org.slf4j" % "slf4j-simple" % slf4jBom.key.value % Test
     )
   )
 
@@ -1001,13 +1004,13 @@ lazy val `scio-elasticsearch-common` = project
       "org.apache.httpcomponents" % "httpasyncclient" % httpAsyncClientVersion,
       "org.apache.httpcomponents" % "httpclient" % httpClientVersion,
       "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "org.slf4j" % "slf4j-api" % slf4jBom.key.value,
       // provided
       "co.elastic.clients" % "elasticsearch-java" % elasticsearch8Version % Provided,
       "org.elasticsearch.client" % "elasticsearch-rest-client" % elasticsearch8Version % Provided,
       // test
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
+      "org.slf4j" % "slf4j-simple" % slf4jBom.key.value % Test
     )
   )
 
@@ -1077,13 +1080,13 @@ lazy val `scio-extra` = project
       "org.apache.beam" % "beam-sdks-java-extensions-zetasketch" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.scalanlp" %% "breeze" % breezeVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "org.slf4j" % "slf4j-api" % slf4jBom.key.value,
       "org.typelevel" %% "algebra" % algebraVersion,
       // test
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % Test,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
+      "org.slf4j" % "slf4j-simple" % slf4jBom.key.value % Test
     ),
     Compile / doc / sources := List(), // suppress warnings
     compileOrder := CompileOrder.JavaThenScala
@@ -1145,7 +1148,7 @@ lazy val `scio-jdbc` = project
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion
+      "org.slf4j" % "slf4j-api" % slf4jBom.key.value
     )
   )
 
@@ -1213,8 +1216,8 @@ lazy val `scio-parquet` = project
       "org.apache.parquet" % "parquet-column" % parquetVersion,
       "org.apache.parquet" % "parquet-common" % parquetVersion,
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
-      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion, // log4j is excluded from hadoop
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "org.slf4j" % "log4j-over-slf4j" % slf4jBom.key.value, // log4j is excluded from hadoop
+      "org.slf4j" % "slf4j-api" % slf4jBom.key.value,
       // provided
       "org.tensorflow" % "tensorflow-core-native" % tensorFlowVersion % Provided,
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Provided,
@@ -1222,7 +1225,7 @@ lazy val `scio-parquet` = project
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion % Runtime excludeAll (Exclude.metricsCore),
       "io.dropwizard.metrics" % "metrics-core" % metricsVersion % Runtime,
       // test
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
+      "org.slf4j" % "slf4j-simple" % slf4jBom.key.value % Test
     )
   )
 
@@ -1272,7 +1275,7 @@ lazy val `scio-tensorflow` = project
       "com.spotify" %% "featran-core" % featranVersion % Test,
       "com.spotify" %% "featran-scio" % featranVersion % Test,
       "com.spotify" %% "featran-tensorflow" % featranVersion % Test,
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
+      "org.slf4j" % "slf4j-simple" % slf4jBom.key.value % Test
     ),
     Compile / tensorFlowMetadataSourcesDir := target.value / s"metadata-$tensorFlowMetadataVersion",
     Compile / PB.protoSources += (Compile / tensorFlowMetadataSourcesDir).value,
@@ -1420,7 +1423,7 @@ lazy val `scio-examples` = project
       "org.apache.parquet" % "parquet-common" % parquetVersion,
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
       "org.neo4j.driver" % "neo4j-java-driver" % neo4jDriverVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "org.slf4j" % "slf4j-api" % slf4jBom.key.value,
       "org.tensorflow" % "tensorflow-core-native" % tensorFlowVersion,
       "redis.clients" % "jedis" % jedisVersion,
       // runtime
@@ -1473,11 +1476,11 @@ lazy val `scio-repl` = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion excludeAll (Exclude.gcsio),
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "org.slf4j" % "slf4j-api" % slf4jBom.key.value,
       // runtime
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Runtime,
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % Runtime
+      "org.slf4j" % "slf4j-simple" % slf4jBom.key.value % Runtime
     ),
     libraryDependencies ++= {
       VersionNumber(scalaVersion.value) match {
@@ -1599,7 +1602,7 @@ lazy val `scio-jmh` = project
     libraryDependencies ++= directRunnerDependencies ++ Seq(
       // test
       "org.hamcrest" % "hamcrest" % hamcrestVersion % Test,
-      "org.slf4j" % "slf4j-nop" % slf4jVersion % Test
+      "org.slf4j" % "slf4j-nop" % slf4jBom.key.value % Test
     )
   )
 
@@ -1641,8 +1644,8 @@ lazy val `scio-smb` = project
       "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-lang3" % commonsLang3Version,
       "org.checkerframework" % "checker-qual" % checkerQualVersion,
-      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion, // log4j is excluded from hadoop
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "org.slf4j" % "log4j-over-slf4j" % slf4jBom.key.value, // log4j is excluded from hadoop
+      "org.slf4j" % "slf4j-api" % slf4jBom.key.value,
       "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
       // provided
       "com.google.auto.value" % "auto-value" % autoValueVersion % Provided,
@@ -1662,7 +1665,7 @@ lazy val `scio-smb` = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % Test classifier "tests",
       "org.hamcrest" % "hamcrest" % hamcrestVersion % Test,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
+      "org.slf4j" % "slf4j-simple" % slf4jBom.key.value % Test
     ),
     javacOptions ++= {
       (Compile / sourceManaged).value.mkdirs()
@@ -1688,7 +1691,7 @@ lazy val `scio-redis` = project
       "redis.clients" % "jedis" % jedisVersion,
       // test
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
+      "org.slf4j" % "slf4j-simple" % slf4jBom.key.value % Test
     )
   )
 
@@ -1739,11 +1742,11 @@ lazy val integration = project
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "org.slf4j" % "slf4j-api" % slf4jBom.key.value,
       // runtime
       "com.google.cloud.sql" % "cloud-sql-connector-jdbc-sqlserver" % "1.27.1" % Runtime,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % Runtime,
+      "org.slf4j" % "slf4j-simple" % slf4jBom.key.value % Runtime,
       // test
       "com.dimafeng" %% "testcontainers-scala-elasticsearch" % testContainersVersion % Test,
       "com.dimafeng" %% "testcontainers-scala-neo4j" % testContainersVersion % Test,
