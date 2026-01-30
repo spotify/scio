@@ -29,10 +29,10 @@ import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 // To test release candidates, find the beam repo and add it as a resolver
 // ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.70.0"
+val beamVersion = "2.71.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.70.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.71.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = sys.props.getOrElse("avro.version", "1.11.5")
@@ -44,7 +44,7 @@ val commonsCompressVersion = "1.26.2"
 val commonsIoVersion = "2.16.1"
 val commonsLang3Version = "3.18.0"
 val commonsMath3Version = "3.6.1"
-val gcpLibrariesVersion = "26.71.0"
+val gcpLibrariesVersion = "26.73.0"
 val googleClientsVersion = "2.0.0"
 val guavaVersion = "33.1.0-jre"
 val hamcrestVersion = "2.1"
@@ -57,7 +57,7 @@ val protobufVersion = "4.33.0"
 val slf4jVersion = "2.0.16"
 val zstdJniVersion = "1.5.6-3"
 // dependent versions
-val googleApiServicesBigQueryVersion = s"v2-rev20250706-$googleClientsVersion"
+val googleApiServicesBigQueryVersion = s"v2-rev20251012-$googleClientsVersion"
 val googleApiServicesDataflowVersion = s"v1b3-rev20250519-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 // beam tested versions
