@@ -47,7 +47,7 @@ object TypedBigQueryIT {
 
   @BigQueryType.toTable
   case class Record(
-    bool: Boolean,
+    @description("some description") bool: Boolean,
     int: Int,
     long: Long,
     float: Float,
@@ -73,7 +73,7 @@ object TypedBigQueryIT {
 
   @BigQueryType.toTable
   case class RecordNoTime(
-    bool: Boolean,
+    @description("some description") bool: Boolean,
     int: Int,
     long: Long,
     float: Float,
@@ -93,7 +93,7 @@ object TypedBigQueryIT {
   // A record with no nested record types
   @BigQueryType.toTable
   case class FlatRecord(
-    bool: Boolean,
+    @description("some description") bool: Boolean,
     int: Int,
     long: Long,
     float: Float,
@@ -234,6 +234,10 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
     writtenSchema.getFields.asScala.filter(_.getDescription == "NONNEGATIVEINT").foreach {
       fieldSchema =>
         fieldSchema.getType shouldEqual "INTEGER"
+    }
+    // field description should be set
+    writtenSchema.getFields.asScala.filter(_.getName == "bool").foreach { fieldSchema =>
+      fieldSchema.getDescription shouldEqual "some description"
     }
 
     runWithRealContext(options) { sc =>
