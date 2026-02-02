@@ -236,7 +236,6 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
         fieldSchema.getType shouldEqual "INTEGER"
     }
     // field description should be set
-    // Result: FAILS
     writtenSchema.getFields.asScala.filter(_.getName == "bool").foreach { fieldSchema =>
       fieldSchema.getDescription shouldEqual "some description"
     }

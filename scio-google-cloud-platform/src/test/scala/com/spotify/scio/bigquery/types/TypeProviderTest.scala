@@ -17,7 +17,7 @@
 
 package com.spotify.scio.bigquery.types
 
-import com.google.api.services.bigquery.model.{TableFieldSchema, TableRow, TableSchema}
+import com.google.api.services.bigquery.model.TableRow
 import munit.Assertions.compileErrors
 import org.apache.beam.sdk.util.SerializableUtils
 import org.joda.time.Instant
@@ -28,7 +28,6 @@ import org.scalatest.flatspec.AnyFlatSpec
 import scala.annotation.StaticAnnotation
 import scala.reflect.runtime.universe._
 import org.apache.avro.generic.GenericRecord
-import scala.jdk.CollectionConverters._
 
 object TypeProviderTest {
   @BigQueryType.toTable
@@ -36,9 +35,6 @@ object TypeProviderTest {
 
   @BigQueryType.toTable
   case class ToTable(f1: Long, f2: Double, f3: Boolean, f4: String, f5: Instant)
-
-  @BigQueryType.toTable
-  case class FieldDescription(@description("foo") id: Int)
 
   @BigQueryType.fromSchema(
     """{"fields": [{"mode": "REQUIRED", "name": "f1", "type": "INTEGER"}]}"""
@@ -556,20 +552,6 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
 
   it should "support table description" in {
     DescriptionTbl.tableDescription shouldBe "Foo bar table description"
-  }
-
-  // Result: PASSES
-  it should "support field description" in {
-    val bqt = BigQueryType[FieldDescription]
-    bqt.schema shouldBe new TableSchema().setFields(
-      List(
-        new TableFieldSchema()
-          .setName("id")
-          .setType("INTEGER")
-          .setMode("REQUIRED")
-          .setDescription("foo")
-      ).asJava
-    )
   }
 
   @BigQueryType.toTable
