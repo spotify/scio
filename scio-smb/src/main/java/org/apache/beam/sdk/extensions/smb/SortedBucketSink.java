@@ -42,8 +42,8 @@ import org.apache.beam.sdk.coders.NullableCoder;
 import org.apache.beam.sdk.extensions.smb.BucketShardId.BucketShardIdCoder;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
-import org.apache.beam.sdk.extensions.sorter.PatchedBufferedExternalSorter;
 import org.apache.beam.sdk.extensions.sorter.ExternalSorter;
+import org.apache.beam.sdk.extensions.sorter.PatchedBufferedExternalSorter;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.MatchResult;
 import org.apache.beam.sdk.io.fs.MoveOptions.StandardMoveOptions;
@@ -395,7 +395,8 @@ public class SortedBucketSink<K1, K2, V> extends PTransform<PCollection<V>, Writ
         @Element KV<BucketShardId, Iterable<V>> record,
         OutputReceiver<KV<BucketShardId, Iterable<byte[]>>> out) {
       final BucketShardId bucketShardId = record.getKey();
-      final PatchedBufferedExternalSorter primarySorter = PatchedBufferedExternalSorter.create(sorterOptions);
+      final PatchedBufferedExternalSorter primarySorter =
+          PatchedBufferedExternalSorter.create(sorterOptions);
 
       try {
         bucketsInitiatedSorting.inc();
@@ -452,7 +453,8 @@ public class SortedBucketSink<K1, K2, V> extends PTransform<PCollection<V>, Writ
     }
 
     private Iterable<byte[]> secondarySort(List<byte[]> curKeyValues) throws IOException {
-      final PatchedBufferedExternalSorter secondarySorter = PatchedBufferedExternalSorter.create(sorterOptions);
+      final PatchedBufferedExternalSorter secondarySorter =
+          PatchedBufferedExternalSorter.create(sorterOptions);
       curKeyValues.forEach(
           valueBytes -> {
             try {
