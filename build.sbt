@@ -323,7 +323,11 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
 )
 
 // mima
-ThisBuild / mimaBinaryIssueFilters ++= Seq()
+ThisBuild / mimaBinaryIssueFilters ++= Seq(
+  // Renamed BufferedExternalSorter to SmbBufferedExternalSorter to avoid classpath conflicts
+  ProblemFilters.exclude[MissingClassProblem]("org.apache.beam.sdk.extensions.sorter.BufferedExternalSorter"),
+  ProblemFilters.exclude[MissingClassProblem]("org.apache.beam.sdk.extensions.sorter.BufferedExternalSorter$Options")
+)
 
 // headers
 lazy val currentYear = java.time.LocalDate.now().getYear
