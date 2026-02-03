@@ -34,9 +34,9 @@ import org.slf4j.LoggerFactory;
  * {@link Sorter} that will use in memory sorting until the values can't fit into memory and will
  * then fall back to external sorting.
  */
-@PatchedFromBeam(origin = "org.apache.beam.sdk.extensions.sorter")
-public class BufferedExternalSorter implements Sorter {
-  private static Logger LOG = LoggerFactory.getLogger(BufferedExternalSorter.class);
+@PatchedFromBeam(origin = "org.apache.beam.sdk.extensions.sorter.BufferedExternalSorter")
+public class PatchedBufferedExternalSorter implements Sorter {
+  private static Logger LOG = LoggerFactory.getLogger(PatchedBufferedExternalSorter.class);
 
   public static Options options() {
     return new Options(SorterSysProps.getTempLocation(), 100, SorterType.HADOOP);
@@ -108,12 +108,12 @@ public class BufferedExternalSorter implements Sorter {
   /** The in-memory sorter is set to {@code null} when it fills up. */
   private @Nullable InMemorySorter inMemorySorter;
 
-  BufferedExternalSorter(ExternalSorter externalSorter, InMemorySorter inMemorySorter) {
+  PatchedBufferedExternalSorter(ExternalSorter externalSorter, InMemorySorter inMemorySorter) {
     this.externalSorter = externalSorter;
     this.inMemorySorter = inMemorySorter;
   }
 
-  public static BufferedExternalSorter create(Options options) {
+  public static PatchedBufferedExternalSorter create(Options options) {
     ExternalSorter.Options externalSorterOptions = new ExternalSorter.Options();
     externalSorterOptions.setTempLocation(options.getTempLocation());
     externalSorterOptions.setSorterType(options.getExternalSorterType());
@@ -122,7 +122,7 @@ public class BufferedExternalSorter implements Sorter {
     InMemorySorter.Options inMemorySorterOptions = new InMemorySorter.Options();
     inMemorySorterOptions.setMemoryMB(options.getMemoryMB());
 
-    return new BufferedExternalSorter(
+    return new PatchedBufferedExternalSorter(
         ExternalSorter.create(externalSorterOptions), InMemorySorter.create(inMemorySorterOptions));
   }
 
