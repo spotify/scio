@@ -110,10 +110,13 @@ private[types] object SchemaProvider {
   }
 
   private def fieldDoc(t: Type): Iterable[Option[String]] = {
-    val tpe = "com.spotify.scio.avro.types.doc"
+    // Scala 2.13.17+ resolves annotation type using `com.spotify.scio.avro.doc` alias; previous Scala
+    // versions (and all 2.12 versions) resolve to `com.spotify.scio.avro.types.doc`
+    // See: https://github.com/spotify/scio/issues/5874
+    val tpes = Set("com.spotify.scio.avro.types.doc", "com.spotify.scio.avro.doc")
     t.typeSymbol.asClass.primaryConstructor.typeSignature.paramLists.head.map {
       _.annotations
-        .find(_.tree.tpe.toString == tpe)
+        .find(a => tpes.contains(a.tree.tpe.toString))
         .map { a =>
           val q"new $_($v)" = a.tree: @nowarn
           val Literal(Constant(s)) = v: @nowarn
