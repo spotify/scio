@@ -222,7 +222,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.15.1-19-4f2f0ac-20260120T204345Z*
+<i class="md-icon" title="Version">label_outline</i> 0.15.2-5-9915816-20260204T144418Z*
 </label>
 </li>
 </ul>
@@ -234,8 +234,8 @@ spotify/scio
 <div class="md-content__searchable">
 <h1><a href="#managed-io" name="managed-io" class="anchor"><span class="anchor-link"></span></a>Managed IO</h1>
 <p>Beam&rsquo;s Managed transforms move responsibility for the creation of transform classes from user code to the runner, allowing runner-specific optimizations like hot-swapping an instance of a transform with an updated one. Beam currently supports Iceberg and Kafka managed transforms. See also <a href="https://cloud.google.com/dataflow/docs/guides/managed-io">Dataflow&rsquo;s supported transforms</a>.</p>
-<p>A Scio <a href="../internals/Coders.html">Coder</a> must be defined for the Beam <a href="https://beam.apache.org/releases/javadoc/2.70.0/?org/apache/beam/sdk/values/Row.html" title="org.apache.beam.sdk.values.Row"><code>Row</code></a>, derived from the Beam <a href="https://beam.apache.org/releases/javadoc/2.70.0/?org/apache/beam/sdk/schemas/Schema.html" title="org.apache.beam.sdk.schemas.Schema"><code>Schema</code></a> expected from the datasource. If you have more than one type of data being read into Beam Rows, you will need to provide the coders explicitly instead of implicitly.</p>
-<p>The source and sink parameters should be imported from Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.70.0/?org/apache/beam/sdk/managed/Managed.html" title="org.apache.beam.sdk.managed.Managed"><code>Managed</code></a>.</p>
+<p>A Scio <a href="../internals/Coders.html">Coder</a> must be defined for the Beam <a href="https://beam.apache.org/releases/javadoc/2.71.0/?org/apache/beam/sdk/values/Row.html" title="org.apache.beam.sdk.values.Row"><code>Row</code></a>, derived from the Beam <a href="https://beam.apache.org/releases/javadoc/2.71.0/?org/apache/beam/sdk/schemas/Schema.html" title="org.apache.beam.sdk.schemas.Schema"><code>Schema</code></a> expected from the datasource. If you have more than one type of data being read into Beam Rows, you will need to provide the coders explicitly instead of implicitly.</p>
+<p>The source and sink parameters should be imported from Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.71.0/?org/apache/beam/sdk/managed/Managed.html" title="org.apache.beam.sdk.managed.Managed"><code>Managed</code></a>.</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.managed._
@@ -297,7 +297,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.15.1-19-4f2f0ac-20260120T204345Z*
+0.15.2-5-9915816-20260204T144418Z*
 </span>
 </div>
 </article>
