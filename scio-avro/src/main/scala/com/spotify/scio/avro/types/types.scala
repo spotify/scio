@@ -37,5 +37,5 @@ package object types {
    * }}}
    */
   @nowarn
-  class doc(value: String) extends StaticAnnotation
+  class doc(value: String) extends StaticAnnotation with Serializable
 }
