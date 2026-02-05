@@ -111,6 +111,29 @@ object NoDocAnnotationMapJob {
   }
 }
 
+/**
+ * Job using standard saveAsAvroFile (Scio's built-in Magnolify integration).
+ * This tests whether the standard Scio API also has the serialization issue.
+ */
+object StandardSaveAsAvroFileJob {
+  import DocAnnotationSerializationTest.RecordWithDoc
+
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+
+    sc.textFile(args("input"))
+      .map { line =>
+        val parts = line.split(",")
+        RecordWithDoc(parts(0), parts(1))
+      }
+      // Uses Scio's built-in Magnolify integration - does this also serialize AvroType?
+      .saveAsAvroFile(args("output"))
+
+    sc.run()
+    ()
+  }
+}
+
 class DocAnnotationSerializationTest extends PipelineSpec {
   import DocAnnotationSerializationTest._
 
@@ -187,6 +210,30 @@ class DocAnnotationSerializationTest extends PipelineSpec {
       .args("--input=in.txt", "--output=out.avro")
       .input(TextIO("in.txt"), inputData)
       .output(AvroIO[GenericRecord]("out.avro")) { actual =>
+        actual should containInAnyOrder(expected)
+      }
+      .run()
+  }
+
+  /**
+   * Test that standard Scio saveAsAvroFile also works with @doc annotations.
+   *
+   * Scio's AvroMagnolifyTypedIO internally uses .map(avroT.to), which captures
+   * the AvroType (including @doc annotations) in a closure. This test verifies
+   * that the standard API also requires @doc to be Serializable.
+   */
+  "StandardSaveAsAvroFileJob" should "serialize @doc annotations with standard saveAsAvroFile" in {
+    val expected = Seq(
+      RecordWithDoc("id1", "name1"),
+      RecordWithDoc("id2", "name2"),
+      RecordWithDoc("id3", "name3")
+    )
+
+    // Standard saveAsAvroFile uses AvroMagnolifyTypedIO which outputs the case class type
+    JobTest[StandardSaveAsAvroFileJob.type]
+      .args("--input=in.txt", "--output=out.avro")
+      .input(TextIO("in.txt"), inputData)
+      .output(AvroIO[RecordWithDoc]("out.avro")) { actual =>
         actual should containInAnyOrder(expected)
       }
       .run()
