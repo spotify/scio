@@ -32,6 +32,8 @@ Also check out the [SDK Version Support Status](https://cloud.google.com/dataflo
 |  0.2.x   | Dataflow Java SDK  | SQL-2011 support                                                                                                                    |
 |  0.1.x   | Dataflow Java SDK  | First releases                                                                                                                      |
 
+### Deprecation
+
 | **Scio Version** | **Beam Version** | **Details**                                            |
 |:----------------:|:----------------:|:-------------------------------------------------------|
 |     0.15.2       |      2.70.0      | This version will be deprecated on December 16, 2026.  |
