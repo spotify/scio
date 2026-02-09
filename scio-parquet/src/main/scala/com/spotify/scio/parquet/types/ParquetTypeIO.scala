@@ -90,7 +90,7 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
     val cls = ScioUtil.classOf[T]
     val job = Job.getInstance(conf)
     val filePattern = ScioUtil.filePattern(path, params.suffix)
-    GcsConnectorUtil.setInputPaths(sc, job, filePattern)
+    GcsConnectorUtil.setInputPaths(sc, job.getConfiguration, filePattern)
     tpe.setupInput(job)
     job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
     job.getConfiguration.setClass("value.class", cls, cls)

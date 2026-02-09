@@ -98,13 +98,23 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     c
   }
 
-  private val readConfigs =
-    Table(
-      ("config", "description"),
-      (() => createConfig(false), "legacy read"),
+  private val readConfigs = {
+    val rows = Seq(
       (() => createConfig(true), "splittable"),
       (() => ParquetAvroIO.ReadParam.DefaultConfiguration, "default")
+    ) ++ (
+      // Legacy reads are not supported on Java 22+; see https://github.com/apache/parquet-java/issues/3328
+      // Todo: unblock when https://github.com/apache/hadoop/pull/8062 is released in Hadoop
+      if (System.getProperty("java.version").stripPrefix("1.").takeWhile(_.isDigit).toInt < 22) {
+        Seq((() => createConfig(false), "legacy read"))
+      } else {
+        println("Skip legacy reads on Java 22+")
+        Seq()
+      }
     )
+
+    Table(("config", "description"), rows: _*)
+  }
 
   it should "work with specific records" in {
     val xs = (1 to 100).map(AvroUtils.newSpecificRecord)
