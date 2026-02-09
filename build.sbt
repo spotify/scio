@@ -1677,7 +1677,11 @@ lazy val `scio-smb` = project
     ),
     javacOptions ++= {
       (Compile / sourceManaged).value.mkdirs()
-      Seq("-s", (Compile / sourceManaged).value.getAbsolutePath)
+      Seq(
+        "-s",
+        (Compile / sourceManaged).value.getAbsolutePath,
+        "-proc:full" // Explicitly enable annotation processing for Java 25
+      )
     },
     compileOrder := CompileOrder.JavaThenScala
   )
