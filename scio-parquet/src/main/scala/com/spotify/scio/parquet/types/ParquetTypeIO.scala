@@ -145,13 +145,13 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
     )(ScioUtil.strippedPath(path), suffix)
     val dynamicDestinations = DynamicFileDestinations
       .constant(fp, SerializableFunctions.identity[T])
-    val job = Job.getInstance(ParquetConfiguration.ofNullable(conf))
-    if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
+    val jobConf = ParquetConfiguration.ofNullable(conf)
+    if (isLocalRunner) GcsConnectorUtil.setCredentials(jobConf)
     val sink = new ParquetTypeFileBasedSink[T](
       StaticValueProvider.of(tempDirectory),
       dynamicDestinations,
       tpe,
-      job.getConfiguration,
+      jobConf,
       compression,
       metadata.asJava
     )

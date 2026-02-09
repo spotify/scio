@@ -98,14 +98,13 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
     )(ScioUtil.strippedPath(path), suffix)
     val dynamicDestinations = DynamicFileDestinations
       .constant(fp, SerializableFunctions.identity[T])
-    val job = Job.getInstance(conf)
-    if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
+    if (isLocalRunner) GcsConnectorUtil.setCredentials(conf)
 
     val sink = new ParquetAvroFileBasedSink[T](
       StaticValueProvider.of(tempDirectory),
       dynamicDestinations,
       schema,
-      job.getConfiguration,
+      conf,
       compression,
       metadata.asJava
     )

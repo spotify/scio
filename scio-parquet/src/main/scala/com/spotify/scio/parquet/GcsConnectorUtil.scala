@@ -42,21 +42,21 @@ private[parquet] object GcsConnectorUtil {
    *
    * If neither of these paths exist, `fs.gs.auth.null.enable` will be set (to enable unit testing).
    */
-  def setCredentials(job: Job): Unit = {
+  def setCredentials(conf: Configuration): Unit = {
     Try(GoogleCredentials.getApplicationDefault()).map {
       case _: ServiceAccountCredentials => getWellKnownCredentialFile.map(_.toString)
       case _                            => None
     } match {
       case Success(Some(sa)) =>
-        job.getConfiguration.set("fs.gs.auth.service.account.json.keyfile", sa)
+        conf.set("fs.gs.auth.service.account.json.keyfile", sa)
       case Success(None) =>
-        job.getConfiguration.set(
+        conf.set(
           "fs.gs.auth.access.token.provider.impl",
           "com.spotify.scio.parquet.ApplicationDefaultTokenProvider"
         )
       case _ =>
-        job.getConfiguration.setBoolean("fs.gs.auth.service.account.enable", false)
-        job.getConfiguration.setBoolean("fs.gs.auth.null.enable", true)
+        conf.setBoolean("fs.gs.auth.service.account.enable", false)
+        conf.setBoolean("fs.gs.auth.null.enable", true)
     }
   }
 
@@ -70,7 +70,7 @@ private[parquet] object GcsConnectorUtil {
   def setInputPaths(sc: ScioContext, job: Job, path: String): Unit = {
     // This is needed since `FileInputFormat.setInputPaths` validates paths locally and requires
     // the user's GCP credentials.
-    GcsConnectorUtil.setCredentials(job)
+    GcsConnectorUtil.setCredentials(job.getConfiguration)
 
     FileInputFormat.setInputPaths(job, path)
 
