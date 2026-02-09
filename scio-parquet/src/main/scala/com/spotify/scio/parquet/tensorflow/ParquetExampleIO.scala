@@ -22,33 +22,29 @@ import com.spotify.parquet.tensorflow.{
   TensorflowExampleParquetReader,
   TensorflowExampleReadSupport
 }
-
-import java.lang.{Boolean => JBoolean}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
-import com.spotify.scio.parquet.ParquetConfiguration
 import com.spotify.scio.parquet.read.{ParquetRead, ParquetReadConfiguration, ReadSupportFactory}
-import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
+import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil, ParquetConfiguration}
 import com.spotify.scio.testing.TestDataManager
-import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.util.FilenamePolicySupplier
+import com.spotify.scio.util.{FilenamePolicySupplier, ScioUtil}
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
-import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.io._
 import org.apache.beam.sdk.io.fs.ResourceId
+import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
+import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
-import org.apache.beam.sdk.transforms.SerializableFunctions
-import org.apache.beam.sdk.transforms.SimpleFunction
+import org.apache.beam.sdk.transforms.{SerializableFunctions, SimpleFunction}
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.mapreduce.Job
+import org.apache.hadoop.mapreduce.InputFormat
 import org.apache.parquet.filter2.predicate.FilterPredicate
-import org.apache.parquet.hadoop.{ParquetInputFormat, ParquetReader}
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
-import org.tensorflow.proto.{Example, Features}
+import org.apache.parquet.hadoop.{ParquetInputFormat, ParquetReader}
 import org.tensorflow.metadata.v0.Schema
+import org.tensorflow.proto.{Example, Features}
 
+import java.lang.{Boolean => JBoolean}
 import scala.jdk.CollectionConverters._
 
 final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
@@ -99,20 +95,22 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
     conf: Configuration,
     params: ReadP
   ): SCollection[Example] = {
-    val job = Job.getInstance(conf)
-    GcsConnectorUtil.setInputPaths(sc, job, path)
-    job.setInputFormatClass(classOf[TensorflowExampleParquetInputFormat])
-    job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
-    job.getConfiguration.setClass("value.class", classOf[Example], classOf[Example])
-
-    ParquetInputFormat.setReadSupportClass(job, classOf[TensorflowExampleReadSupport])
+    GcsConnectorUtil.setInputPaths(sc, conf, path)
+    conf.setClass(
+      "mapreduce.job.inputformat.class",
+      classOf[TensorflowExampleParquetInputFormat],
+      classOf[InputFormat[_, Example]]
+    )
+    conf.setClass("key.class", classOf[Void], classOf[Void])
+    conf.setClass("value.class", classOf[Example], classOf[Example])
+    conf.set(ParquetInputFormat.READ_SUPPORT_CLASS, classOf[TensorflowExampleReadSupport].getName)
     Option(params.projection).foreach { projection =>
-      TensorflowExampleParquetInputFormat.setRequestedProjection(job, projection)
-      TensorflowExampleParquetInputFormat.setExampleReadSchema(job, projection)
+      TensorflowExampleReadSupport.setRequestedProjection(conf, projection)
+      TensorflowExampleReadSupport.setExampleReadSchema(conf, projection)
     }
 
     Option(params.predicate).foreach { predicate =>
-      ParquetInputFormat.setFilterPredicate(job.getConfiguration, predicate)
+      ParquetInputFormat.setFilterPredicate(conf, predicate)
     }
 
     val source = HadoopFormatIO
@@ -121,7 +119,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
       .withKeyTranslation(new SimpleFunction[Void, JBoolean]() {
         override def apply(input: Void): JBoolean = true
       })
-      .withConfiguration(job.getConfiguration)
+      .withConfiguration(conf)
     sc.applyTransform(source).map(_.getValue)
   }
 
