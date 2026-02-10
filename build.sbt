@@ -161,10 +161,10 @@ ThisBuild / tlCiScalafmtCheck := true
 ThisBuild / tlCiJavafmtCheck := true
 
 // github actions
+val java25 = JavaSpec.corretto("25")
 val java21 = JavaSpec.corretto("21")
 val java17 = JavaSpec.corretto("17")
-val java11 = JavaSpec.corretto("11")
-val javaDefault = java11
+val javaDefault = java17
 val condPrimaryScala = s"matrix.scala == '${CrossVersion.binaryScalaVersion(scalaDefault)}'"
 val condPrimaryJava = s"matrix.java == '${javaDefault.render}'"
 val condIsMain = "github.ref == 'refs/heads/main'"
@@ -196,7 +196,7 @@ val skipUnauthorizedGcpGithubWorkflow = Def.setting {
 }
 
 ThisBuild / githubWorkflowTargetBranches := Seq("main")
-ThisBuild / githubWorkflowJavaVersions := Seq(javaDefault, java17, java21) // default MUST be head
+ThisBuild / githubWorkflowJavaVersions := Seq(javaDefault, java21, java25) // default MUST be head
 ThisBuild / githubWorkflowBuildPreamble ++= Seq(githubWorkflowGcpAuthStep, githubWorkflowSetupStep)
 ThisBuild / githubWorkflowBuildPostamble ++= Seq(
   WorkflowStep.Sbt(
