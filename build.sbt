@@ -101,7 +101,7 @@ val kantanCodecsVersion = "0.6.0"
 val kantanCsvVersion = "0.8.0"
 val kryoVersion = "4.0.3"
 val magnoliaVersion = "1.1.10"
-val magnolifyVersion = "0.9.3"
+val magnolifyVersion = "0.9.4"
 val metricsVersion = "4.2.37"
 val munitVersion = "1.2.1"
 val neo4jDriverVersion = "4.4.21"
@@ -161,10 +161,10 @@ ThisBuild / tlCiScalafmtCheck := true
 ThisBuild / tlCiJavafmtCheck := true
 
 // github actions
+val java25 = JavaSpec.corretto("25")
 val java21 = JavaSpec.corretto("21")
 val java17 = JavaSpec.corretto("17")
-val java11 = JavaSpec.corretto("11")
-val javaDefault = java11
+val javaDefault = java17
 val condPrimaryScala = s"matrix.scala == '${CrossVersion.binaryScalaVersion(scalaDefault)}'"
 val condPrimaryJava = s"matrix.java == '${javaDefault.render}'"
 val condIsMain = "github.ref == 'refs/heads/main'"
@@ -196,7 +196,7 @@ val skipUnauthorizedGcpGithubWorkflow = Def.setting {
 }
 
 ThisBuild / githubWorkflowTargetBranches := Seq("main")
-ThisBuild / githubWorkflowJavaVersions := Seq(javaDefault, java17, java21) // default MUST be head
+ThisBuild / githubWorkflowJavaVersions := Seq(javaDefault, java21, java25) // default MUST be head
 ThisBuild / githubWorkflowBuildPreamble ++= Seq(githubWorkflowGcpAuthStep, githubWorkflowSetupStep)
 ThisBuild / githubWorkflowBuildPostamble ++= Seq(
   WorkflowStep.Sbt(
@@ -1677,7 +1677,11 @@ lazy val `scio-smb` = project
     ),
     javacOptions ++= {
       (Compile / sourceManaged).value.mkdirs()
-      Seq("-s", (Compile / sourceManaged).value.getAbsolutePath)
+      Seq(
+        "-s",
+        (Compile / sourceManaged).value.getAbsolutePath,
+        "-proc:full" // Explicitly enable annotation processing for Java 25
+      )
     },
     compileOrder := CompileOrder.JavaThenScala
   )

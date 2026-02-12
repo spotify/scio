@@ -22,8 +22,8 @@ import com.google.cloud.hadoop.util.AccessTokenProvider
 import com.spotify.scio.ScioContext
 import com.spotify.scio.util.ScioUtil
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
+import org.apache.hadoop.util.StringUtils
 
 import java.io.File
 import java.util.Locale
@@ -42,41 +42,40 @@ private[parquet] object GcsConnectorUtil {
    *
    * If neither of these paths exist, `fs.gs.auth.null.enable` will be set (to enable unit testing).
    */
-  def setCredentials(job: Job): Unit = {
+  def setCredentials(conf: Configuration): Unit = {
     Try(GoogleCredentials.getApplicationDefault()).map {
       case _: ServiceAccountCredentials => getWellKnownCredentialFile.map(_.toString)
       case _                            => None
     } match {
       case Success(Some(sa)) =>
-        job.getConfiguration.set("fs.gs.auth.service.account.json.keyfile", sa)
+        conf.set("fs.gs.auth.service.account.json.keyfile", sa)
       case Success(None) =>
-        job.getConfiguration.set(
+        conf.set(
           "fs.gs.auth.access.token.provider.impl",
           "com.spotify.scio.parquet.ApplicationDefaultTokenProvider"
         )
       case _ =>
-        job.getConfiguration.setBoolean("fs.gs.auth.service.account.enable", false)
-        job.getConfiguration.setBoolean("fs.gs.auth.null.enable", true)
+        conf.setBoolean("fs.gs.auth.service.account.enable", false)
+        conf.setBoolean("fs.gs.auth.null.enable", true)
     }
   }
 
-  def unsetCredentials(job: Job): Unit = {
-    job.getConfiguration.unset("fs.gs.auth.service.account.json.keyfile")
-    job.getConfiguration.unset("fs.gs.auth.access.token.provider.impl")
-    job.getConfiguration.unset("fs.gs.auth.null.enable")
-    job.getConfiguration.unset("fs.gs.auth.service.account.enable")
+  def unsetCredentials(conf: Configuration): Unit = {
+    conf.unset("fs.gs.auth.service.account.json.keyfile")
+    conf.unset("fs.gs.auth.access.token.provider.impl")
+    conf.unset("fs.gs.auth.null.enable")
+    conf.unset("fs.gs.auth.service.account.enable")
   }
 
-  def setInputPaths(sc: ScioContext, job: Job, path: String): Unit = {
+  def setInputPaths(sc: ScioContext, conf: Configuration, path: String): Unit = {
     // This is needed since `FileInputFormat.setInputPaths` validates paths locally and requires
     // the user's GCP credentials.
-    GcsConnectorUtil.setCredentials(job)
-
-    FileInputFormat.setInputPaths(job, path)
+    GcsConnectorUtil.setCredentials(conf)
+    conf.set(FileInputFormat.INPUT_DIR, StringUtils.escapeString(path));
 
     // It will interfere with credentials in Dataflow workers
     if (!ScioUtil.isLocalRunner(sc.options.getRunner)) {
-      GcsConnectorUtil.unsetCredentials(job)
+      GcsConnectorUtil.unsetCredentials(conf)
     }
   }
 
