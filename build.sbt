@@ -64,7 +64,7 @@ val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 val zetasketchVersion = "0.1.0" // sdks/java/extensions/zetasketch/build.gradle
 val flinkVersion = "1.19.0" // runners/flink/1.19/build.gradle
 val flinkMinorVersion = VersionNumber(flinkVersion).numbers.take(2).mkString(".")
-val hadoopVersion = "3.4.2" // sdks/java/io/parquet/build.gradle
+val hadoopVersion = "3.4.3" // sdks/java/io/parquet/build.gradle
 val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
 val sparkMajorVersion = VersionNumber(sparkVersion).numbers.take(1).mkString(".")
 
