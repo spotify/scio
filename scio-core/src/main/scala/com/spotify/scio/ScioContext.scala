@@ -326,6 +326,7 @@ object ScioContext {
   ): (T, Args) = {
     val optClass = ScioUtil.classOf[T]
     PipelineOptionsFactory.register(optClass)
+    PipelineOptionsFactory.register(classOf[ScioOptions])
 
     // Extract --pattern of all registered derived types of PipelineOptions
     val registeredPatterns = for {
