@@ -17,8 +17,9 @@
 
 package com.spotify.scio.testing.parquet
 
+import com.google.common.base.CaseFormat
 import com.spotify.scio.avro.{Account, AccountStatus}
-import org.apache.avro.SchemaBuilder
+import org.apache.avro.{Schema, SchemaBuilder}
 import org.apache.avro.generic.GenericRecordBuilder
 import org.apache.parquet.filter2.predicate.FilterApi
 import org.scalatest.flatspec.AnyFlatSpec
@@ -29,6 +30,7 @@ import org.tensorflow.proto._
 import scala.jdk.CollectionConverters._
 
 case class SomeRecord(id: Int)
+case class SomeRecordWithList(id: Int, arrayField: List[Int])
 
 class ParquetTestUtilsTest extends AnyFlatSpec with Matchers {
 
@@ -108,22 +110,40 @@ class ParquetTestUtilsTest extends AnyFlatSpec with Matchers {
 
   it should "be projectable via case class" in {
     import com.spotify.scio.testing.parquet.avro._
+    import magnolify.parquet._
+    import magnolify.shared.CaseMapper
+
+    // AvroCompat is deprecated, but keep for backwards-compat testing purposes until removed
+    // Todo eventually replace with MagnolifyParquetProperties
+    import magnolify.parquet.ParquetArray.AvroCompat._
+
+    // Map `arrayField` -> `array_field` and test that the implicitly scoped ParquetType is used to project
+    implicit val caseMappedParquetType: ParquetType[SomeRecordWithList] =
+      ParquetType[SomeRecordWithList](
+        CaseMapper(CaseFormat.LOWER_CAMEL.converterTo(CaseFormat.LOWER_UNDERSCORE).convert _)
+      )
 
     val recordSchema = SchemaBuilder
       .record("TestRecord")
       .fields()
       .requiredInt("id")
       .optionalString("string_field")
+      .name("array_field")
+      .`type`(Schema.createArray(Schema.create(Schema.Type.INT)))
+      .noDefault()
       .endRecord()
 
     val records = (1 to 10).map(i =>
       new GenericRecordBuilder(recordSchema)
         .set("id", i)
         .set("string_field", i.toString)
+        .set("array_field", List(i).asJava)
         .build()
     )
 
-    records.withProjection[SomeRecord] should contain theSameElementsAs (1 to 10).map(SomeRecord)
+    records.withProjection[SomeRecordWithList] should contain theSameElementsAs (1 to 10).map(i =>
+      SomeRecordWithList(i, List(i))
+    )
   }
 
   "Case classes" should "be filterable" in {
