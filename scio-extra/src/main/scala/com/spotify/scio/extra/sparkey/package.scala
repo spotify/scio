@@ -580,10 +580,9 @@ package object sparkey extends SparkeyReaderInstances with SparkeyCoders {
       this(view, mapFn, SparkeyReadConfig.Default)
     override def updateCacheOnGlobalWindow: Boolean = false
     override def get[I, O](context: DoFn[I, O]#ProcessContext): T = {
-      val reader = SparkeySideInput.checkMemory(
-        context.sideInput(view).getReader(RemoteFileUtil.create(context.getPipelineOptions), config)
-      )
-      reader.load(config.loadMode)
+      val uri = context.sideInput(view)
+      val rfu = RemoteFileUtil.create(context.getPipelineOptions)
+      val reader = SparkeySideInput.getOrCreateReader(uri, rfu, config)
       mapFn(reader)
     }
   }
@@ -620,6 +619,40 @@ package object sparkey extends SparkeyReaderInstances with SparkeyCoders {
 
   private object SparkeySideInput {
     private val logger = LoggerFactory.getLogger(this.getClass)
+
+    private val readerCache =
+      new java.util.concurrent.ConcurrentHashMap[
+        String,
+        java.util.concurrent.CompletableFuture[SparkeyReader]
+      ]()
+
+    def getOrCreateReader(
+      uri: SparkeyUri,
+      rfu: RemoteFileUtil,
+      config: SparkeyReadConfig
+    ): SparkeyReader = {
+      val future = readerCache.computeIfAbsent(
+        uri.path,
+        _ =>
+          // supplyAsync so computeIfAbsent returns quickly (it holds a bucket lock)
+          java.util.concurrent.CompletableFuture.supplyAsync { () =>
+            logger.info("Loading sparkey reader for {}", uri.path)
+            val reader = uri.getReader(rfu, config)
+            reader.load(config.loadMode)
+            checkMemory(reader)
+            reader
+          }
+      )
+      try {
+        future.get()
+      } catch {
+        case e: java.util.concurrent.ExecutionException =>
+          // Remove failed entry so next attempt can retry
+          readerCache.remove(uri.path, future)
+          throw e.getCause
+      }
+    }
+
     def checkMemory(reader: SparkeyReader): SparkeyReader = {
       val memoryBytes = java.lang.management.ManagementFactory.getOperatingSystemMXBean
         .asInstanceOf[com.sun.management.OperatingSystemMXBean]
