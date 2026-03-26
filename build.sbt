@@ -115,7 +115,7 @@ val scalaCollectionCompatVersion = "2.14.0"
 val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.2.19"
 val shapelessVersion = "2.3.13"
-val sparkeyVersion = "3.5.1"
+val sparkeyVersion = "3.7.0"
 val tensorFlowVersion = "1.1.0"
 val tensorFlowMetadataVersion = "1.16.1"
 val testContainersVersion = "0.44.1"
@@ -330,6 +330,17 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ),
   ProblemFilters.exclude[MissingClassProblem](
     "org.apache.beam.sdk.extensions.sorter.BufferedExternalSorter$Options"
+  ),
+  // Private method sparkeySideInput(String, Function1) replaced by sparkeySideInputWithConfig
+  ProblemFilters.exclude[IncompatibleMethTypeProblem](
+    "com.spotify.scio.extra.sparkey.package#SparkeyScioContext.sparkeySideInput$extension"
+  ),
+  // Scala 2.12 generates different extension method names
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.extra.sparkey.package#SparkeyScioContext.sparkeySideInput$extension0"
+  ),
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.extra.sparkey.package#SparkeyScioContext.sparkeySideInput$extension1"
   )
 )
 

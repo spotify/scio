@@ -113,7 +113,11 @@ package object sparkey extends SparkeyReaderInstances with SparkeyCoders {
   /** Enhanced version of [[ScioContext]] with Sparkey methods. */
   implicit class SparkeyScioContext(private val self: ScioContext) extends AnyVal {
 
-    private def sparkeySideInput[T](basePath: String, mapFn: SparkeyReader => T): SideInput[T] = {
+    private def sparkeySideInputWithConfig[T](
+      basePath: String,
+      mapFn: SparkeyReader => T,
+      config: SparkeyReadConfig
+    ): SideInput[T] = {
       if (self.isTest) {
         val id = self.testId.get
         val view = TestDataManager
@@ -126,7 +130,7 @@ package object sparkey extends SparkeyReaderInstances with SparkeyCoders {
         val view: PCollectionView[SparkeyUri] = self
           .parallelize(paths)
           .applyInternal(View.asSingleton())
-        new SparkeySideInput(view, mapFn)
+        new SparkeySideInput(view, mapFn, config)
       }
     }
 
@@ -138,7 +142,21 @@ package object sparkey extends SparkeyReaderInstances with SparkeyCoders {
      */
     @experimental
     def sparkeySideInput(basePath: String): SideInput[SparkeyReader] =
-      sparkeySideInput(basePath, identity)
+      sparkeySideInputWithConfig(basePath, identity, SparkeyReadConfig.Default)
+
+    /**
+     * Create a SideInput of `SparkeyReader` from a [[SparkeyUri]] base path, to be used with
+     * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. If the
+     * provided base path ends with "*", it will be treated as a sharded collection of Sparkey
+     * files.
+     *
+     * @param config
+     *   read configuration including page cache prefetch mode and heap budget for loading shards
+     *   into JVM heap memory instead of memory-mapped files.
+     */
+    @experimental
+    def sparkeySideInput(basePath: String, config: SparkeyReadConfig): SideInput[SparkeyReader] =
+      sparkeySideInputWithConfig(basePath, identity, config)
 
     /**
      * Create a SideInput of `TypedSparkeyReader` from a [[SparkeyUri]] base path, to be used with
@@ -152,14 +170,15 @@ package object sparkey extends SparkeyReaderInstances with SparkeyCoders {
       decoder: Array[Byte] => T,
       cache: Cache[String, T] = null
     ): SideInput[TypedSparkeyReader[T]] =
-      sparkeySideInput(
+      sparkeySideInputWithConfig(
         basePath,
         reader =>
           new TypedSparkeyReader[T](
             reader,
             decoder,
             Option(cache).getOrElse(Cache.noOp[String, T])
-          )
+          ),
+        SparkeyReadConfig.Default
       )
 
     /**
@@ -171,7 +190,11 @@ package object sparkey extends SparkeyReaderInstances with SparkeyCoders {
       basePath: String,
       cache: Cache[String, String]
     ): SideInput[CachedStringSparkeyReader] =
-      sparkeySideInput(basePath, reader => new CachedStringSparkeyReader(reader, cache))
+      sparkeySideInputWithConfig(
+        basePath,
+        reader => new CachedStringSparkeyReader(reader, cache),
+        SparkeyReadConfig.Default
+      )
   }
 
   /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods. */
@@ -476,7 +499,11 @@ package object sparkey extends SparkeyReaderInstances with SparkeyCoders {
      */
     @experimental
     def asSparkeySideInput: SideInput[SparkeyReader] =
-      new SparkeySideInput(self.applyInternal(View.asSingleton()), identity)
+      new SparkeySideInput(
+        self.applyInternal(View.asSingleton()),
+        identity,
+        SparkeyReadConfig.Default
+      )
 
     /**
      * Convert this SCollection to a SideInput of `SparkeyReader`, to be used with
@@ -490,7 +517,8 @@ package object sparkey extends SparkeyReaderInstances with SparkeyCoders {
     ): SideInput[TypedSparkeyReader[T]] = {
       new SparkeySideInput(
         self.applyInternal(View.asSingleton()),
-        reader => new TypedSparkeyReader[T](reader, decoder, cache)
+        reader => new TypedSparkeyReader[T](reader, decoder, cache),
+        SparkeyReadConfig.Default
       )
     }
 
@@ -504,7 +532,8 @@ package object sparkey extends SparkeyReaderInstances with SparkeyCoders {
     def asTypedSparkeySideInput[T](decoder: Array[Byte] => T): SideInput[TypedSparkeyReader[T]] =
       new SparkeySideInput(
         self.applyInternal(View.asSingleton()),
-        reader => new TypedSparkeyReader[T](reader, decoder, Cache.noOp)
+        reader => new TypedSparkeyReader[T](reader, decoder, Cache.noOp),
+        SparkeyReadConfig.Default
       )
 
     /**
@@ -517,7 +546,8 @@ package object sparkey extends SparkeyReaderInstances with SparkeyCoders {
     ): SideInput[CachedStringSparkeyReader] =
       new SparkeySideInput(
         self.applyInternal(View.asSingleton()),
-        reader => new CachedStringSparkeyReader(reader, cache)
+        reader => new CachedStringSparkeyReader(reader, cache),
+        SparkeyReadConfig.Default
       )
   }
 
@@ -542,15 +572,20 @@ package object sparkey extends SparkeyReaderInstances with SparkeyCoders {
 
   private class SparkeySideInput[T](
     val view: PCollectionView[SparkeyUri],
-    mapFn: SparkeyReader => T
+    mapFn: SparkeyReader => T,
+    config: SparkeyReadConfig
   ) extends SideInput[T] {
+    // Binary-compatible constructor (pre-3.6.1)
+    def this(view: PCollectionView[SparkeyUri], mapFn: SparkeyReader => T) =
+      this(view, mapFn, SparkeyReadConfig.Default)
     override def updateCacheOnGlobalWindow: Boolean = false
-    override def get[I, O](context: DoFn[I, O]#ProcessContext): T =
-      mapFn(
-        SparkeySideInput.checkMemory(
-          context.sideInput(view).getReader(RemoteFileUtil.create(context.getPipelineOptions))
-        )
+    override def get[I, O](context: DoFn[I, O]#ProcessContext): T = {
+      val reader = SparkeySideInput.checkMemory(
+        context.sideInput(view).getReader(RemoteFileUtil.create(context.getPipelineOptions), config)
       )
+      reader.load(config.loadMode)
+      mapFn(reader)
+    }
   }
 
   /**

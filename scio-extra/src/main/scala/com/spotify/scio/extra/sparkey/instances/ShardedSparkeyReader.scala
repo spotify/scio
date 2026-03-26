@@ -18,7 +18,7 @@ package com.spotify.scio.extra.sparkey.instances
 
 import java.util
 
-import com.spotify.sparkey.{IndexHeader, LogHeader, SparkeyReader}
+import com.spotify.sparkey.{IndexHeader, LoadMode, LoadResult, LogHeader, SparkeyReader}
 
 import scala.util.hashing.MurmurHash3
 import scala.jdk.CollectionConverters._
@@ -80,6 +80,9 @@ class ShardedSparkeyReader(val sparkeys: Map[Short, SparkeyReader], val numShard
 
   override def iterator(): util.Iterator[SparkeyReader.Entry] =
     sparkeys.values.map(_.iterator.asScala).reduce(_ ++ _).asJava
+
+  override def load(mode: LoadMode, executor: java.util.concurrent.Executor): LoadResult =
+    LoadResult.combine(sparkeys.values.map(_.load(mode, executor)).toArray: _*)
 
   override def getLoadedBytes: Long = sparkeys.valuesIterator.map(_.getLoadedBytes).sum
 

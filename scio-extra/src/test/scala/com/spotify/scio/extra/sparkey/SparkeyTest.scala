@@ -639,4 +639,51 @@ class SparkeyTest extends PipelineSpec {
     result should contain theSameElementsAs expectedOutput
   }
 
+  it should "support heap budget for sharded sparkey" in {
+    val (_, sparkeyUris) = runWithLocalOutput(_.parallelize(bigSideData).asSparkey(numShards = 4))
+    val sparkeyUri = sparkeyUris.head
+    val rfu = RemoteFileUtil.create(PipelineOptionsFactory.create())
+
+    // With no heap budget (default) — all mmap
+    val defaultReader = sparkeyUri.getReader(rfu, SparkeyReadConfig())
+    defaultReader.toMap shouldBe bigSideData.toMap
+    defaultReader.close()
+
+    // With large heap budget — all shards on heap
+    val heapReader = sparkeyUri.getReader(rfu, SparkeyReadConfig(heapBudgetBytes = Long.MaxValue))
+    heapReader.toMap shouldBe bigSideData.toMap
+    bigSideData.foreach { case (k, v) =>
+      heapReader.getAsString(k) shouldBe v
+    }
+    heapReader.close()
+
+    // With tiny heap budget — only smallest shards fit
+    val tinyReader = sparkeyUri.getReader(rfu, SparkeyReadConfig(heapBudgetBytes = 1))
+    tinyReader.toMap shouldBe bigSideData.toMap
+    tinyReader.close()
+
+    FileUtils.deleteDirectory(new File(sparkeyUri.basePath))
+  }
+
+  it should "support heap budget for unsharded sparkey" in {
+    val (_, sparkeyUris) = runWithLocalOutput(_.parallelize(sideData).asSparkey)
+    val basePath = sparkeyUris.head.basePath
+    val sparkeyUri = SparkeyUri(basePath)
+    val rfu = RemoteFileUtil.create(PipelineOptionsFactory.create())
+
+    // Large budget — on heap
+    val heapReader = sparkeyUri.getReader(rfu, SparkeyReadConfig(heapBudgetBytes = Long.MaxValue))
+    heapReader.toMap shouldBe sideData.toMap
+    heapReader.close()
+
+    // Tiny budget — mmap
+    val mmapReader = sparkeyUri.getReader(rfu, SparkeyReadConfig(heapBudgetBytes = 1))
+    mmapReader.toMap shouldBe sideData.toMap
+    mmapReader.close()
+
+    for (ext <- Seq(".spi", ".spl")) {
+      new File(basePath + ext).delete()
+    }
+  }
+
 }

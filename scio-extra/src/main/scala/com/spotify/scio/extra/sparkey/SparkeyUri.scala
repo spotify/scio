@@ -29,6 +29,8 @@ import org.apache.beam.sdk.options.PipelineOptions
 
 import java.nio.file.Path
 import java.util.UUID
+import org.slf4j.LoggerFactory
+
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 
@@ -76,11 +78,16 @@ case class SparkeyUri(path: String) {
     rfu.download(downloadPaths.asJava).asScala
   }
 
-  def getReader(rfu: RemoteFileUtil): SparkeyReader = {
+  def getReader(rfu: RemoteFileUtil): SparkeyReader =
+    getReader(rfu, SparkeyReadConfig.Default)
+
+  def getReader(rfu: RemoteFileUtil, config: SparkeyReadConfig): SparkeyReader = {
     if (!isSharded) {
-      val path =
+      val file =
         if (isLocal) new File(basePath) else downloadRemoteUris(Seq(basePath), rfu).head.toFile
-      Sparkey.open(path)
+      val totalSize = Sparkey.getIndexFile(file).length() + Sparkey.getLogFile(file).length()
+      val useHeap = config.heapBudgetBytes > 0 && totalSize <= config.heapBudgetBytes
+      Sparkey.reader().file(file).useHeap(useHeap).open()
     } else {
       val (basePaths, numShards) =
         ShardedSparkeyUri.basePathsAndCount(EmptyMatchTreatment.DISALLOW, globExpression)
@@ -91,7 +98,10 @@ case class SparkeyUri(path: String) {
             .map(_.toAbsolutePath.toString.replaceAll("\\.sp[il]$", ""))
             .toSet
         }
-      new ShardedSparkeyReader(ShardedSparkeyUri.localReadersByShard(paths), numShards)
+      new ShardedSparkeyReader(
+        ShardedSparkeyUri.localReadersByShard(paths, config.heapBudgetBytes),
+        numShards
+      )
     }
   }
 
@@ -129,11 +139,75 @@ private[sparkey] object ShardedSparkeyUri {
   private[sparkey] def localReadersByShard(
     localBasePaths: Iterable[String]
   ): Map[Short, SparkeyReader] =
-    localBasePaths.iterator.map { path =>
-      val (shardIndex, _) = shardsFromPath(path)
-      val reader = Sparkey.open(new File(path + ".spi"))
-      (shardIndex, reader)
-    }.toMap
+    localReadersByShard(localBasePaths, 0)
+
+  private[sparkey] def localReadersByShard(
+    localBasePaths: Iterable[String],
+    heapBudgetBytes: Long
+  ): Map[Short, SparkeyReader] = {
+    if (heapBudgetBytes <= 0) {
+      // No heap budget — all mmap (current behavior)
+      localBasePaths.iterator.map { path =>
+        val (shardIndex, _) = shardsFromPath(path)
+        val reader = Sparkey.open(new File(path + ".spi"))
+        (shardIndex, reader)
+      }.toMap
+    } else {
+      // Sort shards largest-first for greedy budget allocation
+      val shardsWithSize = localBasePaths
+        .map { path =>
+          val (shardIndex, _) = shardsFromPath(path)
+          val file = new File(path + ".spi")
+          val size = Sparkey.getIndexFile(file).length() + Sparkey.getLogFile(file).length()
+          (shardIndex, path, size)
+        }
+        .toSeq
+        .sortBy(-_._3)
+
+      case class Acc(
+        readers: List[(Short, SparkeyReader)] = Nil,
+        remainingBudget: Long = heapBudgetBytes,
+        heapShards: Int = 0,
+        mmapShards: Int = 0
+      )
+
+      val result = shardsWithSize.foldLeft(Acc()) { case (acc, (shardIndex, path, size)) =>
+        val file = new File(path + ".spi")
+        val useHeap = size <= acc.remainingBudget
+        val reader = Sparkey.reader().file(file).useHeap(useHeap).open()
+        if (useHeap) {
+          acc.copy(
+            readers = (shardIndex, reader) :: acc.readers,
+            remainingBudget = acc.remainingBudget - size,
+            heapShards = acc.heapShards + 1
+          )
+        } else {
+          acc.copy(
+            readers = (shardIndex, reader) :: acc.readers,
+            mmapShards = acc.mmapShards + 1
+          )
+        }
+      }
+
+      val logger = LoggerFactory.getLogger(classOf[ShardedSparkeyReader])
+      val totalSize = shardsWithSize.map(_._3).sum
+      val heapBytes = heapBudgetBytes - result.remainingBudget
+      logger.info(
+        "Opened {} shards: {} on heap ({} bytes), {} mmap. " +
+          "Total data: {} bytes, heap budget: {} bytes",
+        Array[AnyRef](
+          Integer.valueOf(result.heapShards + result.mmapShards),
+          Integer.valueOf(result.heapShards),
+          java.lang.Long.valueOf(heapBytes),
+          Integer.valueOf(result.mmapShards),
+          java.lang.Long.valueOf(totalSize),
+          java.lang.Long.valueOf(heapBudgetBytes)
+        ): _*
+      )
+
+      result.readers.toMap
+    }
+  }
 
   def basePathsAndCount(
     emptyMatchTreatment: EmptyMatchTreatment,
