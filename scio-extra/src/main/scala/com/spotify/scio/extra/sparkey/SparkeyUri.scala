@@ -21,11 +21,11 @@ import java.io.File
 import java.net.URI
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import com.spotify.scio.extra.sparkey.instances.ShardedSparkeyReader
-import com.spotify.sparkey.Sparkey
-import com.spotify.sparkey.SparkeyReader
+import com.spotify.sparkey.{Sparkey, SparkeyReader}
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.io.fs.{EmptyMatchTreatment, MatchResult, ResourceId}
 import org.apache.beam.sdk.options.PipelineOptions
+import org.slf4j.LoggerFactory
 
 import java.nio.file.Path
 import java.util.UUID
@@ -77,10 +77,10 @@ case class SparkeyUri(path: String) {
   }
 
   def getReader(rfu: RemoteFileUtil): SparkeyReader = {
-    if (!isSharded) {
+    val (reader, plans) = if (!isSharded) {
       val path =
         if (isLocal) new File(basePath) else downloadRemoteUris(Seq(basePath), rfu).head.toFile
-      Sparkey.open(path)
+      ShardedSparkeyUri.openWithMemoryTracking(path)
     } else {
       val (basePaths, numShards) =
         ShardedSparkeyUri.basePathsAndCount(EmptyMatchTreatment.DISALLOW, globExpression)
@@ -91,8 +91,11 @@ case class SparkeyUri(path: String) {
             .map(_.toAbsolutePath.toString.replaceAll("\\.sp[il]$", ""))
             .toSet
         }
-      new ShardedSparkeyReader(ShardedSparkeyUri.localReadersByShard(paths), numShards)
+      val (readers, p) = ShardedSparkeyUri.localReadersByShard(paths)
+      (new ShardedSparkeyReader(readers, numShards), p)
     }
+    ShardedSparkeyUri.logSummary(path, plans)
+    reader
   }
 
   def exists(rfu: RemoteFileUtil): Boolean = {
@@ -113,6 +116,83 @@ case class SparkeyUri(path: String) {
 }
 
 private[sparkey] object ShardedSparkeyUri {
+  private val logger = LoggerFactory.getLogger(this.getClass)
+
+  // Conservative fixed overhead per reader for JVM array/object headers (heap) and page cache
+  // metadata (off-heap). The exact overhead is hard to measure; we prefer to overestimate slightly
+  // rather than risk overcommitting memory.
+  private val PerReaderOverheadBytes: Long = 64 * 1024
+
+  private def formatGiB(bytes: Long): String = f"${bytes / (1024.0 * 1024 * 1024)}%.2f GiB"
+
+  private[sparkey] case class ShardPlan(
+    shardIndex: Short,
+    indexFile: File,
+    size: Long,
+    useHeap: Boolean,
+    budgeted: Boolean
+  ) {
+    def openReader(): SparkeyReader =
+      Sparkey.reader().file(indexFile).useHeap(useHeap).open()
+  }
+
+  /**
+   * Claim memory for a shard from the tracker. Tries bounded off-heap first, then heap, then
+   * unbounded mmap. Returns (useHeap, budgeted).
+   */
+  private def claimMemory(
+    tracker: HostMemoryTracker,
+    totalBytes: Long
+  ): (Boolean, Boolean) = {
+    if (tracker.tryClaimOffHeap(totalBytes)) {
+      (false, true)
+    } else if (tracker.tryClaimHeap(totalBytes)) {
+      (true, true)
+    } else {
+      tracker.addUnboundedOffHeap(totalBytes)
+      (false, false)
+    }
+  }
+
+  private[sparkey] def logSummary(path: String, plans: Seq[ShardPlan]): Unit = {
+    if (plans.isEmpty) return
+
+    val offHeapBytes = plans.filter(p => !p.useHeap && p.budgeted).map(_.size).sum
+    val heapBytes = plans.filter(_.useHeap).map(_.size).sum
+    val unboundedBytes = plans.filter(p => !p.useHeap && !p.budgeted).map(_.size).sum
+
+    val parts = new scala.collection.mutable.ArrayBuffer[String]()
+    if (offHeapBytes > 0) parts += s"${formatGiB(offHeapBytes)} off-heap"
+    if (heapBytes > 0) parts += s"${formatGiB(heapBytes)} on heap"
+    if (unboundedBytes > 0) parts += s"${formatGiB(unboundedBytes)} unbounded mmap"
+
+    val msg = s"Loaded ${plans.size} sparkey shard(s) from $path: ${parts.mkString(", ")}"
+    if (unboundedBytes > 0) logger.warn(msg) else logger.info(msg)
+  }
+
+  private def planShard(
+    shardIndex: Short,
+    indexFile: File,
+    tracker: HostMemoryTracker
+  ): ShardPlan = {
+    val logFile = Sparkey.getLogFile(indexFile)
+    val totalBytes = indexFile.length() + logFile.length() + PerReaderOverheadBytes
+    val (useHeap, budgeted) = claimMemory(tracker, totalBytes)
+    ShardPlan(shardIndex, indexFile, totalBytes, useHeap, budgeted)
+  }
+
+  /**
+   * Open a sparkey reader with memory-aware strategy: try off-heap (mmap) first, fall back to
+   * on-heap (byte[]) if off-heap budget is exhausted, or use off-heap if neither budget has room.
+   */
+  private[sparkey] def openWithMemoryTracking(
+    file: File,
+    tracker: HostMemoryTracker = HostMemoryTracker.instance
+  ): (SparkeyReader, Seq[ShardPlan]) = {
+    val plan = planShard(0, Sparkey.getIndexFile(file), tracker)
+    (plan.openReader(), Seq(plan))
+  }
+
   private[sparkey] def shardsFromPath(path: String): (Short, Short) = {
     "part-([0-9]+)-of-([0-9]+)".r
       .findFirstMatchIn(path)
@@ -126,14 +206,29 @@ private[sparkey] object ShardedSparkeyUri {
       }
   }
 
+  /**
+   * Open readers for all shards:
+   *   1. Plan: claim memory per shard atomically (off-heap → heap → unbounded mmap)
+   *   1. Open readers: heap first (temporary page cache I/O), then mmap (pages stay cached)
+   */
   private[sparkey] def localReadersByShard(
-    localBasePaths: Iterable[String]
-  ): Map[Short, SparkeyReader] =
-    localBasePaths.iterator.map { path =>
+    localBasePaths: Iterable[String],
+    tracker: HostMemoryTracker = HostMemoryTracker.instance
+  ): (Map[Short, SparkeyReader], Seq[ShardPlan]) = {
+    // Step 1: plan — claim memory per shard atomically
+    val plans = localBasePaths.iterator.map { path =>
       val (shardIndex, _) = shardsFromPath(path)
-      val reader = Sparkey.open(new File(path + ".spi"))
-      (shardIndex, reader)
+      val indexFile = Sparkey.getIndexFile(new File(path + ".spi"))
+      planShard(shardIndex, indexFile, tracker)
+    }.toSeq
+
+    // Step 2: open heap readers first, then mmap readers
+    val (heapPlans, mmapPlans) = plans.partition(_.useHeap)
+    val readers = (heapPlans ++ mmapPlans).iterator.map { plan =>
+      (plan.shardIndex, plan.openReader())
     }.toMap
+    (readers, plans)
+  }
 
   def basePathsAndCount(
     emptyMatchTreatment: EmptyMatchTreatment,
