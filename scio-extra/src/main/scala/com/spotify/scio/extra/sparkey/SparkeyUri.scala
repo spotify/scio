@@ -21,11 +21,11 @@ import java.io.File
 import java.net.URI
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import com.spotify.scio.extra.sparkey.instances.ShardedSparkeyReader
-import com.spotify.sparkey.Sparkey
-import com.spotify.sparkey.SparkeyReader
+import com.spotify.sparkey.{Sparkey, SparkeyReader}
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.io.fs.{EmptyMatchTreatment, MatchResult, ResourceId}
 import org.apache.beam.sdk.options.PipelineOptions
+import org.slf4j.LoggerFactory
 
 import java.nio.file.Path
 import java.util.UUID
@@ -80,7 +80,7 @@ case class SparkeyUri(path: String) {
     if (!isSharded) {
       val path =
         if (isLocal) new File(basePath) else downloadRemoteUris(Seq(basePath), rfu).head.toFile
-      Sparkey.open(path)
+      ShardedSparkeyUri.openWithMemoryTracking(path)
     } else {
       val (basePaths, numShards) =
         ShardedSparkeyUri.basePathsAndCount(EmptyMatchTreatment.DISALLOW, globExpression)
@@ -113,6 +113,43 @@ case class SparkeyUri(path: String) {
 }
 
 private[sparkey] object ShardedSparkeyUri {
+  private val logger = LoggerFactory.getLogger(this.getClass)
+
+  // Conservative fixed overhead per reader for JVM array/object headers (heap) and page cache
+  // metadata (off-heap). The exact overhead is hard to measure; we prefer to overestimate slightly
+  // rather than risk overcommitting memory.
+  private val PerReaderOverheadBytes: Long = 64 * 1024
+
+  /**
+   * Open a sparkey reader with memory-aware strategy: try off-heap (mmap) first, fall back to
+   * on-heap (byte[]) if page cache budget is exhausted, or use off-heap with a warning if neither
+   * budget has room.
+   */
+  private[sparkey] def openWithMemoryTracking(
+    file: File,
+    tracker: HostMemoryTracker = HostMemoryTracker.instance
+  ): SparkeyReader = {
+    val indexFile = Sparkey.getIndexFile(file)
+    val logFile = Sparkey.getLogFile(file)
+    val totalBytes = indexFile.length() + logFile.length() + PerReaderOverheadBytes
+
+    if (tracker.tryClaimOffHeap(totalBytes)) {
+      Sparkey.open(indexFile)
+    } else if (tracker.tryClaimHeap(totalBytes)) {
+      logger.info(
+        "Opening {} on heap ({} bytes)",
+        Array[AnyRef](indexFile.getName, Long.box(totalBytes)): _*
+      )
+      Sparkey.reader().file(indexFile).useHeap(true).open()
+    } else {
+      logger.warn(
+        "Neither off-heap nor heap budget available for {} ({} bytes), falling back to mmap",
+        Array[AnyRef](indexFile.getName, Long.box(totalBytes)): _*
+      )
+      Sparkey.open(indexFile)
+    }
+  }
+
   private[sparkey] def shardsFromPath(path: String): (Short, Short) = {
     "part-([0-9]+)-of-([0-9]+)".r
       .findFirstMatchIn(path)
@@ -131,7 +168,7 @@ private[sparkey] object ShardedSparkeyUri {
   ): Map[Short, SparkeyReader] =
     localBasePaths.iterator.map { path =>
       val (shardIndex, _) = shardsFromPath(path)
-      val reader = Sparkey.open(new File(path + ".spi"))
+      val reader = openWithMemoryTracking(new File(path + ".spi"))
       (shardIndex, reader)
     }.toMap
 
