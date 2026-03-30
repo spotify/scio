@@ -29,7 +29,7 @@ import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 // To test release candidates, find the beam repo and add it as a resolver
 // ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.71.0"
+val beamVersion = "2.72.0"
 
 // check version used by beam
 // https://github.com/apache/beam/blob/v2.71.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
@@ -44,7 +44,7 @@ val commonsCompressVersion = "1.26.2"
 val commonsIoVersion = "2.16.1"
 val commonsLang3Version = "3.18.0"
 val commonsMath3Version = "3.6.1"
-val gcpLibrariesVersion = "26.73.0"
+val gcpLibrariesVersion = "26.76.0"
 val googleClientsVersion = "2.0.0"
 val guavaVersion = "33.1.0-jre"
 val hamcrestVersion = "2.1"
@@ -53,12 +53,12 @@ val httpCoreVersion = "4.4.14"
 val jacksonVersion = "2.15.4"
 val jodaTimeVersion = "2.14.0"
 val nettyVersion = "4.1.128.Final"
-val protobufVersion = "4.33.0"
+val protobufVersion = "4.33.2"
 val slf4jVersion = "2.0.16"
 val zstdJniVersion = "1.5.6-3"
 // dependent versions
 val googleApiServicesBigQueryVersion = s"v2-rev20251012-$googleClientsVersion"
-val googleApiServicesDataflowVersion = s"v1b3-rev20250519-$googleClientsVersion"
+val googleApiServicesDataflowVersion = s"v1b3-rev20260118-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 // beam tested versions
 val zetasketchVersion = "0.1.0" // sdks/java/extensions/zetasketch/build.gradle
