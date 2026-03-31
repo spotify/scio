@@ -19,6 +19,15 @@ val itemVectors: SCollection[(String, Array[Float])] = ???
 itemVectors.asVoyager(uri, space, numDimensions)
 ```
 
+### Custom Filenames
+
+By default, Voyager writes the index as `index.hnsw` and `names.json` within the specified path. You can override these filenames by passing custom values to `VoyagerUri`:
+
+```scala
+val voyagerUri = VoyagerUri("gs://output-path", indexFile = "my_index.hnsw", namesFile = "my_names.json")
+itemVectors.asVoyager(voyagerUri, space, numDimensions)
+```
+
 ## Side Input
 
 A Voyager index can be read directly as a `SideInput` with @scaladoc[asVoyagerSideInput](com.spotify.scio.extra.voyager.syntax.VoyagerScioContextOps#voyagerSideInput(uri:com.spotify.scio.extra.voyager.VoyagerUri,spaceType:com.spotify.voyager.jni.Index.SpaceType,storageDataType:com.spotify.voyager.jni.Index.StorageDataType,dim:Int):com.spotify.scio.values.SideInput[com.spotify.scio.extra.voyager.VoyagerReader]):
@@ -40,6 +49,10 @@ val storageDataType: StorageDataType = ???
 val voyagerV1: SideInput[VoyagerReader] = sc.voyagerSideInput(voyagerUri, space, numDimensions, storageDataType)
 // index saved with voyager v2 extracts settings from its metadata
 val voyagerV2: SideInput[VoyagerReader] = sc.voyagerSideInput(voyagerUri)
+
+// with custom filenames
+val customUri = VoyagerUri("gs://output-path", indexFile = "my_index.hnsw", namesFile = "my_names.json")
+val voyagerCustom: SideInput[VoyagerReader] = sc.voyagerSideInput(customUri, space, numDimensions, storageDataType)
 ```
 
 Alternatively, an `SCollection` can be converted directly to a `SideInput` with @scaladoc[asVoyagerSideInput](com.spotify.scio.extra.voyager.syntax.VoyagerSCollectionOps#asVoyagerSideInput(spaceType:com.spotify.voyager.jni.Index.SpaceType,storageType:com.spotify.voyager.jni.Index.StorageDataType,dim:Int):com.spotify.scio.values.SideInput[com.spotify.scio.extra.voyager.VoyagerReader]):
@@ -52,6 +65,11 @@ val space: SpaceType = ???
 val numDimensions: Int = ???
 val itemVectors: SCollection[(String, Array[Float])] = ???
 val voyagerSI: SideInput[VoyagerReader] = itemVectors.asVoyagerSideInput(space, numDimensions)
+
+// with custom filenames
+val voyagerSICustom: SideInput[VoyagerReader] = itemVectors.asVoyagerSideInput(
+  space, numDimensions, indexFile = "my_index.hnsw", namesFile = "my_names.json"
+)
 ```
 
 An @scaladoc[VoyagerReader](com.spotify.scio.extra.voyager.VoyagerReader) provides access to querying the Voyager index to get their nearest neighbors.
