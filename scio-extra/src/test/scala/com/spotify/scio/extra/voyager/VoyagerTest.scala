@@ -123,6 +123,40 @@ class VoyagerTest extends PipelineSpec {
     }
   }
 
+  it should "support voyagerSideInput with custom filenames" in {
+    val tmpDir = Files.createTempDirectory("voyager-test")
+    val customIndex = "custom_index.hnsw"
+    val customNames = "custom_names.json"
+    val uri = VoyagerUri(tmpDir.toUri, indexFile = customIndex, namesFile = customNames)
+
+    // Write the index with custom filenames
+    runWithContext { sc =>
+      sc.parallelize(sideData)
+        .asVoyager(
+          uri = uri,
+          space = space,
+          numDimensions = numDimensions,
+          storageDataType = storageDataType
+        )
+    }
+
+    // Read back via voyagerSideInput with custom filenames
+    val (names, vectors) = sideData.unzip
+    runWithContext { sc =>
+      val voyagerSI = sc.voyagerSideInput(uri, space, numDimensions, storageDataType)
+      val result = sc
+        .parallelize(vectors)
+        .withSideInputs(voyagerSI)
+        .flatMap { case (v, ctx) =>
+          ctx(voyagerSI).getNearest(v, 1, 100)
+        }
+        .toSCollection
+        .map(_.name)
+
+      result should containInAnyOrder(names)
+    }
+  }
+
   it should "throw exception when the Voyager files already exist with custom filenames" in {
     val tmpDir = Files.createTempDirectory("voyager-test")
     val customIndex = "my_index.hnsw"
