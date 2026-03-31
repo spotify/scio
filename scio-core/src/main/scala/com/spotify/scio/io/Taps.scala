@@ -155,8 +155,7 @@ object Taps extends {
    *
    *   - `taps.polling.maximum_interval`: maximum interval between polls.
    *   - `taps.polling.initial_interval`: initial interval between polls.
-   *   - `taps.polling.maximum_attempts`: maximum number of attempts, unlimited if <= 0. Default is
-   *     0.
+   *   - `taps.polling.maximum_attempts`: maximum number of attempts, unlimited if <= 0. Default is 0.
    */
   def apply(): Taps =
     Algorithm.value(AlgorithmDefault) match {
