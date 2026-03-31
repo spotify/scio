@@ -330,6 +330,18 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ),
   ProblemFilters.exclude[MissingClassProblem](
     "org.apache.beam.sdk.extensions.sorter.BufferedExternalSorter$Options"
+  ),
+  // VoyagerUri changed from AnyVal to a multi-field case class to support custom filenames.
+  // This changes bytecode signatures for VoyagerUri itself and all classes with methods that
+  // accept or return VoyagerUri (previously erased to URI, now uses VoyagerUri directly).
+  ProblemFilters.exclude[IncompatibleResultTypeProblem](
+    "com.spotify.scio.extra.voyager.*"
+  ),
+  ProblemFilters.exclude[IncompatibleMethTypeProblem](
+    "com.spotify.scio.extra.voyager.*"
+  ),
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.extra.voyager.*"
   )
 )
 
