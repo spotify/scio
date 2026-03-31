@@ -52,7 +52,7 @@ val voyagerV2: SideInput[VoyagerReader] = sc.voyagerSideInput(voyagerUri)
 
 // with custom filenames
 val customUri = VoyagerUri("gs://output-path", indexFile = "my_index.hnsw", namesFile = "my_names.json")
-val voyagerCustom: SideInput[VoyagerReader] = sc.voyagerSideInput(customUri, space, numDimensions, storageDataType)
+val voyagerCustom: SideInput[VoyagerReader] = sc.voyagerSideInput(customUri)
 ```
 
 Alternatively, an `SCollection` can be converted directly to a `SideInput` with @scaladoc[asVoyagerSideInput](com.spotify.scio.extra.voyager.syntax.VoyagerSCollectionOps#asVoyagerSideInput(spaceType:com.spotify.voyager.jni.Index.SpaceType,storageType:com.spotify.voyager.jni.Index.StorageDataType,dim:Int):com.spotify.scio.values.SideInput[com.spotify.scio.extra.voyager.VoyagerReader]):
