@@ -21,5 +21,5 @@ addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.4.3")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.8")
 
 libraryDependencies ++= Seq(
-  "org.typelevel" %% "scalac-options" % "0.1.8"
+  "org.typelevel" %% "scalac-options" % "0.1.9"
 )
