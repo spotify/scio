@@ -230,7 +230,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.15.3-11-d59fbba-20260324T184110Z*
+<i class="md-icon" title="Version">label_outline</i> 0.15.4-15-1480594-20260401T173145Z*
 </label>
 </li>
 </ul>
@@ -271,6 +271,11 @@ val numDimensions: Int = ???
 val itemVectors: SCollection[(String, Array[Float])] = ???
 itemVectors.asVoyager(uri, space, numDimensions)
 </code></pre>
+<h3><a href="#custom-filenames" name="custom-filenames" class="anchor"><span class="anchor-link"></span></a>Custom Filenames</h3>
+<p>By default, Voyager writes the index as <code>index.hnsw</code> and <code>names.json</code> within the specified path. You can override these filenames by passing custom values to <code>VoyagerUri</code>:</p>
+<pre class="prettyprint"><code class="language-scala">val voyagerUri = VoyagerUri(&quot;gs://output-path&quot;, indexFile = &quot;my_index.hnsw&quot;, namesFile = &quot;my_names.json&quot;)
+itemVectors.asVoyager(voyagerUri, space, numDimensions)
+</code></pre>
 <h2><a href="#side-input" name="side-input" class="anchor"><span class="anchor-link"></span></a>Side Input</h2>
 <p>A Voyager index can be read directly as a <code>SideInput</code> with <a href="https://spotify.github.io/scio/api/com/spotify/scio/extra/voyager/syntax/VoyagerScioContextOps.html#voyagerSideInput(uri:com.spotify.scio.extra.voyager.VoyagerUri,spaceType:com.spotify.voyager.jni.Index.SpaceType,storageDataType:com.spotify.voyager.jni.Index.StorageDataType,dim:Int):com.spotify.scio.values.SideInput[com.spotify.scio.extra.voyager.VoyagerReader]" title="com.spotify.scio.extra.voyager.syntax.VoyagerScioContextOps"><code>asVoyagerSideInput</code></a>:</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio._
@@ -289,6 +294,10 @@ val storageDataType: StorageDataType = ???
 val voyagerV1: SideInput[VoyagerReader] = sc.voyagerSideInput(voyagerUri, space, numDimensions, storageDataType)
 // index saved with voyager v2 extracts settings from its metadata
 val voyagerV2: SideInput[VoyagerReader] = sc.voyagerSideInput(voyagerUri)
+
+// with custom filenames
+val customUri = VoyagerUri(&quot;gs://output-path&quot;, indexFile = &quot;my_index.hnsw&quot;, namesFile = &quot;my_names.json&quot;)
+val voyagerCustom: SideInput[VoyagerReader] = sc.voyagerSideInput(customUri)
 </code></pre>
 <p>Alternatively, an <code>SCollection</code> can be converted directly to a <code>SideInput</code> with <a href="https://spotify.github.io/scio/api/com/spotify/scio/extra/voyager/syntax/VoyagerSCollectionOps.html#asVoyagerSideInput(spaceType:com.spotify.voyager.jni.Index.SpaceType,storageType:com.spotify.voyager.jni.Index.StorageDataType,dim:Int):com.spotify.scio.values.SideInput[com.spotify.scio.extra.voyager.VoyagerReader]" title="com.spotify.scio.extra.voyager.syntax.VoyagerSCollectionOps"><code>asVoyagerSideInput</code></a>:</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio.values.SCollection
@@ -299,6 +308,11 @@ val space: SpaceType = ???
 val numDimensions: Int = ???
 val itemVectors: SCollection[(String, Array[Float])] = ???
 val voyagerSI: SideInput[VoyagerReader] = itemVectors.asVoyagerSideInput(space, numDimensions)
+
+// with custom filenames
+val voyagerSICustom: SideInput[VoyagerReader] = itemVectors.asVoyagerSideInput(
+  space, numDimensions, indexFile = &quot;my_index.hnsw&quot;, namesFile = &quot;my_names.json&quot;
+)
 </code></pre>
 <p>An <a href="https://spotify.github.io/scio/api/com/spotify/scio/extra/voyager/VoyagerReader.html" title="com.spotify.scio.extra.voyager.VoyagerReader"><code>VoyagerReader</code></a> provides access to querying the Voyager index to get their nearest neighbors.</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio.values.{SCollection, SideInput}
@@ -324,7 +338,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.15.3-11-d59fbba-20260324T184110Z*
+0.15.4-15-1480594-20260401T173145Z*
 </span>
 </div>
 </article>
