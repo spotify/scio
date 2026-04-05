@@ -103,15 +103,17 @@ final case class SpannerWrite(config: SpannerConfig) extends SpannerIO[Mutation]
   override type WriteP = SpannerWrite.WriteParam
 
   override protected def write(data: SCollection[Mutation], params: WriteP): Tap[Nothing] = {
-    val transform = BSpannerIO
-      .write()
-      .withSpannerConfig(config)
-      .withBatchSizeBytes(params.batchSizeBytes)
-      .withFailureMode(params.failureMode)
+     val coder = CoderMaterializer.beam(data.context, coders.spannerMutationCoder)
 
-    data.applyInternal(transform)
+     val transform = BSpannerIO
+       .write()
+       .withSpannerConfig(config)
+       .withBatchSizeBytes(params.batchSizeBytes)
+       .withFailureMode(params.failureMode)
+
+    data.setCoder(coder).applyInternal(transform)
     EmptyTap
-  }
+}
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[Mutation] = sc.wrap {
     throw new UnsupportedOperationException("SpannerWrite is write-only")
