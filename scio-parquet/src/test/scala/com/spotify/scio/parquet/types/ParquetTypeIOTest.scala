@@ -117,6 +117,28 @@ class ParquetTypeIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     sc.run()
   }
 
+  it should "deep copy Configurations" in {
+    val sc = ScioContext()
+    val conf = ParquetConfiguration.empty()
+
+    val dataWithPredicate = sc.typedParquetFile[Wide](
+      path = testDir.getAbsolutePath,
+      predicate = predicate,
+      suffix = ".parquet",
+      conf = conf
+    )
+
+    val dataWithoutPredicate = sc.typedParquetFile[Wide](
+      path = testDir.getAbsolutePath,
+      suffix = ".parquet",
+      conf = conf
+    )
+
+    dataWithPredicate should containInAnyOrder(records.filter(t => t.i <= 5 || t.o.exists(_ >= 95)))
+    dataWithoutPredicate should containInAnyOrder(records)
+    sc.run()
+  }
+
   it should "read case classes with projection and predicate" in {
     val sc = ScioContext()
     val data = sc.typedParquetFile[Narrow](

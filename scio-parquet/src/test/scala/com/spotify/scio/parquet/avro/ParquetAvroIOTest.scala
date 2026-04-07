@@ -154,6 +154,28 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     }
   }
 
+  it should "deep copy Configurations" in {
+    val sc = ScioContext()
+    val conf = ParquetConfiguration.empty()
+    val predicate = Predicate[TestRecord](_.getIntField <= 5)
+    val dataWithPredicate = sc.parquetAvroFile[TestRecord](
+      path = testDir.getAbsolutePath,
+      predicate = predicate,
+      suffix = ".parquet",
+      conf = conf
+    )
+    val dataWithoutPredicate = sc.parquetAvroFile[TestRecord](
+      path = testDir.getAbsolutePath,
+      suffix = ".parquet",
+      conf = conf
+    )
+    dataWithPredicate.map(identity) should containInAnyOrder(
+      specificRecords.filter(_.getIntField <= 5)
+    )
+    dataWithoutPredicate.map(identity) should containInAnyOrder(specificRecords)
+    sc.run()
+  }
+
   it should "read specific records with projection and predicate" in {
     forAllCases(readConfigs) { case (c, _) =>
       val sc = ScioContext()
