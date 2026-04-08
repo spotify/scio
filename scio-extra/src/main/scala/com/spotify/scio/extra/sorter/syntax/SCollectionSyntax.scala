@@ -70,20 +70,13 @@ final class SorterOps[K1, K2: SortingKey, V](self: SCollection[(K1, Iterable[(K2
       .applyTransform(SortValues.create[K1, K2, V](options))(coder)
       .withName("KvToTuple")
       .map { kv =>
-        val iter = new Iterable[(K2, V)] {
-          override def iterator: Iterator[(K2, V)] = new AbstractIterator[(K2, V)] {
-            private[this] val iter = kv.getValue.iterator()
-            override def hasNext: Boolean = iter.hasNext
-
-            override def next(): (K2, V) = {
-              val next = iter.next()
-              (next.getKey, next.getValue)
-            }
-          }
-
-          override def toString: String = "<iterable>"
+        val iter = kv.getValue.iterator()
+        val buf = Vector.newBuilder[(K2, V)]
+        while (iter.hasNext) {
+          val next = iter.next()
+          buf += ((next.getKey, next.getValue))
         }
-        (kv.getKey, iter)
+        (kv.getKey, buf.result(): Iterable[(K2, V)])
       }(Coder.beam(c.internal.getCoder))
   }
 }
