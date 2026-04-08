@@ -27,19 +27,19 @@ import scala.jdk.CollectionConverters._
 
 @BigQueryType.toTable
 case class RequiredTemporal(
-                             timestampF: Instant,
-                             dateF: LocalDate,
-                             timeF: LocalTime,
-                             datetimeF: LocalDateTime
-                           )
+  timestampF: Instant,
+  dateF: LocalDate,
+  timeF: LocalTime,
+  datetimeF: LocalDateTime
+)
 
 @BigQueryType.toTable
 case class NullableTemporal(
-                             timestampF: Option[Instant],
-                             dateF: Option[LocalDate],
-                             timeF: Option[LocalTime],
-                             datetimeF: Option[LocalDateTime]
-                           )
+  timestampF: Option[Instant],
+  dateF: Option[LocalDate],
+  timeF: Option[LocalTime],
+  datetimeF: Option[LocalDateTime]
+)
 
 class SchemaProviderTest extends AnyFlatSpec with Matchers {
   import Schemas._
@@ -141,23 +141,27 @@ class SchemaProviderTest extends AnyFlatSpec with Matchers {
       avroSchema.getField(fieldName).schema().getProp("logicalType")
 
     logicalType("timestampF") shouldBe "timestamp-micros"
-    logicalType("dateF")      shouldBe "date"
-    logicalType("timeF")      shouldBe "time-micros"
-    logicalType("datetimeF")  shouldBe "datetime"
+    logicalType("dateF") shouldBe "date"
+    logicalType("timeF") shouldBe "time-micros"
+    logicalType("datetimeF") shouldBe "datetime"
   }
 
   it should "stamp logicalType on nullable temporal Avro fields" in {
     val avroSchema = BigQueryType.avroSchemaOf[NullableTemporal]
 
     def logicalType(fieldName: String): String =
-      avroSchema.getField(fieldName).schema().getTypes.asScala
+      avroSchema
+        .getField(fieldName)
+        .schema()
+        .getTypes
+        .asScala
         .find(_.getType != Schema.Type.NULL)
         .map(_.getProp("logicalType"))
         .orNull
 
     logicalType("timestampF") shouldBe "timestamp-micros"
-    logicalType("dateF")      shouldBe "date"
-    logicalType("timeF")      shouldBe "time-micros"
-    logicalType("datetimeF")  shouldBe "datetime"
+    logicalType("dateF") shouldBe "date"
+    logicalType("timeF") shouldBe "time-micros"
+    logicalType("datetimeF") shouldBe "datetime"
   }
 }
