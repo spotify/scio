@@ -72,8 +72,9 @@ package object parquet extends AllSyntax {
       conf
     }
 
+    // Always deep copy Parquet Configurations to avoid reuse
     private[parquet] def ofNullable(conf: Configuration): Configuration =
-      Option(conf).getOrElse(empty())
+      Option(conf).map(new Configuration(_)).getOrElse(empty())
   }
 
   case class ParquetBlockMetadata(
