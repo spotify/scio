@@ -100,6 +100,7 @@ private[types] object SchemaProvider {
           .asJava
       )
     } else {
+      // non-temporal nullable field (or required temporal): preserve original schema
       avroSchema
     }
   }
