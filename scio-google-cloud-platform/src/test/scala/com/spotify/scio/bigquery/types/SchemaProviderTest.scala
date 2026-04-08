@@ -21,6 +21,25 @@ import com.spotify.scio.bigquery.BigQueryUtil.parseSchema
 import org.apache.beam.sdk.util.SerializableUtils
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
+import org.apache.avro.Schema
+import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
+import scala.jdk.CollectionConverters._
+
+@BigQueryType.toTable
+case class RequiredTemporal(
+                             timestampF: Instant,
+                             dateF: LocalDate,
+                             timeF: LocalTime,
+                             datetimeF: LocalDateTime
+                           )
+
+@BigQueryType.toTable
+case class NullableTemporal(
+                             timestampF: Option[Instant],
+                             dateF: Option[LocalDate],
+                             timeF: Option[LocalTime],
+                             datetimeF: Option[LocalDateTime]
+                           )
 
 class SchemaProviderTest extends AnyFlatSpec with Matchers {
   import Schemas._
@@ -113,5 +132,32 @@ class SchemaProviderTest extends AnyFlatSpec with Matchers {
 
   it should "ignore methods in case classes" in {
     SchemaProvider.schemaOf[CaseClassWithMethods] shouldBe parseSchema(recordFields("REQUIRED"))
+  }
+
+  it should "stamp logicalType on required temporal Avro fields" in {
+    val avroSchema = BigQueryType.avroSchemaOf[RequiredTemporal]
+
+    def logicalType(fieldName: String): String =
+      avroSchema.getField(fieldName).schema().getProp("logicalType")
+
+    logicalType("timestampF") shouldBe "timestamp-micros"
+    logicalType("dateF")      shouldBe "date"
+    logicalType("timeF")      shouldBe "time-micros"
+    logicalType("datetimeF")  shouldBe "datetime"
+  }
+
+  it should "stamp logicalType on nullable temporal Avro fields" in {
+    val avroSchema = BigQueryType.avroSchemaOf[NullableTemporal]
+
+    def logicalType(fieldName: String): String =
+      avroSchema.getField(fieldName).schema().getTypes.asScala
+        .find(_.getType != Schema.Type.NULL)
+        .map(_.getProp("logicalType"))
+        .orNull
+
+    logicalType("timestampF") shouldBe "timestamp-micros"
+    logicalType("dateF")      shouldBe "date"
+    logicalType("timeF")      shouldBe "time-micros"
+    logicalType("datetimeF")  shouldBe "datetime"
   }
 }
