@@ -20,6 +20,7 @@ package com.spotify.scio.parquet.types
 import java.{lang => jl}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec, ScioIOTest, TapSpec}
+import com.spotify.scio.parquet.read.ParquetReadConfiguration
 import com.spotify.scio.parquet.{BeamInputFile, ParquetConfiguration}
 import com.spotify.scio.testing.ScioIOSpec
 import com.spotify.scio.util.FilenamePolicySupplier
@@ -29,6 +30,7 @@ import org.apache.parquet.HadoopReadOptions
 import org.apache.parquet.filter2.predicate.FilterApi
 import org.apache.parquet.hadoop.ParquetFileReader
 import org.scalatest.BeforeAndAfterAll
+import org.scalatest.prop.TableDrivenPropertyChecks.{forAll => forAllCases, Table}
 
 import java.nio.file.Files
 
@@ -118,25 +120,42 @@ class ParquetTypeIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
   }
 
   it should "deep copy Configurations" in {
-    val sc = ScioContext()
-    val conf = ParquetConfiguration.empty()
+    val readConfigs =
+      Table(
+        ("config", "description"),
+        (
+          () => ParquetConfiguration.of(ParquetReadConfiguration.UseSplittableDoFn -> true),
+          "legacy read"
+        ),
+        (
+          () => ParquetConfiguration.of(ParquetReadConfiguration.UseSplittableDoFn -> false),
+          "SDF read"
+        )
+      )
 
-    val dataWithPredicate = sc.typedParquetFile[Wide](
-      path = testDir.getAbsolutePath,
-      predicate = predicate,
-      suffix = ".parquet",
-      conf = conf
-    )
+    forAllCases(readConfigs) { case (c, _) =>
+      val sc = ScioContext()
+      val conf = c()
 
-    val dataWithoutPredicate = sc.typedParquetFile[Wide](
-      path = testDir.getAbsolutePath,
-      suffix = ".parquet",
-      conf = conf
-    )
+      val dataWithPredicate = sc.typedParquetFile[Wide](
+        path = testDir.getAbsolutePath,
+        predicate = predicate,
+        suffix = ".parquet",
+        conf = conf
+      )
 
-    dataWithPredicate should containInAnyOrder(records.filter(t => t.i <= 5 || t.o.exists(_ >= 95)))
-    dataWithoutPredicate should containInAnyOrder(records)
-    sc.run()
+      val dataWithoutPredicate = sc.typedParquetFile[Wide](
+        path = testDir.getAbsolutePath,
+        suffix = ".parquet",
+        conf = conf
+      )
+
+      dataWithPredicate should containInAnyOrder(
+        records.filter(t => t.i <= 5 || t.o.exists(_ >= 95))
+      )
+      dataWithoutPredicate should containInAnyOrder(records)
+      sc.run()
+    }
   }
 
   it should "read case classes with projection and predicate" in {

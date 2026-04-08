@@ -20,6 +20,7 @@ package com.spotify.scio.parquet.tensorflow
 import com.google.protobuf.ByteString
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec, ScioIOTest, TapSpec}
+import com.spotify.scio.parquet.read.ParquetReadConfiguration
 import com.spotify.scio.parquet.{BeamInputFile, ParquetConfiguration}
 import com.spotify.scio.parquet.types._
 import com.spotify.scio.testing.ScioIOSpec
@@ -31,6 +32,7 @@ import org.apache.parquet.HadoopReadOptions
 import org.apache.parquet.filter2.predicate.FilterApi
 import org.apache.parquet.hadoop.ParquetFileReader
 import org.scalatest.BeforeAndAfterAll
+import org.scalatest.prop.TableDrivenPropertyChecks.{forAll => forAllCases, Table}
 import org.tensorflow.metadata.{v0 => tfmd}
 import org.tensorflow.proto._
 
@@ -272,6 +274,47 @@ class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAl
     data should containInAnyOrder(examples)
     sc.run()
     ()
+  }
+
+  it should "deep copy Configurations" in {
+    val readConfigs =
+      Table(
+        ("config", "description"),
+        (
+          () => ParquetConfiguration.of(ParquetReadConfiguration.UseSplittableDoFn -> true),
+          "legacy read"
+        ),
+        (
+          () => ParquetConfiguration.of(ParquetReadConfiguration.UseSplittableDoFn -> false),
+          "SDF read"
+        )
+      )
+
+    forAllCases(readConfigs) { case (c, _) =>
+      val conf = c()
+      val sc = ScioContext()
+
+      val dataWithPredicate = sc.parquetExampleFile(
+        path = currentDir.getAbsolutePath,
+        predicate = predicate,
+        suffix = ".parquet",
+        conf = conf
+      )
+
+      val dataWithoutPredicate = sc.parquetExampleFile(
+        path = currentDir.getAbsolutePath,
+        suffix = ".parquet",
+        conf = conf
+      )
+
+      dataWithPredicate should containInAnyOrder(examples.filter { e =>
+        e.getFeatures.getFeatureOrThrow("int64_required").getInt64List.getValue(0) <= 5L &&
+        e.getFeatures.getFeatureOrThrow("float_required").getFloatList.getValue(0) >= 2.5f
+      })
+
+      dataWithoutPredicate should containInAnyOrder(examples)
+      sc.run()
+    }
   }
 
   it should "read Examples with projection in a JobTest context" in {
