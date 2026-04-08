@@ -100,7 +100,7 @@ private[types] object SchemaProvider {
           .asJava
       )
     } else {
-      stamped
+      avroSchema
     }
   }
 
