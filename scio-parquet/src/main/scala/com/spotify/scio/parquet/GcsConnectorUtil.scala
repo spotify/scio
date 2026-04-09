@@ -71,7 +71,9 @@ private[parquet] object GcsConnectorUtil {
     // This is needed since `FileInputFormat.setInputPaths` validates paths locally and requires
     // the user's GCP credentials.
     GcsConnectorUtil.setCredentials(conf)
-    conf.set(FileInputFormat.INPUT_DIR, StringUtils.escapeString(path));
+    // Split comma-separated paths and escape each individually to preserve URI schemes (gs://)
+    val escaped = path.split(",").map(StringUtils.escapeString).mkString(",")
+    conf.set(FileInputFormat.INPUT_DIR, escaped)
 
     // It will interfere with credentials in Dataflow workers
     if (!ScioUtil.isLocalRunner(sc.options.getRunner)) {
