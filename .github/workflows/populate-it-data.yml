@@ -3,6 +3,9 @@ name: Populate Integration Test Data
 on:
   workflow_dispatch # Manually triggered
 
+permissions:
+  contents: read
+
 jobs:
   populate-integration-test-data:
     runs-on: ubuntu-22.04
