@@ -22,6 +22,7 @@ import java.util.UUID
 import com.spotify.scio._
 import com.spotify.scio.avro._
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.parquet.ParquetConfiguration
 import com.spotify.scio.smb._
 import com.spotify.scio.testing._
 import org.apache.avro.{Schema, SchemaBuilder}
@@ -38,6 +39,7 @@ object ParquetEndToEndTest {
     .fields()
     .requiredString("user")
     .requiredString("event")
+    .requiredString("country")
     .requiredInt("timestamp")
     .endRecord()
 
@@ -46,29 +48,32 @@ object ParquetEndToEndTest {
     .namespace("org.apache.beam.sdk.extensions.smb.avro")
     .fields()
     .requiredString("name")
+    .requiredString("country")
     .requiredInt("age")
     .endRecord()
 
   def avroEvent(x: Int): GenericRecord = new GenericRecordBuilder(eventSchema)
     .set("user", s"user${x % 10 + 1}")
     .set("event", s"event$x")
+    .set("country", s"country${x % 2 + 1}")
     .set("timestamp", x)
     .build()
 
   def avroUser(x: Int): GenericRecord = new GenericRecordBuilder(userSchema)
     .set("name", s"user$x")
+    .set("country", s"country${x % 2 + 1}")
     .set("age", x)
     .build()
 
-  case class Event(user: String, event: String, timestamp: Int)
-  case class User(name: String, age: Int)
+  case class Event(user: String, event: String, country: String, timestamp: Int)
+  case class User(name: String, country: String, age: Int)
 
   object Event {
-    def apply(x: Int): Event = Event(s"user${x % 10 + 1}", s"event$x", x)
+    def apply(x: Int): Event = Event(s"user${x % 10 + 1}", s"event$x", s"country${x % 2 + 1}", x)
   }
 
   object User {
-    def apply(x: Int): User = User(s"user$x", x)
+    def apply(x: Int): User = User(s"user$x", s"country${x % 2 + 1}", x)
   }
 
   val avroEvents: Seq[GenericRecord] = (1 to 100).map(avroEvent)
@@ -216,5 +221,115 @@ class ParquetEndToEndTest extends PipelineSpec {
       .map(kv => (kv._1.toString, kv._2.toList))
     val expected = users.map(u => (u.getName.toString, List(u)))
     actual should containInAnyOrder(expected)
+  }
+
+  it should "support cogrouping typed Parquet" in {
+    val eventsDir = tmpDir
+    val usersDir = tmpDir
+    val sc1 = ScioContext()
+    sc1
+      .parallelize(events)
+      .saveAsSortedBucket(
+        ParquetTypeSortedBucketIO
+          .write[String, Event]("user")
+          .to(eventsDir.toString)
+          .withNumBuckets(1)
+      )
+    sc1
+      .parallelize(users)
+      .saveAsSortedBucket(
+        ParquetTypeSortedBucketIO
+          .write[String, User]("name")
+          .to(usersDir.toString)
+          .withNumBuckets(1)
+      )
+    sc1.run()
+
+    val sc2 = ScioContext()
+    val actual = sc2
+      .sortMergeCoGroup(
+        classOf[String],
+        ParquetTypeSortedBucketIO
+          .read[Event](new TupleTag[Event]("user"))
+          .from(eventsDir.toString)
+          .withConfiguration(ParquetConfiguration.of("foo" -> "Bar")),
+        ParquetTypeSortedBucketIO
+          .read[User](new TupleTag[User]("name"))
+          .from(usersDir.toString)
+      )
+
+    val userMap = users.groupBy(_.name).view.toMap
+    val eventMap = events.groupBy(_.user).view.toMap
+    val expected = userMap.keys.toSeq.map { userName =>
+      val eventsForUser = eventMap.getOrElse(userName, Seq.empty)
+      (userName, (eventsForUser.toSet, userMap(userName).toSet))
+    }
+    // Convert actual results to sets for order-independent comparison
+    val actualSets = actual.map { case (k, (eventsIter, usersIter)) =>
+      (k, (eventsIter.toSet, usersIter.toSet))
+    }
+    actualSets should containInAnyOrder(expected)
+
+    sc2.run()
+
+    eventsDir.delete()
+    usersDir.delete()
+  }
+
+  it should "support cogrouping typed Parquet with secondary key" in {
+    val eventsDir = tmpDir
+    val usersDir = tmpDir
+    val sc1 = ScioContext()
+    sc1
+      .parallelize(events)
+      .saveAsSortedBucket(
+        ParquetTypeSortedBucketIO
+          .write[String, String, Event]("user", "country")
+          .to(eventsDir.toString)
+          .withNumBuckets(1)
+      )
+    sc1
+      .parallelize(users)
+      .saveAsSortedBucket(
+        ParquetTypeSortedBucketIO
+          .write[String, String, User]("name", "country")
+          .to(usersDir.toString)
+          .withNumBuckets(1)
+      )
+    sc1.run()
+
+    val sc2 = ScioContext()
+    val actual = sc2
+      .sortMergeCoGroup(
+        classOf[String],
+        classOf[String],
+        ParquetTypeSortedBucketIO
+          .read[Event](new TupleTag[Event]())
+          .from(eventsDir.toString)
+          .withConfiguration(ParquetConfiguration.of("foo" -> "Bar")),
+        ParquetTypeSortedBucketIO
+          .read[User](new TupleTag[User]())
+          .from(usersDir.toString)
+      )
+
+    val userMap = users.groupBy(u => (u.name, u.country)).view.toMap
+    val eventMap = events.groupBy(e => (e.user, e.country)).view.toMap
+    // Include all keys from both users and events
+    val allKeys = (userMap.keys ++ eventMap.keys).toSet
+    val expected = allKeys.toSeq.map { case (userName, country) =>
+      val eventsForKey = eventMap.getOrElse((userName, country), Seq.empty)
+      val usersForKey = userMap.getOrElse((userName, country), Seq.empty)
+      ((userName, country), (eventsForKey.toSet, usersForKey.toSet))
+    }
+    // Convert actual results to sets for order-independent comparison
+    val actualSets = actual.map { case (k, (eventsIter, usersIter)) =>
+      (k, (eventsIter.toSet, usersIter.toSet))
+    }
+    actualSets should containInAnyOrder(expected)
+
+    sc2.run()
+
+    eventsDir.delete()
+    usersDir.delete()
   }
 }

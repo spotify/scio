@@ -48,11 +48,12 @@ class InjectorUtils {
     }
     if (credential.getClientAuthentication() != null) {
       System.out.println(
-          "\n***Warning! You are not using service account credentials to "
-              + "authenticate.\nYou need to use service account credentials for this example,"
-              + "\nsince user-level credentials do not have enough pubsub quota,\nand so you will run "
-              + "out of PubSub quota very quickly.\nSee "
-              + "https://developers.google.com/identity/protocols/application-default-credentials.");
+          "\n"
+              + "***Warning! You are not using service account credentials to authenticate.\n"
+              + "You need to use service account credentials for this example,\n"
+              + "since user-level credentials do not have enough pubsub quota,\n"
+              + "and so you will run out of PubSub quota very quickly.\n"
+              + "See https://developers.google.com/identity/protocols/application-default-credentials.");
       System.exit(1);
     }
     HttpRequestInitializer initializer = new RetryHttpInitializerWrapper(credential);

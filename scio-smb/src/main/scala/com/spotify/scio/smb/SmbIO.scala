@@ -50,6 +50,9 @@ object SmbIO {
     writeResult: WriteResult
   ): ScioContext => Tap[T] =
     (sc: ScioContext) => {
+      // Extract coder from FileOperations to preserve DatumFactory for Avro SpecificRecords
+      val valueCoder: Coder[T] = Coder.beam[T](fileOperations.getCoder())
+
       val bucketFiles = sc
         .wrap(
           writeResult
@@ -59,6 +62,6 @@ object SmbIO {
         )
         .materialize
 
-      bucketFiles.underlying.flatMap(kv => fileOperations.iterator(kv.getValue).asScala)
+      bucketFiles.underlying.flatMap(kv => fileOperations.iterator(kv.getValue).asScala)(valueCoder)
     }
 }

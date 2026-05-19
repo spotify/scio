@@ -36,7 +36,6 @@ import org.apache.beam.sdk.io.{DynamicFileDestinations, FileSystems, WriteFiles}
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.values.TypeDescriptor
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
@@ -88,15 +87,14 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
 
   private def readLegacy(sc: ScioContext, conf: Configuration, params: ReadP): SCollection[T] = {
     val cls = ScioUtil.classOf[T]
-    val job = Job.getInstance(conf)
     val filePattern = ScioUtil.filePattern(path, params.suffix)
-    GcsConnectorUtil.setInputPaths(sc, job, filePattern)
-    tpe.setupInput(job)
-    job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
-    job.getConfiguration.setClass("value.class", cls, cls)
+    GcsConnectorUtil.setInputPaths(sc, conf, filePattern)
+    tpe.setupInput(conf)
+    conf.setClass("key.class", classOf[Void], classOf[Void])
+    conf.setClass("value.class", cls, cls)
 
     if (params.predicate != null) {
-      ParquetInputFormat.setFilterPredicate(job.getConfiguration, params.predicate)
+      ParquetInputFormat.setFilterPredicate(conf, params.predicate)
     }
 
     val source = HadoopFormatIO
@@ -112,9 +110,9 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
         },
         CoderMaterializer.beam(sc, Coder[T])
       )
-      .withConfiguration(job.getConfiguration)
+      .withConfiguration(conf)
       .withSkipValueClone(
-        job.getConfiguration.getBoolean(
+        conf.getBoolean(
           ParquetReadConfiguration.SkipClone: @nowarn("cat=deprecation"),
           true
         )
@@ -133,7 +131,8 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
     shardNameTemplate: String,
     isWindowed: Boolean,
     tempDirectory: ResourceId,
-    isLocalRunner: Boolean
+    isLocalRunner: Boolean,
+    metadata: Map[String, String]
   ) = {
     require(tempDirectory != null, "tempDirectory must not be null")
     val fp = FilenamePolicySupplier.resolve(
@@ -144,14 +143,15 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
     )(ScioUtil.strippedPath(path), suffix)
     val dynamicDestinations = DynamicFileDestinations
       .constant(fp, SerializableFunctions.identity[T])
-    val job = Job.getInstance(ParquetConfiguration.ofNullable(conf))
-    if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
+    val jobConf = ParquetConfiguration.ofNullable(conf)
+    if (isLocalRunner) GcsConnectorUtil.setCredentials(jobConf)
     val sink = new ParquetTypeFileBasedSink[T](
       StaticValueProvider.of(tempDirectory),
       dynamicDestinations,
       tpe,
-      job.getConfiguration,
-      compression
+      jobConf,
+      compression,
+      metadata.asJava
     )
     val transform = WriteFiles.to(sink).withNumShards(numShards)
     if (!isWindowed) transform else transform.withWindowedWrites()
@@ -170,7 +170,8 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
         params.shardNameTemplate,
         ScioUtil.isWindowed(data),
         ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
-        ScioUtil.isLocalRunner(data.context.options.getRunner)
+        ScioUtil.isLocalRunner(data.context.options.getRunner),
+        params.metadata
       )
     )
     tap(ParquetTypeIO.ReadParam(params))
@@ -208,6 +209,7 @@ object ParquetTypeIO {
     val DefaultPrefix: String = null
     val DefaultShardNameTemplate: String = null
     val DefaultTempDirectory: String = null
+    val DefaultMetadata: Map[String, String] = null
   }
 
   final case class WriteParam private (
@@ -218,7 +220,8 @@ object ParquetTypeIO {
     filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier,
     prefix: String = WriteParam.DefaultPrefix,
     shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
-    tempDirectory: String = WriteParam.DefaultTempDirectory
+    tempDirectory: String = WriteParam.DefaultTempDirectory,
+    metadata: Map[String, String] = WriteParam.DefaultMetadata
   )
 }
 

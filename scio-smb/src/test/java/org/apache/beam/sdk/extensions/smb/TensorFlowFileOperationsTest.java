@@ -35,12 +35,12 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.tensorflow.proto.example.BytesList;
-import org.tensorflow.proto.example.Example;
-import org.tensorflow.proto.example.Feature;
-import org.tensorflow.proto.example.Features;
-import org.tensorflow.proto.example.FloatList;
-import org.tensorflow.proto.example.Int64List;
+import org.tensorflow.proto.BytesList;
+import org.tensorflow.proto.Example;
+import org.tensorflow.proto.Feature;
+import org.tensorflow.proto.Features;
+import org.tensorflow.proto.FloatList;
+import org.tensorflow.proto.Int64List;
 
 /** Unit tests for {@link TensorFlowFileOperations}. */
 public class TensorFlowFileOperationsTest {

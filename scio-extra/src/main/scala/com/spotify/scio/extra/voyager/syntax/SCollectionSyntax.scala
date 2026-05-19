@@ -116,16 +116,16 @@ class VoyagerPairSCollectionOps(
         .groupBy(_ => ()) // asIterableSideInput fails for large indexes
         .withSideInputs(count)
         .map { case ((_, xs), ctx) =>
-          val indexUri = uri.value.resolve(VoyagerUri.IndexFile)
-          val namesUri = uri.value.resolve(VoyagerUri.NamesFile)
+          val indexUri = uri.value.resolve(uri.indexFile)
+          val namesUri = uri.value.resolve(uri.namesFile)
           val isLocal = ScioUtil.isLocalUri(uri.value)
 
           val (localIndex, localNames) = if (isLocal) {
             (Paths.get(indexUri), Paths.get(namesUri))
           } else {
             val tmpDir = Files.createTempDirectory("voyager-")
-            val tmpIndex = tmpDir.resolve(VoyagerUri.IndexFile)
-            val tmpNames = tmpDir.resolve(VoyagerUri.NamesFile)
+            val tmpIndex = tmpDir.resolve(uri.indexFile)
+            val tmpNames = tmpDir.resolve(uri.namesFile)
             (tmpIndex, tmpNames)
           }
 
@@ -163,12 +163,18 @@ class VoyagerPairSCollectionOps(
     indexM: Long,
     efConstruction: Long,
     randomSeed: Long,
-    storageDataType: StorageDataType
+    storageDataType: StorageDataType,
+    indexFile: String,
+    namesFile: String
   ): SCollection[VoyagerUri] = {
     val uuid = UUID.randomUUID()
     val tempLocation: String = self.context.options.getTempLocation
     require(tempLocation != null, s"Voyager writes require --tempLocation to be set.")
-    val uri = VoyagerUri(s"${tempLocation.stripSuffix("/")}/voyager-build-$uuid")
+    val uri = VoyagerUri(
+      s"${tempLocation.stripSuffix("/")}/voyager-build-$uuid",
+      indexFile,
+      namesFile
+    )
     asVoyager(
       uri,
       space,
@@ -198,6 +204,10 @@ class VoyagerPairSCollectionOps(
    *   A random seed to use when initializing the index's internal data structures.
    * @param storageDataType
    *   The datatype to use under-the-hood when storing vectors.
+   * @param indexFile
+   *   The filename of the HNSW index file. Defaults to `index.hnsw`.
+   * @param namesFile
+   *   The filename of the names JSON file. Defaults to `names.json`.
    * @return
    *   A SideInput with a [[VoyagerReader]]
    */
@@ -208,7 +218,9 @@ class VoyagerPairSCollectionOps(
     indexM: Long = VoyagerWriter.DefaultIndexM,
     efConstruction: Long = VoyagerWriter.DefaultEfConstruction,
     randomSeed: Long = VoyagerWriter.DefaultRandomSeed,
-    storageDataType: StorageDataType = VoyagerWriter.DefaultStorageDataType
+    storageDataType: StorageDataType = VoyagerWriter.DefaultStorageDataType,
+    indexFile: String = VoyagerUri.IndexFile,
+    namesFile: String = VoyagerUri.NamesFile
   ): SideInput[VoyagerReader] = {
     val voyagerUri = asVoyager(
       space,
@@ -216,7 +228,9 @@ class VoyagerPairSCollectionOps(
       indexM,
       efConstruction,
       randomSeed,
-      storageDataType
+      storageDataType,
+      indexFile,
+      namesFile
     )
     new VoyagerSCollectionOps(voyagerUri).asVoyagerSideInput()
   }

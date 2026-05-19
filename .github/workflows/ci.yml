@@ -29,40 +29,27 @@ jobs:
       matrix:
         os: [ubuntu-22.04]
         scala: [2.13, 2.12]
-        java: [corretto@11, corretto@17, corretto@21]
+        java: [corretto@17, corretto@21, corretto@25]
         exclude:
           - scala: 2.12
-            java: corretto@17
-          - scala: 2.12
             java: corretto@21
+          - scala: 2.12
+            java: corretto@25
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
 
-      - name: Setup Java (corretto@11)
-        id: setup-java-corretto-11
-        if: matrix.java == 'corretto@11'
-        uses: actions/setup-java@v4
-        with:
-          distribution: corretto
-          java-version: 11
-          cache: sbt
-
-      - name: sbt update
-        if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
-        run: sbt +update
-
       - name: Setup Java (corretto@17)
         id: setup-java-corretto-17
         if: matrix.java == 'corretto@17'
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: corretto
           java-version: 17
@@ -75,7 +62,7 @@ jobs:
       - name: Setup Java (corretto@21)
         id: setup-java-corretto-21
         if: matrix.java == 'corretto@21'
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: corretto
           java-version: 21
@@ -83,6 +70,19 @@ jobs:
 
       - name: sbt update
         if: matrix.java == 'corretto@21' && steps.setup-java-corretto-21.outputs.cache-hit == 'false'
+        run: sbt +update
+
+      - name: Setup Java (corretto@25)
+        id: setup-java-corretto-25
+        if: matrix.java == 'corretto@25'
+        uses: actions/setup-java@v5
+        with:
+          distribution: corretto
+          java-version: 25
+          cache: sbt
+
+      - name: sbt update
+        if: matrix.java == 'corretto@25' && steps.setup-java-corretto-25.outputs.cache-hit == 'false'
         run: sbt +update
 
       - name: gcloud auth
@@ -100,18 +100,18 @@ jobs:
         run: sbt githubWorkflowCheck
 
       - name: Check headers and formatting
-        if: matrix.java == 'corretto@11' && matrix.os == 'ubuntu-22.04'
+        if: matrix.java == 'corretto@17' && matrix.os == 'ubuntu-22.04'
         run: sbt '++ ${{ matrix.scala }}' headerCheckAll javafmtCheckAll scalafmtCheckAll 'project /' scalafmtSbtCheck
 
       - name: Test
         run: sbt '++ ${{ matrix.scala }}' test
 
       - name: Check binary compatibility
-        if: matrix.java == 'corretto@11' && matrix.os == 'ubuntu-22.04'
+        if: matrix.java == 'corretto@17' && matrix.os == 'ubuntu-22.04'
         run: sbt '++ ${{ matrix.scala }}' mimaReportBinaryIssues
 
       - name: Generate API documentation
-        if: matrix.java == 'corretto@11' && matrix.os == 'ubuntu-22.04'
+        if: matrix.java == 'corretto@17' && matrix.os == 'ubuntu-22.04'
         run: sbt '++ ${{ matrix.scala }}' doc
 
       - name: Check dependencies
@@ -119,15 +119,15 @@ jobs:
 
       - name: Make target directories
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main')
-        run: mkdir -p scio-bom/target scio-tensorflow/target site/target scio-cassandra/cassandra3/target scio-elasticsearch/es8/target scio-jdbc/target scio-macros/target scio-grpc/target scio-elasticsearch/common/target scio-test/target scio-avro/target scio-elasticsearch/es7/target scio-snowflake/target scio-redis/target scio-extra/target scio-test/parquet/target scio-test/core/target scio-google-cloud-platform/target scio-smb/target scio-test/google-cloud-platform/target scio-neo4j/target scio-parquet/target scio-core/target scio-repl/target project/target
+        run: mkdir -p scio-bom/target scio-tensorflow/target site/target scio-cassandra/cassandra3/target scio-elasticsearch/es8/target scio-jdbc/target scio-macros/target scio-grpc/target scio-elasticsearch/common/target scio-test/target scio-avro/target scio-elasticsearch/es7/target scio-snowflake/target scio-redis/target scio-extra/target scio-test/parquet/target scio-test/core/target scio-google-cloud-platform/target scio-smb/target scio-test/google-cloud-platform/target scio-neo4j/target scio-parquet/target scio-core/target scio-repl/target scio-managed/target project/target
 
       - name: Compress target directories
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main')
-        run: tar cf targets.tar scio-bom/target scio-tensorflow/target site/target scio-cassandra/cassandra3/target scio-elasticsearch/es8/target scio-jdbc/target scio-macros/target scio-grpc/target scio-elasticsearch/common/target scio-test/target scio-avro/target scio-elasticsearch/es7/target scio-snowflake/target scio-redis/target scio-extra/target scio-test/parquet/target scio-test/core/target scio-google-cloud-platform/target scio-smb/target scio-test/google-cloud-platform/target scio-neo4j/target scio-parquet/target scio-core/target scio-repl/target project/target
+        run: tar cf targets.tar scio-bom/target scio-tensorflow/target site/target scio-cassandra/cassandra3/target scio-elasticsearch/es8/target scio-jdbc/target scio-macros/target scio-grpc/target scio-elasticsearch/common/target scio-test/target scio-avro/target scio-elasticsearch/es7/target scio-snowflake/target scio-redis/target scio-extra/target scio-test/parquet/target scio-test/core/target scio-google-cloud-platform/target scio-smb/target scio-test/google-cloud-platform/target scio-neo4j/target scio-parquet/target scio-core/target scio-repl/target scio-managed/target project/target
 
       - name: Upload target directories
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main')
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: target-${{ matrix.os }}-${{ matrix.java }}-${{ matrix.scala }}
           path: targets.tar
@@ -139,34 +139,21 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04]
-        java: [corretto@11]
+        java: [corretto@17]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
 
-      - name: Setup Java (corretto@11)
-        id: setup-java-corretto-11
-        if: matrix.java == 'corretto@11'
-        uses: actions/setup-java@v4
-        with:
-          distribution: corretto
-          java-version: 11
-          cache: sbt
-
-      - name: sbt update
-        if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
-        run: sbt +update
-
       - name: Setup Java (corretto@17)
         id: setup-java-corretto-17
         if: matrix.java == 'corretto@17'
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: corretto
           java-version: 17
@@ -179,7 +166,7 @@ jobs:
       - name: Setup Java (corretto@21)
         id: setup-java-corretto-21
         if: matrix.java == 'corretto@21'
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: corretto
           java-version: 21
@@ -189,8 +176,21 @@ jobs:
         if: matrix.java == 'corretto@21' && steps.setup-java-corretto-21.outputs.cache-hit == 'false'
         run: sbt +update
 
+      - name: Setup Java (corretto@25)
+        id: setup-java-corretto-25
+        if: matrix.java == 'corretto@25'
+        uses: actions/setup-java@v5
+        with:
+          distribution: corretto
+          java-version: 25
+          cache: sbt
+
+      - name: sbt update
+        if: matrix.java == 'corretto@25' && steps.setup-java-corretto-25.outputs.cache-hit == 'false'
+        run: sbt +update
+
       - name: Download target directories (2.13)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: target-${{ matrix.os }}-${{ matrix.java }}-2.13
 
@@ -200,7 +200,7 @@ jobs:
           rm targets.tar
 
       - name: Download target directories (2.12)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: target-${{ matrix.os }}-${{ matrix.java }}-2.12
 
@@ -248,34 +248,21 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04]
-        java: [corretto@11]
+        java: [corretto@17]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
 
-      - name: Setup Java (corretto@11)
-        id: setup-java-corretto-11
-        if: matrix.java == 'corretto@11'
-        uses: actions/setup-java@v4
-        with:
-          distribution: corretto
-          java-version: 11
-          cache: sbt
-
-      - name: sbt update
-        if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
-        run: sbt +update
-
       - name: Setup Java (corretto@17)
         id: setup-java-corretto-17
         if: matrix.java == 'corretto@17'
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: corretto
           java-version: 17
@@ -288,7 +275,7 @@ jobs:
       - name: Setup Java (corretto@21)
         id: setup-java-corretto-21
         if: matrix.java == 'corretto@21'
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: corretto
           java-version: 21
@@ -298,10 +285,23 @@ jobs:
         if: matrix.java == 'corretto@21' && steps.setup-java-corretto-21.outputs.cache-hit == 'false'
         run: sbt +update
 
+      - name: Setup Java (corretto@25)
+        id: setup-java-corretto-25
+        if: matrix.java == 'corretto@25'
+        uses: actions/setup-java@v5
+        with:
+          distribution: corretto
+          java-version: 25
+          cache: sbt
+
+      - name: sbt update
+        if: matrix.java == 'corretto@25' && steps.setup-java-corretto-25.outputs.cache-hit == 'false'
+        run: sbt +update
+
       - name: Submit Dependencies
         uses: scalacenter/sbt-dependency-submission@v2
         with:
-          modules-ignore: scio_2.13 scio_2.12 scio-examples_2.13 scio-examples_2.12 integration_2.13 integration_2.12 scio-jmh_2.13 scio-jmh_2.12
+          modules-ignore: scio_2.13 scio_2.12 scio-examples_2.13 scio-examples_2.12 integration_2.13 integration_2.12 scio-jmh_2.13 scio-jmh_2.12 socco-plugin_2.13 socco-plugin_2.12
           configs-ignore: test scala-tool scala-doc-tool test-internal
 
   validate-steward:
@@ -313,12 +313,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (fast)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Java (temurin@11)
         id: setup-java-temurin-11
         if: matrix.java == 'temurin@11'
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 11
@@ -335,25 +335,25 @@ jobs:
       matrix:
         os: [ubuntu-22.04]
         scala: [2.13]
-        java: [corretto@11]
+        java: [corretto@17]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - name: Setup Java (corretto@11)
-        id: setup-java-corretto-11
-        if: matrix.java == 'corretto@11'
-        uses: actions/setup-java@v4
+      - name: Setup Java (corretto@17)
+        id: setup-java-corretto-17
+        if: matrix.java == 'corretto@17'
+        uses: actions/setup-java@v5
         with:
           distribution: corretto
-          java-version: 11
+          java-version: 17
           cache: sbt
 
       - name: sbt update
-        if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
+        if: matrix.java == 'corretto@17' && steps.setup-java-corretto-17.outputs.cache-hit == 'false'
         run: sbt +update
 
       - name: Check that workflows are up to date
@@ -374,25 +374,25 @@ jobs:
       matrix:
         os: [ubuntu-22.04]
         scala: [2.13]
-        java: [corretto@11]
+        java: [corretto@17]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - name: Setup Java (corretto@11)
-        id: setup-java-corretto-11
-        if: matrix.java == 'corretto@11'
-        uses: actions/setup-java@v4
+      - name: Setup Java (corretto@17)
+        id: setup-java-corretto-17
+        if: matrix.java == 'corretto@17'
+        uses: actions/setup-java@v5
         with:
           distribution: corretto
-          java-version: 11
+          java-version: 17
           cache: sbt
 
       - name: sbt update
-        if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
+        if: matrix.java == 'corretto@17' && steps.setup-java-corretto-17.outputs.cache-hit == 'false'
         run: sbt +update
 
       - name: Test
@@ -407,25 +407,25 @@ jobs:
       matrix:
         os: [ubuntu-22.04]
         scala: [2.13]
-        java: [corretto@11]
+        java: [corretto@17]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - name: Setup Java (corretto@11)
-        id: setup-java-corretto-11
-        if: matrix.java == 'corretto@11'
-        uses: actions/setup-java@v4
+      - name: Setup Java (corretto@17)
+        id: setup-java-corretto-17
+        if: matrix.java == 'corretto@17'
+        uses: actions/setup-java@v5
         with:
           distribution: corretto
-          java-version: 11
+          java-version: 17
           cache: sbt
 
       - name: sbt update
-        if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
+        if: matrix.java == 'corretto@17' && steps.setup-java-corretto-17.outputs.cache-hit == 'false'
         run: sbt +update
 
       - name: Check that workflows are up to date
@@ -446,6 +446,8 @@ jobs:
         run: scripts/gha_setup.sh
 
       - name: Test
+        env:
+          JAVA_OPTS: '-Davro.version=1.12.0'
         run: 'sbt ''++ ${{ matrix.scala }}'' ''set integration/test/skip := false'' integration/test'
 
   site:
@@ -455,25 +457,25 @@ jobs:
       matrix:
         os: [ubuntu-22.04]
         scala: [2.13]
-        java: [corretto@11]
+        java: [corretto@17]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - name: Setup Java (corretto@11)
-        id: setup-java-corretto-11
-        if: matrix.java == 'corretto@11'
-        uses: actions/setup-java@v4
+      - name: Setup Java (corretto@17)
+        id: setup-java-corretto-17
+        if: matrix.java == 'corretto@17'
+        uses: actions/setup-java@v5
         with:
           distribution: corretto
-          java-version: 11
+          java-version: 17
           cache: sbt
 
       - name: sbt update
-        if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
+        if: matrix.java == 'corretto@17' && steps.setup-java-corretto-17.outputs.cache-hit == 'false'
         run: sbt +update
 
       - name: Check that workflows are up to date

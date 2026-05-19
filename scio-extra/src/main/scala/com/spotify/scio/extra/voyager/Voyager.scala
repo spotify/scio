@@ -33,29 +33,45 @@ import java.util.concurrent.ConcurrentHashMap
  * Represents the base URI for a voyager index, either on a local or a remote file system. For
  * remote file systems, the `path` should be in the form 'scheme://<bucket>/<path>/'. For local
  * files, it should be in the form '/<path>/'. The `uri` specified represents the directory where
- * the `index.hnsw` and `names.json` are.
+ * the index and names files are.
+ *
+ * @param value
+ *   The base URI of the directory containing the index files.
+ * @param indexFile
+ *   The filename of the HNSW index file. Defaults to `index.hnsw`.
+ * @param namesFile
+ *   The filename of the names JSON file. Defaults to `names.json`.
  */
-final case class VoyagerUri(value: URI) extends AnyVal {
+final case class VoyagerUri(
+  value: URI,
+  indexFile: String = VoyagerUri.IndexFile,
+  namesFile: String = VoyagerUri.NamesFile
+) {
 
-  import VoyagerUri._
+  private[voyager] def voyagerFiles: Seq[String] = Seq(indexFile, namesFile)
 
   def exists(implicit remoteFileUtil: RemoteFileUtil): Boolean = {
     if (ScioUtil.isLocalUri(value)) {
-      VoyagerFiles.exists(f => Paths.get(value.resolve(f)).toFile.exists())
+      voyagerFiles.exists(f => Paths.get(value.resolve(f)).toFile.exists())
     } else {
-      VoyagerFiles.exists(f => remoteFileUtil.remoteExists(value.resolve(f)))
+      voyagerFiles.exists(f => remoteFileUtil.remoteExists(value.resolve(f)))
     }
   }
 }
 
 object VoyagerUri {
+  def apply(
+    value: String,
+    indexFile: String,
+    namesFile: String
+  ): VoyagerUri =
+    new VoyagerUri(URI.create(value.stripSuffix("/") + "/"), indexFile, namesFile)
+
   def apply(value: String): VoyagerUri =
     new VoyagerUri(URI.create(value.stripSuffix("/") + "/"))
 
   private[voyager] val IndexFile = "index.hnsw"
   private[voyager] val NamesFile = "names.json"
-
-  private[voyager] val VoyagerFiles: Seq[String] = Seq(IndexFile, NamesFile)
 
 }
 
@@ -196,8 +212,8 @@ private[voyager] class VoyagerSideInput(
   import VoyagerSideInput._
 
   private def createReader(uri: VoyagerUri): VoyagerReader = {
-    val indexUri = uri.value.resolve(VoyagerUri.IndexFile)
-    val namesUri = uri.value.resolve(VoyagerUri.NamesFile)
+    val indexUri = uri.value.resolve(uri.indexFile)
+    val namesUri = uri.value.resolve(uri.namesFile)
 
     val (localIndex, localNames) = if (ScioUtil.isLocalUri(uri.value)) {
       (Paths.get(indexUri), Paths.get(namesUri))

@@ -20,7 +20,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.parquet.hadoop.ParquetOutputFormat;
 import org.apache.parquet.hadoop.util.ContextUtil;
 import org.tensorflow.metadata.v0.Schema;
-import org.tensorflow.proto.example.Example;
+import org.tensorflow.proto.Example;
 
 public class TensorflowExampleParquetOutputFormat extends ParquetOutputFormat<Example> {
 

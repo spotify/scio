@@ -23,6 +23,7 @@ import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
 
+@FunctionalInterface
 trait FilenamePolicySupplier {
   def apply(path: String, suffix: String): FilenamePolicy
 }

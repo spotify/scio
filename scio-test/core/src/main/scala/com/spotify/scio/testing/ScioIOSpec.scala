@@ -149,30 +149,34 @@ trait ScioIOSpec extends PipelineSpec {
   }
 
   def testJobTest[T: Coder](xs: Seq[T], in: String = "in", out: String = "out")(
-    ioFn: String => ScioIO[T]
+    ioFn: String => ScioIO[T],
+    optOutIOFn: Option[String => ScioIO[T]] = None
   )(
     readFn: (ScioContext, String) => SCollection[T]
   )(
     writeFn: (SCollection[T], String) => ClosedTap[_]
   ): Unit = {
+    val inIO = ioFn(in)
+    val outIO = optOutIOFn.map(outIoFn => outIoFn(out)).getOrElse(ioFn(out))
+
     val testJob = (sc: ScioContext) => writeFn(readFn(sc, in), out)
     JobTest(testJob)
-      .input(ioFn(in), xs)
-      .output(ioFn(out))(_ should containInAnyOrder(xs))
+      .input(inIO, xs)
+      .output(outIO)(_ should containInAnyOrder(xs))
       .run()
 
     the[IllegalArgumentException] thrownBy {
       JobTest(testJob)
         .input(CustomIO[T](in), xs)
-        .output(ioFn(out))(_ should containInAnyOrder(xs))
+        .output(outIO)(_ should containInAnyOrder(xs))
         .run()
-    } should have message s"requirement failed: Missing test input: ${ioFn(in).testId}, available: [CustomIO($in)]"
+    } should have message s"requirement failed: Missing test input: ${inIO.testId}, available: [CustomIO($in)]"
 
     the[IllegalArgumentException] thrownBy {
       JobTest(testJob)
-        .input(ioFn(in), xs)
+        .input(inIO, xs)
         .output(CustomIO[T](out))(_ should containInAnyOrder(xs))
         .run()
-    } should have message s"requirement failed: Missing test output: ${ioFn(out).testId}, available: [CustomIO($out)]"
+    } should have message s"requirement failed: Missing test output: ${outIO.testId}, available: [CustomIO($out)]"
   }
 }

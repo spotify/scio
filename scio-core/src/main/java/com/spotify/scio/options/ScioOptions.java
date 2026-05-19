@@ -81,7 +81,8 @@ public interface ScioOptions extends PipelineOptions, KryoOptions {
   void setNullableCoders(boolean value);
 
   @Description(
-      "Colon-separated mapping of fully-qualified class name to location of Zstd dictionary for that class com.MyClass:gs://bucket/file.bin")
+      "Colon-separated mapping of fully-qualified class name to location of Zstd dictionary for"
+          + " that class com.MyClass:gs://bucket/file.bin")
   List<String> getZstdDictionary();
 
   void setZstdDictionary(List<String> value);

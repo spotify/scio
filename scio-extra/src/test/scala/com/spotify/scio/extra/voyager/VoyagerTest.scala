@@ -84,12 +84,168 @@ class VoyagerTest extends PipelineSpec {
     } should have message s"requirement failed: Voyager URI ${uri.value} already exists"
   }
 
+  it should "support .asVoyager with custom filenames" in {
+    val tmpDir = Files.createTempDirectory("voyager-test")
+    val customIndex = "custom_index.hnsw"
+    val customNames = "custom_names.json"
+    val uri = VoyagerUri(tmpDir.toUri, indexFile = customIndex, namesFile = customNames)
+
+    runWithContext { sc =>
+      sc.parallelize(sideData)
+        .asVoyager(
+          uri = uri,
+          space = space,
+          numDimensions = numDimensions,
+          storageDataType = storageDataType
+        )
+    }
+
+    // Verify custom filenames were used
+    tmpDir.resolve(customIndex).toFile.exists() shouldBe true
+    tmpDir.resolve(customNames).toFile.exists() shouldBe true
+    // Verify default filenames were NOT created
+    tmpDir.resolve(VoyagerUri.IndexFile).toFile.exists() shouldBe false
+    tmpDir.resolve(VoyagerUri.NamesFile).toFile.exists() shouldBe false
+
+    val index = StringIndex.load(
+      tmpDir.resolve(customIndex).toString,
+      tmpDir.resolve(customNames).toString,
+      SpaceType.Cosine,
+      numDimensions,
+      StorageDataType.E4M3
+    )
+
+    sideData.foreach { data =>
+      val result = index.query(data._2, 2, 100)
+      result.getNames.length shouldEqual 2
+      result.getDistances.length shouldEqual 2
+      result.getNames should contain(data._1)
+    }
+  }
+
+  it should "support voyagerSideInput with custom filenames" in {
+    val tmpDir = Files.createTempDirectory("voyager-test")
+    val customIndex = "custom_index.hnsw"
+    val customNames = "custom_names.json"
+    val uri = VoyagerUri(tmpDir.toUri, indexFile = customIndex, namesFile = customNames)
+
+    // Write the index with custom filenames
+    runWithContext { sc =>
+      sc.parallelize(sideData)
+        .asVoyager(
+          uri = uri,
+          space = space,
+          numDimensions = numDimensions,
+          storageDataType = storageDataType
+        )
+    }
+
+    // Read back via voyagerSideInput with custom filenames
+    val (names, vectors) = sideData.unzip
+    runWithContext { sc =>
+      val voyagerSI = sc.voyagerSideInput(uri, space, numDimensions, storageDataType)
+      val result = sc
+        .parallelize(vectors)
+        .withSideInputs(voyagerSI)
+        .flatMap { case (v, ctx) =>
+          ctx(voyagerSI).getNearest(v, 1, 100)
+        }
+        .toSCollection
+        .map(_.name)
+
+      result should containInAnyOrder(names)
+    }
+  }
+
+  it should "support voyagerSideInput (no settings) with custom filenames" in {
+    val tmpDir = Files.createTempDirectory("voyager-test")
+    val customIndex = "custom_v2_index.hnsw"
+    val customNames = "custom_v2_names.json"
+    val uri = VoyagerUri(tmpDir.toUri, indexFile = customIndex, namesFile = customNames)
+
+    runWithContext { sc =>
+      sc.parallelize(sideData)
+        .asVoyager(
+          uri = uri,
+          space = space,
+          numDimensions = numDimensions,
+          storageDataType = storageDataType
+        )
+    }
+
+    // Read back via the no-settings voyagerSideInput overload
+    val (names, vectors) = sideData.unzip
+    runWithContext { sc =>
+      val voyagerSI = sc.voyagerSideInput(uri)
+      val result = sc
+        .parallelize(vectors)
+        .withSideInputs(voyagerSI)
+        .flatMap { case (v, ctx) =>
+          ctx(voyagerSI).getNearest(v, 1, 100)
+        }
+        .toSCollection
+        .map(_.name)
+
+      result should containInAnyOrder(names)
+    }
+  }
+
+  it should "throw exception when the Voyager files already exist with custom filenames" in {
+    val tmpDir = Files.createTempDirectory("voyager-test")
+    val customIndex = "my_index.hnsw"
+    val customNames = "my_names.json"
+    val uri = VoyagerUri(tmpDir.toUri, indexFile = customIndex, namesFile = customNames)
+
+    Files.createFile(tmpDir.resolve(customIndex))
+    Files.createFile(tmpDir.resolve(customNames))
+
+    the[IllegalArgumentException] thrownBy {
+      runWithContext { sc =>
+        sc.parallelize(sideData)
+          .asVoyager(
+            uri = uri,
+            space = space,
+            numDimensions = numDimensions,
+            storageDataType = storageDataType
+          )
+      }
+    } should have message s"requirement failed: Voyager URI ${uri.value} already exists"
+  }
+
   "VoyagerUri" should "normalize uri as directory" in {
     VoyagerUri("gs://this-that").value.toString shouldBe "gs://this-that/"
   }
 
+  it should "use default filenames when none specified" in {
+    val uri = VoyagerUri("gs://bucket/path")
+    uri.indexFile shouldBe "index.hnsw"
+    uri.namesFile shouldBe "names.json"
+  }
+
+  it should "support custom filenames via String apply" in {
+    val uri = VoyagerUri("gs://bucket/path", "custom.hnsw", "custom.json")
+    uri.indexFile shouldBe "custom.hnsw"
+    uri.namesFile shouldBe "custom.json"
+    uri.value.toString shouldBe "gs://bucket/path/"
+  }
+
+  it should "support custom filenames via URI constructor" in {
+    val uri = VoyagerUri(
+      java.net.URI.create("gs://bucket/path/"),
+      indexFile = "my_index.hnsw",
+      namesFile = "my_names.json"
+    )
+    uri.indexFile shouldBe "my_index.hnsw"
+    uri.namesFile shouldBe "my_names.json"
+  }
+
   it should "not use Kryo" in {
     val uri = VoyagerUri("gs://this-that/")
+    uri coderShould notFallback()
+  }
+
+  it should "not use Kryo with custom filenames" in {
+    val uri = VoyagerUri("gs://this-that/", "custom.hnsw", "custom.json")
     uri coderShould notFallback()
   }
 }

@@ -29,7 +29,10 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 
 public class WriterUtils {
   public static <T, SELF extends ParquetWriter.Builder<T, SELF>> ParquetWriter<T> build(
-      ParquetWriter.Builder<T, SELF> builder, Configuration conf, CompressionCodecName compression)
+      ParquetWriter.Builder<T, SELF> builder,
+      Configuration conf,
+      CompressionCodecName compression,
+      Map<String, String> extraMetadata)
       throws IOException {
     // https://github.com/apache/parquet-mr/tree/master/parquet-hadoop#class-parquetoutputformat
     long rowGroupSize =
@@ -51,6 +54,10 @@ public class WriterUtils {
         getColumnarConfig(conf, ParquetOutputFormat.BLOOM_FILTER_EXPECTED_NDV, Long::parseLong)
             .entrySet()) {
       builder = builder.withBloomFilterNDV(entry.getKey(), entry.getValue());
+    }
+
+    if (extraMetadata != null) {
+      builder = builder.withExtraMetaData(extraMetadata);
     }
 
     return builder

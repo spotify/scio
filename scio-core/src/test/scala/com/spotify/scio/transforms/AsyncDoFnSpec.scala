@@ -23,7 +23,7 @@ import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import org.apache.beam.sdk.options.PipelineOptions
 import org.apache.beam.sdk.transforms.DoFn.OutputReceiver
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, GlobalWindow, PaneInfo}
-import org.apache.beam.sdk.values.TupleTag
+import org.apache.beam.sdk.values.{OutputBuilder, TupleTag}
 import org.joda.time.{DateTime, Instant}
 import org.scalacheck.Prop.propBoolean
 import org.scalacheck._
@@ -210,6 +210,9 @@ abstract class AsyncDoFnTester[P[_], F[_]] extends BaseDoFnTester {
         paneInfo: PaneInfo
       ): Unit =
         outputBuffer.append(output)
+
+      override def builder(value: String): OutputBuilder[String] =
+        this.asInstanceOf[OutputBuilder[String]]
     }
     val input: Int = nextElement
     val timestamp = DateTime.parse("2022-08-31").toInstant

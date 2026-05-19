@@ -118,14 +118,17 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def bigQueryStorage(query: Query): SCollection[TableRow] =
     self.read(BigQueryStorageSelect(query))
 
+  @deprecated("Use magnolify API instead.", "0.15.0")
   def typedBigQuery[T <: HasAnnotation: TypeTag: Coder](): SCollection[T] =
     typedBigQuery(None)
 
+  @deprecated("Use magnolify API instead.", "0.15.0")
   def typedBigQuery[T <: HasAnnotation: TypeTag: Coder](
     newSource: Source
   ): SCollection[T] = typedBigQuery(Option(newSource))
 
   /** Get a typed SCollection for BigQuery Table or a SELECT query using the Storage API. */
+  @deprecated("Use magnolify API instead.", "0.15.0")
   def typedBigQuery[T <: HasAnnotation: TypeTag: Coder](
     newSource: Option[Source]
   ): SCollection[T] = {
@@ -147,6 +150,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * [[com.spotify.scio.bigquery.types.BigQueryType.fromSchema BigQueryType.fromStorage]] or
    * [[com.spotify.scio.bigquery.types.BigQueryType.fromQuery BigQueryType.fromQuery]]
    */
+  @deprecated("Use magnolify API instead.", "0.15.0")
   def typedBigQueryStorage[T <: HasAnnotation: TypeTag: Coder](): SCollection[T] = {
     val bqt = BigQueryType[T]
     if (bqt.isQuery) {
@@ -159,6 +163,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     }
   }
 
+  @deprecated("Use magnolify API instead.", "0.15.0")
   def typedBigQueryStorage[T <: HasAnnotation: TypeTag: Coder](
     table: Table
   ): SCollection[T] =
@@ -170,6 +175,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
       )
     )
 
+  @deprecated("Use magnolify API instead.", "0.15.0")
   def typedBigQueryStorage[T <: HasAnnotation: TypeTag: Coder](
     rowRestriction: String
   ): SCollection[T] = {
@@ -184,6 +190,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     )
   }
 
+  @deprecated("Use magnolify API instead.", "0.15.0")
   def typedBigQueryStorage[T <: HasAnnotation: TypeTag: Coder](
     table: Table,
     rowRestriction: String
@@ -196,6 +203,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
       )
     )
 
+  @deprecated("Use magnolify API instead.", "0.15.0")
   def typedBigQueryStorage[T <: HasAnnotation: TypeTag: Coder](
     table: Table,
     selectedFields: List[String],

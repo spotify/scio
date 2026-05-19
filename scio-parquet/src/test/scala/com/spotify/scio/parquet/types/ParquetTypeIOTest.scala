@@ -20,12 +20,17 @@ package com.spotify.scio.parquet.types
 import java.{lang => jl}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec, ScioIOTest, TapSpec}
+import com.spotify.scio.parquet.read.ParquetReadConfiguration
+import com.spotify.scio.parquet.{BeamInputFile, ParquetConfiguration}
 import com.spotify.scio.testing.ScioIOSpec
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import org.apache.commons.io.FileUtils
+import org.apache.parquet.HadoopReadOptions
 import org.apache.parquet.filter2.predicate.FilterApi
+import org.apache.parquet.hadoop.ParquetFileReader
 import org.scalatest.BeforeAndAfterAll
+import org.scalatest.prop.TableDrivenPropertyChecks.{forAll => forAllCases, Table}
 
 import java.nio.file.Files
 
@@ -114,6 +119,45 @@ class ParquetTypeIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     sc.run()
   }
 
+  it should "deep copy Configurations" in {
+    val readConfigs =
+      Table(
+        ("config", "description"),
+        (
+          () => ParquetConfiguration.of(ParquetReadConfiguration.UseSplittableDoFn -> true),
+          "legacy read"
+        ),
+        (
+          () => ParquetConfiguration.of(ParquetReadConfiguration.UseSplittableDoFn -> false),
+          "SDF read"
+        )
+      )
+
+    forAllCases(readConfigs) { case (c, _) =>
+      val sc = ScioContext()
+      val conf = c()
+
+      val dataWithPredicate = sc.typedParquetFile[Wide](
+        path = testDir.getAbsolutePath,
+        predicate = predicate,
+        suffix = ".parquet",
+        conf = conf
+      )
+
+      val dataWithoutPredicate = sc.typedParquetFile[Wide](
+        path = testDir.getAbsolutePath,
+        suffix = ".parquet",
+        conf = conf
+      )
+
+      dataWithPredicate should containInAnyOrder(
+        records.filter(t => t.i <= 5 || t.o.exists(_ >= 95))
+      )
+      dataWithoutPredicate should containInAnyOrder(records)
+      sc.run()
+    }
+  }
+
   it should "read case classes with projection and predicate" in {
     val sc = ScioContext()
     val data = sc.typedParquetFile[Narrow](
@@ -138,6 +182,26 @@ class ParquetTypeIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
       .map(t => HasNewDefaultReaderField(t.i, None))
     data should containInAnyOrder(expected)
     sc.run()
+  }
+
+  it should "write extra metadata" in withTempDir { dir =>
+    val sc = ScioContext()
+    val outDir = s"${dir.toPath.resolve("test-metadata").toFile.getAbsolutePath}"
+
+    sc
+      .parallelize(records)
+      .saveAsTypedParquetFile(outDir, metadata = Map("foo" -> "bar", "bar" -> "baz"), numShards = 1)
+    sc.run()
+
+    val options = HadoopReadOptions.builder(ParquetConfiguration.empty()).build
+    val r =
+      ParquetFileReader.open(BeamInputFile.of(s"$outDir/part-00000-of-00001.parquet"), options)
+    val metadata = r.getFileMetaData.getKeyValueMetaData
+
+    metadata.get("foo") shouldBe "bar"
+    metadata.get("bar") shouldBe "baz"
+
+    r.close()
   }
 }
 

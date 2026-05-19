@@ -33,6 +33,9 @@ import java.io.File
 object AvroIOTest {
   @AvroType.toSchema
   case class AvroRecord(i: Int, s: String, r: List[String])
+  case class Track(trackId: String)
+
+  case class Record(i: Int, s: String, r: List[String])
 }
 
 class AvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
@@ -58,7 +61,7 @@ class AvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
     _.map(AvroUtils.newSpecificRecord).saveAsAvroFile(
       "nonsense",
       shardNameTemplate = "SSS-of-NNN",
-      filenamePolicySupplier = testFilenamePolicySupplier
+      filenamePolicySupplier = testFilenamePolicySupplier(_, _)
     )
   )
 }
@@ -88,7 +91,7 @@ class ObjectIOFileNamePolicyTest extends FileNamePolicySpec[AvroIOTest.AvroRecor
     _.map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList)).saveAsObjectFile(
       "nonsense",
       shardNameTemplate = "SSS-of-NNN",
-      filenamePolicySupplier = testFilenamePolicySupplier
+      filenamePolicySupplier = testFilenamePolicySupplier(_, _)
     )
   )
 }
@@ -116,7 +119,7 @@ class ProtobufIOFileNamePolicyTest extends FileNamePolicySpec[TrackPB] {
     _.map(x => TrackPB.newBuilder().setTrackId(x.toString).build()).saveAsProtobufFile(
       "nonsense",
       shardNameTemplate = "SSS-of-NNN",
-      filenamePolicySupplier = testFilenamePolicySupplier
+      filenamePolicySupplier = testFilenamePolicySupplier(_, _)
     )
   )
 }
@@ -200,6 +203,12 @@ class AvroIOTest extends ScioIOSpec {
     testJobTest(xs)(io)(_.typedAvroFile[AvroRecord](_))(_.saveAsTypedAvroFile(_))
   }
 
+  it should "work with typed Avro with magnolify AvroType" in {
+    val xs = (1 to 100).map(x => Record(x, x.toString, (1 to x).map(_.toString).toList))
+    testTap(xs)(_.saveAsAvroFile(_))(".avro")
+    testJobTest(xs)(AvroIO[Record])(_.typedAvroFileMagnolify[Record](_))(_.saveAsAvroFile(_))
+  }
+
   "ObjectFileIO" should "work" in {
     val xs = (1 to 100).map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList))
     testTap(xs)(_.saveAsObjectFile(_))(".obj.avro")
@@ -216,4 +225,12 @@ class AvroIOTest extends ScioIOSpec {
     testJobTest(xs)(ProtobufIO(_))(_.protobufFile[TrackPB](_))(_.saveAsProtobufFile(_))
   }
 
+  "TypedProtobufIO" should "work" in {
+    val xs = (1 to 100).map(x => Track(x.toString))
+    val suffix = ".protobuf.avro"
+    testTap(xs)(_.saveAsProtobufFile[TrackPB](_))(suffix)
+    testJobTest(xs)(ProtobufIO(_))(_.typedProtobufFile[Track, TrackPB](_))(
+      _.saveAsProtobufFile[TrackPB](_)
+    )
+  }
 }

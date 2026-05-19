@@ -32,7 +32,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.parquet.ParquetConfiguration
 import org.apache.avro.generic.GenericRecord
-import org.tensorflow.proto.example.{BytesList, Example, Feature, Features, FloatList}
+import org.tensorflow.proto.{BytesList, Example, Feature, Features, FloatList}
 import org.tensorflow.metadata.{v0 => tfmd}
 
 object ParquetExample {

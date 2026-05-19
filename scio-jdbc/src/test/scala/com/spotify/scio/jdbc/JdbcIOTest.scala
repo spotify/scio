@@ -45,6 +45,17 @@ object JdbcIOTest {
 class JdbcIOTest extends AnyFlatSpec with Matchers {
   import JdbcIOTest._
 
+  // Test helper to access connection properties via reflection
+  private def getConnectionProperties(
+    config: BJdbcIO.DataSourceConfiguration
+  ): Option[String] = {
+    val method = config.getClass.getDeclaredMethod("getConnectionProperties")
+    method.setAccessible(true)
+    val valueProvider =
+      method.invoke(config).asInstanceOf[org.apache.beam.sdk.options.ValueProvider[String]]
+    Option(valueProvider).map(_.get())
+  }
+
   it must "add to pipeline overridden Read transform" in {
     val args = Array[String]()
     val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](args)
@@ -84,7 +95,6 @@ class JdbcIOTest extends AnyFlatSpec with Matchers {
     sc.pipeline.traverseTopologically(finder)
     val transform = finder.result().head
     val displayData = DisplayData.from(transform).asMap().asScala
-    println(displayData)
     displayData should contain key WriteStatementId
     displayData(WriteStatementId).getValue should be("updated statement")
   }
@@ -101,5 +111,69 @@ class JdbcIOTest extends AnyFlatSpec with Matchers {
     s"jdbc:mysql://google/${opts.getCloudSqlDb}?" +
       s"cloudSqlInstance=${opts.getCloudSqlInstanceConnectionName}&" +
       s"socketFactory=com.google.cloud.sql.mysql.SocketFactory"
+
+  "dataSourceConfiguration" must "extract cloudSqlInstance from URL parameters" in {
+    val url = "jdbc:mysql://google/mydb?" +
+      "cloudSqlInstance=my-project:us-central1:my-instance&" +
+      "socketFactory=com.google.cloud.sql.mysql.SocketFactory"
+    val opts = JdbcConnectionOptions(
+      username = "testuser",
+      password = Some("testpass"),
+      connectionUrl = url,
+      classOf[java.sql.Driver]
+    )
+
+    val config = JdbcIO.dataSourceConfiguration(opts)
+    val connectionProperties = getConnectionProperties(config)
+
+    connectionProperties should be(Some("cloudSqlInstance=my-project:us-central1:my-instance"))
+  }
+
+  it must "handle URL without cloudSqlInstance parameter" in {
+    val url = "jdbc:mysql://localhost:3306/mydb?useSSL=false"
+    val opts = JdbcConnectionOptions(
+      username = "testuser",
+      password = None,
+      connectionUrl = url,
+      classOf[java.sql.Driver]
+    )
+
+    val config = JdbcIO.dataSourceConfiguration(opts)
+    val connectionProperties = getConnectionProperties(config)
+
+    connectionProperties should be(None)
+  }
+
+  it must "handle URL without query string" in {
+    val url = "jdbc:mysql://localhost:3306/mydb"
+    val opts = JdbcConnectionOptions(
+      username = "testuser",
+      password = None,
+      connectionUrl = url,
+      classOf[java.sql.Driver]
+    )
+
+    val config = JdbcIO.dataSourceConfiguration(opts)
+    val connectionProperties = getConnectionProperties(config)
+
+    connectionProperties should be(None)
+  }
+
+  it must "be case-insensitive for cloudSqlInstance parameter name" in {
+    val url = "jdbc:mysql://google/mydb?" +
+      "CloudSqlInstance=my-project:us-central1:my-instance&" +
+      "socketFactory=com.google.cloud.sql.mysql.SocketFactory"
+    val opts = JdbcConnectionOptions(
+      username = "testuser",
+      password = Some("testpass"),
+      connectionUrl = url,
+      classOf[java.sql.Driver]
+    )
+
+    val config = JdbcIO.dataSourceConfiguration(opts)
+    val connectionProperties = getConnectionProperties(config)
+
+    connectionProperties should be(Some("cloudSqlInstance=my-project:us-central1:my-instance"))
+  }
 
 }

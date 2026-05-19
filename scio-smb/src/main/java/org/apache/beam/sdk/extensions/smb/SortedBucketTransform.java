@@ -302,7 +302,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     }
   }
 
-  private static class BucketSource<FinalKeyT> extends BoundedSource<BucketItem> {
+  public static class BucketSource<FinalKeyT> extends BoundedSource<BucketItem> {
     // Dataflow calls split() with a suggested byte size that assumes a higher throughput than
     // SMB joins have. By adjusting this suggestion we can arrive at a more optimal parallelism.
 
@@ -357,7 +357,8 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
 
       final DecimalFormat sizeFormat = new DecimalFormat("0.00");
       LOG.info(
-          "Parallelism was adjusted by {}splitting source of size {} MB into {} source(s) of size {} MB",
+          "Parallelism was adjusted by {}splitting source of size {} MB into {} source(s) of size"
+              + " {} MB",
           effectiveParallelism > 1 ? "further " : "",
           sizeFormat.format(estimatedSizeBytes / 1000000.0),
           numSplits,
@@ -377,8 +378,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     public long getEstimatedSizeBytes(final PipelineOptions options) throws Exception {
       if (estimatedSizeBytes == -1) {
         estimatedSizeBytes =
-            sources
-                .parallelStream()
+            sources.parallelStream()
                 .mapToLong(SortedBucketSource.BucketedInput::getOrSampleByteSize)
                 .sum();
         LOG.info("Estimated byte size is " + estimatedSizeBytes);

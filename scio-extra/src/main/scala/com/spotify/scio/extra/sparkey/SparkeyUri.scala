@@ -21,7 +21,7 @@ import java.io.File
 import java.net.URI
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import com.spotify.scio.extra.sparkey.instances.ShardedSparkeyReader
-import com.spotify.sparkey.extra.ThreadLocalSparkeyReader
+import com.spotify.sparkey.Sparkey
 import com.spotify.sparkey.SparkeyReader
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.io.fs.{EmptyMatchTreatment, MatchResult, ResourceId}
@@ -80,7 +80,7 @@ case class SparkeyUri(path: String) {
     if (!isSharded) {
       val path =
         if (isLocal) new File(basePath) else downloadRemoteUris(Seq(basePath), rfu).head.toFile
-      new ThreadLocalSparkeyReader(path)
+      Sparkey.open(path)
     } else {
       val (basePaths, numShards) =
         ShardedSparkeyUri.basePathsAndCount(EmptyMatchTreatment.DISALLOW, globExpression)
@@ -131,7 +131,7 @@ private[sparkey] object ShardedSparkeyUri {
   ): Map[Short, SparkeyReader] =
     localBasePaths.iterator.map { path =>
       val (shardIndex, _) = shardsFromPath(path)
-      val reader = new ThreadLocalSparkeyReader(new File(path + ".spi"))
+      val reader = Sparkey.open(new File(path + ".spi"))
       (shardIndex, reader)
     }.toMap
 

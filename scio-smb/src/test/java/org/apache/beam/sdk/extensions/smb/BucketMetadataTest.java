@@ -184,15 +184,18 @@ public class BucketMetadataTest {
     final String serializedAvro =
         "{\"type\":\"org.apache.beam.sdk.extensions.smb.AvroBucketMetadata\",\"version\":"
             + futureVersion
-            + ",\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"MURMUR3_32\",\"keyField\":\"user_id\", \"extra_field\":\"foo\"}";
+            + ",\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"MURMUR3_32\",\"keyField\":\"user_id\","
+            + " \"extra_field\":\"foo\"}";
     final String serializedJson =
         "{\"type\":\"org.apache.beam.sdk.extensions.smb.JsonBucketMetadata\",\"version\":"
             + futureVersion
-            + ",\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"MURMUR3_32\",\"keyField\":\"user_id\", \"extra_field\":\"foo\"}";
+            + ",\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"MURMUR3_32\",\"keyField\":\"user_id\","
+            + " \"extra_field\":\"foo\"}";
     final String serializedTensorflow =
         "{\"type\":\"org.apache.beam.sdk.extensions.smb.TensorFlowBucketMetadata\",\"version\":"
             + futureVersion
-            + ",\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"MURMUR3_32\",\"keyField\":\"user_id\", \"extra_field\":\"foo\"}";
+            + ",\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"MURMUR3_32\",\"keyField\":\"user_id\","
+            + " \"extra_field\":\"foo\"}";
 
     // Assert that no exception is thrown decoding.
     Assert.assertEquals(
@@ -210,19 +213,23 @@ public class BucketMetadataTest {
     final String serializedAvro =
         "{\"type\":\"org.apache.beam.sdk.extensions.smb.AvroBucketMetadata\",\"version\":"
             + futureVersion
-            + ",\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"SOME_HASH_TYPE\",\"keyField\":\"user_id\", \"extra_field\":\"foo\"}";
+            + ",\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"SOME_HASH_TYPE\",\"keyField\":\"user_id\","
+            + " \"extra_field\":\"foo\"}";
     final String serializedJson =
         "{\"type\":\"org.apache.beam.sdk.extensions.smb.JsonBucketMetadata\",\"version\":"
             + futureVersion
-            + ",\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"SOME_HASH_TYPE\",\"keyField\":\"user_id\", \"extra_field\":\"foo\"}";
+            + ",\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"SOME_HASH_TYPE\",\"keyField\":\"user_id\","
+            + " \"extra_field\":\"foo\"}";
     final String serializedPq =
         "{\"type\":\"org.apache.beam.sdk.extensions.smb.ParquetBucketMetadata\",\"version\":"
             + futureVersion
-            + ",\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"SOME_HASH_TYPE\",\"keyField\":\"user_id\", \"extra_field\":\"foo\"}";
+            + ",\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"SOME_HASH_TYPE\",\"keyField\":\"user_id\","
+            + " \"extra_field\":\"foo\"}";
     final String serializedTf =
         "{\"type\":\"org.apache.beam.sdk.extensions.smb.TensorFlowBucketMetadata\",\"version\":"
             + futureVersion
-            + ",\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"SOME_HASH_TYPE\",\"keyField\":\"user_id\", \"extra_field\":\"foo\"}";
+            + ",\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"SOME_HASH_TYPE\",\"keyField\":\"user_id\","
+            + " \"extra_field\":\"foo\"}";
 
     // Assert that no exception is thrown decoding.
     final JsonBucketMetadata jsonBucketMetadata =

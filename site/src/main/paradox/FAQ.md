@@ -484,7 +484,7 @@ If you encounter an SBT error with message "Initial heap size set to a larger va
 
 You might get an error message like `java.io.IOException: Unable to create parent directories of /Applications/IntelliJ IDEA CE.app/Contents/bin/.bigquery/012345abcdef.schema.json`. This usually happens to people who run IntelliJ IDEA with its bundled JVM. There are two solutions.
 
-- Install JDK from [java.com](https://www.java.com/) and switch to it by following the "All platforms: switch between installed runtimes" section in this [page](https://intellij-support.jetbrains.com/hc/en-us/articles/206544879-Selecting-the-JDK-version-the-IDE-will-run-under).
+- Install JDK from a vendor like [adoptium](https://adoptium.net/index.html) or [corretto](https://aws.amazon.com/corretto/) and switch to it by following the "All platforms: switch between installed runtimes" section in this [page](https://intellij-support.jetbrains.com/hc/en-us/articles/206544879-Selecting-the-JDK-version-the-IDE-will-run-under).
 - Override the bigquery `.cache` directory as a JVM compiler parameter. On the bottom right of the IntelliJ window, click the icon that looks like a clock, and then "Configure...". Then, edit the JVM parameters to include the line `-Dbigquery.cache.directory=</path/to/repository>/.bigquery`. Then, restart the compile server by clicking on the clock icon -> Stop, and then Start.
 
 #### How to make IntelliJ IDEA work with type safe BigQuery classes?

@@ -25,7 +25,7 @@ import org.apache.parquet.hadoop.api.WriteSupport;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.apache.parquet.io.OutputFile;
 import org.tensorflow.metadata.v0.Schema;
-import org.tensorflow.proto.example.Example;
+import org.tensorflow.proto.Example;
 
 public class TensorflowExampleParquetWriter extends ParquetWriter<Example> {
 

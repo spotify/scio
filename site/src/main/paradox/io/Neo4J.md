@@ -1,6 +1,6 @@
 # Neo4J
 
-Scio provides support [Neo4J](https://neo4j.com/) in the `scio-neo4j` artifact.
+Scio provides support for [Neo4J](https://neo4j.com/) in the `scio-neo4j` artifact.
 
 Scio uses [magnolify's](https://github.com/spotify/magnolify) `magnolify-neo4j` to convert to and from Neo4J types. 
 

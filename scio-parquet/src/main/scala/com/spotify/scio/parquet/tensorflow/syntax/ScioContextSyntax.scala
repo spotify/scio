@@ -24,7 +24,7 @@ import com.spotify.scio.values.SCollection
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.tensorflow.metadata.v0.Schema
-import org.tensorflow.proto.example.Example
+import org.tensorflow.proto.Example
 
 /** Enhanced version of [[ScioContext]] with Parquet [[Example]] methods. */
 final class ScioContextOps(private val self: ScioContext) extends AnyVal {

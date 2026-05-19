@@ -125,7 +125,9 @@ public class GrpcDoFn<RequestT, ResponseT, ClientT extends AbstractStub<ClientT>
       return this;
     }
 
-    /** @param newClientFn creates the gRPC async stub from the channel */
+    /**
+     * @param newClientFn creates the gRPC async stub from the channel
+     */
     public Builder<RequestT, ResponseT, ClientT> withNewClientFn(
         SerializableFunction<Channel, ClientT> newClientFn) {
       this.newClientFn = newClientFn;
@@ -152,7 +154,9 @@ public class GrpcDoFn<RequestT, ResponseT, ClientT extends AbstractStub<ClientT>
       return this;
     }
 
-    /** @param cacheSupplier supplier for lookup cache. */
+    /**
+     * @param cacheSupplier supplier for lookup cache.
+     */
     public Builder<RequestT, ResponseT, ClientT> withCacheSupplier(
         CacheSupplier<RequestT, ResponseT> cacheSupplier) {
       this.cacheSupplier = cacheSupplier;

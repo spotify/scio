@@ -1757,15 +1757,15 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   /**
-   * Generic write method for all `ScioIO[T]` implementations, if it is test pipeline this will
+   * Generic write method for all `ScioIO[T]` implementations, if it is a test pipeline this will
    * evaluate pre-registered output IO implementation which match for the passing `ScioIO[T]`
-   * implementation. if not this will invoke [[com.spotify.scio.io.ScioIO[T]#write]] method along
-   * with write configurations passed by.
+   * implementation. If not, this will invoke [[com.spotify.scio.io.ScioIO[T]#write]] with the
+   * provided write configuration.
    *
    * @param io
    *   an implementation of `ScioIO[T]` trait
    * @param params
-   *   configurations need to pass to perform underline write implementation
+   *   configurations need to pass to perform underlying write implementation
    */
   def write(io: ScioIO[T])(params: io.WriteP): ClosedTap[io.tapT.T] =
     io.writeWithContext(this, params)

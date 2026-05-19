@@ -130,10 +130,14 @@ private[types] object SchemaProvider {
     t.decls.filter(isField) zip fieldDescs(t)
 
   private def fieldDescs(t: Type): Iterable[Option[String]] = {
-    val tpe = "com.spotify.scio.bigquery.types.description"
+    // Scala 2.13.17+ resolves annotation type using `com.spotify.scio.bigquery.description` alias; previous Scala
+    // versions (and all 2.12 versions) resolve to `com.spotify.scio.bigquery.types.description`
+    // See: https://github.com/spotify/scio/issues/5874
+    val tpes =
+      Set("com.spotify.scio.bigquery.description", "com.spotify.scio.bigquery.types.description")
     t.typeSymbol.asClass.primaryConstructor.typeSignature.paramLists.head.map {
       _.annotations
-        .find(_.tree.tpe.toString == tpe)
+        .find(a => tpes.contains(a.tree.tpe.toString))
         .map { a =>
           val q"new $_($v)" = a.tree: @nowarn
           val Literal(Constant(s)) = v: @nowarn

@@ -22,7 +22,7 @@ import com.spotify.scio._
 import com.spotify.scio.avro._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec, ScioIOTest, TapSpec, TextIO}
-import com.spotify.scio.parquet.ParquetConfiguration
+import com.spotify.scio.parquet.{BeamInputFile, ParquetConfiguration}
 import com.spotify.scio.parquet.read.ParquetReadConfiguration
 import com.spotify.scio.testing._
 import com.spotify.scio.util.FilenamePolicySupplier
@@ -43,7 +43,9 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
+import org.apache.parquet.HadoopReadOptions
 import org.apache.parquet.avro.{AvroDataSupplier, AvroReadSupport, AvroWriteSupport}
+import org.apache.parquet.hadoop.ParquetFileReader
 import org.joda.time.{DateTimeFieldType, Duration, Instant}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.prop.TableDrivenPropertyChecks.{forAll => forAllCases, Table}
@@ -148,6 +150,30 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
       )
       val expected = specificRecords.filter(_.getIntField <= 5)
       data.map(identity) should containInAnyOrder(expected)
+      sc.run()
+    }
+  }
+
+  it should "deep copy Configurations" in {
+    forAllCases(readConfigs) { case (c, _) =>
+      val sc = ScioContext()
+      val conf = c()
+      val predicate = Predicate[TestRecord](_.getIntField <= 5)
+      val dataWithPredicate = sc.parquetAvroFile[TestRecord](
+        path = testDir.getAbsolutePath,
+        predicate = predicate,
+        suffix = ".parquet",
+        conf = conf
+      )
+      val dataWithoutPredicate = sc.parquetAvroFile[TestRecord](
+        path = testDir.getAbsolutePath,
+        suffix = ".parquet",
+        conf = conf
+      )
+      dataWithPredicate.map(identity) should containInAnyOrder(
+        specificRecords.filter(_.getIntField <= 5)
+      )
+      dataWithoutPredicate.map(identity) should containInAnyOrder(specificRecords)
       sc.run()
     }
   }
@@ -352,6 +378,51 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
       data should containInAnyOrder(genericRecords)
       sc2.run()
     }
+  }
+
+  it should "read/write records with java-class annotations" in withTempDir { dir =>
+    forAllCases(readConfigs) { case (readConf, testCase) =>
+      val testCaseDir = new File(dir, testCase)
+      val records = (1 to 10).map { i =>
+        JavaClassTest.newBuilder().setAmount(BigDecimal.valueOf(i.toLong).bigDecimal).build()
+      }
+
+      val sc1 = ScioContext()
+      sc1
+        .parallelize(records)
+        .saveAsParquetAvroFile(testCaseDir.getAbsolutePath)
+      sc1.run()
+
+      val sc2 = ScioContext()
+      sc2
+        .parquetAvroFile[JavaClassTest](
+          s"${testCaseDir.getAbsolutePath}/*.parquet",
+          conf = readConf()
+        )
+        .map(identity) should containInAnyOrder(records)
+      sc2.run()
+    }
+  }
+
+  it should "write extra metadata" in withTempDir { dir =>
+    val sc = ScioContext()
+    val outDir = s"${dir.toPath.resolve("test-metadata").toFile.getAbsolutePath}"
+
+    sc
+      .parallelize(1 to 10)
+      .map(x => new Account(x, x.toString, x.toString, x.toDouble, AccountStatus.Active))
+      .saveAsParquetAvroFile(outDir, metadata = Map("foo" -> "bar", "bar" -> "baz"), numShards = 1)
+    sc.run()
+
+    val options = HadoopReadOptions.builder(ParquetConfiguration.empty()).build
+    val r =
+      ParquetFileReader.open(BeamInputFile.of(s"$outDir/part-00000-of-00001.parquet"), options)
+    val metadata = r.getFileMetaData.getKeyValueMetaData
+
+    metadata.get("foo") shouldBe "bar"
+    metadata.get("bar") shouldBe "baz"
+
+    r.close()
   }
 
   class TestRecordProjection(@unused str: String)

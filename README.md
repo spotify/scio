@@ -31,7 +31,8 @@ Scio is a Scala API for [Apache Beam](http://beam.incubator.apache.org/) and [Go
 
 # Quick Start
 
-Download and install the [Java Development Kit (JDK)](https://adoptopenjdk.net/index.html) version 8.
+Download and install the Java Development Kit (JDK) version 11 or higher,
+eg. [adoptium](https://adoptium.net/index.html) or [corretto](https://aws.amazon.com/corretto/).
 
 Install [sbt](https://www.scala-sbt.org/1.x/docs/Setup.html).
 
@@ -79,6 +80,7 @@ Scio includes the following artifacts:
 - `scio-google-cloud-platform`: add-on for Google Cloud IO's: BigQuery, Bigtable, Pub/Sub, Datastore, Spanner
 - `scio-grpc`: add-on for gRPC service calls
 - `scio-jdbc`: add-on for JDBC IO
+- `scio-managed`: add-on for Beam's managed transforms. Includes Iceberg
 - `scio-neo4j`: add-on for Neo4J IO
 - `scio-parquet`: add-on for Parquet
 - `scio-redis`: add-on for Redis

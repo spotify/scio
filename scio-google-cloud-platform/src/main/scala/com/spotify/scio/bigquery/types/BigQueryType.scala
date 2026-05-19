@@ -21,7 +21,7 @@ import com.google.api.services.bigquery.model.{TableRow, TableSchema}
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 
-import scala.annotation.{compileTimeOnly, nowarn, StaticAnnotation}
+import scala.annotation.{compileTimeOnly, StaticAnnotation}
 import scala.reflect.runtime.universe._
 import scala.util.Try
 
@@ -190,7 +190,6 @@ object BigQueryType {
    * Also generate a companion object with convenience methods.
    * @group annotation
    */
-  @nowarn
   @compileTimeOnly(
     "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
   )
@@ -221,7 +220,6 @@ object BigQueryType {
    * Also generate a companion object with convenience methods.
    * @group annotation
    */
-  @nowarn
   @compileTimeOnly(
     "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
   )
@@ -271,7 +269,6 @@ object BigQueryType {
    * Also generate a companion object with convenience methods.
    * @group annotation
    */
-  @nowarn
   @compileTimeOnly(
     "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
   )
@@ -318,7 +315,6 @@ object BigQueryType {
    * behavior, start the query string with `#legacysql` or `#standardsql`.
    * @group annotation
    */
-  @nowarn
   @compileTimeOnly(
     "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
   )

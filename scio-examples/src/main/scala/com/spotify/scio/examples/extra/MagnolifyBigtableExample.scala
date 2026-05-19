@@ -34,11 +34,8 @@ import magnolify.bigtable._
 import scala.collection.compat._
 
 object MagnolifyBigtableExample {
-  // Define case class representation of TensorFlow `Example`
   case class WordCount(cnt: Long)
-  // `BigtableType` provides mapping between case classes and `Seq[Mutation]`/`Row`
-  // for writing/reading.
-  val WordCountType: BigtableType[WordCount] = BigtableType[WordCount]
+  val ColumnFamily = "counts"
 }
 
 // ## Magnolify Bigtable Write Example
@@ -65,14 +62,10 @@ object MagnolifyBigtableWriteExample {
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue
-      // Convert case class to `Seq[Mutation]` and lift it into a key-value pair
-      // for saving to Bigtable table.
-      .map { case (word, count) =>
-        val mutations =
-          WordCountType(WordCount(count), columnFamily = "counts").iterator.to(Iterable)
-        ByteString.copyFromUtf8(word) -> mutations
-      }
-      .saveAsBigtable(btProjectId, btInstanceId, btTableId)
+      .mapValues(cnt => WordCount(cnt))
+      // `keyFn` converts word to a ByteString, while the value is converted via an
+      // implicitly derived BigtableType[WordCount]
+      .saveAsBigtable(btProjectId, btInstanceId, btTableId, ColumnFamily, ByteString.copyFromUtf8 _)
 
     sc.run()
     ()
@@ -99,12 +92,15 @@ object MagnolifyBigtableReadExample {
     val btInstanceId = args("bigtableInstanceId")
     val btTableId = args("bigtableTableId")
 
-    sc.bigtable(btProjectId, btInstanceId, btTableId)
-      .map { row =>
-        // Convert Bigtable `Row` to the case class and lift it into a key-value pair.
-        row.getKey.toStringUtf8 -> WordCountType(row, columnFamily = "counts").cnt
-      }
-      .saveAsTextFile(args("output"))
+    // Internally converts Bigtable `Row` to `(String, WordCount)` via implicit
+    // BigtableType[WordCount] and the provided `keyFn`
+    sc.typedBigtable[String, WordCount](
+      btProjectId,
+      btInstanceId,
+      btTableId,
+      ColumnFamily,
+      (bs: ByteString) => bs.toStringUtf8
+    ).saveAsTextFile(args("output"))
 
     sc.run()
     ()

@@ -40,7 +40,7 @@ private[scio] object RandomSampler {
 
 abstract private[scio] class RandomSampler[T, R] extends DoFn[T, T] {
   protected var rng: R = _
-  protected var seed: Long = -1
+  protected var seed: Option[Long] = None
 
   // TODO: is it necessary to setSeed for each instance like Spark does?
   @StartBundle
@@ -58,7 +58,7 @@ abstract private[scio] class RandomSampler[T, R] extends DoFn[T, T] {
 
   def init: R
   def samples: Int
-  def setSeed(seed: Long): Unit = this.seed = seed
+  def setSeed(seed: Long): Unit = this.seed = Some(seed)
 }
 
 /**
@@ -74,6 +74,7 @@ abstract private[scio] class RandomSampler[T, R] extends DoFn[T, T] {
  */
 private[scio] class BernoulliSampler[T](val fraction: Double, private val seedOpt: Option[Long])
     extends RandomSampler[T, JRandom] {
+  this.seed = seedOpt
 
   /** Epsilon slop to avoid failure from floating point jitter */
   require(
@@ -84,7 +85,7 @@ private[scio] class BernoulliSampler[T](val fraction: Double, private val seedOp
 
   override def init: JRandom = {
     val r = RandomSampler.newDefaultRNG
-    seedOpt.foreach(r.setSeed)
+    this.seed.foreach(r.setSeed)
     r
   }
 
@@ -117,6 +118,7 @@ private[scio] object BernoulliSampler {
  */
 private[scio] class PoissonSampler[T](val fraction: Double, private val seedOpt: Option[Long])
     extends RandomSampler[T, IntegerDistribution] {
+  this.seed = seedOpt
 
   /** Epsilon slop to avoid failure from floating point jitter. */
   require(
@@ -128,7 +130,7 @@ private[scio] class PoissonSampler[T](val fraction: Double, private val seedOpt:
   // If fraction is <= 0, 0 is used below, so we can use any placeholder value.
   override def init: IntegerDistribution = {
     val r = new PoissonDistribution(if (fraction > 0.0) fraction else 1.0)
-    seedOpt.foreach(r.reseedRandomGenerator)
+    this.seed.foreach(r.reseedRandomGenerator)
     r
   }
 

@@ -75,7 +75,7 @@ trait ParquetDynamicTest extends PipelineSpec {
 
 class ParquetTensorflowDynamicTest extends ParquetDynamicTest {
   import com.google.protobuf.ByteString
-  import org.tensorflow.proto.example._
+  import org.tensorflow.proto._
   import org.tensorflow.metadata.{v0 => tfmd}
   import com.spotify.scio.parquet.tensorflow._
   import com.spotify.scio.parquet.tensorflow.dynamic._

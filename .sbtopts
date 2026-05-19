@@ -5,3 +5,9 @@
 -Dscio.ignoreVersionWarning=true
 -Dorg.slf4j.simpleLogger.defaultLogLevel=info
 -Dorg.slf4j.simpleLogger.logFile=scio.log
+# required for sbt-java-formatter
+-J--add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED
+-J--add-opens=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED
+-J--add-opens=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED
+-J--add-opens=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED
+-J--add-opens=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED

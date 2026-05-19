@@ -22,7 +22,6 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 trait PropertySpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with Matchers {
-  // TODO: remove this once https://github.com/scalatest/scalatest/issues/1090 is addressed
   implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
     PropertyCheckConfiguration(minSuccessful = 100)
 }

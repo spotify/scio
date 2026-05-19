@@ -66,6 +66,9 @@ class BigQueryValidationTest extends AnyFlatSpec with Matchers with BeforeAndAft
     CountryOutput.schema.getFields.get(0).getType shouldBe "STRING"
     CountryOutput.schema.getFields.get(1).getType shouldBe "STRING"
     CountryOutput.schema.getFields.get(2).getType shouldBe "STRING"
+
+    // Overridden type should keep its given field name, even if type is overridden
+    CountryOutput.schema.getFields.get(0).getName shouldBe "country"
   }
 
   "ValidationProvider" should "properly validate data" in {

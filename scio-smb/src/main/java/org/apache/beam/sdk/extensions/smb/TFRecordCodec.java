@@ -84,7 +84,8 @@ public class TFRecordCodec {
     if (data.hasRemaining()) {
       throw new IOException(
           String.format(
-              "EOF while reading record of length %d. Read only %d bytes. Input might be truncated.",
+              "EOF while reading record of length %d. Read only %d bytes. Input might be"
+                  + " truncated.",
               length, data.position()));
     }
 

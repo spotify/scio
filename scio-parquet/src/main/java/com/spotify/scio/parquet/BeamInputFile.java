@@ -144,8 +144,8 @@ public class BeamInputFile implements InputFile {
       if (!className.equals("H1SeekableInputStream")
           && !className.equals("H2SeekableInputStream")) {
         LOG.warn(
-            "Vectored read was requested for file {}, but Parquet vector bridge returned non-vectorized stream "
-                + "{}. Is parquet-hadoop available on the classpath?",
+            "Vectored read was requested for file {}, but Parquet vector bridge returned"
+                + " non-vectorized stream {}. Is parquet-hadoop available on the classpath?",
             resourceId,
             stream.getClass());
       }

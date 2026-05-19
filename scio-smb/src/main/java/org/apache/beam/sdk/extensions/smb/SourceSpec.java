@@ -77,7 +77,8 @@ class SourceSpec implements Serializable {
     if (targetParallelism.getValue() > greatestNumBuckets)
       LOG.warn(
           String.format(
-              "You have selected a parallelism > the greatest number of buckets (%d). Unless you are applying a SortedBucketTransform, consider a lower number.",
+              "You have selected a parallelism > the greatest number of buckets (%d). Unless you"
+                  + " are applying a SortedBucketTransform, consider a lower number.",
               greatestNumBuckets));
     return targetParallelism.getValue();
   }

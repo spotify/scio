@@ -19,11 +19,12 @@ package com.spotify.scio.transforms
 import org.apache.beam.sdk.options.PipelineOptions
 import org.apache.beam.sdk.transforms.DoFn.OutputReceiver
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, GlobalWindow, IntervalWindow}
-import org.apache.beam.sdk.values.TupleTag
+import org.apache.beam.sdk.values.{OutputBuilder, TupleTag}
 import org.joda.time.Instant
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import java.lang
 import scala.jdk.CollectionConverters._
 
 class BatchDoFnTest extends AnyFlatSpec with Matchers {
@@ -39,6 +40,9 @@ class BatchDoFnTest extends AnyFlatSpec with Matchers {
 
     def values: List[Iterable[T]] = builder.result().map(_._1)
     def valuesWithTimestamp: List[(Iterable[T], Instant)] = builder.result()
+
+    override def builder(value: lang.Iterable[T]): OutputBuilder[lang.Iterable[T]] =
+      this.asInstanceOf[OutputBuilder[lang.Iterable[T]]]
   }
 
   def intervalWindow(

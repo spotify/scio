@@ -17,7 +17,6 @@
 
 package com.spotify.scio.parquet.avro
 
-import java.lang.{Boolean => JBoolean}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
@@ -31,15 +30,14 @@ import org.apache.avro.Schema
 import org.apache.avro.reflect.ReflectData
 import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.io._
-import org.apache.beam.sdk.transforms.SerializableFunctions
-import org.apache.beam.sdk.transforms.SimpleFunction
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
 import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
+import org.apache.beam.sdk.transforms.{SerializableFunctions, SimpleFunction}
 import org.apache.beam.sdk.values.TypeDescriptor
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.mapreduce.Job
+import org.apache.hadoop.mapreduce.InputFormat
 import org.apache.parquet.avro.{
   AvroDataSupplier,
   AvroParquetInputFormat,
@@ -50,6 +48,8 @@ import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 
+import java.lang.{Boolean => JBoolean}
+import scala.jdk.CollectionConverters._
 import scala.reflect.{classTag, ClassTag}
 
 final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[T] {
@@ -85,7 +85,8 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
     shardNameTemplate: String,
     isWindowed: Boolean,
     tempDirectory: ResourceId,
-    isLocalRunner: Boolean
+    isLocalRunner: Boolean,
+    metadata: Map[String, String]
   ) = {
     require(tempDirectory != null, "tempDirectory must not be null")
     val fp = FilenamePolicySupplier.resolve(
@@ -96,15 +97,15 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
     )(ScioUtil.strippedPath(path), suffix)
     val dynamicDestinations = DynamicFileDestinations
       .constant(fp, SerializableFunctions.identity[T])
-    val job = Job.getInstance(conf)
-    if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
+    if (isLocalRunner) GcsConnectorUtil.setCredentials(conf)
 
     val sink = new ParquetAvroFileBasedSink[T](
       StaticValueProvider.of(tempDirectory),
       dynamicDestinations,
       schema,
-      job.getConfiguration,
-      compression
+      conf,
+      compression,
+      metadata.asJava
     )
     val transform = WriteFiles.to(sink).withNumShards(numShards)
     if (!isWindowed) transform else transform.withWindowedWrites()
@@ -128,7 +129,8 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
         params.shardNameTemplate,
         ScioUtil.isWindowed(data),
         ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
-        ScioUtil.isLocalRunner(data.context.options.getRunner)
+        ScioUtil.isLocalRunner(data.context.options.getRunner),
+        params.metadata
       )
     )
     tap(ParquetAvroIO.ReadParam(params))
@@ -182,6 +184,20 @@ object ParquetAvroIO {
         Option(projection).getOrElse(readSchema)
       )
 
+      val serializableClassesProp = System.getProperty("org.apache.avro.SERIALIZABLE_CLASSES")
+      Option(serializableClassesProp).filter(_.nonEmpty).foreach { serializableClasses =>
+        if (
+          confOrDefault.get(
+            AvroReadSupport.SERIALIZABLE_CLASSES
+          ) == null
+        ) {
+          AvroReadSupport.setSerializableClasses(
+            confOrDefault,
+            serializableClasses.split(",").toSeq: _*
+          )
+        }
+      }
+
       if (predicate != null) {
         ParquetInputFormat.setFilterPredicate(confOrDefault, predicate)
       }
@@ -220,12 +236,15 @@ object ParquetAvroIO {
     private def readLegacy(sc: ScioContext, path: String)(implicit
       coder: Coder[T]
     ): SCollection[T] = {
-      val job = Job.getInstance(confOrDefault)
       val filePattern = ScioUtil.filePattern(path, suffix)
-      GcsConnectorUtil.setInputPaths(sc, job, filePattern)
-      job.setInputFormatClass(classOf[AvroParquetInputFormat[T]])
-      job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
-      job.getConfiguration.setClass("value.class", avroClass, avroClass)
+      GcsConnectorUtil.setInputPaths(sc, confOrDefault, filePattern)
+      confOrDefault.setClass(
+        "mapreduce.job.inputformat.class",
+        classOf[AvroParquetInputFormat[T]],
+        classOf[InputFormat[_, T]]
+      )
+      confOrDefault.setClass("key.class", classOf[Void], classOf[Void])
+      confOrDefault.setClass("value.class", avroClass, avroClass)
 
       val g = ClosureCleaner.clean(projectionFn) // defeat closure
       val aCls = avroClass
@@ -244,7 +263,7 @@ object ParquetAvroIO {
           override def getInputTypeDescriptor = TypeDescriptor.of(aCls)
           override def getOutputTypeDescriptor = TypeDescriptor.of(oCls)
         })
-        .withConfiguration(job.getConfiguration)
+        .withConfiguration(confOrDefault)
 
       sc.applyTransform(transform).map(_.getValue)
     }
@@ -260,6 +279,7 @@ object ParquetAvroIO {
     val DefaultPrefix: String = null
     val DefaultShardNameTemplate: String = null
     val DefaultTempDirectory: String = null
+    val DefaultMetadata: Map[String, String] = null
   }
 
   final case class WriteParam private (
@@ -271,6 +291,7 @@ object ParquetAvroIO {
     filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier,
     prefix: String = WriteParam.DefaultPrefix,
     shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
-    tempDirectory: String = WriteParam.DefaultTempDirectory
+    tempDirectory: String = WriteParam.DefaultTempDirectory,
+    metadata: Map[String, String] = WriteParam.DefaultMetadata
   )
 }

@@ -22,9 +22,13 @@ import com.google.bigtable.v2.{Mutation, Row}
 import com.google.protobuf.ByteString
 import com.spotify.scio.testing._
 
+// must be defined outside the test class or test job will hang
+case class Foo(i: Int, s: String)
+
 class BigtableIOTest extends ScioIOSpec {
   val projectId = "project"
   val instanceId = "instance"
+  val columnFamily = "columnFamily"
 
   "BigtableIO" should "work with input" in {
     val xs = (1 to 100).map { x =>
@@ -44,6 +48,26 @@ class BigtableIOTest extends ScioIOSpec {
     }
     testJobTestOutput(xs)(BigtableIO(projectId, instanceId, _))(
       _.saveAsBigtable(projectId, instanceId, _)
+    )
+  }
+
+  it should "work with typed input" in {
+    val xs = (1 to 100).map(x => x.toString -> Foo(x, x.toString))
+    testJobTestInput(xs)(BigtableIO[(String, Foo)](projectId, instanceId, _))(
+      _.typedBigtable[String, Foo](
+        projectId,
+        instanceId,
+        _,
+        columnFamily,
+        (bs: ByteString) => bs.toStringUtf8
+      )
+    )
+  }
+
+  it should "work with typed output" in {
+    val xs = (1 to 100).map(x => (x.toString, Foo(x, x.toString)))
+    testJobTestOutput(xs)(BigtableIO(projectId, instanceId, _))(
+      _.saveAsBigtable(projectId, instanceId, _, columnFamily, ByteString.copyFromUtf8 _)
     )
   }
 }

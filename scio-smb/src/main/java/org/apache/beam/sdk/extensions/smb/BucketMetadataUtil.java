@@ -56,7 +56,9 @@ public class BucketMetadataUtil {
       this.mapping = mapping;
     }
 
-    /** @return smallest number of buckets for this set of inputs. */
+    /**
+     * @return smallest number of buckets for this set of inputs.
+     */
     int leastNumBuckets() {
       return mapping.values().stream().mapToInt(v -> v.metadata.getNumBuckets()).min().getAsInt();
     }
