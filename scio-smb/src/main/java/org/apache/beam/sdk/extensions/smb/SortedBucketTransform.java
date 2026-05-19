@@ -20,6 +20,7 @@ package org.apache.beam.sdk.extensions.smb;
 import java.io.IOException;
 import java.io.Serializable;
 import java.text.DecimalFormat;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -226,12 +228,13 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         if (bucketMetadata == null) {
           try {
             bucketMetadata =
-                newBucketMetadataFn.createMetadata(bucket.totalNumBuckets, 1, hashType);
+                newBucketMetadataFn.createMetadata(
+                    bucket.totalNumBuckets, bucket.numShards, hashType);
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
         }
-        writtenBuckets.put(BucketShardId.of(bucket.bucketId, 0), bucket.destination);
+        writtenBuckets.put(BucketShardId.of(bucket.bucketId, bucket.shardId), bucket.destination);
       }
 
       RenameBuckets.moveFiles(
@@ -277,11 +280,24 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
   public static class MergedBucket implements Serializable {
     final ResourceId destination;
     final int bucketId;
+    final int shardId;
+    final int numShards;
     final int totalNumBuckets;
 
     MergedBucket(Integer bucketId, ResourceId destination, Integer totalNumBuckets) {
+      this(bucketId, 0, 1, destination, totalNumBuckets);
+    }
+
+    MergedBucket(
+        Integer bucketId,
+        Integer shardId,
+        Integer numShards,
+        ResourceId destination,
+        Integer totalNumBuckets) {
       this.destination = destination;
       this.bucketId = bucketId;
+      this.shardId = shardId;
+      this.numShards = numShards;
       this.totalNumBuckets = totalNumBuckets;
     }
 
@@ -293,12 +309,14 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       MergedBucket that = (MergedBucket) o;
       return Objects.equals(destination, that.destination)
           && Objects.equals(bucketId, that.bucketId)
+          && shardId == that.shardId
+          && numShards == that.numShards
           && Objects.equals(totalNumBuckets, that.totalNumBuckets);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(destination, bucketId, totalNumBuckets);
+      return Objects.hash(destination, bucketId, shardId, numShards, totalNumBuckets);
     }
   }
 
@@ -453,56 +471,85 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       int bucketId = e.bucketOffsetId;
       int effectiveParallelism = e.effectiveParallelism;
 
-      ResourceId dst =
-          fileAssignment.forBucket(BucketShardId.of(bucketId, 0), effectiveParallelism, 1);
-      OutputCollector<FinalValueT> outputCollector;
-      final Counter recordsWritten =
-          Metrics.counter(metricsPrefix, metricsPrefix + "-RecordsWritten");
-      try {
-        outputCollector = new OutputCollector<>(fileOperations.createWriter(dst), recordsWritten);
-      } catch (IOException err) {
-        throw new RuntimeException("Failed to create file writer for transformed output", err);
-      }
-
       // get any arbitrary metadata to be able to rehash keys into buckets
       BucketMetadata<?, ?, ?> someArbitraryBucketMetadata =
           sources.get(0).getSourceMetadata().mapping.values().stream().findAny().get().metadata;
-      final MultiSourceKeyGroupReader<FinalKeyT> iter =
-          new MultiSourceKeyGroupReader<FinalKeyT>(
-              sources,
-              keyFn,
-              coGbkResultSchema(),
-              someArbitraryBucketMetadata,
-              keyComparator,
-              metricsPrefix,
-              false,
-              bucketId,
-              effectiveParallelism,
-              context.getPipelineOptions());
-      while (true) {
-        try {
-          KV<FinalKeyT, CoGbkResult> mergedKeyGroup = iter.readNext();
-          if (mergedKeyGroup == null) break;
-          outputTransform(mergedKeyGroup, context, outputCollector, window);
 
-          // exhaust iterators if necessary before moving on to the next key group:
-          // for example, if not every element was needed in the transformFn
-          sources.forEach(
-              source -> {
-                final Iterable<?> maybeUnfinishedIt =
-                    mergedKeyGroup.getValue().getAll(source.getTupleTag());
-                if (SortedBucketSource.TraversableOnceIterable.class.isAssignableFrom(
-                    maybeUnfinishedIt.getClass())) {
-                  ((SortedBucketSource.TraversableOnceIterable<?>) maybeUnfinishedIt)
-                      .ensureExhausted();
-                }
-              });
-        } catch (Exception ex) {
-          throw new RuntimeException("Failed to write merged key group", ex);
+      // Check if any source needs directory batching
+      SortedBucketSource.BucketedInput<?> batchedSource =
+          sources.stream()
+              .filter(SortedBucketSource.BucketedInput::needsBatching)
+              .findFirst()
+              .orElse(null);
+
+      List<Map<TupleTag<?>, Set<ResourceId>>> batchFilters;
+      if (batchedSource != null) {
+        TupleTag<?> tag = batchedSource.getTupleTag();
+        batchFilters = new java.util.ArrayList<>();
+        for (Set<ResourceId> batch : batchedSource.getDirectoryBatches()) {
+          Map<TupleTag<?>, Set<ResourceId>> filter = new HashMap<>();
+          filter.put(tag, batch);
+          batchFilters.add(filter);
         }
+      } else {
+        batchFilters = Collections.singletonList(null);
       }
-      outputCollector.onComplete();
-      out.output(new MergedBucket(bucketId, dst, effectiveParallelism));
+
+      int numShards = batchFilters.size();
+      final Counter recordsWritten =
+          Metrics.counter(metricsPrefix, metricsPrefix + "-RecordsWritten");
+
+      for (int shardIdx = 0; shardIdx < numShards; shardIdx++) {
+        Map<TupleTag<?>, Set<ResourceId>> dirFilter = batchFilters.get(shardIdx);
+
+        ResourceId dst =
+            fileAssignment.forBucket(
+                BucketShardId.of(bucketId, shardIdx), effectiveParallelism, numShards);
+        OutputCollector<FinalValueT> outputCollector;
+        try {
+          outputCollector = new OutputCollector<>(fileOperations.createWriter(dst), recordsWritten);
+        } catch (IOException err) {
+          throw new RuntimeException("Failed to create file writer for transformed output", err);
+        }
+
+        final MultiSourceKeyGroupReader<FinalKeyT> iter =
+            new MultiSourceKeyGroupReader<FinalKeyT>(
+                sources,
+                keyFn,
+                coGbkResultSchema(),
+                someArbitraryBucketMetadata,
+                keyComparator,
+                metricsPrefix,
+                false,
+                bucketId,
+                effectiveParallelism,
+                context.getPipelineOptions(),
+                dirFilter);
+        while (true) {
+          try {
+            KV<FinalKeyT, CoGbkResult> mergedKeyGroup = iter.readNext();
+            if (mergedKeyGroup == null) break;
+            outputTransform(mergedKeyGroup, context, outputCollector, window);
+
+            // exhaust iterators if necessary before moving on to the next key group:
+            // for example, if not every element was needed in the transformFn
+            sources.forEach(
+                source -> {
+                  final Iterable<?> maybeUnfinishedIt =
+                      mergedKeyGroup.getValue().getAll(source.getTupleTag());
+                  if (SortedBucketSource.TraversableOnceIterable.class.isAssignableFrom(
+                      maybeUnfinishedIt.getClass())) {
+                    ((SortedBucketSource.TraversableOnceIterable<?>) maybeUnfinishedIt)
+                        .ensureExhausted();
+                  }
+                });
+          } catch (Exception ex) {
+            throw new RuntimeException("Failed to write merged key group", ex);
+          }
+        }
+        outputCollector.onComplete();
+        out.output(new MergedBucket(bucketId, shardIdx, numShards, dst, effectiveParallelism));
+      }
     }
   }
 

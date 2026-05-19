@@ -282,7 +282,17 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     keyClass: Class[K],
     a: SortedBucketIO.Read[A],
     b: SortedBucketIO.Read[B],
-    targetParallelism: TargetParallelism = TargetParallelism.auto()
+    targetParallelism: TargetParallelism,
+    lazyKeyGroups: Boolean
+  ): SCollection[(K, (Iterable[A], Iterable[B]))] =
+    SMBMultiJoin(self).sortMergeCoGroup(keyClass, a, b, targetParallelism, lazyKeyGroups)
+
+  @experimental
+  def sortMergeCoGroup[K: Coder, A: Coder, B: Coder](
+    keyClass: Class[K],
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    targetParallelism: TargetParallelism
   ): SCollection[(K, (Iterable[A], Iterable[B]))] =
     SMBMultiJoin(self).sortMergeCoGroup(keyClass, a, b, targetParallelism)
 
@@ -357,6 +367,17 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    *   the desired parallelism of the job. See
    *   [[org.apache.beam.sdk.extensions.smb.TargetParallelism]] for more information.
    */
+  @experimental
+  def sortMergeCoGroup[K: Coder, A: Coder, B: Coder, C: Coder](
+    keyClass: Class[K],
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    c: SortedBucketIO.Read[C],
+    targetParallelism: TargetParallelism,
+    lazyKeyGroups: Boolean
+  ): SCollection[(K, (Iterable[A], Iterable[B], Iterable[C]))] =
+    SMBMultiJoin(self).sortMergeCoGroup(keyClass, a, b, c, targetParallelism, lazyKeyGroups)
+
   @experimental
   def sortMergeCoGroup[K: Coder, A: Coder, B: Coder, C: Coder](
     keyClass: Class[K],

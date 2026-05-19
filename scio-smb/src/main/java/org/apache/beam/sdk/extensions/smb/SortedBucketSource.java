@@ -105,6 +105,7 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
   protected SourceSpec sourceSpec;
   protected Long estimatedSizeBytes;
   protected final String metricsKey;
+  protected boolean lazyKeyGroups = false;
 
   public SortedBucketSource(List<BucketedInput<?>> sources) {
     this(sources, TargetParallelism.auto());
@@ -221,7 +222,13 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
     final int totalParallelism = numSplits * effectiveParallelism;
     return IntStream.range(0, numSplits)
         .boxed()
-        .map(splitNum -> createSplitSource(splitNum, totalParallelism, estSplitSize))
+        .map(
+            splitNum -> {
+              SortedBucketSource<KeyType> split =
+                  createSplitSource(splitNum, totalParallelism, estSplitSize);
+              split.lazyKeyGroups = this.lazyKeyGroups;
+              return split;
+            })
         .collect(Collectors.toList());
   }
 
@@ -276,7 +283,7 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
             someArbitraryBucketMetadata,
             comparator(),
             metricsKey,
-            true,
+            !lazyKeyGroups,
             bucketOffsetId,
             effectiveParallelism,
             options),
@@ -419,6 +426,7 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
     protected Keying keying;
     // lazy, internal checks depend on what kind of iteration is requested
     protected transient SourceMetadata<V> sourceMetadata = null; // lazy
+    private int maxPartitionsPerBatch = 0;
 
     private transient Map<ResourceId, KV<String, FileOperations<V>>> inputs;
     private final Map<Integer, KV<String, FileOperations<V>>> fileOperationsEncoding;
@@ -535,6 +543,33 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
       return sampledSource.getValue().getCoder();
     }
 
+    public int getMaxPartitionsPerBatch() {
+      return maxPartitionsPerBatch;
+    }
+
+    public void setMaxPartitionsPerBatch(int max) {
+      this.maxPartitionsPerBatch = max;
+    }
+
+    public boolean needsBatching() {
+      return maxPartitionsPerBatch > 0
+          && getSourceMetadata().mapping.size() > maxPartitionsPerBatch;
+    }
+
+    public List<Set<ResourceId>> getDirectoryBatches() {
+      SourceMetadata<V> sm = getSourceMetadata();
+      List<ResourceId> allDirs = new ArrayList<>(sm.mapping.keySet());
+      if (!needsBatching()) {
+        return Collections.singletonList(new HashSet<>(allDirs));
+      }
+      List<Set<ResourceId>> batches = new ArrayList<>();
+      for (int i = 0; i < allDirs.size(); i += maxPartitionsPerBatch) {
+        batches.add(
+            new HashSet<>(allDirs.subList(i, Math.min(i + maxPartitionsPerBatch, allDirs.size()))));
+      }
+      return batches;
+    }
+
     static CoGbkResultSchema schemaOf(List<BucketedInput<?>> sources) {
       return CoGbkResultSchema.of(
           sources.stream().map(BucketedInput::getTupleTag).collect(Collectors.toList()));
@@ -601,6 +636,11 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
 
     public KeyGroupIterator<V> createIterator(
         int bucketId, int targetParallelism, PipelineOptions options) {
+      return createIterator(bucketId, targetParallelism, options, null);
+    }
+
+    public KeyGroupIterator<V> createIterator(
+        int bucketId, int targetParallelism, PipelineOptions options, Set<ResourceId> dirFilter) {
       SourceMetadata<V> sourceMetadata = getSourceMetadata();
       final Comparator<SortedBucketIO.ComparableKeyBytes> keyComparator =
           (keying == Keying.PRIMARY)
@@ -615,6 +655,7 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
       final List<Iterator<KV<SortedBucketIO.ComparableKeyBytes, V>>> iterators = new ArrayList<>();
       sourceMetadata.mapping.forEach(
           (dir, value) -> {
+            if (dirFilter != null && !dirFilter.contains(dir)) return;
             final int numBuckets = value.metadata.getNumBuckets();
             final int numShards = value.metadata.getNumShards();
             final Function<V, SortedBucketIO.ComparableKeyBytes> keyFn =

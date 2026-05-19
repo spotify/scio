@@ -29,7 +29,7 @@ import org.typelevel.scalaccompat.annotation.nowarn
 
 import scala.jdk.CollectionConverters._
 final class SMBMultiJoin(private val self: ScioContext) {
-	def sortMergeCoGroup[KEY: Coder, A: Coder, B: Coder](keyClass: Class[KEY], a: SortedBucketIO.Read[A], b: SortedBucketIO.Read[B], targetParallelism: TargetParallelism): SCollection[(KEY, (Iterable[A], Iterable[B]))] = self.requireNotClosed {
+	def sortMergeCoGroup[KEY: Coder, A: Coder, B: Coder](keyClass: Class[KEY], a: SortedBucketIO.Read[A], b: SortedBucketIO.Read[B], targetParallelism: TargetParallelism, lazyKeyGroups: Boolean): SCollection[(KEY, (Iterable[A], Iterable[B]))] = self.requireNotClosed {
 		val tfName = self.tfName
 		val keyed = if (self.isTest) {
 			testCoGroup[KEY](a, b)
@@ -38,6 +38,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
 				.read(keyClass)
 				.of(a, b)
 				.withTargetParallelism(targetParallelism)
+				.withLazyKeyGroups(lazyKeyGroups)
 			self.wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", transform))
 		}
 		val tupleTagA = a.getTupleTag
@@ -56,11 +57,15 @@ final class SMBMultiJoin(private val self: ScioContext) {
 			}
 	}
 
-	def sortMergeCoGroup[KEY: Coder, A: Coder, B: Coder](keyClass: Class[KEY], a: SortedBucketIO.Read[A], b: SortedBucketIO.Read[B]): SCollection[(KEY, (Iterable[A], Iterable[B]))] = {
-		sortMergeCoGroup(keyClass, a, b, TargetParallelism.auto())
+	def sortMergeCoGroup[KEY: Coder, A: Coder, B: Coder](keyClass: Class[KEY], a: SortedBucketIO.Read[A], b: SortedBucketIO.Read[B], targetParallelism: TargetParallelism): SCollection[(KEY, (Iterable[A], Iterable[B]))] = {
+		sortMergeCoGroup(keyClass, a, b, targetParallelism, false)
 	}
 
-	def sortMergeCoGroup[KEY: Coder, A: Coder, B: Coder, C: Coder](keyClass: Class[KEY], a: SortedBucketIO.Read[A], b: SortedBucketIO.Read[B], c: SortedBucketIO.Read[C], targetParallelism: TargetParallelism): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C]))] = self.requireNotClosed {
+	def sortMergeCoGroup[KEY: Coder, A: Coder, B: Coder](keyClass: Class[KEY], a: SortedBucketIO.Read[A], b: SortedBucketIO.Read[B]): SCollection[(KEY, (Iterable[A], Iterable[B]))] = {
+		sortMergeCoGroup(keyClass, a, b, TargetParallelism.auto(), false)
+	}
+
+	def sortMergeCoGroup[KEY: Coder, A: Coder, B: Coder, C: Coder](keyClass: Class[KEY], a: SortedBucketIO.Read[A], b: SortedBucketIO.Read[B], c: SortedBucketIO.Read[C], targetParallelism: TargetParallelism, lazyKeyGroups: Boolean): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C]))] = self.requireNotClosed {
 		val tfName = self.tfName
 		val keyed = if (self.isTest) {
 			testCoGroup[KEY](a, b, c)
@@ -69,6 +74,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
 				.read(keyClass)
 				.of(a, b, c)
 				.withTargetParallelism(targetParallelism)
+				.withLazyKeyGroups(lazyKeyGroups)
 			self.wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", transform))
 		}
 		val tupleTagA = a.getTupleTag
@@ -89,8 +95,12 @@ final class SMBMultiJoin(private val self: ScioContext) {
 			}
 	}
 
+	def sortMergeCoGroup[KEY: Coder, A: Coder, B: Coder, C: Coder](keyClass: Class[KEY], a: SortedBucketIO.Read[A], b: SortedBucketIO.Read[B], c: SortedBucketIO.Read[C], targetParallelism: TargetParallelism): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C]))] = {
+		sortMergeCoGroup(keyClass, a, b, c, targetParallelism, false)
+	}
+
 	def sortMergeCoGroup[KEY: Coder, A: Coder, B: Coder, C: Coder](keyClass: Class[KEY], a: SortedBucketIO.Read[A], b: SortedBucketIO.Read[B], c: SortedBucketIO.Read[C]): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C]))] = {
-		sortMergeCoGroup(keyClass, a, b, c, TargetParallelism.auto())
+		sortMergeCoGroup(keyClass, a, b, c, TargetParallelism.auto(), false)
 	}
 
 	def sortMergeCoGroup[KEY: Coder, A: Coder, B: Coder, C: Coder, D: Coder](keyClass: Class[KEY], a: SortedBucketIO.Read[A], b: SortedBucketIO.Read[B], c: SortedBucketIO.Read[C], d: SortedBucketIO.Read[D], targetParallelism: TargetParallelism): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D]))] = self.requireNotClosed {

@@ -21,10 +21,12 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.beam.sdk.extensions.smb.SortedBucketIO.ComparableKeyBytes;
+import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Distribution;
 import org.apache.beam.sdk.metrics.Metrics;
@@ -79,6 +81,32 @@ public class MultiSourceKeyGroupReader<KeyType> {
       int bucketId,
       int effectiveParallelism,
       PipelineOptions options) {
+    this(
+        sources,
+        keyFn,
+        resultSchema,
+        someArbitraryBucketMetadata,
+        keyComparator,
+        metricsPrefix,
+        materializeKeyGroup,
+        bucketId,
+        effectiveParallelism,
+        options,
+        null);
+  }
+
+  public MultiSourceKeyGroupReader(
+      List<SortedBucketSource.BucketedInput<?>> sources,
+      Function<ComparableKeyBytes, KeyType> keyFn,
+      CoGbkResultSchema resultSchema,
+      BucketMetadata<?, ?, ?> someArbitraryBucketMetadata,
+      Comparator<ComparableKeyBytes> keyComparator,
+      String metricsPrefix,
+      boolean materializeKeyGroup,
+      int bucketId,
+      int effectiveParallelism,
+      PipelineOptions options,
+      Map<TupleTag<?>, Set<ResourceId>> directoryFilters) {
     this.keyFn = keyFn;
     this.keyGroupSize = Metrics.distribution(metricsPrefix, metricsPrefix + "-KeyGroupSize");
     this.predicateFilteredRecordsCounts =
@@ -97,7 +125,12 @@ public class MultiSourceKeyGroupReader<KeyType> {
     this.resultSchema = resultSchema;
     this.bucketedInputs =
         sources.stream()
-            .map(src -> new BucketIterator<>(src, bucketId, effectiveParallelism, options))
+            .map(
+                src -> {
+                  Set<ResourceId> filter =
+                      directoryFilters != null ? directoryFilters.get(src.tupleTag) : null;
+                  return new BucketIterator<>(src, bucketId, effectiveParallelism, options, filter);
+                })
             .collect(Collectors.toList());
     // this only operates on the primary key
     this.keyGroupFilter =
@@ -254,9 +287,18 @@ public class MultiSourceKeyGroupReader<KeyType> {
         int bucketId,
         int parallelism,
         PipelineOptions options) {
+      this(source, bucketId, parallelism, options, null);
+    }
+
+    BucketIterator(
+        SortedBucketSource.BucketedInput<V> source,
+        int bucketId,
+        int parallelism,
+        PipelineOptions options,
+        Set<ResourceId> directoryFilter) {
       this.predicate = source.getPredicate();
       this.tupleTag = source.getTupleTag();
-      this.iter = source.createIterator(bucketId, parallelism, options);
+      this.iter = source.createIterator(bucketId, parallelism, options, directoryFilter);
 
       int numBuckets = source.getSourceMetadata().leastNumBuckets();
       // The canonical # buckets for this source. If # buckets >= the parallelism of the job,

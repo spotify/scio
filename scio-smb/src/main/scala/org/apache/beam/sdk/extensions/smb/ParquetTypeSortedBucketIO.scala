@@ -64,7 +64,8 @@ object ParquetTypeSortedBucketIO {
     filenameSuffix: String = DefaultSuffix,
     filterPredicate: FilterPredicate = null,
     predicate: Predicate[T] = null,
-    configuration: Configuration = new Configuration()
+    configuration: Configuration = new Configuration(),
+    maxPartitionsPerBatch: Int = 0
   ) extends SortedBucketIO.Read[T] {
     def from(inputDirectories: String*): Read[T] =
       this.copy(inputDirectories = inputDirectories)
@@ -81,6 +82,9 @@ object ParquetTypeSortedBucketIO {
     def withConfiguration(configuration: Configuration): Read[T] =
       this.copy(configuration = configuration)
 
+    def withMaxPartitionsPerBatch(max: Int): Read[T] =
+      this.copy(maxPartitionsPerBatch = max)
+
     def getInputDirectories: ImmutableList[String] =
       ImmutableList.copyOf(inputDirectories.asJava: java.lang.Iterable[String])
     def getFilenameSuffix: String = filenameSuffix
@@ -90,7 +94,7 @@ object ParquetTypeSortedBucketIO {
     override def toBucketedInput(
       keying: SortedBucketSource.Keying
     ): SortedBucketSource.BucketedInput[T] = {
-      BucketedInput.of(
+      val input = BucketedInput.of(
         keying,
         getTupleTag,
         inputDirectories.asJava,
@@ -98,6 +102,8 @@ object ParquetTypeSortedBucketIO {
         getFileOperations,
         predicate
       )
+      if (maxPartitionsPerBatch > 0) input.setMaxPartitionsPerBatch(maxPartitionsPerBatch)
+      input
     }
 
     def getFileOperations: FileOperations[T] =

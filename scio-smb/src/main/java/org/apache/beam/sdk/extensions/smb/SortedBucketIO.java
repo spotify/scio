@@ -148,16 +148,27 @@ public class SortedBucketIO {
     private final List<BucketedInput<?>> inputs;
     private final TargetParallelism targetParallelism;
     private final String metricsKey;
+    private final boolean lazyKeyGroups;
 
     private CoGbk(
         Class<K> keyClass,
         List<BucketedInput<?>> inputs,
         TargetParallelism targetParallelism,
         String metricsKey) {
+      this(keyClass, inputs, targetParallelism, metricsKey, false);
+    }
+
+    private CoGbk(
+        Class<K> keyClass,
+        List<BucketedInput<?>> inputs,
+        TargetParallelism targetParallelism,
+        String metricsKey,
+        boolean lazyKeyGroups) {
       this.keyClass = keyClass;
       this.inputs = inputs;
       this.targetParallelism = targetParallelism;
       this.metricsKey = metricsKey;
+      this.lazyKeyGroups = lazyKeyGroups;
     }
 
     /**
@@ -171,15 +182,24 @@ public class SortedBucketIO {
               .add(read.toBucketedInput(SortedBucketSource.Keying.PRIMARY))
               .build();
       validateInputNameUniqueness(newReads);
-      return new CoGbk<>(keyClass, newReads, targetParallelism, metricsKey);
+      return new CoGbk<>(keyClass, newReads, targetParallelism, metricsKey, lazyKeyGroups);
     }
 
     public CoGbk<K> withTargetParallelism(TargetParallelism targetParallelism) {
-      return new CoGbk<>(keyClass, inputs, targetParallelism, metricsKey);
+      return new CoGbk<>(keyClass, inputs, targetParallelism, metricsKey, lazyKeyGroups);
     }
 
     public CoGbk<K> withMetricsKey(String metricsKey) {
-      return new CoGbk<>(keyClass, inputs, targetParallelism, metricsKey);
+      return new CoGbk<>(keyClass, inputs, targetParallelism, metricsKey, lazyKeyGroups);
+    }
+
+    /**
+     * When enabled, key group iterables in the CoGbkResult are lazily evaluated instead of eagerly
+     * materialized into Lists. This reduces memory usage for large key groups but means each
+     * Iterable can only be traversed once.
+     */
+    public CoGbk<K> withLazyKeyGroups(boolean lazy) {
+      return new CoGbk<>(keyClass, inputs, targetParallelism, metricsKey, lazy);
     }
 
     public <V> CoGbkTransform<K, V> transform(TransformOutput<K, Void, V> transform) {
@@ -188,10 +208,10 @@ public class SortedBucketIO {
 
     @Override
     public PCollection<KV<K, CoGbkResult>> expand(PBegin input) {
-      return input.apply(
-          org.apache.beam.sdk.io.Read.from(
-              new SortedBucketPrimaryKeyedSource<>(
-                  keyClass, inputs, targetParallelism, metricsKey)));
+      SortedBucketPrimaryKeyedSource<K> source =
+          new SortedBucketPrimaryKeyedSource<>(keyClass, inputs, targetParallelism, metricsKey);
+      source.lazyKeyGroups = this.lazyKeyGroups;
+      return input.apply(org.apache.beam.sdk.io.Read.from(source));
     }
   }
 
@@ -207,6 +227,7 @@ public class SortedBucketIO {
     private final List<BucketedInput<?>> inputs;
     private final TargetParallelism targetParallelism;
     private final String metricsKey;
+    private final boolean lazyKeyGroups;
 
     private CoGbkWithSecondary(
         Class<K1> keyClassPrimary,
@@ -214,11 +235,22 @@ public class SortedBucketIO {
         List<BucketedInput<?>> inputs,
         TargetParallelism targetParallelism,
         String metricsKey) {
+      this(keyClassPrimary, keyClassSecondary, inputs, targetParallelism, metricsKey, false);
+    }
+
+    private CoGbkWithSecondary(
+        Class<K1> keyClassPrimary,
+        Class<K2> keyClassSecondary,
+        List<BucketedInput<?>> inputs,
+        TargetParallelism targetParallelism,
+        String metricsKey,
+        boolean lazyKeyGroups) {
       this.keyClassPrimary = keyClassPrimary;
       this.keyClassSecondary = keyClassSecondary;
       this.inputs = inputs;
       this.targetParallelism = targetParallelism;
       this.metricsKey = metricsKey;
+      this.lazyKeyGroups = lazyKeyGroups;
     }
 
     /**
@@ -233,17 +265,27 @@ public class SortedBucketIO {
               .build();
       validateInputNameUniqueness(newReads);
       return new CoGbkWithSecondary<>(
-          keyClassPrimary, keyClassSecondary, newReads, targetParallelism, metricsKey);
+          keyClassPrimary,
+          keyClassSecondary,
+          newReads,
+          targetParallelism,
+          metricsKey,
+          lazyKeyGroups);
     }
 
     public CoGbkWithSecondary<K1, K2> withTargetParallelism(TargetParallelism targetParallelism) {
       return new CoGbkWithSecondary<>(
-          keyClassPrimary, keyClassSecondary, inputs, targetParallelism, metricsKey);
+          keyClassPrimary, keyClassSecondary, inputs, targetParallelism, metricsKey, lazyKeyGroups);
     }
 
     public CoGbkWithSecondary<K1, K2> withMetricsKey(String metricsKey) {
       return new CoGbkWithSecondary<>(
-          keyClassPrimary, keyClassSecondary, inputs, targetParallelism, metricsKey);
+          keyClassPrimary, keyClassSecondary, inputs, targetParallelism, metricsKey, lazyKeyGroups);
+    }
+
+    public CoGbkWithSecondary<K1, K2> withLazyKeyGroups(boolean lazy) {
+      return new CoGbkWithSecondary<>(
+          keyClassPrimary, keyClassSecondary, inputs, targetParallelism, metricsKey, lazy);
     }
 
     public <V> CoGbkTransformWithSecondary<K1, K2, V> transform(
@@ -254,10 +296,11 @@ public class SortedBucketIO {
 
     @Override
     public PCollection<KV<KV<K1, K2>, CoGbkResult>> expand(PBegin input) {
-      return input.apply(
-          org.apache.beam.sdk.io.Read.from(
-              new SortedBucketPrimaryAndSecondaryKeyedSource<K1, K2>(
-                  keyClassPrimary, keyClassSecondary, inputs, targetParallelism, metricsKey)));
+      SortedBucketPrimaryAndSecondaryKeyedSource<K1, K2> source =
+          new SortedBucketPrimaryAndSecondaryKeyedSource<K1, K2>(
+              keyClassPrimary, keyClassSecondary, inputs, targetParallelism, metricsKey);
+      source.lazyKeyGroups = this.lazyKeyGroups;
+      return input.apply(org.apache.beam.sdk.io.Read.from(source));
     }
   }
 
