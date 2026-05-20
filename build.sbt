@@ -28,8 +28,9 @@ import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 
 // To test release candidates, find the beam repo and add it as a resolver
 // ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/"
+ThisBuild / resolvers += "Apache Snapshots" at "https://repository.apache.org/content/groups/snapshots/"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.72.0"
+val beamVersion = "2.74.0-SNAPSHOT"
 
 // check version used by beam
 // https://github.com/apache/beam/blob/v2.72.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
@@ -55,6 +56,7 @@ val jodaTimeVersion = "2.14.0"
 val nettyVersion = "4.1.128.Final"
 val protobufVersion = "4.33.2"
 val slf4jVersion = "2.0.16"
+val opentelemetryVersion = "1.56.0"
 val zstdJniVersion = "1.5.6-3"
 // dependent versions
 val googleApiServicesBigQueryVersion = s"v2-rev20251012-$googleClientsVersion"
@@ -377,7 +379,8 @@ val bomSettings = Def.settings(
   nettyBom,
   slf4jBom,
   dependencyOverrides ++=
-    beamBom.key.value.bomDependencies ++
+    Seq("io.opentelemetry" % "opentelemetry-context" % opentelemetryVersion) ++
+      beamBom.key.value.bomDependencies ++
       gcpBom.key.value.bomDependencies ++
       guavaBom.key.value.bomDependencies ++
       jacksonBom.key.value.bomDependencies ++
