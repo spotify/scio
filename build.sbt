@@ -37,8 +37,8 @@ val beamVersion = "2.74.0-SNAPSHOT"
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = sys.props.getOrElse("avro.version", "1.11.5")
-val bigdataossVersion = "2.2.26"
-val bigdataoss3Version = "3.1.3"
+val bigdataoss2Version = "2.2.26"
+val bigdataoss3Version = "3.1.16"
 val bigtableClientVersion = "1.28.0"
 val commonsCodecVersion = "1.18.0"
 val commonsCompressVersion = "1.26.2"
@@ -733,9 +733,9 @@ lazy val `scio-core` = project
       "org.apache.beam" % s"beam-runners-spark-$sparkMajorVersion" % beamVersion % Provided,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion % Provided,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion % Provided,
-      "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Provided,
-      "com.google.cloud.bigdataoss" % "gcsio" % bigdataossVersion % Provided,
-      "com.google.cloud.bigdataoss" % "util-hadoop" % s"hadoop2-$bigdataossVersion" % Provided,
+      "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataoss2Version" % Provided,
+      "com.google.cloud.bigdataoss" % "gcsio" % bigdataoss3Version % Provided,
+      "com.google.cloud.bigdataoss" % "util-hadoop" % s"hadoop2-$bigdataoss2Version" % Provided,
       // test
       "com.lihaoyi" %% "fansi" % fansiVersion % Test,
       "com.lihaoyi" %% "pprint" % pprintVersion % Test,
@@ -940,7 +940,7 @@ lazy val `scio-google-cloud-platform` = project
       "com.google.cloud" % "google-cloud-bigtable" % gcpBom.key.value,
       "com.google.cloud" % "google-cloud-core" % gcpBom.key.value,
       "com.google.cloud" % "google-cloud-spanner" % gcpBom.key.value,
-      "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
+      "com.google.cloud.bigdataoss" % "util" % bigdataoss3Version,
       "com.google.cloud.bigtable" % "bigtable-client-core" % bigtableClientVersion,
       "com.google.cloud.bigtable" % "bigtable-client-core-config" % bigtableClientVersion,
       "com.google.guava" % "guava" % guavaVersion,
@@ -1222,7 +1222,7 @@ lazy val `scio-parquet` = project
       // compile
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       "com.google.auth" % "google-auth-library-oauth2-http" % gcpBom.key.value,
-      "com.google.cloud.bigdataoss" % "util-hadoop" % s"hadoop2-$bigdataossVersion",
+      "com.google.cloud.bigdataoss" % "util-hadoop" % s"hadoop2-$bigdataoss2Version",
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
       "com.twitter" %% "chill" % chillVersion,
@@ -1243,7 +1243,7 @@ lazy val `scio-parquet` = project
       "org.slf4j" % "slf4j-api" % slf4jBom.key.value,
       // provided
       "org.tensorflow" % "tensorflow-core-native" % tensorFlowVersion % Provided,
-      "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Provided,
+      "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataoss2Version" % Provided,
       // runtime
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion % Runtime excludeAll (Exclude.metricsCore),
       "io.dropwizard.metrics" % "metrics-core" % metricsVersion % Runtime,
@@ -1412,7 +1412,7 @@ lazy val `scio-examples` = project
       "com.google.apis" % "google-api-services-pubsub" % googleApiServicesPubsubVersion,
       "com.google.auth" % "google-auth-library-credentials" % gcpBom.key.value,
       "com.google.auth" % "google-auth-library-oauth2-http" % gcpBom.key.value,
-      "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
+      "com.google.cloud.bigdataoss" % "util" % bigdataoss3Version,
       "com.google.code.findbugs" % "jsr305" % jsr305Version,
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client" % gcpBom.key.value,
@@ -1450,7 +1450,7 @@ lazy val `scio-examples` = project
       "org.tensorflow" % "tensorflow-core-native" % tensorFlowVersion,
       "redis.clients" % "jedis" % jedisVersion,
       // runtime
-      "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
+      "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataoss2Version" % Runtime,
       "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.28.2" % Runtime,
       // test
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
