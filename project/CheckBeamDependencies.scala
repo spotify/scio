@@ -38,9 +38,7 @@ object CheckBeamDependencies extends AutoPlugin {
   private val AnsiCode = s"\\x1b\\[[0-9;]*m".r
 
   private def coursierResolveTree(coordinate: String): List[String] =
-    Seq("sh", "-c", s"""coursier resolve --tree "$coordinate" 2>/dev/null""")
-      .lineStream_!
-      .toList
+    Seq("sh", "-c", s"""coursier resolve --tree "$coordinate" 2>/dev/null""").lineStream_!.toList
 
   // Parses direct (first-level) dependencies from beam module POMs via `coursier resolve --tree`.
   // Only direct deps are meaningful; transitive resolution picks up unrelated version conflicts.
