@@ -35,31 +35,50 @@ object CheckBeamDependencies extends AutoPlugin {
 
   private[this] val beamDeps = new ConcurrentHashMap[String, Map[String, Set[String]]]()
 
+  private val AnsiCode = s"\\x1b\\[[0-9;]*m".r
+
+  private def coursierResolveTree(coordinate: String): List[String] =
+    Seq("sh", "-c", s"""coursier resolve --tree "$coordinate" 2>/dev/null""")
+      .lineStream_!
+      .toList
+
+  // Parses direct (first-level) dependencies from beam module POMs via `coursier resolve --tree`.
+  // Only direct deps are meaningful; transitive resolution picks up unrelated version conflicts.
   private def resolveBeamDependencies(deps: Seq[(String, String)]): Map[String, Set[String]] =
     deps
-      .filter(d => d._1.startsWith("org.apache.beam"))
+      .filter(_._1.startsWith("org.apache.beam"))
       .map { case (orgName, rev) =>
         beamDeps.computeIfAbsent(
           orgName,
           new JFunction[String, Map[String, Set[String]]] {
             override def apply(key: String): Map[String, Set[String]] = {
-              val output = s"coursier resolve $key:$rev" lineStream_!
-
-              output
-                .flatMap { dep =>
-                  dep.split(":").toList match {
-                    case org :: name :: rev :: _ => Some((s"$org:$name", rev))
-                    case _                       => None
+              coursierResolveTree(s"$key:$rev")
+                .map(l => AnsiCode.replaceAllIn(l, ""))
+                .filter(l =>
+                  l.length > 3 &&
+                    l.startsWith("   ") &&
+                    (l.charAt(3) == '├' || l.charAt(3) == '└')
+                )
+                .flatMap { line =>
+                  val coord = line.dropWhile(c => !c.isLetterOrDigit)
+                  coord.split(":").toList match {
+                    case org :: name :: rest :: _ if !org.startsWith("org.apache.beam") =>
+                      Some((s"$org:$name", rest.split(" -> ").head.trim))
+                    case _ => None
                   }
                 }
-                .toList
                 .groupBy(_._1)
                 .mapValues(_.map(_._2).toSet)
+                .toMap
             }
           }
         )
       }
-      .foldLeft(Map.empty[String, Set[String]])(_ ++ _)
+      .foldLeft(Map.empty[String, Set[String]]) { case (acc, m) =>
+        m.foldLeft(acc) { case (a, (k, v)) =>
+          a + (k -> (a.getOrElse(k, Set.empty[String]) ++ v))
+        }
+      }
 
   override lazy val projectSettings = Seq(
     checkBeamDependencies := {
