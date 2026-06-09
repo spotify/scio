@@ -628,6 +628,7 @@ lazy val scio = project
     `scio-grpc`,
     `scio-jdbc`,
     `scio-jmh`,
+    `scio-managed`,
     `scio-macros`,
     `scio-neo4j`,
     `scio-parquet`,
