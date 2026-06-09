@@ -37,8 +37,6 @@ val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = sys.props.getOrElse("avro.version", "1.12.0")
 val bigdataossVersion = "3.1.16"
-// beam pins bigtable behind the GCP BOM version. See https://github.com/apache/beam/pull/38861
-val bigtableVersion = "2.73.1"
 val bigtableClientVersion = "1.28.0"
 val commonsCodecVersion = "1.18.0"
 val commonsCompressVersion = "1.26.2"
@@ -46,8 +44,14 @@ val commonsIoVersion = "2.16.1"
 val commonsLang3Version = "3.18.0"
 val commonsMath3Version = "3.6.1"
 val gcpLibrariesVersion = "26.80.0"
+// in theory, googleApiClientsVersion and googleClientsVersion should be a single value
+// beam declares 2.0.0 but transitively depends on 2.7.2 for only the google-api-client artifact
+// which gets caught in our undeclared filter if we use the declared 2.0.0 version.
+// the googleApiServices* versions should however align with the declared 2.0.0 version
+val googleApiClientsVersion = "2.7.2"
 val googleClientsVersion = "2.0.0"
-val googleOauthClientsVersion = "1.34.1"
+// pinned by beam at 1.34.1 but transitively depends on 1.39.0
+val googleOauthClientsVersion = "1.39.0"
 val guavaVersion = "33.1.0-jre"
 val hamcrestVersion = "2.1"
 val httpClientVersion = "4.5.13"
@@ -699,7 +703,7 @@ lazy val `scio-core` = project
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
       "com.github.luben" % "zstd-jni" % zstdJniVersion,
       "com.google.api" % "gax" % gcpBom.key.value,
-      "com.google.api-client" % "google-api-client" % googleClientsVersion,
+      "com.google.api-client" % "google-api-client" % googleApiClientsVersion,
       "com.google.auto.service" % "auto-service-annotations" % autoServiceVersion,
       "com.google.auto.service" % "auto-service" % autoServiceVersion,
       "com.google.code.findbugs" % "jsr305" % jsr305Version,
@@ -925,7 +929,7 @@ lazy val `scio-google-cloud-platform` = project
       "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
       "com.google.api" % "gax" % gcpBom.key.value,
       "com.google.api" % "gax-grpc" % gcpBom.key.value,
-      "com.google.api-client" % "google-api-client" % googleClientsVersion,
+      "com.google.api-client" % "google-api-client" % googleApiClientsVersion,
       "com.google.api.grpc" % "grpc-google-cloud-pubsub-v1" % gcpBom.key.value,
       "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1" % gcpBom.key.value,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % gcpBom.key.value,
@@ -936,7 +940,7 @@ lazy val `scio-google-cloud-platform` = project
       "com.google.auth" % "google-auth-library-credentials" % gcpBom.key.value,
       "com.google.auth" % "google-auth-library-oauth2-http" % gcpBom.key.value,
       "com.google.cloud" % "google-cloud-bigquerystorage" % gcpBom.key.value,
-      "com.google.cloud" % "google-cloud-bigtable" % bigtableVersion,
+      "com.google.cloud" % "google-cloud-bigtable" % gcpBom.key.value,
       "com.google.cloud" % "google-cloud-core" % gcpBom.key.value,
       "com.google.cloud" % "google-cloud-spanner" % gcpBom.key.value,
       "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
@@ -1405,7 +1409,7 @@ lazy val `scio-examples` = project
       "co.elastic.clients" % "elasticsearch-java" % elasticsearch8Version,
       "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
-      "com.google.api-client" % "google-api-client" % googleClientsVersion,
+      "com.google.api-client" % "google-api-client" % googleApiClientsVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % gcpBom.key.value,
       "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % gcpBom.key.value,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
@@ -1760,7 +1764,7 @@ lazy val integration = project
     unusedCompileDependenciesTest := unusedCompileDependenciesTestSkipped.value,
     libraryDependencies ++= Seq(
       // compile
-      "com.google.api-client" % "google-api-client" % googleClientsVersion,
+      "com.google.api-client" % "google-api-client" % googleApiClientsVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client" % gcpBom.key.value,
