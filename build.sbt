@@ -1155,7 +1155,10 @@ lazy val `scio-managed` = project
       // compile
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-managed" % beamVersion,
-      "com.spotify" %% "magnolify-beam" % magnolifyVersion
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+      "com.spotify" %% "magnolify-beam" % magnolifyVersion,
+      "com.spotify" %% "magnolify-shared" % magnolifyVersion,
+      "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion
       // test
     )
   )
