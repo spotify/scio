@@ -28,16 +28,17 @@ import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 
 // To test release candidates, find the beam repo and add it as a resolver
 // ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/"
+ThisBuild / resolvers += "Apache Snapshots" at "https://repository.apache.org/content/groups/snapshots/"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.72.0"
+val beamVersion = "2.74.0-SNAPSHOT"
 
 // check version used by beam
 // https://github.com/apache/beam/blob/v2.72.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = sys.props.getOrElse("avro.version", "1.11.5")
-val bigdataossVersion = "2.2.26"
-val bigdataoss3Version = "3.1.3"
+val bigdataoss2Version = "2.2.26"
+val bigdataoss3Version = "3.1.16"
 val bigtableClientVersion = "1.28.0"
 val commonsCodecVersion = "1.18.0"
 val commonsCompressVersion = "1.26.2"
@@ -55,6 +56,7 @@ val jodaTimeVersion = "2.14.0"
 val nettyVersion = "4.1.128.Final"
 val protobufVersion = "4.33.2"
 val slf4jVersion = "2.0.16"
+val opentelemetryVersion = "1.56.0"
 val zstdJniVersion = "1.5.6-3"
 // dependent versions
 val googleApiServicesBigQueryVersion = s"v2-rev20251012-$googleClientsVersion"
@@ -377,7 +379,8 @@ val bomSettings = Def.settings(
   nettyBom,
   slf4jBom,
   dependencyOverrides ++=
-    beamBom.key.value.bomDependencies ++
+    Seq("io.opentelemetry" % "opentelemetry-context" % opentelemetryVersion) ++
+      beamBom.key.value.bomDependencies ++
       gcpBom.key.value.bomDependencies ++
       guavaBom.key.value.bomDependencies ++
       jacksonBom.key.value.bomDependencies ++
@@ -731,9 +734,9 @@ lazy val `scio-core` = project
       "org.apache.beam" % s"beam-runners-spark-$sparkMajorVersion" % beamVersion % Provided,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion % Provided,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion % Provided,
-      "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Provided,
-      "com.google.cloud.bigdataoss" % "gcsio" % bigdataossVersion % Provided,
-      "com.google.cloud.bigdataoss" % "util-hadoop" % s"hadoop2-$bigdataossVersion" % Provided,
+      "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataoss2Version" % Provided,
+      "com.google.cloud.bigdataoss" % "gcsio" % bigdataoss3Version % Provided,
+      "com.google.cloud.bigdataoss" % "util-hadoop" % s"hadoop2-$bigdataoss2Version" % Provided,
       // test
       "com.lihaoyi" %% "fansi" % fansiVersion % Test,
       "com.lihaoyi" %% "pprint" % pprintVersion % Test,
@@ -938,7 +941,7 @@ lazy val `scio-google-cloud-platform` = project
       "com.google.cloud" % "google-cloud-bigtable" % gcpBom.key.value,
       "com.google.cloud" % "google-cloud-core" % gcpBom.key.value,
       "com.google.cloud" % "google-cloud-spanner" % gcpBom.key.value,
-      "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
+      "com.google.cloud.bigdataoss" % "util" % bigdataoss3Version,
       "com.google.cloud.bigtable" % "bigtable-client-core" % bigtableClientVersion,
       "com.google.cloud.bigtable" % "bigtable-client-core-config" % bigtableClientVersion,
       "com.google.guava" % "guava" % guavaVersion,
@@ -1220,7 +1223,7 @@ lazy val `scio-parquet` = project
       // compile
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       "com.google.auth" % "google-auth-library-oauth2-http" % gcpBom.key.value,
-      "com.google.cloud.bigdataoss" % "util-hadoop" % s"hadoop2-$bigdataossVersion",
+      "com.google.cloud.bigdataoss" % "util-hadoop" % s"hadoop2-$bigdataoss2Version",
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
       "com.twitter" %% "chill" % chillVersion,
@@ -1241,7 +1244,7 @@ lazy val `scio-parquet` = project
       "org.slf4j" % "slf4j-api" % slf4jBom.key.value,
       // provided
       "org.tensorflow" % "tensorflow-core-native" % tensorFlowVersion % Provided,
-      "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Provided,
+      "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataoss2Version" % Provided,
       // runtime
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion % Runtime excludeAll (Exclude.metricsCore),
       "io.dropwizard.metrics" % "metrics-core" % metricsVersion % Runtime,
@@ -1410,7 +1413,7 @@ lazy val `scio-examples` = project
       "com.google.apis" % "google-api-services-pubsub" % googleApiServicesPubsubVersion,
       "com.google.auth" % "google-auth-library-credentials" % gcpBom.key.value,
       "com.google.auth" % "google-auth-library-oauth2-http" % gcpBom.key.value,
-      "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
+      "com.google.cloud.bigdataoss" % "util" % bigdataoss3Version,
       "com.google.code.findbugs" % "jsr305" % jsr305Version,
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client" % gcpBom.key.value,
@@ -1448,7 +1451,7 @@ lazy val `scio-examples` = project
       "org.tensorflow" % "tensorflow-core-native" % tensorFlowVersion,
       "redis.clients" % "jedis" % jedisVersion,
       // runtime
-      "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
+      "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataoss2Version" % Runtime,
       "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.28.2" % Runtime,
       // test
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
