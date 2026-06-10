@@ -1251,7 +1251,6 @@ lazy val `scio-parquet` = project
       // provided
       "org.tensorflow" % "tensorflow-core-native" % tensorFlowVersion % Provided,
       "com.google.cloud.bigdataoss" % "gcs-connector" % bigdataossVersion % Provided,
-      "com.google.cloud.bigdataoss" % "gcsio" % bigdataossVersion % Provided,
       // runtime
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion % Runtime excludeAll (Exclude.metricsCore),
       "io.dropwizard.metrics" % "metrics-core" % metricsVersion % Runtime,
