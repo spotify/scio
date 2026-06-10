@@ -1255,7 +1255,8 @@ lazy val `scio-parquet` = project
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion % Runtime excludeAll (Exclude.metricsCore),
       "io.dropwizard.metrics" % "metrics-core" % metricsVersion % Runtime,
       // test
-      "org.slf4j" % "slf4j-simple" % slf4jBom.key.value % Test
+      "org.slf4j" % "slf4j-simple" % slf4jBom.key.value % Test,
+      "com.google.cloud.bigdataoss" % "gcsio" % bigdataossVersion % Test
     )
   )
 
