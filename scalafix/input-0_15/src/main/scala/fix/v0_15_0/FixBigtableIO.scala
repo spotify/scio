@@ -14,10 +14,10 @@ object FixBigtableIO {
   val rowFilter: RowFilter = ???
   val keyRange: ByteKeyRange = ???
 
-  // 5-arg call with Seq[ByteKeyRange] - should be fixed (add None)
+  // 5-arg call with Seq[ByteKeyRange] - should migrate to BTOptions overload
   sc.bigtable("project", "instance", "table", keyRanges, rowFilter)
 
-  // 4-arg call with Seq[ByteKeyRange] - should be fixed (add null, None)
+  // 4-arg call with Seq[ByteKeyRange] - should migrate to BTOptions overload
   sc.bigtable("project", "instance", "table", keyRanges)
 
   // 5-arg call with ByteKeyRange - should NOT be fixed
