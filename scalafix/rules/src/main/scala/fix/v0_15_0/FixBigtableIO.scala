@@ -7,6 +7,7 @@ object FixBigtableIO {
   val BigtableMatcher: SymbolMatcher = SymbolMatcher.normalized(
     "com/spotify/scio/bigtable/syntax/ScioContextOps#bigtable()."
   )
+  val btOptionsImport = importer"com.spotify.scio.bigtable.BTOptions"
 }
 
 final class FixBigtableIO extends SemanticRule("FixBigtableIO") {
@@ -23,14 +24,19 @@ final class FixBigtableIO extends SemanticRule("FixBigtableIO") {
                   paramLists.head.size == 6 &&
                   params.size >= 4 &&
                   params.size < 6 =>
-              val missing = paramLists.head.drop(params.size).map { sym =>
-                sym.displayName match {
-                  case "rowFilter" => q"null"
-                  case _           => q"None"
+              val projectId = params(0)
+              val instanceId = params(1)
+              val tableId = params(2)
+              val rest = params.drop(3)
+              val namedArgs = rest.zipWithIndex.map { case (arg, i) =>
+                i match {
+                  case 0 => q"keyRanges = $arg"
+                  case 1 => q"rowFilter = $arg"
                 }
               }
-              val newParams = params.toList ++ missing
-              Patch.replaceTree(t, q"$expr(..$newParams)".syntax)
+              val newParams = List(q"BTOptions($projectId, $instanceId)", tableId) ++ namedArgs
+              Patch.replaceTree(t, q"$expr(..$newParams)".syntax) +
+                Patch.addGlobalImport(btOptionsImport)
           }
           .getOrElse(Patch.empty)
     }.asPatch

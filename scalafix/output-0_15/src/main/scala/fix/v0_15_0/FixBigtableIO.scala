@@ -4,6 +4,7 @@ import com.google.bigtable.v2.RowFilter
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigtable._
 import org.apache.beam.sdk.io.range.ByteKeyRange
+import com.spotify.scio.bigtable.BTOptions
 
 object FixBigtableIO {
   val sc: ScioContext = ???
@@ -12,10 +13,10 @@ object FixBigtableIO {
   val keyRange: ByteKeyRange = ???
 
   // 5-arg call with Seq[ByteKeyRange] - should be fixed (add None)
-  sc.bigtable("project", "instance", "table", keyRanges, rowFilter, None)
+  sc.bigtable(BTOptions("project", "instance"), "table", keyRanges = keyRanges, rowFilter = rowFilter)
 
   // 4-arg call with Seq[ByteKeyRange] - should be fixed (add null, None)
-  sc.bigtable("project", "instance", "table", keyRanges, null, None)
+  sc.bigtable(BTOptions("project", "instance"), "table", keyRanges = keyRanges)
 
   // 5-arg call with ByteKeyRange - should NOT be fixed
   sc.bigtable("project", "instance", "table", keyRange, rowFilter)
