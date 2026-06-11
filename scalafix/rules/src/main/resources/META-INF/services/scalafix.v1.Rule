@@ -24,4 +24,5 @@ fix.v0_14_0.FixSMBCharSequenceKey
 fix.v0_14_0.FixQuery
 fix.v0_15_0.FixTensorflowProtoImports
 fix.v0_15_0.FixDatastoreIO
+fix.v0_15_0.FixBigtableIO
 
