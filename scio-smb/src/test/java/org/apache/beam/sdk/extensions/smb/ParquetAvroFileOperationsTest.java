@@ -55,7 +55,7 @@ public class ParquetAvroFileOperationsTest {
   private static final Schema USER_SCHEMA =
       SchemaBuilder.record("User")
           // intentionally set this namespace for testGenericRecord
-          .namespace("org.apache.beam.sdk.extensions.smb.ParquetAvroFileOperationsTest$")
+          .namespace("org.apache.beam.sdk.extensions.smb.ParquetAvroFileOperationsTest")
           .fields()
           .name("name")
           .type()
