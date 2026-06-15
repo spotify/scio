@@ -24,8 +24,10 @@ import magnolify.beam.RowType
 import org.apache.beam.sdk.managed.Managed
 import com.spotify.scio.managed.ManagedIO
 import org.apache.beam.sdk.coders.RowCoder
+import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.values.Row
 import magnolia1._
+import scala.jdk.CollectionConverters._
 
 private[scio] object ConfigMap {
   type Typeclass[T] = ConfigMapType[T]
@@ -74,10 +76,21 @@ final case class IcebergIO[T: RowType: Coder](table: String, catalogName: Option
   private[scio] def config[P](
     params: P
   )(implicit mapper: ConfigMap.ConfigMapType[P]): Map[String, AnyRef] = {
+    def leafFieldNames(schema: BSchema, prefix: String = ""): List[String] =
+      schema.getFields.asScala.toList.flatMap { field =>
+        val name = if (prefix.isEmpty) field.getName else s"$prefix.${field.getName}"
+        if (field.getType.getTypeName == BSchema.TypeName.ROW)
+          leafFieldNames(field.getType.getRowSchema, name)
+        else
+          List(name)
+      }
+
     val b = Map.newBuilder[String, AnyRef]
     b += ("table" -> table)
     catalogName.foreach(name => b += ("catalog_name" -> name))
+    b += ("keep" -> leafFieldNames(rowType.schema))
     b ++= mapper.toMap(params)
+
     b.result()
   }
 
@@ -98,15 +111,12 @@ object IcebergIO {
   case class ReadParam private (
     catalogProperties: Map[String, String] = ReadParam.DefaultCatalogProperties,
     configProperties: Map[String, String] = ReadParam.DefaultConfigProperties,
-    keep: List[String] = ReadParam.DefaultKeep,
-    drop: List[String] = ReadParam.DefaultDrop,
     filter: String = ReadParam.DefaultFilter
   )
+
   object ReadParam {
     val DefaultCatalogProperties: Map[String, String] = null
     val DefaultConfigProperties: Map[String, String] = null
-    val DefaultKeep: List[String] = null
-    val DefaultDrop: List[String] = null
     val DefaultFilter: String = null
 
     implicit val configMap: ConfigMap.ConfigMapType[ReadParam] = ConfigMap.gen[ReadParam]
@@ -115,19 +125,13 @@ object IcebergIO {
     catalogProperties: Map[String, String] = WriteParam.DefaultCatalogProperties,
     configProperties: Map[String, String] = WriteParam.DefaultConfigProperties,
     triggeringFrequencySeconds: Option[Int] = None,
-    directWriteByteLimit: Option[Int] = None,
-    keep: List[String] = WriteParam.DefaultKeep,
-    drop: List[String] = WriteParam.DefaultDrop,
-    only: String = WriteParam.DefaultOnly
+    directWriteByteLimit: Option[Int] = None
   )
   object WriteParam {
     val DefaultCatalogProperties: Map[String, String] = null
     val DefaultConfigProperties: Map[String, String] = null
     val DefaultTriggeringFrequencySeconds: Int = -1
     val DefaultDirectWriteByteLimit: Int = -1
-    val DefaultKeep: List[String] = null
-    val DefaultDrop: List[String] = null
-    val DefaultOnly: String = null
 
     implicit val configMap: ConfigMap.ConfigMapType[WriteParam] = ConfigMap.gen[WriteParam]
   }

@@ -35,10 +35,7 @@ class IcebergSCollectionSyntax[T: RowType: Coder](self: SCollection[T]) {
     catalogProperties: Map[String, String] = IcebergIO.WriteParam.DefaultCatalogProperties,
     configProperties: Map[String, String] = IcebergIO.WriteParam.DefaultConfigProperties,
     triggeringFrequencySeconds: Int = IcebergIO.WriteParam.DefaultTriggeringFrequencySeconds,
-    directWriteByteLimit: Int = IcebergIO.WriteParam.DefaultDirectWriteByteLimit,
-    keep: List[String] = IcebergIO.WriteParam.DefaultKeep,
-    drop: List[String] = IcebergIO.WriteParam.DefaultDrop,
-    only: String = IcebergIO.WriteParam.DefaultOnly
+    directWriteByteLimit: Int = IcebergIO.WriteParam.DefaultDirectWriteByteLimit
   ): ClosedTap[Nothing] = {
 
     val params = IcebergIO.WriteParam(
@@ -47,10 +44,7 @@ class IcebergSCollectionSyntax[T: RowType: Coder](self: SCollection[T]) {
       Option(triggeringFrequencySeconds).filter(
         _ != IcebergIO.WriteParam.DefaultTriggeringFrequencySeconds
       ),
-      Option(directWriteByteLimit).filter(_ != IcebergIO.WriteParam.DefaultDirectWriteByteLimit),
-      keep,
-      drop,
-      only
+      Option(directWriteByteLimit).filter(_ != IcebergIO.WriteParam.DefaultDirectWriteByteLimit)
     )
     self.write(IcebergIO(table, Option(catalogName)))(params)
   }
