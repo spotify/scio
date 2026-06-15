@@ -25,15 +25,30 @@ import magnolify.beam.RowType
 class IcebergSCollectionSyntax[T: RowType: Coder](self: SCollection[T]) {
 
   /**
-   * @see
-   *   [[org.apache.beam.sdk.io.iceberg.IcebergWriteSchemaTransformProvider IcebergWriteSchemaTransformProvider]]
-   *   https://github.com/apache/beam/blob/v2.68.0/sdks/java/io/iceberg/src/main/java/org/apache/beam/sdk/io/iceberg/IcebergWriteSchemaTransformProvider.java#L135-L153
+   * Writes to an Iceberg table using Beam's [[org.apache.beam.sdk.managed.Managed]] IO.
+   *
+   * @param table
+   *   the unique identifier for the Iceberg table, in the format `{table_namespace}.{table_name}`.
+   * @param catalogName
+   *   the name of the Iceberg catalog
+   * @param catalogProperties
+   *   any additional properties required by the Iceberg catalog; see:
+   *   https://iceberg.apache.org/docs/latest/catalog-properties
+   * @param configProperties
+   *   any additional Hadoop configuration properties
+   * @param triggeringFrequencySeconds
+   *   (streaming only) frequency at which snapshots are produced
+   * @param directWriteByteLimit
+   *   (streaming only) limit for lifting bundles into the direct write path.
+   *
+   * For a complete reference, see:
+   * https://docs.cloud.google.com/dataflow/docs/guides/managed-io-iceberg
    */
   def saveAsIceberg(
     table: String,
     catalogName: String = null,
     catalogProperties: Map[String, String] = IcebergIO.WriteParam.DefaultCatalogProperties,
-    configProperties: Map[String, String] = IcebergIO.WriteParam.DefaultConfigProperties,
+    configProperties: Map[String, String] = IcebergIO.WriteParam.DefaultHadoopConfigProperties,
     triggeringFrequencySeconds: Int = IcebergIO.WriteParam.DefaultTriggeringFrequencySeconds,
     directWriteByteLimit: Int = IcebergIO.WriteParam.DefaultDirectWriteByteLimit
   ): ClosedTap[Nothing] = {

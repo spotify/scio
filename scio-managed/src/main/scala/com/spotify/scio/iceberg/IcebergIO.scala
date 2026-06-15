@@ -110,26 +110,26 @@ final case class IcebergIO[T: RowType: Coder](table: String, catalogName: Option
 object IcebergIO {
   case class ReadParam private (
     catalogProperties: Map[String, String] = ReadParam.DefaultCatalogProperties,
-    configProperties: Map[String, String] = ReadParam.DefaultConfigProperties,
+    configProperties: Map[String, String] = ReadParam.DefaultHadoopConfigProperties,
     filter: String = ReadParam.DefaultFilter
   )
 
   object ReadParam {
     val DefaultCatalogProperties: Map[String, String] = null
-    val DefaultConfigProperties: Map[String, String] = null
+    val DefaultHadoopConfigProperties: Map[String, String] = null
     val DefaultFilter: String = null
 
     implicit val configMap: ConfigMap.ConfigMapType[ReadParam] = ConfigMap.gen[ReadParam]
   }
   case class WriteParam private (
     catalogProperties: Map[String, String] = WriteParam.DefaultCatalogProperties,
-    configProperties: Map[String, String] = WriteParam.DefaultConfigProperties,
+    configProperties: Map[String, String] = WriteParam.DefaultHadoopConfigProperties,
     triggeringFrequencySeconds: Option[Int] = None,
     directWriteByteLimit: Option[Int] = None
   )
   object WriteParam {
     val DefaultCatalogProperties: Map[String, String] = null
-    val DefaultConfigProperties: Map[String, String] = null
+    val DefaultHadoopConfigProperties: Map[String, String] = null
     val DefaultTriggeringFrequencySeconds: Int = -1
     val DefaultDirectWriteByteLimit: Int = -1
 
