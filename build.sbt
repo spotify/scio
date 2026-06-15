@@ -1158,8 +1158,9 @@ lazy val `scio-managed` = project
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "com.spotify" %% "magnolify-beam" % magnolifyVersion,
       "com.spotify" %% "magnolify-shared" % magnolifyVersion,
-      "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion
+      "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       // test
+      "org.yaml" % "snakeyaml" % "2.2" % Test
     ),
     // remove on next release
     tlMimaPreviousVersions := Set.empty

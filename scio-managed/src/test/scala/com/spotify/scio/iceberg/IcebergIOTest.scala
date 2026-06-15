@@ -18,6 +18,9 @@ package com.spotify.scio.iceberg
 
 import com.spotify.scio.managed.ManagedIO
 import com.spotify.scio.testing.ScioIOSpec
+import org.apache.beam.sdk.schemas.utils.YamlUtils
+
+import scala.jdk.CollectionConverters._
 
 case class Fake(a: String, b: Int)
 
@@ -84,5 +87,28 @@ class IcebergIOTest extends ScioIOSpec {
 
     // don't throw
     configs.map(ManagedIO.convertConfig)
+  }
+
+  it should "produce Java iterables compatible with Beam ManagedIO's yaml-parsing library" in {
+    val config = ManagedIO.convertConfig(
+      IcebergIO[Fake]("tableName", Some("catalogName")).config(
+        IcebergIO.ReadParam(
+          Map("a" -> "b"),
+          Map("c" -> "d", "e" -> "f")
+        )
+      )
+    )
+
+    assert(
+      config == Map(
+        "config_properties" -> Map("c" -> "d", "e" -> "f").asJava,
+        "catalog_properties" -> Map("a" -> "b").asJava,
+        "table" -> "tableName",
+        "catalog_name" -> "catalogName"
+      ).asJava
+    )
+
+    // invoked by Beam's Managed transform internally; shouldn't throw
+    YamlUtils.yamlStringFromMap(config)
   }
 }

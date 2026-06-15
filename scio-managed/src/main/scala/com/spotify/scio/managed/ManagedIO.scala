@@ -64,8 +64,8 @@ object ManagedIO {
       a match {
         case m: Map[_, _] =>
           m.asInstanceOf[Map[_, Object]].map { case (k, v) => k -> _convert(v) }.asJava
-        case i: Iterable[_] => i.map(o => _convert(o.asInstanceOf[Object])).asJava
-        case _              => a
+        case i: Seq[_] => i.map(o => _convert(o.asInstanceOf[Object])).asJava
+        case _         => a
       }
     }
     config.map { case (k, v) => k -> _convert(v) }.asJava
