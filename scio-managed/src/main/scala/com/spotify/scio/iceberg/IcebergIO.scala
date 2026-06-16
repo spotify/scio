@@ -24,8 +24,10 @@ import magnolify.beam.RowType
 import org.apache.beam.sdk.managed.Managed
 import com.spotify.scio.managed.ManagedIO
 import org.apache.beam.sdk.coders.RowCoder
+import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.values.Row
 import magnolia1._
+import scala.jdk.CollectionConverters._
 
 private[scio] object ConfigMap {
   type Typeclass[T] = ConfigMapType[T]
@@ -71,14 +73,35 @@ final case class IcebergIO[T: RowType: Coder](table: String, catalogName: Option
 
   override def testId: String = s"IcebergIO(${(Some(table) ++ catalogName).mkString(", ")})"
 
-  private[scio] def config[P](
+  private def baseConfig[P](
     params: P
   )(implicit mapper: ConfigMap.ConfigMapType[P]): Map[String, AnyRef] = {
     val b = Map.newBuilder[String, AnyRef]
     b += ("table" -> table)
     catalogName.foreach(name => b += ("catalog_name" -> name))
     b ++= mapper.toMap(params)
+
     b.result()
+  }
+
+  private[scio] def config(params: WriteP)(implicit
+    mapper: ConfigMap.ConfigMapType[WriteP]
+  ): Map[String, AnyRef] =
+    baseConfig(params)
+
+  private[scio] def config(
+    params: ReadP
+  )(implicit mapper: ConfigMap.ConfigMapType[ReadP]): Map[String, AnyRef] = {
+    def leafFieldNames(schema: BSchema, prefix: String = ""): List[String] =
+      schema.getFields.asScala.toList.flatMap { field =>
+        val name = if (prefix.isEmpty) field.getName else s"$prefix.${field.getName}"
+        if (field.getType.getTypeName == BSchema.TypeName.ROW)
+          leafFieldNames(field.getType.getRowSchema, name)
+        else
+          List(name)
+      }
+
+    baseConfig(params) + ("keep" -> leafFieldNames(rowType.schema))
   }
 
   override protected def read(sc: ScioContext, params: IcebergIO.ReadParam): SCollection[T] = {
@@ -97,37 +120,28 @@ final case class IcebergIO[T: RowType: Coder](table: String, catalogName: Option
 object IcebergIO {
   case class ReadParam private (
     catalogProperties: Map[String, String] = ReadParam.DefaultCatalogProperties,
-    configProperties: Map[String, String] = ReadParam.DefaultConfigProperties,
-    keep: List[String] = ReadParam.DefaultKeep,
-    drop: List[String] = ReadParam.DefaultDrop,
+    configProperties: Map[String, String] = ReadParam.DefaultHadoopConfigProperties,
     filter: String = ReadParam.DefaultFilter
   )
+
   object ReadParam {
     val DefaultCatalogProperties: Map[String, String] = null
-    val DefaultConfigProperties: Map[String, String] = null
-    val DefaultKeep: List[String] = null
-    val DefaultDrop: List[String] = null
+    val DefaultHadoopConfigProperties: Map[String, String] = null
     val DefaultFilter: String = null
 
     implicit val configMap: ConfigMap.ConfigMapType[ReadParam] = ConfigMap.gen[ReadParam]
   }
   case class WriteParam private (
     catalogProperties: Map[String, String] = WriteParam.DefaultCatalogProperties,
-    configProperties: Map[String, String] = WriteParam.DefaultConfigProperties,
+    configProperties: Map[String, String] = WriteParam.DefaultHadoopConfigProperties,
     triggeringFrequencySeconds: Option[Int] = None,
-    directWriteByteLimit: Option[Int] = None,
-    keep: List[String] = WriteParam.DefaultKeep,
-    drop: List[String] = WriteParam.DefaultDrop,
-    only: String = WriteParam.DefaultOnly
+    directWriteByteLimit: Option[Int] = None
   )
   object WriteParam {
     val DefaultCatalogProperties: Map[String, String] = null
-    val DefaultConfigProperties: Map[String, String] = null
+    val DefaultHadoopConfigProperties: Map[String, String] = null
     val DefaultTriggeringFrequencySeconds: Int = -1
     val DefaultDirectWriteByteLimit: Int = -1
-    val DefaultKeep: List[String] = null
-    val DefaultDrop: List[String] = null
-    val DefaultOnly: String = null
 
     implicit val configMap: ConfigMap.ConfigMapType[WriteParam] = ConfigMap.gen[WriteParam]
   }

@@ -24,6 +24,8 @@ import scala.jdk.CollectionConverters._
 
 case class Fake(a: String, b: Int)
 
+case class FakeNested(a: String, b: Int, c: Fake)
+
 class IcebergIOTest extends ScioIOSpec {
   "IcebergIO" should "produce snake_case config maps" in {
     val io = IcebergIO[Fake]("tableName", Some("catalogName"))
@@ -33,15 +35,11 @@ class IcebergIOTest extends ScioIOSpec {
       IcebergIO.ReadParam(
         Map.empty,
         Map.empty,
-        List.empty,
-        List.empty,
         ""
       ),
       IcebergIO.ReadParam(
         Map("catalogProp1" -> "catalogProp1Value"),
         Map("configProp1" -> "configProp1Value", "configProp2" -> "configProp2Value"),
-        List("keep1", "keep2", "keep3"),
-        List("drop1", "drop2", "drop3"),
         "id > 10"
       )
     )
@@ -51,19 +49,13 @@ class IcebergIOTest extends ScioIOSpec {
         Map.empty,
         Map.empty,
         None,
-        None,
-        List.empty,
-        List.empty,
-        ""
+        None
       ),
       IcebergIO.WriteParam(
         Map("catalogProp1" -> "catalogProp1Value"),
         Map("configProp1" -> "configProp1Value", "configProp2" -> "configProp2Value"),
         Some(10),
-        Some(100),
-        List("keep1", "keep2", "keep3"),
-        List("drop1", "drop2", "drop3"),
-        "only"
+        Some(100)
       )
     )
 
@@ -75,13 +67,11 @@ class IcebergIOTest extends ScioIOSpec {
       "catalog_properties",
       "config_properties",
       "keep",
-      "drop",
       // reads
       "filter",
       // writes
       "triggering_frequency_seconds",
-      "direct_write_byte_limit",
-      "only"
+      "direct_write_byte_limit"
     )
     assert(configs.flatMap(_.keys).toSet.intersect(expectedKeys) == expectedKeys)
 
@@ -104,11 +94,51 @@ class IcebergIOTest extends ScioIOSpec {
         "config_properties" -> Map("c" -> "d", "e" -> "f").asJava,
         "catalog_properties" -> Map("a" -> "b").asJava,
         "table" -> "tableName",
-        "catalog_name" -> "catalogName"
+        "catalog_name" -> "catalogName",
+        "keep" -> List("a", "b").asJava
       ).asJava
     )
 
     // invoked by Beam's Managed transform internally; shouldn't throw
     YamlUtils.yamlStringFromMap(config)
+  }
+
+  it should "infer correct read config for Magnolify RowTypes" in {
+    val io = IcebergIO[FakeNested]("tableName", Some("catalogName"))
+
+    val readParam = IcebergIO.ReadParam(
+      Map("a" -> "b"),
+      Map("c" -> "d", "e" -> "f"),
+      "id > 10"
+    )
+
+    val managedConfig: Map[String, AnyRef] = io.config(readParam)
+
+    managedConfig should contain only (
+      "config_properties" -> Map("c" -> "d", "e" -> "f"),
+      "filter" -> "id > 10",
+      "catalog_properties" -> Map("a" -> "b"),
+      "table" -> "tableName",
+      "keep" -> List("a", "b", "c.a", "c.b"),
+      "catalog_name" -> "catalogName"
+    )
+  }
+
+  it should "infer correct write config for Magnolify RowTypes" in {
+    val io = IcebergIO[FakeNested]("tableName", Some("catalogName"))
+
+    val writeParam = IcebergIO.WriteParam(
+      Map("a" -> "b"),
+      Map("c" -> "d", "e" -> "f")
+    )
+
+    val managedConfig: Map[String, AnyRef] = io.config(writeParam)
+
+    managedConfig should contain only (
+      "config_properties" -> Map("c" -> "d", "e" -> "f"),
+      "catalog_properties" -> Map("a" -> "b"),
+      "table" -> "tableName",
+      "catalog_name" -> "catalogName"
+    )
   }
 }

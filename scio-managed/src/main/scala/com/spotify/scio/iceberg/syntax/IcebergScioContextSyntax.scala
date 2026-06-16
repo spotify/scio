@@ -25,20 +25,32 @@ import magnolify.beam.RowType
 class IcebergScioContextSyntax(self: ScioContext) {
 
   /**
-   * @see
-   *   [[org.apache.beam.sdk.io.iceberg.IcebergReadSchemaTransformProvider IcebergReadSchemaTransformProvider]]
-   *   https://github.com/apache/beam/blob/v2.68.0/sdks/java/io/iceberg/src/main/java/org/apache/beam/sdk/io/iceberg/IcebergReadSchemaTransformProvider.java#L107-L139
+   * Reads from an Iceberg table using Beam's [[org.apache.beam.sdk.managed.Managed]] IO.
+   *
+   * @param table
+   *   the unique identifier for the Iceberg table, in the format `{table_namespace}.{table_name}`.
+   * @param catalogName
+   *   the name of the Iceberg catalog
+   * @param catalogProperties
+   *   any additional properties required by the Iceberg catalog; see:
+   *   https://iceberg.apache.org/docs/latest/catalog-properties
+   * @param hadoopConfigProperties
+   *   any additional Hadoop configuration properties
+   * @param filter
+   *   the predicate to apply to the Iceberg read Multiple filters can be combined using AND/OR, for
+   *   example: `__PARTITIONTIME > '2026-01-01' AND age > 25`
+   *
+   * For a complete reference, see:
+   * https://docs.cloud.google.com/dataflow/docs/guides/managed-io-iceberg
    */
   def iceberg[T: Coder](
     table: String,
     catalogName: String = null,
     catalogProperties: Map[String, String] = IcebergIO.ReadParam.DefaultCatalogProperties,
-    configProperties: Map[String, String] = IcebergIO.ReadParam.DefaultConfigProperties,
-    keep: List[String] = IcebergIO.ReadParam.DefaultKeep,
-    drop: List[String] = IcebergIO.ReadParam.DefaultDrop,
+    hadoopConfigProperties: Map[String, String] = IcebergIO.ReadParam.DefaultHadoopConfigProperties,
     filter: String = IcebergIO.ReadParam.DefaultFilter
   )(implicit rt: RowType[T]): SCollection[T] = {
-    val params = IcebergIO.ReadParam(catalogProperties, configProperties, keep, drop, filter)
+    val params = IcebergIO.ReadParam(catalogProperties, hadoopConfigProperties, filter)
     self.read(IcebergIO(table, Option(catalogName)))(params)
   }
 }

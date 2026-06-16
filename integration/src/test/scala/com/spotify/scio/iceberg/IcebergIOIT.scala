@@ -21,7 +21,13 @@ import com.spotify.scio.testing.PipelineSpec
 import magnolify.beam._
 import org.apache.iceberg.catalog.{Namespace, TableIdentifier}
 import org.apache.iceberg.rest.RESTCatalog
-import org.apache.iceberg.types.Types.{IntegerType, NestedField, StringType}
+import org.apache.iceberg.types.Types.{
+  BooleanType,
+  IntegerType,
+  NestedField,
+  StringType,
+  StructType
+}
 import org.apache.iceberg.{CatalogProperties, CatalogUtil, PartitionSpec, Schema}
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy
 
@@ -30,7 +36,8 @@ import java.io.File
 import java.nio.file.Files
 import scala.jdk.CollectionConverters._
 
-case class IcebergIOITRecord(a: Int, b: String)
+case class Nested(d: Boolean)
+case class IcebergIOITRecord(a: Int, b: String, c: Nested)
 object IcebergIOITRecord {
   implicit val icebergIOITRecordRowType: RowType[IcebergIOITRecord] = RowType[IcebergIOITRecord]
 }
@@ -67,7 +74,12 @@ class IcebergIOIT extends PipelineSpec with ForAllTestContainer {
       TableIdentifier.parse(TableName),
       new Schema(
         NestedField.required(0, "a", IntegerType.get()),
-        NestedField.required(1, "b", StringType.get())
+        NestedField.required(1, "b", StringType.get()),
+        NestedField.required(
+          2,
+          "c",
+          StructType.of(NestedField.required(3, "d", BooleanType.get()))
+        )
       ),
       PartitionSpec.unpartitioned()
     )
@@ -78,7 +90,7 @@ class IcebergIOIT extends PipelineSpec with ForAllTestContainer {
       CatalogUtil.ICEBERG_CATALOG_TYPE -> CatalogUtil.ICEBERG_CATALOG_TYPE_REST,
       CatalogProperties.URI -> uri
     )
-    val elements = 1.to(10).map(i => IcebergIOITRecord(i, s"$i"))
+    val elements = 1.to(10).map(i => IcebergIOITRecord(i, s"$i", Nested(i % 2 == 0)))
 
     runWithRealContext() { sc =>
       sc.parallelize(elements)
