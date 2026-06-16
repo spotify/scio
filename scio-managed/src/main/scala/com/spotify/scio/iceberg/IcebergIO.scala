@@ -73,9 +73,25 @@ final case class IcebergIO[T: RowType: Coder](table: String, catalogName: Option
 
   override def testId: String = s"IcebergIO(${(Some(table) ++ catalogName).mkString(", ")})"
 
-  private[scio] def config[P](
+  private def baseConfig[P](
     params: P
   )(implicit mapper: ConfigMap.ConfigMapType[P]): Map[String, AnyRef] = {
+    val b = Map.newBuilder[String, AnyRef]
+    b += ("table" -> table)
+    catalogName.foreach(name => b += ("catalog_name" -> name))
+    b ++= mapper.toMap(params)
+
+    b.result()
+  }
+
+  private[scio] def config(params: WriteP)(implicit
+    mapper: ConfigMap.ConfigMapType[WriteP]
+  ): Map[String, AnyRef] =
+    baseConfig(params)
+
+  private[scio] def config(
+    params: ReadP
+  )(implicit mapper: ConfigMap.ConfigMapType[ReadP]): Map[String, AnyRef] = {
     def leafFieldNames(schema: BSchema, prefix: String = ""): List[String] =
       schema.getFields.asScala.toList.flatMap { field =>
         val name = if (prefix.isEmpty) field.getName else s"$prefix.${field.getName}"
@@ -85,13 +101,7 @@ final case class IcebergIO[T: RowType: Coder](table: String, catalogName: Option
           List(name)
       }
 
-    val b = Map.newBuilder[String, AnyRef]
-    b += ("table" -> table)
-    catalogName.foreach(name => b += ("catalog_name" -> name))
-    b += ("keep" -> leafFieldNames(rowType.schema))
-    b ++= mapper.toMap(params)
-
-    b.result()
+    baseConfig(params) + ("keep" -> leafFieldNames(rowType.schema))
   }
 
   override protected def read(sc: ScioContext, params: IcebergIO.ReadParam): SCollection[T] = {

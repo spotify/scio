@@ -94,7 +94,8 @@ class IcebergIOTest extends ScioIOSpec {
         "config_properties" -> Map("c" -> "d", "e" -> "f").asJava,
         "catalog_properties" -> Map("a" -> "b").asJava,
         "table" -> "tableName",
-        "catalog_name" -> "catalogName"
+        "catalog_name" -> "catalogName",
+        "keep" -> List("a", "b").asJava
       ).asJava
     )
 
@@ -119,6 +120,24 @@ class IcebergIOTest extends ScioIOSpec {
       "catalog_properties" -> Map("a" -> "b"),
       "table" -> "tableName",
       "keep" -> List("a", "b", "c.a", "c.b"),
+      "catalog_name" -> "catalogName"
+    )
+  }
+
+  it should "infer correct write config for Magnolify RowTypes" in {
+    val io = IcebergIO[FakeNested]("tableName", Some("catalogName"))
+
+    val writeParam = IcebergIO.WriteParam(
+      Map("a" -> "b"),
+      Map("c" -> "d", "e" -> "f")
+    )
+
+    val managedConfig: Map[String, AnyRef] = io.config(writeParam)
+
+    managedConfig should contain only (
+      "config_properties" -> Map("c" -> "d", "e" -> "f"),
+      "catalog_properties" -> Map("a" -> "b"),
+      "table" -> "tableName",
       "catalog_name" -> "catalogName"
     )
   }
