@@ -79,9 +79,17 @@ private[scio] class SpecificRecordDatumFactory[T <: SpecificRecord](recordType: 
   private class ScioSpecificDatumReader extends SpecificDatumReader[T](recordType) {
     // Avro 1.12.0 bug: SpecificDatumReader(Class) chains to SpecificDatumReader(SpecificData)
     // which doesn't populate trustedPackages with SERIALIZABLE_PACKAGES defaults
-    getTrustedPackages.addAll(
-      java.util.Arrays.asList(SpecificDatumReader.SERIALIZABLE_PACKAGES: _*)
-    )
+    // reflection avoids breaking avro 1.8. Equivalent to:
+    // getTrustedPackages.addAll(
+    //   java.util.Arrays.asList(SpecificDatumReader.SERIALIZABLE_PACKAGES: _*)
+    // )
+    Try {
+      val method = classOf[SpecificDatumReader[_]].getMethod("getTrustedPackages")
+      val trusted = method.invoke(this).asInstanceOf[java.util.Set[String]]
+      val field = classOf[SpecificDatumReader[_]].getField("SERIALIZABLE_PACKAGES")
+      val packages = field.get(null).asInstanceOf[Array[String]]
+      trusted.addAll(java.util.Arrays.asList(packages: _*))
+    }
 
     override def findStringClass(schema: Schema): Class[_] = super.findStringClass(schema) match {
       case cls if cls == classOf[CharSequence] => classOf[String]
