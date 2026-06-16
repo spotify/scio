@@ -473,12 +473,12 @@ class ScioContext private[scio] (
           .pipe(o =>
             Option(config.get(GfsConfig.GCS_INPUT_STREAM_FAST_FAIL_ON_NOT_FOUND_ENABLE.getKey))
               .map(_.toBoolean)
-              .fold(o)(o.setFastFailOnNotFound)
+              .fold(o)(o.setFastFailOnNotFoundEnabled)
           )
           .pipe(o =>
             Option(config.get(GfsConfig.GCS_INPUT_STREAM_SUPPORT_GZIP_ENCODING_ENABLE.getKey))
               .map(_.toBoolean)
-              .fold(o)(o.setSupportGzipEncoding)
+              .fold(o)(o.setGzipEncodingSupportEnabled)
           )
           .pipe(o =>
             Option(config.get(GfsConfig.GCS_INPUT_STREAM_INPLACE_SEEK_LIMIT.getKey))
@@ -492,7 +492,7 @@ class ScioContext private[scio] (
           )
           .pipe(o =>
             Option(config.get(GfsConfig.GCS_INPUT_STREAM_MIN_RANGE_REQUEST_SIZE.getKey))
-              .map(_.toInt)
+              .map(_.toLong)
               .fold(o)(o.setMinRangeRequestSize)
           )
           .pipe(o =>
@@ -502,33 +502,18 @@ class ScioContext private[scio] (
           )
           .pipe(o =>
             Option(config.get(GfsConfig.GCS_GRPC_READ_TIMEOUT_MS.getKey))
-              .map(_.toLong)
-              .fold(o)(o.setGrpcReadTimeoutMillis)
+              .map(ms => java.time.Duration.ofMillis(ms.toLong))
+              .fold(o)(o.setGrpcReadTimeout)
           )
           .pipe(o =>
             Option(config.get(GfsConfig.GCS_GRPC_READ_MESSAGE_TIMEOUT_MS.getKey))
-              .map(_.toLong)
-              .fold(o)(o.setGrpcReadMessageTimeoutMillis)
-          )
-          .pipe(o =>
-            Option(config.get(GfsConfig.GCS_GRPC_READ_METADATA_TIMEOUT_MS.getKey))
-              .map(_.toLong)
-              .fold(o)(o.setGrpcReadMetadataTimeoutMillis)
+              .map(ms => java.time.Duration.ofMillis(ms.toLong))
+              .fold(o)(o.setGrpcReadMessageTimeout)
           )
           .pipe(o =>
             Option(config.get(GfsConfig.GCS_GRPC_READ_ZEROCOPY_ENABLE.getKey))
               .map(_.toBoolean)
               .fold(o)(o.setGrpcReadZeroCopyEnabled)
-          )
-          .pipe(o =>
-            Option(config.get(GfsConfig.GCS_TRACE_LOG_ENABLE.getKey))
-              .map(_.toBoolean)
-              .fold(o)(o.setTraceLogEnabled)
-          )
-          .pipe(o =>
-            Option(config.get(GfsConfig.GCS_TRACE_LOG_TIME_THRESHOLD_MS.getKey))
-              .map(_.toLong)
-              .fold(o)(o.setTraceLogTimeThreshold)
           )
           .build()
       )
