@@ -433,7 +433,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
         |{
         |"type":"record",
         |"name":"TestRecordProjection",
-        |"namespace":"com.spotify.scio.parquet.avro.ParquetAvroIOTest$",
+        |"namespace":"com.spotify.scio.parquet.avro.ParquetAvroIOTest",
         |"fields":[{"name":"int_field","type":["null", "int"]}]}
         |""".stripMargin
     )
