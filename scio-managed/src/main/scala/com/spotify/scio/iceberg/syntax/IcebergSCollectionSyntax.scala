@@ -34,7 +34,7 @@ class IcebergSCollectionSyntax[T: RowType: Coder](self: SCollection[T]) {
    * @param catalogProperties
    *   any additional properties required by the Iceberg catalog; see:
    *   https://iceberg.apache.org/docs/latest/catalog-properties
-   * @param configProperties
+   * @param hadoopConfigProperties
    *   any additional Hadoop configuration properties
    * @param triggeringFrequencySeconds
    *   (streaming only) frequency at which snapshots are produced
@@ -48,14 +48,15 @@ class IcebergSCollectionSyntax[T: RowType: Coder](self: SCollection[T]) {
     table: String,
     catalogName: String = null,
     catalogProperties: Map[String, String] = IcebergIO.WriteParam.DefaultCatalogProperties,
-    configProperties: Map[String, String] = IcebergIO.WriteParam.DefaultHadoopConfigProperties,
+    hadoopConfigProperties: Map[String, String] =
+      IcebergIO.WriteParam.DefaultHadoopConfigProperties,
     triggeringFrequencySeconds: Int = IcebergIO.WriteParam.DefaultTriggeringFrequencySeconds,
     directWriteByteLimit: Int = IcebergIO.WriteParam.DefaultDirectWriteByteLimit
   ): ClosedTap[Nothing] = {
 
     val params = IcebergIO.WriteParam(
       catalogProperties,
-      configProperties,
+      hadoopConfigProperties,
       Option(triggeringFrequencySeconds).filter(
         _ != IcebergIO.WriteParam.DefaultTriggeringFrequencySeconds
       ),

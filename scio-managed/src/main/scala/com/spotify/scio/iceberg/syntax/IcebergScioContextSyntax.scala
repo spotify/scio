@@ -34,7 +34,7 @@ class IcebergScioContextSyntax(self: ScioContext) {
    * @param catalogProperties
    *   any additional properties required by the Iceberg catalog; see:
    *   https://iceberg.apache.org/docs/latest/catalog-properties
-   * @param configProperties
+   * @param hadoopConfigProperties
    *   any additional Hadoop configuration properties
    * @param filter
    *   the predicate to apply to the Iceberg read Multiple filters can be combined using AND/OR, for
@@ -47,10 +47,10 @@ class IcebergScioContextSyntax(self: ScioContext) {
     table: String,
     catalogName: String = null,
     catalogProperties: Map[String, String] = IcebergIO.ReadParam.DefaultCatalogProperties,
-    configProperties: Map[String, String] = IcebergIO.ReadParam.DefaultHadoopConfigProperties,
+    hadoopConfigProperties: Map[String, String] = IcebergIO.ReadParam.DefaultHadoopConfigProperties,
     filter: String = IcebergIO.ReadParam.DefaultFilter
   )(implicit rt: RowType[T]): SCollection[T] = {
-    val params = IcebergIO.ReadParam(catalogProperties, configProperties, filter)
+    val params = IcebergIO.ReadParam(catalogProperties, hadoopConfigProperties, filter)
     self.read(IcebergIO(table, Option(catalogName)))(params)
   }
 }
