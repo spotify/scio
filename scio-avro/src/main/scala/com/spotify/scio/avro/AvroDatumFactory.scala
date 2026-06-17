@@ -85,7 +85,7 @@ private[scio] class SpecificRecordDatumFactory[T <: SpecificRecord](recordType: 
     // )
     Try {
       val method = classOf[SpecificDatumReader[_]].getMethod("getTrustedPackages")
-      val trusted = method.invoke(this).asInstanceOf[java.util.Set[String]]
+      val trusted = method.invoke(this).asInstanceOf[java.util.List[String]]
       val field = classOf[SpecificDatumReader[_]].getField("SERIALIZABLE_PACKAGES")
       val packages = field.get(null).asInstanceOf[Array[String]]
       trusted.addAll(java.util.Arrays.asList(packages: _*))
