@@ -1597,11 +1597,14 @@ lazy val `scio-repl` = project
         case PathList("META-INF", "native-image", "native-image.properties") =>
           // merge conflicting native-image property files
           MergeStrategy.filterDistinctLines
+        case PathList("org", "hamcrest", _*) =>
+          // hamcrest-2.1 supersedes hamcrest-core-1.3
+          MergeStrategy.last
         case PathList(
               "META-INF",
               "native-image",
               "io.grpc.netty.shaded.io.netty",
-              "netty-codec" | "netty-handler",
+              "netty-codec-http2" | "netty-codec-http" | "netty-codec" | "netty-handler",
               "generated",
               "handlers",
               "reflect-config.json"
