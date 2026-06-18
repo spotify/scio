@@ -61,7 +61,7 @@ val jodaTimeVersion = "2.14.0"
 val nettyVersion = "4.1.130.Final"
 val protobufVersion = "4.33.2"
 val slf4jVersion = "2.0.16"
-val zstdJniVersion = "1.5.6-3"
+val zstdJniVersion = "1.5.6-5"
 // dependent versions
 val googleApiServicesBigQueryVersion = s"v2-rev20251012-$googleClientsVersion"
 val googleApiServicesDataflowVersion = s"v1b3-rev20260405-$googleClientsVersion"
