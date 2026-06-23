@@ -26,6 +26,21 @@ object FixBigtableIO {
   // 3-arg call - should NOT be fixed
   sc.bigtable("project", "instance", "table")
 
+  // 4-arg call with named rowFilter - should migrate to BTOptions, preserve named arg
+  sc.bigtable("project", "instance", "table", rowFilter = rowFilter)
+
+  // 4-arg call with named keyRanges - should migrate to BTOptions, preserve named arg
+  sc.bigtable("project", "instance", "table", keyRanges = keyRanges)
+
+  // 5-arg call with both named - should migrate to BTOptions, preserve named args
+  sc.bigtable("project", "instance", "table", keyRanges = keyRanges, rowFilter = rowFilter)
+
+  // 5-arg call with named keyRanges, positional rowFilter - should migrate to BTOptions
+  sc.bigtable("project", "instance", "table", keyRanges = keyRanges, rowFilter)
+
+  // 5-arg call with positional keyRanges, named rowFilter - should migrate to BTOptions
+  sc.bigtable("project", "instance", "table", keyRanges, rowFilter = rowFilter)
+
   // 6-arg call already explicit - should NOT be fixed
   sc.bigtable("project", "instance", "table", keyRanges, rowFilter, None)
 }

@@ -29,9 +29,13 @@ final class FixBigtableIO extends SemanticRule("FixBigtableIO") {
               val tableId = params(2)
               val rest = params.drop(3)
               val namedArgs = rest.zipWithIndex.map { case (arg, i) =>
-                i match {
-                  case 0 => q"keyRanges = $arg"
-                  case 1 => q"rowFilter = $arg"
+                arg match {
+                  case _: Term.Assign => arg
+                  case _ =>
+                    i match {
+                      case 0 => q"keyRanges = $arg"
+                      case 1 => q"rowFilter = $arg"
+                    }
                 }
               }
               val newParams = List(q"BTOptions($projectId, $instanceId)", tableId) ++ namedArgs
