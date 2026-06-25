@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+  <property>
+    <name>fs.gs.inputstream.fadvise</name>
+    <value>RANDOM</value>
+  </property>
+  <property>
+    <name>fs.gs.inputstream.fast.fail.on.not.found.enable</name>
+    <value>true</value>
+  </property>
+  <property>
+    <name>fs.gs.inputstream.support.gzip.encoding.enable</name>
+    <value>true</value>
+  </property>
+  <property>
+    <name>fs.gs.inputstream.inplace.seek.limit</name>
+    <value>8m</value>
+  </property>
+  <property>
+    <name>fs.gs.inputstream.min.range.request.size</name>
+    <value>512k</value>
+  </property>
+  <property>
+    <name>fs.gs.grpc.checksums.enable</name>
+    <value>true</value>
+  </property>
+  <property>
+    <name>fs.gs.grpc.read.timeout</name>
+    <value>60s</value>
+  </property>
+  <property>
+    <name>fs.gs.grpc.read.message.timeout</name>
+    <value>7s</value>
+  </property>
+  <property>
+    <name>fs.gs.grpc.read.zerocopy.enable</name>
+    <value>true</value>
+  </property>
+  <property>
+    <name>fs.gs.block.size</name>
+    <value>64m</value>
+  </property>
+  <property>
+    <name>fs.gs.fadvise.request.track.count</name>
+    <value>3</value>
+  </property>
+</configuration>

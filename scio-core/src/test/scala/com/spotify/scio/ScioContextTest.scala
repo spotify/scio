@@ -331,6 +331,28 @@ class ScioContextTest extends PipelineSpec {
     }
   }
 
+  "ScioContext" should "parse GCS read options from Hadoop configuration" in {
+    import com.google.cloud.hadoop.gcsio.GoogleCloudStorageReadOptions.Fadvise
+    import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
+
+    org.apache.hadoop.conf.Configuration.addDefaultResource("gcs-read-options-test.xml")
+
+    val sc = ScioContext()
+    val readOpts = sc.optionsAs[GcsOptions].getGoogleCloudStorageReadOptions
+
+    readOpts.getFadvise shouldBe Fadvise.RANDOM
+    readOpts.isFastFailOnNotFoundEnabled shouldBe true
+    readOpts.isGzipEncodingSupportEnabled shouldBe true
+    readOpts.getInplaceSeekLimit shouldBe 8388608L
+    readOpts.getMinRangeRequestSize shouldBe 524288L
+    readOpts.isGrpcChecksumsEnabled shouldBe true
+    readOpts.getGrpcReadTimeout shouldBe java.time.Duration.ofSeconds(60)
+    readOpts.getGrpcReadMessageTimeout shouldBe java.time.Duration.ofSeconds(7)
+    readOpts.isGrpcReadZeroCopyEnabled shouldBe true
+    readOpts.getBlockSize shouldBe 67108864L
+    readOpts.getFadviseRequestTrackCount shouldBe 3
+  }
+
   "RunnerContext" should "include ~/.m2, ~/.ivy2, ~/.cache/coursier, and ~/.sbt/boot/ dirs, but not other env dirs" in {
     val userDir = sys.props("user.home").replace("\\", "/")
     val paths1 = List(
