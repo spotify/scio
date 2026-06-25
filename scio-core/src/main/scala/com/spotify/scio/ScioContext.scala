@@ -48,6 +48,7 @@ import scala.collection.mutable.{Buffer => MBuffer}
 import scala.concurrent.duration.Duration
 import scala.io.Source
 import scala.reflect.ClassTag
+import scala.util.chaining._
 import scala.util.control.NoStackTrace
 import scala.util.{Failure, Success, Try}
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
@@ -474,26 +475,50 @@ class ScioContext private[scio] (
       val long: Getter[java.lang.Long] = (k, d) => config.getLong(k, d)
       val int: Getter[java.lang.Integer] = (k, d) => config.getInt(k, d)
 
+      type Builder = GoogleCloudStorageReadOptions.Builder
       implicit class PropOps[T](val prop: HadoopConfigurationProperty[T]) {
-        def ifSet(getter: Getter[T])(setter: T => Any): Unit =
-          if (config.get(prop.getKey) != null) setter(prop.get(config, getter))
-        def ifSetDuration(setter: java.time.Duration => Any): Unit =
-          if (config.get(prop.getKey) != null) setter(prop.getTimeDuration(config))
+        def ifSet(getter: Getter[T])(setter: Builder => T => Builder)(b: Builder): Builder =
+          if (config.get(prop.getKey) != null) setter(b)(prop.get(config, getter)) else b
+        def ifSetDuration(setter: Builder => java.time.Duration => Builder)(b: Builder): Builder =
+          if (config.get(prop.getKey) != null) setter(b)(prop.getTimeDuration(config)) else b
       }
 
-      val b = GoogleCloudStorageReadOptions.builder()
-      GCS_INPUT_STREAM_FADVISE.ifSet(fadvise)(b.setFadvise(_))
-      GCS_INPUT_STREAM_FAST_FAIL_ON_NOT_FOUND_ENABLE.ifSet(bool)(b.setFastFailOnNotFoundEnabled(_))
-      GCS_INPUT_STREAM_SUPPORT_GZIP_ENCODING_ENABLE.ifSet(bool)(b.setGzipEncodingSupportEnabled(_))
-      GCS_INPUT_STREAM_INPLACE_SEEK_LIMIT.ifSet(longBytes)(b.setInplaceSeekLimit(_))
-      GCS_INPUT_STREAM_MIN_RANGE_REQUEST_SIZE.ifSet(longBytes)(b.setMinRangeRequestSize(_))
-      GCS_GRPC_CHECKSUMS_ENABLE.ifSet(bool)(b.setGrpcChecksumsEnabled(_))
-      GCS_GRPC_READ_TIMEOUT.ifSetDuration(b.setGrpcReadTimeout(_))
-      GCS_GRPC_READ_MESSAGE_TIMEOUT.ifSetDuration(b.setGrpcReadMessageTimeout(_))
-      GCS_GRPC_READ_ZEROCOPY_ENABLE.ifSet(bool)(b.setGrpcReadZeroCopyEnabled(_))
-      BLOCK_SIZE.ifSet(long)(b.setBlockSize(_))
-      GCS_FADVISE_REQUEST_TRACK_COUNT.ifSet(int)(b.setFadviseRequestTrackCount(_))
-      o.setGoogleCloudStorageReadOptions(b.build())
+      o.setGoogleCloudStorageReadOptions(
+        GoogleCloudStorageReadOptions
+          .builder()
+          .pipe(GCS_INPUT_STREAM_FADVISE.ifSet(fadvise)(_.setFadvise))
+          .pipe(
+            GCS_INPUT_STREAM_FAST_FAIL_ON_NOT_FOUND_ENABLE.ifSet(bool)(b =>
+              v => b.setFastFailOnNotFoundEnabled(v)
+            )
+          )
+          .pipe(
+            GCS_INPUT_STREAM_SUPPORT_GZIP_ENCODING_ENABLE.ifSet(bool)(b =>
+              v => b.setGzipEncodingSupportEnabled(v)
+            )
+          )
+          .pipe(
+            GCS_INPUT_STREAM_INPLACE_SEEK_LIMIT.ifSet(longBytes)(b => v => b.setInplaceSeekLimit(v))
+          )
+          .pipe(
+            GCS_INPUT_STREAM_MIN_RANGE_REQUEST_SIZE.ifSet(longBytes)(b =>
+              v => b.setMinRangeRequestSize(v)
+            )
+          )
+          .pipe(GCS_GRPC_CHECKSUMS_ENABLE.ifSet(bool)(b => v => b.setGrpcChecksumsEnabled(v)))
+          .pipe(GCS_GRPC_READ_TIMEOUT.ifSetDuration(b => v => b.setGrpcReadTimeout(v)))
+          .pipe(
+            GCS_GRPC_READ_MESSAGE_TIMEOUT.ifSetDuration(b => v => b.setGrpcReadMessageTimeout(v))
+          )
+          .pipe(
+            GCS_GRPC_READ_ZEROCOPY_ENABLE.ifSet(bool)(b => v => b.setGrpcReadZeroCopyEnabled(v))
+          )
+          .pipe(BLOCK_SIZE.ifSet(long)(b => v => b.setBlockSize(v)))
+          .pipe(
+            GCS_FADVISE_REQUEST_TRACK_COUNT.ifSet(int)(b => v => b.setFadviseRequestTrackCount(v))
+          )
+          .build()
+      )
     } catch {
       // Hadoop and/or gcs-connector is excluded from classpath, do not try to set options
       case _: LinkageError =>
