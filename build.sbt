@@ -1749,6 +1749,7 @@ lazy val integration = project
     `scio-jdbc` % "compile;test->test",
     `scio-managed` % "test->test",
     `scio-neo4j` % "test->test",
+    `scio-parquet` % "test->test",
     `scio-smb` % "test->provided,test"
   )
   .settings(commonSettings)
@@ -1802,7 +1803,8 @@ lazy val integration = project
       "org.apache.iceberg" % "iceberg-core" % icebergVersion % Test,
       "org.apache.iceberg" % "iceberg-parquet" % icebergVersion % Test,
       "org.apache.parquet" % "parquet-common" % parquetVersion % Test,
-      "org.apache.parquet" % "parquet-column" % parquetVersion % Test
+      "org.apache.parquet" % "parquet-column" % parquetVersion % Test,
+      "com.google.cloud.bigdataoss" % "gcs-connector" % bigdataossVersion % Test
     )
   )
 
