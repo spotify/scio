@@ -473,7 +473,6 @@ class ScioContext private[scio] (
       val fadvise: Getter[Fadvise] = (k, d) => config.getEnum(k, d)
       val bool: Getter[java.lang.Boolean] = (k, d) => config.getBoolean(k, d)
       val longBytes: Getter[java.lang.Long] = (k, d) => config.getLongBytes(k, d)
-      val long: Getter[java.lang.Long] = (k, d) => config.getLong(k, d)
       val int: Getter[java.lang.Integer] = (k, d) => config.getInt(k, d)
 
       implicit class PropOps[T](val prop: HadoopConfigurationProperty[T]) {
@@ -524,7 +523,7 @@ class ScioContext private[scio] (
           )
           .pipe(
             BLOCK_SIZE
-              .ifSet(long, (b, v) => b.setBlockSize(v))
+              .ifSet(longBytes, (b, v) => b.setBlockSize(v))
           )
           .pipe(
             GCS_FADVISE_REQUEST_TRACK_COUNT
