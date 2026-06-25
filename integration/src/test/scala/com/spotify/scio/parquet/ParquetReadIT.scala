@@ -60,7 +60,8 @@ class ParquetReadIT extends PipelineSpec {
       sc1.run().waitUntilDone()
 
       val legacyReadConf = ParquetConfiguration.of(
-        ParquetReadConfiguration.UseSplittableDoFn -> false
+        ParquetReadConfiguration.UseSplittableDoFn -> false,
+        "fs.gs.auth.type" -> "APPLICATION_DEFAULT"
       )
 
       val (sc2, _) = ContextAndArgs(gcpOptions)
