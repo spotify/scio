@@ -141,15 +141,10 @@ private object RunnerContext {
   private[scio] def isAllowedEnvDir(s: String): Boolean = {
     val sanitized = sanitizePath(s)
     val sanitizedUserHome: String = sanitizePath(sys.props("user.home"))
-    val extraDirs = CoreSysProps.StagingJarsAllowedEnvDirs.valueOption
-      .map(_.split(':').filter(_.nonEmpty).map(_.stripPrefix(".")).mkString("|"))
-      .filter(_.nonEmpty)
-    val allowedPattern = extraDirs match {
-      case Some(extra) =>
-        s"${sanitizedUserHome}/\\.(ivy2|m2|cache/coursier|sbt/boot/[^/]*/lib|$extra)/.+"
-      case None =>
-        s"${sanitizedUserHome}/\\.(ivy2|m2|cache/coursier|sbt/boot/[^/]*/lib)/.+"
-    }
+    val defaultDirs = Seq("ivy2", "m2", "cache/coursier", "sbt/boot/[^/]*/lib")
+    val extraDirs = CoreSysProps.StagingJarsAllowedEnvDirs.valueOption.toSeq
+      .flatMap(_.split(':').filter(_.nonEmpty).map(_.stripPrefix(".")))
+    val allowedPattern = s"${sanitizedUserHome}/\\.(${(defaultDirs ++ extraDirs).mkString("|")})/.+"
     !sanitized.matches(s"${sanitizedUserHome}/\\..+/.+") || sanitized.matches(allowedPattern)
   }
 
