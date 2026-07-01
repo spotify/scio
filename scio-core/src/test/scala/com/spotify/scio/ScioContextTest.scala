@@ -376,6 +376,7 @@ class ScioContextTest extends PipelineSpec {
 
     RunnerContext.isAllowedEnvDir(gradlePath) shouldBe false
     RunnerContext.isAllowedEnvDir(venvPath) shouldBe false
+    RunnerContext.isAllowedEnvDir(bazelPath) shouldBe false
 
     sys.props("staging.jars.allowedenvdirs") = ".gradle:.venv:.cache/bazel_repo"
     try {
