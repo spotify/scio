@@ -363,8 +363,30 @@ class ScioContextTest extends PipelineSpec {
     )
     val paths2 = paths1 :+ s"$userDir/.env/a/b/c/foo-0.0.1.jar"
 
-    paths1.filterNot(RunnerContext.isNonRepositoryEnvDir) should contain theSameElementsAs paths1
-    paths2.filterNot(RunnerContext.isNonRepositoryEnvDir) should contain theSameElementsAs paths1
+    paths1.filter(RunnerContext.isAllowedEnvDir) should contain theSameElementsAs paths1
+    paths2.filter(RunnerContext.isAllowedEnvDir) should contain theSameElementsAs paths1
+  }
+
+  it should "allow additional env dirs via staging.jars.allowedenvdirs" in {
+    val userDir = sys.props("user.home").replace("\\", "/")
+    val gradlePath = s"$userDir/.gradle/caches/modules-2/files-2.1/foo-0.0.1.jar"
+    val venvPath = s"$userDir/.venv/lib/python3.9/site-packages/foo.jar"
+    val bazelPath = s"$userDir/.cache/bazel_repo/flib/flob/python3.9/site-packages/foo.jar"
+    val otherPath = s"$userDir/.other/foo.jar"
+
+    RunnerContext.isAllowedEnvDir(gradlePath) shouldBe false
+    RunnerContext.isAllowedEnvDir(venvPath) shouldBe false
+    RunnerContext.isAllowedEnvDir(bazelPath) shouldBe false
+
+    sys.props("staging.jars.allowedenvdirs") = ".gradle:.venv:.cache/bazel_repo"
+    try {
+      RunnerContext.isAllowedEnvDir(gradlePath) shouldBe true
+      RunnerContext.isAllowedEnvDir(venvPath) shouldBe true
+      RunnerContext.isAllowedEnvDir(bazelPath) shouldBe true
+      RunnerContext.isAllowedEnvDir(otherPath) shouldBe false
+    } finally {
+      sys.props.remove("staging.jars.allowedenvdirs")
+    }
   }
 
 }
