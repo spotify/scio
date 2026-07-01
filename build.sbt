@@ -201,6 +201,7 @@ val skipUnauthorizedGcpGithubWorkflow = Def.setting {
   githubIsWorkflowBuild.value && sys.props.get("bigquery.project").isEmpty
 }
 
+ThisBuild / githubWorkflowIncludeClean := false
 ThisBuild / githubWorkflowTargetBranches := Seq("main")
 ThisBuild / githubWorkflowJavaVersions := Seq(javaDefault, java21, java25) // default MUST be head
 ThisBuild / githubWorkflowBuildPreamble ++= Seq(githubWorkflowGcpAuthStep, githubWorkflowSetupStep)
