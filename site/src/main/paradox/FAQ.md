@@ -598,6 +598,18 @@ sbt -Dbigquery.connect_timeout=30000 -Dbigquery.read_timeout=30000
 
 Scio traverses JVM stack trace to figure out the proper name of each transform, i.e. `flatMap@{UserAnalysis.scala:30}` but may get confused if your jobs are under the `com.spotify.scio` package. Move them to a different package, e.g. `com.spotify.analytics` to fix the issue.
 
+#### How do I allow additional classpath directories for staging?
+
+By default, Scio filters out JARs from hidden dot-directories under your home directory (e.g. `~/.gradle`, `~/.venv`) when staging classpath resources for remote execution, while allowing known dependency caches like `~/.m2`, `~/.ivy2`, `~/.cache/coursier`, and `~/.sbt/boot/*/lib`.
+
+To allow additional dot-directories, set the `staging.jars.allowedenvdirs` system property to a colon-separated list of directory names:
+
+```bash
+sbt -Dstaging.jars.allowedenvdirs=.gradle:.venv
+```
+
+This will allow JARs from `~/.gradle/...` and `~/.venv/...` to be staged alongside the default allowed directories.
+
 #### How do I fix "RESOURCE_EXHAUSTED" error?
 
 You might see errors like `RESOURCE_EXHAUSTED: IO error: No space left on disk` in a job. They usually indicate that you have allocated insufficient local disk space to process your job. If you are running your job with default settings, your job is running on 3 workers, each with 250 GB of local disk space. Consider modifying the default settings to increase the number of workers available to your job (via `--numWorkers`), to increase the default disk size per worker (via `--diskSizeGb`).

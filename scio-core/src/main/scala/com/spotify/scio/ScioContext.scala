@@ -138,11 +138,19 @@ private object RunnerContext {
 
   private val sanitizePath: String => String = _.replace("\\", "/")
 
-  private[scio] def isNonRepositoryEnvDir(s: String): Boolean = {
+  private[scio] def isAllowedEnvDir(s: String): Boolean = {
+    val sanitized = sanitizePath(s)
     val sanitizedUserHome: String = sanitizePath(sys.props("user.home"))
-    s.matches(s"${sanitizedUserHome}/\\..+/.+") && !s.matches(
-      s"${sanitizedUserHome}/\\.(ivy2|m2|cache/coursier|sbt/boot/[^/]*/lib)/.+"
-    )
+    val extraDirs = CoreSysProps.StagingJarsAllowedEnvDirs.valueOption
+      .map(_.split(':').filter(_.nonEmpty).map(_.stripPrefix(".")).mkString("|"))
+      .filter(_.nonEmpty)
+    val allowedPattern = extraDirs match {
+      case Some(extra) =>
+        s"${sanitizedUserHome}/\\.(ivy2|m2|cache/coursier|sbt/boot/[^/]*/lib|$extra)/.+"
+      case None =>
+        s"${sanitizedUserHome}/\\.(ivy2|m2|cache/coursier|sbt/boot/[^/]*/lib)/.+"
+    }
+    !sanitized.matches(s"${sanitizedUserHome}/\\..+/.+") || sanitized.matches(allowedPattern)
   }
 
   /** Borrowed from DataflowRunner. */
@@ -153,7 +161,7 @@ private object RunnerContext {
     val classPathJars = PipelineResources
       .detectClassPathResourcesToStage(classLoader, pipelineOptions)
       .asScala
-      .filterNot(sanitizePath.andThen(isNonRepositoryEnvDir))
+      .filter(isAllowedEnvDir)
     logger.debug(s"Classpath jars: ${classPathJars.mkString(":")}")
 
     classPathJars
