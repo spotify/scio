@@ -1160,7 +1160,7 @@ lazy val `scio-managed` = project
       "com.spotify" %% "magnolify-shared" % magnolifyVersion,
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       // test
-      "org.yaml" % "snakeyaml" % "2.2" % Test
+      "org.yaml" % "snakeyaml" % "2.6" % Test
     ),
     // remove on next release
     tlMimaPreviousVersions := Set.empty
