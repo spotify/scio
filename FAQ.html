@@ -235,7 +235,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.15.7-5-dbf5b5c-20260629T091648Z*
+<i class="md-icon" title="Version">label_outline</i> 0.15.8-4-f346209-20260701T195332Z*
 </label>
 </li>
 </ul>
@@ -329,6 +329,7 @@ spotify/scio
     <li><a href="FAQ.html#why-are-my-typed-bigquery-case-classes-not-up-to-date-" class="header">Why are my typed BigQuery case classes not up to date?</a></li>
     <li><a href="FAQ.html#how-do-i-fix-with-bigquery-" class="header">How do I fix &ldquo;SocketTimeoutException&rdquo; with BigQuery?</a></li>
     <li><a href="FAQ.html#why-do-i-see-names-like-in-the-ui-" class="header">Why do I see names like &ldquo;<a href="mailto:m&#x61;&#x69;n&#64;&#x7b;&#x4e;&#97;&#116;&#105;&#118;&#101;&#x4d;&#x65;&#116;&#104;&#111;&#100;&#x41;&#99;&#99;&#101;&#x73;&#115;&#111;&#x72;&#73;&#x6d;&#x70;&#x6c;&#x2e;&#46;&#x2e;&#125;">m&#x61;&#x69;n&#64;&#x7b;&#x4e;&#97;&#116;&#105;&#118;&#101;&#x4d;&#x65;&#116;&#104;&#111;&#100;&#x41;&#99;&#99;&#101;&#x73;&#115;&#111;&#x72;&#73;&#x6d;&#x70;&#x6c;&#x2e;&#46;&#x2e;&#125;</a>&rdquo; in the UI?</a></li>
+    <li><a href="FAQ.html#how-do-i-allow-additional-classpath-directories-for-staging-" class="header">How do I allow additional classpath directories for staging?</a></li>
     <li><a href="FAQ.html#how-do-i-fix-error-" class="header">How do I fix &ldquo;RESOURCE_EXHAUSTED&rdquo; error?</a></li>
     <li><a href="FAQ.html#can-i-use-trait-instead-of-method-" class="header">Can I use &ldquo;scala.App&rdquo; trait instead of &ldquo;main&rdquo; method?</a></li>
     <li><a href="FAQ.html#how-to-inspect-the-content-of-an-scollection-" class="header">How to inspect the content of an <code>SCollection</code>?</a></li>
@@ -776,6 +777,12 @@ def main(cmdlineArgs: Array[String]): Unit = {
 </code></pre>
 <h4><a href="#why-do-i-see-names-like-in-the-ui-" name="why-do-i-see-names-like-in-the-ui-" class="anchor"><span class="anchor-link"></span></a>Why do I see names like &ldquo;<a href="mailto:&#109;a&#105;&#x6e;&#x40;{&#x4e;&#97;&#116;&#105;&#x76;&#101;M&#x65;&#116;&#104;&#x6f;&#100;&#x41;&#99;&#99;&#101;&#x73;&#x73;&#x6f;&#114;&#73;&#109;&#x70;&#x6c;&#46;&#46;.&#x7d;">&#109;a&#105;&#x6e;&#x40;{&#x4e;&#97;&#116;&#105;&#x76;&#101;M&#x65;&#116;&#104;&#x6f;&#100;&#x41;&#99;&#99;&#101;&#x73;&#x73;&#x6f;&#114;&#73;&#109;&#x70;&#x6c;&#46;&#46;.&#x7d;</a>&rdquo; in the UI?</h4>
 <p>Scio traverses JVM stack trace to figure out the proper name of each transform, i.e. <code>flatMap@{UserAnalysis.scala:30}</code> but may get confused if your jobs are under the <code>com.spotify.scio</code> package. Move them to a different package, e.g. <code>com.spotify.analytics</code> to fix the issue.</p>
+<h4><a href="#how-do-i-allow-additional-classpath-directories-for-staging-" name="how-do-i-allow-additional-classpath-directories-for-staging-" class="anchor"><span class="anchor-link"></span></a>How do I allow additional classpath directories for staging?</h4>
+<p>By default, Scio filters out JARs from hidden dot-directories under your home directory (e.g. <code>~/.gradle</code>, <code>~/.venv</code>) when staging classpath resources for remote execution, while allowing known dependency caches like <code>~/.m2</code>, <code>~/.ivy2</code>, <code>~/.cache/coursier</code>, and <code>~/.sbt/boot/*/lib</code>.</p>
+<p>To allow additional dot-directories, set the <code>staging.jars.allowedenvdirs</code> system property to a colon-separated list of directory names:</p>
+<pre class="prettyprint"><code class="language-bash">sbt -Dstaging.jars.allowedenvdirs=.gradle:.venv
+</code></pre>
+<p>This will allow JARs from <code>~/.gradle/...</code> and <code>~/.venv/...</code> to be staged alongside the default allowed directories.</p>
 <h4><a href="#how-do-i-fix-error-" name="how-do-i-fix-error-" class="anchor"><span class="anchor-link"></span></a>How do I fix &ldquo;RESOURCE_EXHAUSTED&rdquo; error?</h4>
 <p>You might see errors like <code>RESOURCE_EXHAUSTED: IO error: No space left on disk</code> in a job. They usually indicate that you have allocated insufficient local disk space to process your job. If you are running your job with default settings, your job is running on 3 workers, each with 250 GB of local disk space. Consider modifying the default settings to increase the number of workers available to your job (via <code>--numWorkers</code>), to increase the default disk size per worker (via <code>--diskSizeGb</code>).</p>
 <h4><a href="#can-i-use-trait-instead-of-method-" name="can-i-use-trait-instead-of-method-" class="anchor"><span class="anchor-link"></span></a>Can I use &ldquo;scala.App&rdquo; trait instead of &ldquo;main&rdquo; method?</h4>
@@ -832,7 +839,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.15.7-5-dbf5b5c-20260629T091648Z*
+0.15.8-4-f346209-20260701T195332Z*
 </span>
 </div>
 </article>
