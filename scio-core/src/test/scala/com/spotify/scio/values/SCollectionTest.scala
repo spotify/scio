@@ -17,34 +17,45 @@
 
 package com.spotify.scio.values
 
-import java.io.PrintStream
-import java.nio.file.Files
 import com.spotify.scio.ScioContext
-import com.spotify.scio.testing.PipelineSpec
-import com.spotify.scio.util.MockedPrintStream
-import com.twitter.algebird.{Aggregator, Semigroup}
-import org.apache.beam.sdk.transforms.DoFn.ProcessElement
-import org.apache.beam.sdk.transforms.{Count, DoFn, GroupByKey, ParDo}
-import org.apache.beam.sdk.transforms.windowing.PaneInfo.Timing
-import org.apache.beam.sdk.transforms.windowing.{
-  BoundedWindow,
-  GlobalWindow,
-  IntervalWindow,
-  PaneInfo
-}
-import org.apache.beam.sdk.values.KV
-import org.joda.time.{DateTimeConstants, Duration, Instant}
-
-import scala.collection.mutable
-import scala.jdk.CollectionConverters._
-import com.spotify.scio.coders.{Beam, Coder, MaterializedCoder}
+import com.spotify.scio.coders.Beam
+import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.MaterializedCoder
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.schemas.Schema
+import com.spotify.scio.testing.PipelineSpec
+import com.spotify.scio.util.MockedPrintStream
+import com.twitter.algebird.Aggregator
+import com.twitter.algebird.Semigroup
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
-import org.apache.beam.sdk.coders.{NullableCoder, StringUtf8Coder}
+import org.apache.beam.sdk.coders.NullableCoder
+import org.apache.beam.sdk.coders.StringUtf8Coder
+import org.apache.beam.sdk.transforms.Count
+import org.apache.beam.sdk.transforms.DoFn
+import org.apache.beam.sdk.transforms.DoFn.ProcessElement
+import org.apache.beam.sdk.transforms.GroupByKey
+import org.apache.beam.sdk.transforms.ParDo
+import org.apache.beam.sdk.transforms.windowing.BoundedWindow
+import org.apache.beam.sdk.transforms.windowing.AfterPane
+import org.apache.beam.sdk.transforms.windowing.GlobalWindow
+import org.apache.beam.sdk.transforms.windowing.IntervalWindow
+import org.apache.beam.sdk.transforms.windowing.PaneInfo
+import org.apache.beam.sdk.transforms.windowing.PaneInfo.Timing
+import org.apache.beam.sdk.transforms.windowing.TimestampCombiner
+import org.apache.beam.sdk.transforms.windowing.Window.ClosingBehavior
+import org.apache.beam.sdk.transforms.windowing.Window.OnTimeBehavior
+import org.apache.beam.sdk.values.KV
+import org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode
+import org.joda.time.DateTimeConstants
+import org.joda.time.Duration
+import org.joda.time.Instant
 
+import java.io.PrintStream
 import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 import java.util.concurrent.ConcurrentLinkedQueue
+import scala.collection.mutable
+import scala.jdk.CollectionConverters._
 
 object SCollectionTest {
   // used to check local side effect in tap()
@@ -944,4 +955,186 @@ class SCollectionTest extends PipelineSpec {
       coll should containInAnyOrder(Seq(Seq.empty[Int]))
     }
   }
+
+  it should "support windowByYears()" in {
+    runWithContext { sc =>
+      val p = sc.parallelizeTimestamped(
+        Seq("previous-year", "new-year", "same-year"),
+        Seq(
+          Instant.parse("2025-12-31T23:59:59.999Z"),
+          Instant.parse("2026-01-01T00:00:00.000Z"),
+          Instant.parse("2026-06-01T00:00:00.000Z")
+        )
+      )
+
+      val r = p.windowByYears(1).top(10).map(_.toSet)
+
+      r should containInAnyOrder(
+        Seq(Set("previous-year"), Set("new-year", "same-year"))
+      )
+    }
+  }
+
+  it should "support windowByMonths()" in {
+    runWithContext { sc =>
+      val p = sc.parallelizeTimestamped(
+        Seq("january", "february-1", "february-2", "march"),
+        Seq(
+          Instant.parse("2026-01-31T23:59:59.999Z"),
+          Instant.parse("2026-02-01T00:00:00.000Z"),
+          Instant.parse("2026-02-28T23:59:59.999Z"),
+          Instant.parse("2026-03-01T00:00:00.000Z")
+        )
+      )
+
+      val r = p.windowByMonths(1).top(10).map(_.toSet)
+
+      r should containInAnyOrder(
+        Seq(Set("january"), Set("february-1", "february-2"), Set("march"))
+      )
+    }
+  }
+
+  it should "support windowByWeeks()" in {
+    runWithContext { sc =>
+      val p = sc.parallelizeTimestamped(
+        Seq("previous-week", "monday", "sunday", "next-week"),
+        Seq(
+          Instant.parse("2026-01-04T23:59:59.999Z"),
+          Instant.parse("2026-01-05T00:00:00.000Z"),
+          Instant.parse("2026-01-11T23:59:59.999Z"),
+          Instant.parse("2026-01-12T00:00:00.000Z")
+        )
+      )
+
+      val r = p.windowByWeeks(1, DateTimeConstants.MONDAY).top(10).map(_.toSet)
+
+      r should containInAnyOrder(
+        Seq(Set("previous-week"), Set("monday", "sunday"), Set("next-week"))
+      )
+    }
+  }
+
+  it should "support windowByDays()" in {
+    runWithContext { sc =>
+      val p = sc.parallelizeTimestamped(
+        Seq("before", "at", "after"),
+        Seq(
+          Instant.parse("2026-01-01T23:59:59.999Z"),
+          Instant.parse("2026-01-02T00:00:00.000Z"),
+          Instant.parse("2026-01-02T00:00:00.001Z")
+        )
+      )
+
+      val r = p
+        .windowByDays(1)
+        .top(10)
+        .map(_.toSet)
+
+      r should containInAnyOrder(Seq(Set("before"), Set("at", "after")))
+    }
+  }
+
+  it should "support windowByDays() with multi-day windows" in {
+    runWithContext { sc =>
+      val p = sc.parallelizeTimestamped(
+        Seq("day-1", "day-2", "next-window"),
+        Seq(
+          Instant.parse("2026-01-01T23:59:59.999Z"),
+          Instant.parse("2026-01-02T00:00:00.000Z"),
+          Instant.parse("2026-01-03T00:00:00.000Z")
+        )
+      )
+
+      val r = p
+        .windowByDays(2)
+        .top(10)
+        .map(_.toSet)
+
+      r should containInAnyOrder(
+        Seq(
+          Set("day-1", "day-2"),
+          Set("next-window")
+        )
+      )
+    }
+  }
+
+  it should "support WindowOptions" in {
+    runWithContext { sc =>
+      val trigger = AfterPane.elementCountAtLeast(1)
+      val allowedLateness = Duration.standardMinutes(5)
+      val p = sc
+        .parallelize(Seq(1))
+        .windowByDays(
+          1,
+          WindowOptions(
+            trigger = trigger,
+            accumulationMode = AccumulationMode.ACCUMULATING_FIRED_PANES,
+            allowedLateness = allowedLateness,
+            closingBehavior = ClosingBehavior.FIRE_ALWAYS,
+            timestampCombiner = TimestampCombiner.END_OF_WINDOW,
+            onTimeBehavior = OnTimeBehavior.FIRE_IF_NON_EMPTY
+          )
+        )
+      val strategy = p.internal.getWindowingStrategy
+
+      strategy.getTrigger shouldBe trigger
+      strategy.getMode shouldBe AccumulationMode.ACCUMULATING_FIRED_PANES
+      strategy.getAllowedLateness shouldBe allowedLateness
+      strategy.getClosingBehavior shouldBe ClosingBehavior.FIRE_ALWAYS
+      strategy.getTimestampCombiner shouldBe TimestampCombiner.END_OF_WINDOW
+      strategy.getOnTimeBehavior shouldBe OnTimeBehavior.FIRE_IF_NON_EMPTY
+    }
+  }
+
+  it should "support WindowOptions with default closing behavior" in {
+    runWithContext { sc =>
+      val allowedLateness = Duration.standardMinutes(5)
+      val p = sc
+        .parallelize(Seq(1))
+        .windowByDays(
+          1,
+          WindowOptions(
+            accumulationMode = AccumulationMode.DISCARDING_FIRED_PANES,
+            allowedLateness = allowedLateness
+          )
+        )
+      val strategy = p.internal.getWindowingStrategy
+
+      strategy.getAllowedLateness shouldBe allowedLateness
+      strategy.getClosingBehavior shouldBe ClosingBehavior.FIRE_IF_NON_EMPTY
+    }
+  }
+
+  it should "support discarding fired panes in WindowOptions" in {
+    runWithContext { sc =>
+      val p = sc
+        .parallelize(Seq(1))
+        .windowByDays(
+          1,
+          WindowOptions(accumulationMode = AccumulationMode.DISCARDING_FIRED_PANES)
+        )
+      val strategy = p.internal.getWindowingStrategy
+
+      strategy.getMode shouldBe AccumulationMode.DISCARDING_FIRED_PANES
+      strategy.isModeSpecified shouldBe true
+    }
+  }
+
+  it should "reject unsupported accumulation modes in WindowOptions" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(Seq(1))
+
+      val e = the[RuntimeException] thrownBy {
+        p.windowByDays(
+          1,
+          WindowOptions(accumulationMode = AccumulationMode.RETRACTING_FIRED_PANES)
+        )
+      }
+
+      e.getMessage should include("Unsupported accumulation mode RETRACTING_FIRED_PANES")
+    }
+  }
+
 }
