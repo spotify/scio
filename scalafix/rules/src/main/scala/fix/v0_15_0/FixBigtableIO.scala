@@ -31,7 +31,7 @@ final class FixBigtableIO extends SemanticRule("FixBigtableIO") {
               val namedArgs = rest.zipWithIndex.map { case (arg, i) =>
                 arg match {
                   case _: Term.Assign => arg
-                  case _ =>
+                  case _              =>
                     i match {
                       case 0 => q"keyRanges = $arg"
                       case 1 => q"rowFilter = $arg"
