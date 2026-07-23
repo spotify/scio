@@ -275,13 +275,16 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   // =======================================================================
 
   /** lifts this [[SCollection]] to the specified type */
-  def covary[U >: T]: SCollection[U] = this.asInstanceOf[SCollection[U]]
+  def covary[U >: T: Coder]: SCollection[U] =
+    this.asInstanceOf[SCollection[U]].setCoder(CoderMaterializer.beam(context, Coder[U]))
 
   /** lifts this [[SCollection]] to the specified type */
-  def covary_[U](implicit @unused ev: T <:< U): SCollection[U] = this.asInstanceOf[SCollection[U]]
+  def covary_[U: Coder](implicit @unused ev: T <:< U): SCollection[U] =
+    this.asInstanceOf[SCollection[U]].setCoder(CoderMaterializer.beam(context, Coder[U]))
 
   /** lifts this [[SCollection]] to the specified type */
-  def contravary[U <: T]: SCollection[U] = this.asInstanceOf[SCollection[U]]
+  def contravary[U <: T: Coder]: SCollection[U] =
+    this.asInstanceOf[SCollection[U]].setCoder(CoderMaterializer.beam(context, Coder[U]))
 
   /**
    * Convert this SCollection to an [[SCollectionWithFanout]] that uses an intermediate node to
