@@ -35,7 +35,8 @@ class IcebergSCollectionSyntax[T: RowType: Coder](self: SCollection[T]) {
    *   any additional properties required by the Iceberg catalog; see:
    *   https://iceberg.apache.org/docs/latest/catalog-properties
    * @param writeProperties
-   *   any additional properties to pass to the Iceberg RecordWriter
+   *   any additional properties to pass to the Iceberg RecordWriter; see:
+   *   https://iceberg.apache.org/docs/latest/configuration/#write-properties
    * @param sortFields
    *   list of field names defining the sort order for written files
    * @param partitionFields
