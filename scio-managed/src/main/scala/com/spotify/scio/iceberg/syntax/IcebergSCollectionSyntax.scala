@@ -46,7 +46,8 @@ class IcebergSCollectionSyntax[T: RowType: Coder](self: SCollection[T]) {
    * @param directWriteByteLimit
    *   (streaming only) limit for lifting bundles into the direct write path.
    * @param extraConfigProperties
-   *   additional properties to pass to the Managed IO config, i.e. `distribution_mode: hash` or `authosharding: true`
+   *   additional properties to pass to the Managed IO config, i.e. `distribution_mode: hash` or
+   *   `authosharding: true`
    *
    * For a complete reference, see:
    * https://docs.cloud.google.com/dataflow/docs/guides/managed-io-iceberg
