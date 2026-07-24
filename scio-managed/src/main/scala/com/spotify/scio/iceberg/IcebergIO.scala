@@ -41,6 +41,7 @@ private[scio] object ConfigMap {
   implicit val stringToMap: ConfigMapType[String] = _ => Map.empty
   implicit val intToMap: ConfigMapType[Int] = _ => Map.empty
   implicit val mapToMap: ConfigMapType[Map[String, String]] = _ => Map.empty
+  implicit val mapAnyRefToMap: ConfigMapType[Map[String, AnyRef]] = _ => Map.empty
   implicit val listToMap: ConfigMapType[List[String]] = _ => Map.empty
   implicit def optionToMap[T]: ConfigMapType[Option[T]] = _ => Map.empty
 
@@ -86,8 +87,10 @@ final case class IcebergIO[T: RowType: Coder](table: String, catalogName: Option
 
   private[scio] def config(params: WriteP)(implicit
     mapper: ConfigMap.ConfigMapType[WriteP]
-  ): Map[String, AnyRef] =
-    baseConfig(params)
+  ): Map[String, AnyRef] = {
+    val extra = Option(params.extraConfigProperties).getOrElse(Map.empty)
+    baseConfig(params) - "extra_config_properties" ++ extra
+  }
 
   private[scio] def config(
     params: ReadP
@@ -133,15 +136,21 @@ object IcebergIO {
   }
   case class WriteParam private (
     catalogProperties: Map[String, String] = WriteParam.DefaultCatalogProperties,
-    configProperties: Map[String, String] = WriteParam.DefaultHadoopConfigProperties,
+    writeProperties: Map[String, String] = WriteParam.DefaultWriteProperties,
+    sortFields: List[String] = WriteParam.DefaultSortFields,
+    partitionFields: List[String] = WriteParam.DefaultPartitionFields,
     triggeringFrequencySeconds: Option[Int] = None,
-    directWriteByteLimit: Option[Int] = None
+    directWriteByteLimit: Option[Int] = None,
+    extraConfigProperties: Map[String, AnyRef] = WriteParam.DefaultExtraConfigProperties
   )
   object WriteParam {
     val DefaultCatalogProperties: Map[String, String] = null
-    val DefaultHadoopConfigProperties: Map[String, String] = null
+    val DefaultWriteProperties: Map[String, String] = null
+    val DefaultSortFields: List[String] = null
+    val DefaultPartitionFields: List[String] = null
     val DefaultTriggeringFrequencySeconds: Int = -1
     val DefaultDirectWriteByteLimit: Int = -1
+    val DefaultExtraConfigProperties: Map[String, AnyRef] = null
 
     implicit val configMap: ConfigMap.ConfigMapType[WriteParam] = ConfigMap.gen[WriteParam]
   }

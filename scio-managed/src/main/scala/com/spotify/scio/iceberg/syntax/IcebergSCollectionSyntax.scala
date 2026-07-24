@@ -34,12 +34,18 @@ class IcebergSCollectionSyntax[T: RowType: Coder](self: SCollection[T]) {
    * @param catalogProperties
    *   any additional properties required by the Iceberg catalog; see:
    *   https://iceberg.apache.org/docs/latest/catalog-properties
-   * @param hadoopConfigProperties
-   *   any additional Hadoop configuration properties
+   * @param writeProperties
+   *   any additional properties to pass to the Iceberg RecordWriter
+   * @param sortFields
+   *   list of field names defining the sort order for written files
+   * @param partitionFields
+   *   list of field names defining the partition spec for the table
    * @param triggeringFrequencySeconds
    *   (streaming only) frequency at which snapshots are produced
    * @param directWriteByteLimit
    *   (streaming only) limit for lifting bundles into the direct write path.
+   * @param extraConfigProperties
+   *   additional properties to pass to the Managed IO config, i.e. `distribution_mode: hash` or `authosharding: true`
    *
    * For a complete reference, see:
    * https://docs.cloud.google.com/dataflow/docs/guides/managed-io-iceberg
@@ -48,19 +54,24 @@ class IcebergSCollectionSyntax[T: RowType: Coder](self: SCollection[T]) {
     table: String,
     catalogName: String = null,
     catalogProperties: Map[String, String] = IcebergIO.WriteParam.DefaultCatalogProperties,
-    hadoopConfigProperties: Map[String, String] =
-      IcebergIO.WriteParam.DefaultHadoopConfigProperties,
+    writeProperties: Map[String, String] = IcebergIO.WriteParam.DefaultWriteProperties,
+    sortFields: List[String] = IcebergIO.WriteParam.DefaultSortFields,
+    partitionFields: List[String] = IcebergIO.WriteParam.DefaultPartitionFields,
+    extraConfigProperties: Map[String, AnyRef] = IcebergIO.WriteParam.DefaultExtraConfigProperties,
     triggeringFrequencySeconds: Int = IcebergIO.WriteParam.DefaultTriggeringFrequencySeconds,
     directWriteByteLimit: Int = IcebergIO.WriteParam.DefaultDirectWriteByteLimit
   ): ClosedTap[Nothing] = {
 
     val params = IcebergIO.WriteParam(
       catalogProperties,
-      hadoopConfigProperties,
+      writeProperties,
+      sortFields,
+      partitionFields,
       Option(triggeringFrequencySeconds).filter(
         _ != IcebergIO.WriteParam.DefaultTriggeringFrequencySeconds
       ),
-      Option(directWriteByteLimit).filter(_ != IcebergIO.WriteParam.DefaultDirectWriteByteLimit)
+      Option(directWriteByteLimit).filter(_ != IcebergIO.WriteParam.DefaultDirectWriteByteLimit),
+      extraConfigProperties
     )
     self.write(IcebergIO(table, Option(catalogName)))(params)
   }
