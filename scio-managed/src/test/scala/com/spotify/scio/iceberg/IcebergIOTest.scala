@@ -48,12 +48,16 @@ class IcebergIOTest extends ScioIOSpec {
       IcebergIO.WriteParam(
         Map.empty,
         Map.empty,
+        Nil,
+        Nil,
         None,
         None
       ),
       IcebergIO.WriteParam(
         Map("catalogProp1" -> "catalogProp1Value"),
         Map("configProp1" -> "configProp1Value", "configProp2" -> "configProp2Value"),
+        List("sortField1"),
+        List("partField1"),
         Some(10),
         Some(100)
       )
@@ -70,6 +74,9 @@ class IcebergIOTest extends ScioIOSpec {
       // reads
       "filter",
       // writes
+      "write_properties",
+      "sort_fields",
+      "partition_fields",
       "triggering_frequency_seconds",
       "direct_write_byte_limit"
     )
@@ -129,14 +136,24 @@ class IcebergIOTest extends ScioIOSpec {
 
     val writeParam = IcebergIO.WriteParam(
       Map("a" -> "b"),
-      Map("c" -> "d", "e" -> "f")
+      Map("c" -> "d", "e" -> "f"),
+      List("col1", "col2"),
+      List("partCol1"),
+      extraConfigProperties = Map(
+        "distribution_mode" -> "hash",
+        "autosharding" -> (true: java.lang.Boolean)
+      )
     )
 
     val managedConfig: Map[String, AnyRef] = io.config(writeParam)
 
     managedConfig should contain only (
-      "config_properties" -> Map("c" -> "d", "e" -> "f"),
+      "write_properties" -> Map("c" -> "d", "e" -> "f"),
+      "sort_fields" -> List("col1", "col2"),
+      "partition_fields" -> List("partCol1"),
       "catalog_properties" -> Map("a" -> "b"),
+      "distribution_mode" -> "hash",
+      "autosharding" -> true,
       "table" -> "tableName",
       "catalog_name" -> "catalogName"
     )
