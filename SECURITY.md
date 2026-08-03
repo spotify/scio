@@ -10,9 +10,8 @@ If you have questions about a potential vulnerability, you can also reach out to
 
 ## What to Expect
 
-Confirmed vulnerabilities are handled through [GitHub Security Advisories](https://github.com/spotify/scio/security/advisories). The typical process is:
+Reports are triaged by the maintainers. Confirmed vulnerabilities are handled through [GitHub Security Advisories](https://github.com/spotify/scio/security/advisories):
 
-1. Maintainers triage the report and create a draft security advisory.
-2. A fix is developed in a [private fork](https://docs.github.com/en/code-security/tutorials/fix-reported-vulnerabilities/collaborate-in-a-fork), keeping the vulnerability details confidential until a patch is available.
-3. The fix is released in a new version of Scio.
-4. The security advisory is published with credit to the reporter.
+1. A fix is developed in a [private fork](https://docs.github.com/en/code-security/tutorials/fix-reported-vulnerabilities/collaborate-in-a-fork), keeping the vulnerability details confidential until a patch is available.
+2. The fix is released in a new version of Scio.
+3. The security advisory is published with credit to the reporter.
