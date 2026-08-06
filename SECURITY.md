@@ -11,7 +11,7 @@ To help us triage and reproduce the issue, please include:
 - Steps to reproduce or a proof of concept
 - Any relevant environment details (Scio version, runner, JDK version)
 
-This policy covers the Scio library itself. Vulnerabilities in upstream dependencies such as Apache Beam should be reported to the [Apache Security Team](https://www.apache.org/security/).
+This policy covers only the Scio library itself. Vulnerabilities in upstream dependencies such as Apache Beam should be reported to the [Apache Security Team](https://www.apache.org/security/).
 
 If you have questions about a potential vulnerability, you can also reach out to the maintainers via [GitHub Discussions](https://github.com/spotify/scio/discussions).
 
