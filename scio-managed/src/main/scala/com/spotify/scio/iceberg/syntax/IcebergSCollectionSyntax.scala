@@ -34,9 +34,9 @@ class IcebergSCollectionSyntax[T: RowType: Coder](self: SCollection[T]) {
    * @param catalogProperties
    *   any additional properties required by the Iceberg catalog; see:
    *   https://iceberg.apache.org/docs/latest/catalog-properties
-   * @param writeProperties
-   *   any additional properties to pass to the Iceberg RecordWriter; see:
-   *   https://iceberg.apache.org/docs/latest/configuration/#write-properties
+   * @param tableProperties
+   *   any additional Iceberg table properties to set during dynamic table creation; see:
+   *   https://iceberg.apache.org/docs/latest/configuration/
    * @param sortFields
    *   list of field names defining the sort order for written files
    * @param partitionFields
@@ -56,7 +56,7 @@ class IcebergSCollectionSyntax[T: RowType: Coder](self: SCollection[T]) {
     table: String,
     catalogName: String = null,
     catalogProperties: Map[String, String] = IcebergIO.WriteParam.DefaultCatalogProperties,
-    writeProperties: Map[String, String] = IcebergIO.WriteParam.DefaultWriteProperties,
+    tableProperties: Map[String, String] = IcebergIO.WriteParam.DefaultTableProperties,
     sortFields: List[String] = IcebergIO.WriteParam.DefaultSortFields,
     partitionFields: List[String] = IcebergIO.WriteParam.DefaultPartitionFields,
     extraConfigProperties: Map[String, AnyRef] = IcebergIO.WriteParam.DefaultExtraConfigProperties,
@@ -66,7 +66,7 @@ class IcebergSCollectionSyntax[T: RowType: Coder](self: SCollection[T]) {
 
     val params = IcebergIO.WriteParam(
       catalogProperties,
-      writeProperties,
+      tableProperties,
       sortFields,
       partitionFields,
       Option(triggeringFrequencySeconds).filter(

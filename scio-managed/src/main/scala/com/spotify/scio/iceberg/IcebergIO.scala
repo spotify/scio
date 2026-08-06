@@ -136,7 +136,7 @@ object IcebergIO {
   }
   case class WriteParam private (
     catalogProperties: Map[String, String] = WriteParam.DefaultCatalogProperties,
-    writeProperties: Map[String, String] = WriteParam.DefaultWriteProperties,
+    tableProperties: Map[String, String] = WriteParam.DefaultTableProperties,
     sortFields: List[String] = WriteParam.DefaultSortFields,
     partitionFields: List[String] = WriteParam.DefaultPartitionFields,
     triggeringFrequencySeconds: Option[Int] = None,
@@ -145,7 +145,7 @@ object IcebergIO {
   )
   object WriteParam {
     val DefaultCatalogProperties: Map[String, String] = null
-    val DefaultWriteProperties: Map[String, String] = null
+    val DefaultTableProperties: Map[String, String] = null
     val DefaultSortFields: List[String] = null
     val DefaultPartitionFields: List[String] = null
     val DefaultTriggeringFrequencySeconds: Int = -1

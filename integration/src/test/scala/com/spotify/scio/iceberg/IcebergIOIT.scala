@@ -117,57 +117,8 @@ class IcebergIOIT extends PipelineSpec with ForAllTestContainer {
     }
   }
 
-  it should "write with sort order" in {
-    val sortedTableName = s"${NamespaceName}.sorted_records"
-    val catalogProperties = Map(
-      CatalogUtil.ICEBERG_CATALOG_TYPE -> CatalogUtil.ICEBERG_CATALOG_TYPE_REST,
-      CatalogProperties.URI -> uri
-    )
-    val elements = 1.to(10).map(i => IcebergIOITRecord(i, s"$i", Nested(i % 2 == 0)))
-
-    runWithRealContext() { sc =>
-      sc.parallelize(elements)
-        .saveAsIceberg(
-          sortedTableName,
-          catalogProperties = catalogProperties,
-          sortFields = List("a asc nulls first")
-        )
-    }
-
-    val table = catalog.loadTable(TableIdentifier.parse(sortedTableName))
-    val sortOrder = table.sortOrder()
-    sortOrder.isSorted shouldBe true
-    sortOrder.fields().size() shouldBe 1
-    sortOrder.fields().get(0).direction() shouldBe SortDirection.ASC
-    sortOrder.fields().get(0).nullOrder() shouldBe NullOrder.NULLS_FIRST
-  }
-
-  it should "write with partition spec" in {
-    val partitionedTableName = s"${NamespaceName}.partitioned_records"
-    val catalogProperties = Map(
-      CatalogUtil.ICEBERG_CATALOG_TYPE -> CatalogUtil.ICEBERG_CATALOG_TYPE_REST,
-      CatalogProperties.URI -> uri
-    )
-    val elements = 1.to(10).map(i => IcebergIOITRecord(i, s"$i", Nested(i % 2 == 0)))
-
-    runWithRealContext() { sc =>
-      sc.parallelize(elements)
-        .saveAsIceberg(
-          partitionedTableName,
-          catalogProperties = catalogProperties,
-          partitionFields = List("bucket(b, 2)")
-        )
-    }
-
-    val table = catalog.loadTable(TableIdentifier.parse(partitionedTableName))
-    val spec = table.spec()
-    spec.isPartitioned shouldBe true
-    spec.fields().size() shouldBe 1
-    spec.fields().get(0).name() shouldBe "b_bucket"
-  }
-
-  it should "propagate Iceberg writeProperties" in {
-    val bfTableName = s"${NamespaceName}.bloom_filter_records"
+  it should "propagate Iceberg dynamic table creation properties" in {
+    val tableName = s"${NamespaceName}.dynamic_table_creation"
     val catalogProperties = Map(
       CatalogUtil.ICEBERG_CATALOG_TYPE -> CatalogUtil.ICEBERG_CATALOG_TYPE_REST,
       CatalogProperties.URI -> uri
@@ -177,19 +128,42 @@ class IcebergIOIT extends PipelineSpec with ForAllTestContainer {
     runWithRealContext() { sc =>
       sc.parallelize(elements)
         .saveAsIceberg(
-          bfTableName,
+          tableName,
           catalogProperties = catalogProperties,
-          writeProperties = Map("write.parquet.bloom-filter-enabled.column.b" -> "true")
+          tableProperties = Map(
+            "write.data.path" -> s"$tempDir/custom_path",
+            "write.parquet.bloom-filter-enabled.column.b" -> "true"
+          ),
+          partitionFields = List("bucket(b, 2)"),
+          sortFields = List("a asc nulls first")
         )
     }
 
-    val table = catalog.loadTable(TableIdentifier.parse(bfTableName))
+    val table = catalog.loadTable(TableIdentifier.parse(tableName))
+
+    // Validate PartitionSpec
+    val spec = table.spec()
+    spec.isPartitioned shouldBe true
+    spec.fields().size() shouldBe 1
+    spec.fields().get(0).name() shouldBe "b_bucket"
+
+    // Validate SortOrder
+    val sortOrder = table.sortOrder()
+    sortOrder.isSorted shouldBe true
+    sortOrder.fields().size() shouldBe 1
+    sortOrder.fields().get(0).direction() shouldBe SortDirection.ASC
+    sortOrder.fields().get(0).nullOrder() shouldBe NullOrder.NULLS_FIRST
+
+    // Validate table properties
+    table.properties().get("write.data.path") shouldBe s"$tempDir/custom_path"
+
     val tasks = table.newScan().planFiles()
     try {
       val dataFiles = tasks.iterator().asScala.map(_.file().path().toString).toSeq
       dataFiles should not be empty
 
       dataFiles.foreach { path =>
+        path should startWith(s"$tempDir/custom_path/")
         val reader = ParquetFileReader.open(BeamInputFile.of(path))
         try {
           reader.getFooter.getBlocks.asScala.foreach { block =>
@@ -197,12 +171,7 @@ class IcebergIOIT extends PipelineSpec with ForAllTestContainer {
               val hasBloom = col.getBloomFilterOffset > 0
               col.getPath.toDotString match {
                 case "b" =>
-                  // flip assertion once https://github.com/apache/beam/pull/39250/ is release in Beam 2.76
-                  withClue(
-                    "Iceberg writeProperties are not supported in Beam versions <= 2.76. Once Beam is upgraded, flip this assertion to `true`."
-                  ) {
-                    hasBloom shouldBe false
-                  }
+                  hasBloom shouldBe true
                 case _ =>
                   hasBloom shouldBe false
               }

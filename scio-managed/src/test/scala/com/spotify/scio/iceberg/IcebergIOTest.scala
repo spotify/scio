@@ -74,7 +74,7 @@ class IcebergIOTest extends ScioIOSpec {
       // reads
       "filter",
       // writes
-      "write_properties",
+      "table_properties",
       "sort_fields",
       "partition_fields",
       "triggering_frequency_seconds",
@@ -148,7 +148,7 @@ class IcebergIOTest extends ScioIOSpec {
     val managedConfig: Map[String, AnyRef] = io.config(writeParam)
 
     managedConfig should contain only (
-      "write_properties" -> Map("c" -> "d", "e" -> "f"),
+      "table_properties" -> Map("c" -> "d", "e" -> "f"),
       "sort_fields" -> List("col1", "col2"),
       "partition_fields" -> List("partCol1"),
       "catalog_properties" -> Map("a" -> "b"),
