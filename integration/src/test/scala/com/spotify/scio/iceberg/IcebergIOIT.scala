@@ -35,7 +35,7 @@ import org.apache.iceberg.{
   NullOrder,
   PartitionSpec,
   Schema,
-  SortDirection
+  SortOrder
 }
 import org.apache.parquet.hadoop.ParquetFileReader
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy
@@ -97,6 +97,8 @@ class IcebergIOIT extends PipelineSpec with ForAllTestContainer {
     )
   }
 
+  override def beforeStop(): Unit = catalog.close()
+
   "IcebergIO" should "work" in {
     val catalogProperties = Map(
       CatalogUtil.ICEBERG_CATALOG_TYPE -> CatalogUtil.ICEBERG_CATALOG_TYPE_REST,
@@ -125,13 +127,15 @@ class IcebergIOIT extends PipelineSpec with ForAllTestContainer {
     )
     val elements = 1.to(100).map(i => IcebergIOITRecord(i, s"value_$i", Nested(i % 2 == 0)))
 
+    val customWriteDataPath = s"$tempDir/custom_path"
+
     runWithRealContext() { sc =>
       sc.parallelize(elements)
         .saveAsIceberg(
           tableName,
           catalogProperties = catalogProperties,
           tableProperties = Map(
-            "write.data.path" -> s"$tempDir/custom_path",
+            "write.data.path" -> customWriteDataPath,
             "write.parquet.bloom-filter-enabled.column.b" -> "true"
           ),
           partitionFields = List("bucket(b, 2)"),
@@ -141,29 +145,23 @@ class IcebergIOIT extends PipelineSpec with ForAllTestContainer {
 
     val table = catalog.loadTable(TableIdentifier.parse(tableName))
 
-    // Validate PartitionSpec
-    val spec = table.spec()
-    spec.isPartitioned shouldBe true
-    spec.fields().size() shouldBe 1
-    spec.fields().get(0).name() shouldBe "b_bucket"
-
-    // Validate SortOrder
-    val sortOrder = table.sortOrder()
-    sortOrder.isSorted shouldBe true
-    sortOrder.fields().size() shouldBe 1
-    sortOrder.fields().get(0).direction() shouldBe SortDirection.ASC
-    sortOrder.fields().get(0).nullOrder() shouldBe NullOrder.NULLS_FIRST
+    // Validate PartitionSpec and SortOrder
+    table.spec() shouldEqual PartitionSpec.builderFor(table.schema()).bucket("b", 2).build()
+    table.sortOrder() shouldEqual SortOrder
+      .builderFor(table.schema())
+      .asc("a", NullOrder.NULLS_FIRST)
+      .build()
 
     // Validate table properties
-    table.properties().get("write.data.path") shouldBe s"$tempDir/custom_path"
+    table.properties().get("write.data.path") shouldBe customWriteDataPath
 
     val tasks = table.newScan().planFiles()
     try {
-      val dataFiles = tasks.iterator().asScala.map(_.file().path().toString).toSeq
+      val dataFiles = tasks.iterator().asScala.map(_.file().location()).toSeq
       dataFiles should not be empty
 
       dataFiles.foreach { path =>
-        path should startWith(s"$tempDir/custom_path/")
+        path should startWith(s"$customWriteDataPath/b_bucket=")
         val reader = ParquetFileReader.open(BeamInputFile.of(path))
         try {
           reader.getFooter.getBlocks.asScala.foreach { block =>
