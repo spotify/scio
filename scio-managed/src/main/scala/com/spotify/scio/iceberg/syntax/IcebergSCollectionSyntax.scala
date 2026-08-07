@@ -36,7 +36,7 @@ class IcebergSCollectionSyntax[T: RowType: Coder](self: SCollection[T]) {
    *   https://iceberg.apache.org/docs/latest/catalog-properties
    * @param tableProperties
    *   any additional Iceberg table properties to set during dynamic table creation; see:
-   *   https://iceberg.apache.org/docs/latest/configuration/
+   *   https://iceberg.apache.org/docs/latest/configuration/#write-properties
    * @param sortFields
    *   list of field names defining the sort order for written files
    * @param partitionFields
