@@ -13,9 +13,9 @@
     </description>
   </property>
   <property>
-    <!-- 512 MB blocks -->
+    <!-- 256 MB blocks -->
     <name>parquet.block.size</name>
-    <value>536870912</value>
+    <value>268435456</value>
   </property>
   <property>
     <!-- This defaults to SEQUENTIAL in GoogleCloudStorageReadOptions -->
