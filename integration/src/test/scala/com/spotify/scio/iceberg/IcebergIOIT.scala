@@ -17,8 +17,10 @@
 package com.spotify.scio.iceberg
 
 import com.dimafeng.testcontainers.{ForAllTestContainer, GenericContainer}
+import com.spotify.scio.parquet.BeamInputFile
 import com.spotify.scio.testing.PipelineSpec
 import magnolify.beam._
+import magnolify.beam.logical.millis._
 import org.apache.iceberg.catalog.{Namespace, TableIdentifier}
 import org.apache.iceberg.rest.RESTCatalog
 import org.apache.iceberg.types.Types.{
@@ -26,18 +28,28 @@ import org.apache.iceberg.types.Types.{
   IntegerType,
   NestedField,
   StringType,
-  StructType
+  StructType,
+  TimestampType
 }
-import org.apache.iceberg.{CatalogProperties, CatalogUtil, PartitionSpec, Schema}
+import org.apache.iceberg.{
+  CatalogProperties,
+  CatalogUtil,
+  NullOrder,
+  PartitionSpec,
+  Schema,
+  SortOrder
+}
+import org.apache.parquet.hadoop.ParquetFileReader
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy
 
-import java.time.Duration
+import java.time.{Duration, Instant}
 import java.io.File
 import java.nio.file.Files
+import java.time.temporal.ChronoUnit
 import scala.jdk.CollectionConverters._
 
 case class Nested(d: Boolean)
-case class IcebergIOITRecord(a: Int, b: String, c: Nested)
+case class IcebergIOITRecord(ts: Instant, a: Int, b: String, c: Nested)
 object IcebergIOITRecord {
   implicit val icebergIOITRecordRowType: RowType[IcebergIOITRecord] = RowType[IcebergIOITRecord]
 }
@@ -65,32 +77,41 @@ class IcebergIOIT extends PipelineSpec with ForAllTestContainer {
 
   lazy val uri = s"http://${container.containerIpAddress}:${container.mappedPort(ContainerPort)}"
 
-  override def afterStart(): Unit = {
+  lazy val tableSchema = new Schema(
+    NestedField.required(1, "ts", TimestampType.withZone()),
+    NestedField.required(2, "a", IntegerType.get()),
+    NestedField.required(3, "b", StringType.get()),
+    NestedField.required(
+      4,
+      "c",
+      StructType.of(NestedField.required(5, "d", BooleanType.get()))
+    )
+  )
+
+  lazy val catalog: RESTCatalog = {
     val cat = new RESTCatalog()
     cat.initialize(CatalogName, Map("uri" -> uri).asJava)
+    cat
+  }
 
-    cat.createNamespace(Namespace.of(NamespaceName))
-    cat.createTable(
+  override def afterStart(): Unit = {
+    catalog.createNamespace(Namespace.of(NamespaceName))
+    catalog.createTable(
       TableIdentifier.parse(TableName),
-      new Schema(
-        NestedField.required(0, "a", IntegerType.get()),
-        NestedField.required(1, "b", StringType.get()),
-        NestedField.required(
-          2,
-          "c",
-          StructType.of(NestedField.required(3, "d", BooleanType.get()))
-        )
-      ),
+      tableSchema,
       PartitionSpec.unpartitioned()
     )
   }
+
+  override def beforeStop(): Unit = catalog.close()
 
   "IcebergIO" should "work" in {
     val catalogProperties = Map(
       CatalogUtil.ICEBERG_CATALOG_TYPE -> CatalogUtil.ICEBERG_CATALOG_TYPE_REST,
       CatalogProperties.URI -> uri
     )
-    val elements = 1.to(10).map(i => IcebergIOITRecord(i, s"$i", Nested(i % 2 == 0)))
+    val ts = Instant.now().truncatedTo(ChronoUnit.DAYS)
+    val elements = 1.to(10).map(i => IcebergIOITRecord(ts, i, s"$i", Nested(i % 2 == 0)))
 
     runWithRealContext() { sc =>
       sc.parallelize(elements)
@@ -102,6 +123,73 @@ class IcebergIOIT extends PipelineSpec with ForAllTestContainer {
         TableName,
         catalogProperties = catalogProperties
       ) should containInAnyOrder(elements)
+    }
+  }
+
+  it should "propagate Iceberg dynamic table creation properties" in {
+    val tableName = s"${NamespaceName}.dynamic_table_creation"
+    val catalogProperties = Map(
+      CatalogUtil.ICEBERG_CATALOG_TYPE -> CatalogUtil.ICEBERG_CATALOG_TYPE_REST,
+      CatalogProperties.URI -> uri
+    )
+    val elements =
+      1.to(100).map(i => IcebergIOITRecord(Instant.now(), i, s"value_$i", Nested(i % 2 == 0)))
+
+    val customWriteDataPath = s"$tempDir/custom_path"
+
+    runWithRealContext() { sc =>
+      sc.parallelize(elements)
+        .saveAsIceberg(
+          tableName,
+          catalogProperties = catalogProperties,
+          tableProperties = Map(
+            "write.data.path" -> customWriteDataPath,
+            "write.parquet.bloom-filter-enabled.column.b" -> "true"
+          ),
+          partitionFields = List("day(ts)"),
+          sortFields = List("a asc nulls first")
+        )
+    }
+
+    val table = catalog.loadTable(TableIdentifier.parse(tableName))
+    table.schema().sameSchema(tableSchema) shouldBe true
+
+    // Validate PartitionSpec and SortOrder
+    table.spec() shouldEqual PartitionSpec.builderFor(table.schema()).day("ts").build()
+    table.sortOrder() shouldEqual SortOrder
+      .builderFor(table.schema())
+      .asc("a", NullOrder.NULLS_FIRST)
+      .build()
+
+    // Validate table properties
+    table.properties().get("write.data.path") shouldBe customWriteDataPath
+
+    val tasks = table.newScan().planFiles()
+    try {
+      val dataFiles = tasks.iterator().asScala.map(_.file().location()).toSeq
+      dataFiles should not be empty
+
+      dataFiles.foreach { path =>
+        path should startWith(s"$customWriteDataPath/ts_day=")
+        val reader = ParquetFileReader.open(BeamInputFile.of(path))
+        try {
+          reader.getFooter.getBlocks.asScala.foreach { block =>
+            block.getColumns.asScala.foreach { col =>
+              val hasBloom = col.getBloomFilterOffset > 0
+              col.getPath.toDotString match {
+                case "b" =>
+                  hasBloom shouldBe true
+                case _ =>
+                  hasBloom shouldBe false
+              }
+            }
+          }
+        } finally {
+          reader.close()
+        }
+      }
+    } finally {
+      tasks.close()
     }
   }
 }

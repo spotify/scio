@@ -48,19 +48,23 @@ private[parquet] object GcsConnectorUtil {
       case _                            => None
     } match {
       case Success(Some(sa)) =>
+        conf.set("fs.gs.auth.type", "SERVICE_ACCOUNT_JSON_KEYFILE")
         conf.set("fs.gs.auth.service.account.json.keyfile", sa)
       case Success(None) =>
+        conf.set("fs.gs.auth.type", "ACCESS_TOKEN_PROVIDER")
         conf.set(
           "fs.gs.auth.access.token.provider.impl",
           "com.spotify.scio.parquet.ApplicationDefaultTokenProvider"
         )
       case _ =>
+        conf.set("fs.gs.auth.type", "UNAUTHENTICATED")
         conf.setBoolean("fs.gs.auth.service.account.enable", false)
         conf.setBoolean("fs.gs.auth.null.enable", true)
     }
   }
 
   def unsetCredentials(conf: Configuration): Unit = {
+    conf.unset("fs.gs.auth.type")
     conf.unset("fs.gs.auth.service.account.json.keyfile")
     conf.unset("fs.gs.auth.access.token.provider.impl")
     conf.unset("fs.gs.auth.null.enable")
