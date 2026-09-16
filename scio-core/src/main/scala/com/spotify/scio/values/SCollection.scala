@@ -147,6 +147,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def setCoder(coder: org.apache.beam.sdk.coders.Coder[T]): SCollection[T] =
     context.wrap(internal.setCoder(coder))
 
+  /** Assign a Schema to an SCollection[Row]. */
+  def setRowSchema(schema: org.apache.beam.sdk.schemas.Schema)(implicit
+    ev: T <:< Row
+  ): SCollection[T] =
+    context.wrap(internal.setRowSchema(schema))
+
   def setSchema(schema: Schema[T])(implicit ct: ClassTag[T]): SCollection[T] =
     if (!internal.hasSchema) {
       val (s, to, from) = SchemaMaterializer.materialize(schema)

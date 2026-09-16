@@ -76,4 +76,8 @@ object CoreSysProps {
   val TmpDir: SysProp = SysProp("java.io.tmpdir", "java temporary directory")
   val User: SysProp = SysProp("user.name", "system username")
   val UserDir: SysProp = SysProp("user.dir", "user dir")
+  val StagingJarsAllowedEnvDirs: SysProp = SysProp(
+    "staging.jars.allowedenvdirs",
+    "Colon-separated list of additional dot-directories under user.home to allow for staging (e.g. .gradle:.venv)"
+  )
 }
