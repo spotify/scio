@@ -25,6 +25,26 @@ import org.scalatest.matchers.should.Matchers
 
 class GcsConnectorUtilTest extends AnyFlatSpec with Matchers {
 
+  "setCredentials" should "set SERVICE_ACCOUNT_JSON_KEYFILE auth type for service account credentials" in {
+    val conf = ParquetConfiguration.empty()
+    sys.env.get("GOOGLE_APPLICATION_CREDENTIALS").foreach { _ =>
+      GcsConnectorUtil.setCredentials(conf)
+      val authType = conf.get("fs.gs.auth.type")
+      authType should (
+        equal("SERVICE_ACCOUNT_JSON_KEYFILE") or equal("ACCESS_TOKEN_PROVIDER")
+      )
+    }
+  }
+
+  it should "set auth type and clear it on unset" in {
+    val conf = ParquetConfiguration.empty()
+    GcsConnectorUtil.setCredentials(conf)
+    conf.get("fs.gs.auth.type") should not be null
+
+    GcsConnectorUtil.unsetCredentials(conf)
+    conf.get("fs.gs.auth.type") shouldBe null
+  }
+
   private def getInputPaths(sc: ScioContext, path: String): Array[String] = {
     val conf = ParquetConfiguration.empty()
     GcsConnectorUtil.setInputPaths(sc, conf, path)
