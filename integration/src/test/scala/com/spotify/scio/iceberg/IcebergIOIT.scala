@@ -57,7 +57,6 @@ case class IcebergIOITRecord(
   c: Nested
 )
 object IcebergIOITRecord {
-  implicit val instantRowField: RowField[Instant] = rfInstantMicros
   implicit val localDateTimeRowField: RowField[LocalDateTime] =
     magnolify.beam.logical.timestamp.millis.rfLocalDateTimeMillis
   implicit val icebergIOITRecordRowType: RowType[IcebergIOITRecord] = RowType[IcebergIOITRecord]
