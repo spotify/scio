@@ -207,6 +207,10 @@ ThisBuild / githubWorkflowJavaVersions := Seq(javaDefault, java21, java25) // de
 ThisBuild / githubWorkflowBuildPreamble ++= Seq(githubWorkflowGcpAuthStep, githubWorkflowSetupStep)
 ThisBuild / githubWorkflowBuildPostamble ++= Seq(
   WorkflowStep.Sbt(
+    List("integration/Test/compile"),
+    name = Some("Compile integration tests")
+  ),
+  WorkflowStep.Sbt(
     List("undeclaredCompileDependenciesTest", "unusedCompileDependenciesTest"),
     name = Some("Check dependencies")
   )
