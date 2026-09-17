@@ -114,6 +114,9 @@ jobs:
         if: matrix.java == 'corretto@17' && matrix.os == 'ubuntu-22.04'
         run: sbt '++ ${{ matrix.scala }}' doc
 
+      - name: Compile integration tests
+        run: sbt '++ ${{ matrix.scala }}' integration/Test/compile
+
       - name: Check dependencies
         run: sbt '++ ${{ matrix.scala }}' undeclaredCompileDependenciesTest unusedCompileDependenciesTest
 

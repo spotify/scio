@@ -20,7 +20,12 @@ import com.dimafeng.testcontainers.{ForAllTestContainer, GenericContainer}
 import com.spotify.scio.parquet.BeamInputFile
 import com.spotify.scio.testing.PipelineSpec
 import magnolify.beam._
-import magnolify.beam.logical.timestamp.micros._
+// Exclude rfLocalDateTimeMicros (raw INT64) — IcebergIO needs SqlTypes.DATETIME for unzoned
+// timestamps, which only exists in the millis grouping (see localDateTimeRowField below).
+// Magnolify groups implicits by precision, but IcebergIO consumes by logical type: Instant uses
+// Timestamp.MICROS while LocalDateTime uses DateTime. Those axes don't align, so a single
+// wildcard import can't serve both.
+import magnolify.beam.logical.timestamp.micros.{rfLocalDateTimeMicros => _, _}
 import org.apache.iceberg.catalog.{Namespace, TableIdentifier}
 import org.apache.iceberg.rest.RESTCatalog
 import org.apache.iceberg.types.Types.{
