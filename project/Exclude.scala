@@ -6,6 +6,10 @@ object Exclude {
   val metricsCore: ExclusionRule = "com.codahale.metrics" % "metrics-core"
   // kafka isn't exposed in scio and pulling too many things
   val beamKafka: ExclusionRule = "org.apache.beam" % "beam-sdks-java-io-kafka"
+  // beam-sdks-java-io-components pulls this in only for EnvoyRateLimiterFactory, which scio
+  // never reaches. Its jar bundles unshaded com.google.api/com.google.rpc classes built with
+  // protobuf 3.x gencode, which collide with proto-google-common-protos (4.x gencode).
+  val envoyControlPlane: ExclusionRule = "io.envoyproxy.controlplane" % "api"
   // logger implementation must be given by the runner lib
   val loggerImplementations: Seq[ExclusionRule] = Seq(
     "ch.qos.logback" % "logback-classic",
