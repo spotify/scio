@@ -430,6 +430,7 @@ val commonSettings = bomSettings ++ Def.settings(
   },
   javaOptions := JavaOptions.defaults(javaMajorVersion),
   excludeDependencies += Exclude.beamKafka,
+  excludeDependencies += Exclude.envoyControlPlane,
   excludeDependencies ++= Exclude.loggerImplementations,
   excludeDependencies ++= Exclude.jacksonCrossBuilt(scalaVersion.value),
   dependencyOverrides ++= Seq(
@@ -1580,6 +1581,9 @@ lazy val `scio-repl` = project
           MergeStrategy.discard
         case PathList(segments @ _*) if segments.last == "module-info.class" =>
           // drop conflicting module-info.class
+          MergeStrategy.discard
+        case PathList("META-INF", "versions", _, "OSGI-INF", "MANIFEST.MF") =>
+          // drop conflicting OSGi bundle metadata; an uber jar is not a bundle
           MergeStrategy.discard
         case PathList("META-INF", "gradle", "incremental.annotation.processors") =>
           // drop conflicting kotlin compiler info
