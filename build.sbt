@@ -83,6 +83,7 @@ val perfmarkVersion = "0.27.0"
 val algebirdVersion = "0.13.10"
 val annoy4sVersion = "0.10.0"
 val annoyVersion = "0.2.6"
+val bouncyCastleVersion = "1.82"
 val breezeVersion = "2.1.0"
 val caffeineVersion = "3.2.4"
 val cassandraDriverVersion = "3.11.5"
@@ -446,6 +447,9 @@ val commonSettings = bomSettings ++ Def.settings(
     "org.apache.httpcomponents" % "httpclient" % httpClientVersion,
     "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
     "org.slf4j" % "slf4j-api" % slf4jVersion, // slf4j-bom only available for v2
+    // hadoop-common requires 1.82 but is Provided in scio-core, so modules that don't get it
+    // transitively fall back to google-cloud-spanner's 1.80. Pin for one crypto provider.
+    "org.bouncycastle" % "bcprov-jdk18on" % bouncyCastleVersion,
     // remove and let BOM override version after Beam upgrades to 4.x
     // see: https://github.com/spotify/scio/issues/5617
     "com.google.protobuf" % "protobuf-java" % protobufVersion,
