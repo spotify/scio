@@ -36,6 +36,10 @@ Also check out the [SDK Version Support Status](https://cloud.google.com/dataflo
 
 | **Scio Version** | **Beam Version** | **Details**                                            |
 |:----------------:|:----------------:|:-------------------------------------------------------|
+|     0.15.10      |      2.76.0      | This version will be deprecated on August 31, 2027.    |
+|      0.15.9      |      2.74.0      | This version will be deprecated on June 2, 2027.       |
+|      0.15.8      |      2.74.0      | This version will be deprecated on June 2, 2027.       |
+|      0.15.7      |      2.74.0      | This version will be deprecated on June 2, 2027.       |
 |      0.15.6      |      2.74.0      | This version will be deprecated on June 2, 2027.       |
 |      0.15.5      |      2.72.0      | This version will be deprecated on March 30, 2027.     |
 |      0.15.4      |      2.71.0      | This version will be deprecated on January 22, 2027.   |
