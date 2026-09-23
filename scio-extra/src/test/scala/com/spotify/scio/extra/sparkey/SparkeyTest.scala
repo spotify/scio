@@ -32,6 +32,9 @@ import org.apache.commons.io.FileUtils
 import java.io.File
 import java.nio.file.Files
 import java.util.Arrays
+import java.util.concurrent.{CountDownLatch, Executors}
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
 
 final case class TestCache[K, V](testId: String) extends CacheT[K, V, CCache[K, V]] {
@@ -99,6 +102,62 @@ class SparkeyTest extends PipelineSpec {
   val sideData: Seq[(String, String)] = Seq(("ab", "1"), ("bc", "2"), ("cd", "3"))
   val bigSideData: IndexedSeq[(String, String)] =
     (0 until 100).map(i => (('a' + i).toString, i.toString))
+
+  "Sparkey worker functions" should "not capture an enclosing closure" in {
+    val workerClasses = Seq(
+      classOf[SparkeyIO.ShardByKey[Any, Any]],
+      classOf[SparkeyIO.WriteShard[Any, Any]]
+    )
+
+    workerClasses.foreach { cls =>
+      cls.getDeclaredFields.map(_.getName) should not contain "$outer"
+    }
+  }
+
+  it should "support concurrent sharded writes from JobTest" in {
+    val jobCount = 16
+    val ready = new CountDownLatch(jobCount)
+    val start = new CountDownLatch(1)
+    val executor = Executors.newFixedThreadPool(jobCount)
+    implicit val executionContext: ExecutionContext = ExecutionContext.fromExecutor(executor)
+
+    try {
+      val jobs = (0 until jobCount).map { jobId =>
+        Future {
+          val data = Seq(
+            s"key-$jobId-a" -> s"value-$jobId-a",
+            s"key-$jobId-b" -> s"value-$jobId-b"
+          )
+          ready.countDown()
+          start.await()
+
+          JobTest { sc =>
+            val sideInput = sc
+              .parallelize(data)
+              .asSparkeySideInput(
+                numShards = 8,
+                compressionType = CompressionType.SNAPPY,
+                compressionBlockSize = 1024
+              )
+
+            sc.parallelize(data.map(_._1))
+              .withSideInputs(sideInput)
+              .map { case (key, ctx) => ctx(sideInput).getAsString(key) }
+              .toSCollection
+              .saveAsTextFile("output")
+          }
+            .output(TextIO("output"))(_ should containInAnyOrder(data.map(_._2)))
+            .run()
+        }
+      }
+
+      ready.await()
+      start.countDown()
+      Await.result(Future.sequence(jobs), 5.minutes)
+    } finally {
+      executor.shutdownNow()
+    }
+  }
 
   "JobTest" should "support mocking String-keyed Sparkey" in {
     val input = Map("a" -> "b", "c" -> "d")
