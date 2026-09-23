@@ -48,6 +48,51 @@ object SparkeyIO {
   def apply(path: String): SparkeyTestIO[SparkeyReader] = SparkeyTestIO[SparkeyReader](path)
   def output[K, V](path: String): SparkeyTestIO[(K, V)] = SparkeyTestIO[(K, V)](path)
 
+  // Keep this as an explicitly serializable class without a `$outer` reference. If this is an
+  // inline closure, Chill's ClosureCleaner must reconstruct its enclosing closure and may race on
+  // its non-thread-safe caches when multiple pipelines are constructed concurrently.
+  // See the thread-safety TODO and mutable cache implementation in Chill 0.10.0:
+  // https://github.com/twitter/chill/blob/0a34e50f742ab74598c81f153cfe8ad90bf3a859/chill-scala/src/main/scala/com/twitter/chill/ClosureCleaner.scala#L53-L58
+  // https://github.com/twitter/chill/blob/0a34e50f742ab74598c81f153cfe8ad90bf3a859/chill-scala/src/main/scala/com/twitter/chill/ClosureCleaner.scala#L164-L172
+  final private[sparkey] class ShardByKey[K, V](
+    writable: SparkeyWritable[K, V],
+    numShards: Short
+  ) extends (((K, V)) => Short)
+      with Serializable {
+    override def apply(kv: (K, V)): Short =
+      floorMod(writable.shardHash(kv._1), numShards.toInt).toShort
+  }
+
+  // Like ShardByKey, this must serialize directly instead of relying on Chill to clean an enclosing
+  // closure. Keep all worker state as constructor fields and do not move this back into writeSparkey.
+  final private[sparkey] class WriteShard[K, V](
+    tempPath: String,
+    numShards: Short,
+    rfu: RemoteFileUtil,
+    maxMemoryUsage: Long,
+    compressionType: CompressionType,
+    compressionBlockSize: Int,
+    writable: SparkeyWritable[K, V]
+  ) extends (((Short, (Option[Iterable[(K, V)]], Option[Unit]))) => (Short, SparkeyUri))
+      with Serializable {
+    override def apply(
+      input: (Short, (Option[Iterable[(K, V)]], Option[Unit]))
+    ): (Short, SparkeyUri) = {
+      val (shard, (elements, _)) = input
+      // Use a temp URI so that retries do not fail if a bundle is retried.
+      val tempUri = SparkeyUri(s"$tempPath/${UUID.randomUUID}")
+      shard -> writeToSparkey(
+        tempUri.sparkeyUriForShard(shard, numShards),
+        rfu,
+        maxMemoryUsage,
+        compressionType,
+        compressionBlockSize,
+        elements.getOrElse(Iterable.empty),
+        writable
+      )
+    }
+  }
+
   private def writeToSparkey[K, V](
     uri: SparkeyUri,
     rfu: RemoteFileUtil,
@@ -115,7 +160,7 @@ object SparkeyIO {
     data.transform { collection =>
       // shard by key hash
       val shards = collection
-        .groupBy { case (k, _) => floorMod(writable.shardHash(k), numShards.toInt).toShort }
+        .groupBy(new ShardByKey(writable, numShards))
 
       // all shards
       val allShards = sc
@@ -125,20 +170,17 @@ object SparkeyIO {
       // write files to temporary locations
       val tempShardUris = shards
         .hashFullOuterJoin(allShards)
-        .map { case (shard, (xs, _)) =>
-          // use a temp uri so that if a bundle fails retries will not fail
-          val tempUri = SparkeyUri(s"$tempPath/${UUID.randomUUID}")
-          // perform the write to the temp uri
-          shard -> writeToSparkey(
-            tempUri.sparkeyUriForShard(shard, numShards),
+        .map(
+          new WriteShard(
+            tempPath,
+            numShards,
             rfu,
             maxMemoryUsage,
             compressionType,
             compressionBlockSize,
-            xs.getOrElse(Iterable.empty),
             writable
           )
-        }
+        )
 
       // TODO WriteFiles inserts a reshuffle here for unclear reasons
 
