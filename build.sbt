@@ -1884,6 +1884,7 @@ lazy val site = project
       `scio-parquet`,
       `scio-redis`,
       `scio-smb`,
+      `scio-snowflake`,
       `scio-tensorflow`,
       `scio-test-core`,
       `scio-test-google-cloud-platform`,
