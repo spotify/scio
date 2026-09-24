@@ -1879,6 +1879,7 @@ lazy val site = project
       `scio-google-cloud-platform`,
       `scio-grpc`,
       `scio-jdbc`,
+      `scio-managed`,
       `scio-neo4j`,
       `scio-parquet`,
       `scio-redis`,
