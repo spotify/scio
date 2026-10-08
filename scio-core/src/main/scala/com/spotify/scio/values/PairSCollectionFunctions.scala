@@ -717,7 +717,13 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group per_key
    */
   def distinctByKey: SCollection[(K, V)] =
-    self.distinctBy(_._1)
+    self.transform { me =>
+      me
+        // we use aggregate by key to avoid errors in streaming mode
+        // when a pane would fire without any element for the key
+        .aggregateByKey[Option[V]](None)(_ orElse Some(_), _ orElse _)
+        .flatMap { case (k, optV) => optV.map(v => (k, v)) }
+    }
 
   /**
    * Convert values into pairs of (value, timestamp).
