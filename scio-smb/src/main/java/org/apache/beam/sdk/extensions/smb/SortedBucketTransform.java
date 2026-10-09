@@ -53,12 +53,14 @@ import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.Filter;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
+import org.apache.beam.sdk.transforms.Reshuffle;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.join.CoGbkResult;
 import org.apache.beam.sdk.transforms.join.CoGbkResultSchema;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PBegin;
+import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PCollectionView;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.TupleTagList;
@@ -83,6 +85,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
   private final BucketSource<FinalKeyT> bucketSource;
   private final DoFn<Iterable<MergedBucket>, KV<BucketShardId, ResourceId>> finalizeBuckets;
   private final ParDo.SingleOutput<BucketItem, MergedBucket> doFn;
+  private final boolean usesSideInputs;
 
   public SortedBucketTransform(
       List<SortedBucketSource.BucketedInput<?>> sources,
@@ -99,13 +102,14 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       String filenameSuffix,
       String filenamePrefix) {
     Preconditions.checkNotNull(outputDirectory, "outputDirectory is not set");
+    usesSideInputs = sideInputTransformFn != null;
     Preconditions.checkState(
-        !((transformFn == null) && (sideInputTransformFn == null)), // at least one defined
+        transformFn != null || usesSideInputs, // at least one defined
         "At least one of transformFn and sideInputTransformFn must be set");
     Preconditions.checkState(
-        !((transformFn != null) && (sideInputTransformFn != null)), // only one defined
+        transformFn == null || !usesSideInputs, // only one defined
         "At most one of transformFn and sideInputTransformFn may be set");
-    if (sideInputTransformFn != null) {
+    if (usesSideInputs) {
       Preconditions.checkNotNull(sides, "If using sideInputTransformFn, sides must not be null");
     }
 
@@ -151,11 +155,18 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
 
   @Override
   public final WriteResult expand(final PBegin begin) {
-    return WriteResult.fromTuple(
+    PCollection<BucketItem> bucketOffsets =
         begin
             .getPipeline()
             // outputs bucket offsets for the various SMB readers
-            .apply("BucketOffsets", Read.from(bucketSource))
+            .apply("BucketOffsets", Read.from(bucketSource));
+
+    if (usesSideInputs) {
+      bucketOffsets = bucketOffsets.apply("RedistributeBuckets", Reshuffle.viaRandomKey());
+    }
+
+    return WriteResult.fromTuple(
+        bucketOffsets
             .apply("MergeBuckets", this.doFn)
             .apply(Filter.by(Objects::nonNull))
             .apply(Group.globally())
