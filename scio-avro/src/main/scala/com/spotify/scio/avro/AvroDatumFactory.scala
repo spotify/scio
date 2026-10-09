@@ -17,7 +17,7 @@
 package com.spotify.scio.avro
 
 import org.apache.avro.{Conversion, Schema}
-import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
+import org.apache.avro.generic.{GenericData, GenericDatumReader, GenericRecord}
 import org.apache.avro.io.{DatumReader, DatumWriter}
 import org.apache.avro.specific.{
   SpecificData,
@@ -26,6 +26,9 @@ import org.apache.avro.specific.{
   SpecificRecord
 }
 import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory
+
+import java.lang.reflect.{InvocationHandler, InvocationTargetException, Method, Proxy}
+import java.util.concurrent.ConcurrentHashMap
 
 import scala.jdk.CollectionConverters._
 import scala.util.Try
@@ -40,7 +43,9 @@ import scala.util.chaining._
  */
 private[scio] object GenericRecordDatumFactory extends AvroDatumFactory.GenericDatumFactory {
 
-  private class ScioGenericDatumReader extends GenericDatumReader[GenericRecord] {
+  // own GenericData instance so disabling the fast reader doesn't touch the GenericData.get() singleton
+  private class ScioGenericDatumReader
+      extends GenericDatumReader[GenericRecord](null, null, new GenericData()) {
     override def findStringClass(schema: Schema): Class[_] = super.findStringClass(schema) match {
       case cls if cls == classOf[CharSequence] => classOf[String]
       case cls                                 => cls
@@ -48,6 +53,7 @@ private[scio] object GenericRecordDatumFactory extends AvroDatumFactory.GenericD
   }
   override def apply(writer: Schema, reader: Schema): DatumReader[GenericRecord] = {
     val datumReader = new ScioGenericDatumReader()
+    AvroCompat.disableFastReader(datumReader.getData)
     datumReader.setExpected(reader)
     datumReader.setSchema(writer)
     datumReader
@@ -98,12 +104,14 @@ private[scio] class SpecificRecordDatumFactory[T <: SpecificRecord](recordType: 
   }
 
   override def apply(writer: Schema, reader: Schema): DatumReader[T] = {
+    AvroCompat.trustClasses(recordType, reader)
     val datumReader = new ScioSpecificDatumReader()
     // avro 1.8 generated code does not add conversions to the data
     if (runtimeAvroVersion.exists(_.startsWith("1.8."))) {
       addLogicalTypeConversions(datumReader.getData.asInstanceOf[SpecificData], reader)
     }
-    datumReader.getData
+    // the data is the record class model, shared with other readers of the same class
+    AvroCompat.disableFastReader(datumReader.getData)
     datumReader.setExpected(reader)
     datumReader.setSchema(writer)
     datumReader
@@ -153,4 +161,87 @@ private[scio] object SpecificRecordDatumFactory {
     }
   }
 
+}
+
+/**
+ * Compatibility with avro runtime versions newer than the one scio compiles against. All avro APIs
+ * used here are accessed by reflection, so this is a no-op on versions that don't have them.
+ */
+private[scio] object AvroCompat {
+
+  val FastReaderProperty = "org.apache.avro.fastread"
+
+  private lazy val setFastReaderEnabled: Option[Method] =
+    Try(classOf[GenericData].getMethod("setFastReaderEnabled", classOf[Boolean])).toOption
+
+  /**
+   * Avro 1.10+ FastReaderBuilder (enabled by default since 1.12) doesn't call
+   * `GenericDatumReader.findStringClass`, so [[org.apache.avro.util.Utf8]] leaks into
+   * [[CharSequence]] fields despite scio's override. Setting `org.apache.avro.fastread=true`
+   * explicitly keeps the fast reader.
+   */
+  def disableFastReader(data: GenericData): Unit =
+    if (!"true".equalsIgnoreCase(System.getProperty(FastReaderProperty))) {
+      setFastReaderEnabled.foreach(_.invoke(data, java.lang.Boolean.FALSE))
+    }
+
+  private val JavaClassProps = Seq("java-class", "java-key-class", "java-element-class")
+
+  private val trustedClassNames: java.util.Set[String] = ConcurrentHashMap.newKeySet[String]()
+
+  /**
+   * Avro 1.12.1+ validates every class it loads by name against `ClassSecurityValidator`, and
+   * 1.12.2 rejects generated specific records too unless their package is listed in
+   * `org.apache.avro.SERIALIZABLE_PACKAGES`. Extends the global validator to trust the classes scio
+   * reads; any other class is checked by the validator in place before.
+   */
+  private lazy val validatorInstalled: Boolean = Try {
+    val validator = Class.forName("org.apache.avro.util.ClassSecurityValidator")
+    val predicate = Class.forName("org.apache.avro.util.ClassSecurityValidator$ClassSecurityPredicate")
+    val previous = validator.getMethod("getGlobal").invoke(null)
+    val handler = new InvocationHandler {
+      override def invoke(proxy: Any, method: Method, args: Array[AnyRef]): AnyRef =
+        method.getName match {
+          case "isTrusted" if trustedClassNames.contains(args(0).asInstanceOf[Class[_]].getName) =>
+            java.lang.Boolean.TRUE
+          case "hashCode" if args == null => Int.box(System.identityHashCode(proxy))
+          case "equals"                   => Boolean.box(proxy.asInstanceOf[AnyRef] eq args(0))
+          case "toString" if args == null => s"ScioTrustedClasses($previous)"
+          case _ =>
+            try method.invoke(previous, args: _*)
+            catch { case e: InvocationTargetException => throw e.getCause }
+        }
+    }
+    val proxy = Proxy.newProxyInstance(predicate.getClassLoader, Array(predicate), handler)
+    validator.getMethod("setGlobal", predicate).invoke(null, proxy)
+    true
+  }.getOrElse(false)
+
+  /**
+   * Trust `recordType` and the classes referenced by `schema`, its reader schema. The reader schema
+   * comes from the compiled record class, unlike writer schemas which come from the data.
+   */
+  def trustClasses(recordType: Class[_], schema: Schema): Unit =
+    if (validatorInstalled) {
+      trustedClassNames.add(recordType.getName)
+      collectClassNames(schema, Set.empty).foreach(trustedClassNames.add)
+    }
+
+  private def collectClassNames(schema: Schema, seen: Set[String]): Set[String] = {
+    val props = JavaClassProps.flatMap(p => Option(schema.getProp(p))).toSet
+    schema.getType match {
+      case Schema.Type.RECORD if !seen.contains(schema.getFullName) =>
+        val name = SpecificData.getClassName(schema)
+        schema.getFields.asScala.foldLeft(seen + schema.getFullName + name ++ props) { (acc, f) =>
+          acc ++ collectClassNames(f.schema(), acc)
+        }
+      case Schema.Type.RECORD                       => seen ++ props
+      case Schema.Type.ENUM | Schema.Type.FIXED     => seen + SpecificData.getClassName(schema) ++ props
+      case Schema.Type.MAP                          => collectClassNames(schema.getValueType, seen ++ props)
+      case Schema.Type.ARRAY                        => collectClassNames(schema.getElementType, seen ++ props)
+      case Schema.Type.UNION =>
+        schema.getTypes.asScala.foldLeft(seen)((acc, t) => acc ++ collectClassNames(t, acc))
+      case _ => seen ++ props
+    }
+  }
 }

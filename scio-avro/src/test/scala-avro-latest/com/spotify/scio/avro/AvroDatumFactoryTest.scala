@@ -16,9 +16,15 @@
 
 package com.spotify.scio.avro
 
-import org.apache.avro.LogicalTypes
+import java.io.ByteArrayOutputStream
+import java.time.{Instant, LocalDate, LocalTime}
+
+import org.apache.avro.{LogicalTypes, Schema, SchemaBuilder}
 import org.apache.avro.data.TimeConversions
+import org.apache.avro.generic.{GenericData, GenericDatumWriter, GenericRecord}
+import org.apache.avro.io.{DecoderFactory, EncoderFactory}
 import org.apache.avro.specific.{SpecificDatumReader, SpecificDatumWriter}
+import org.apache.avro.util.ClassSecurityValidator
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -60,6 +66,55 @@ class AvroDatumFactoryTest extends AnyFlatSpec with Matchers {
     val schema = LogicalTypesTest.getClassSchema
     noException shouldBe thrownBy(f(schema))
     noException shouldBe thrownBy(f(schema, schema))
+  }
+
+  it should "trust the record class and its nested classes" in {
+    new SpecificRecordDatumFactory(classOf[LogicalTypesTest])(
+      LogicalTypesTest.getClassSchema,
+      LogicalTypesTest.getClassSchema
+    )
+    val validator = ClassSecurityValidator.getGlobal
+    validator.isTrusted(classOf[LogicalTypesTest]) shouldBe true
+    validator.isTrusted(classOf[LocalDateTimeTest]) shouldBe true
+    validator.isTrusted(classOf[AvroDatumFactoryTest]) shouldBe false
+  }
+
+  it should "read records and disable the fast reader" in {
+    val factory = new SpecificRecordDatumFactory(classOf[LogicalTypesTest])
+    val schema = LogicalTypesTest.getClassSchema
+    val record = LogicalTypesTest
+      .newBuilder()
+      .setTimestamp(Instant.ofEpochMilli(1000))
+      .setLocalDateTime(new LocalDateTimeTest(LocalDate.of(2026, 1, 1), LocalTime.NOON))
+      .build()
+
+    val out = new ByteArrayOutputStream()
+    val encoder = EncoderFactory.get().binaryEncoder(out, null)
+    factory(schema).write(record, encoder)
+    encoder.flush()
+
+    val reader = factory(schema, schema)
+    reader.asInstanceOf[SpecificDatumReader[_]].getData.isFastReaderEnabled shouldBe false
+    reader.read(null, DecoderFactory.get().binaryDecoder(out.toByteArray, null)) shouldBe record
+  }
+
+  "GenericRecordDatumFactory" should "read String instead of Utf8 with the fast reader on by default" in {
+    val schema: Schema = SchemaBuilder.record("R").fields().requiredString("s").endRecord()
+    val record = new GenericData.Record(schema)
+    record.put("s", "value")
+
+    val out = new ByteArrayOutputStream()
+    val encoder = EncoderFactory.get().binaryEncoder(out, null)
+    new GenericDatumWriter[GenericRecord](schema).write(record, encoder)
+    encoder.flush()
+
+    GenericData.get().isFastReaderEnabled shouldBe true
+    val reader = GenericRecordDatumFactory(schema, schema)
+    val read = reader.read(null, DecoderFactory.get().binaryDecoder(out.toByteArray, null))
+    read.get("s") shouldBe a[String]
+    read.get("s") shouldBe "value"
+    // the shared singletons are left alone
+    GenericData.get().isFastReaderEnabled shouldBe true
   }
 
 }
