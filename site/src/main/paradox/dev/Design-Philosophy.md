@@ -1,6 +1,6 @@
 # Design Philosophy
 
-We learned a lot building and improving Scio. The project was inspired by Spark and Scalding from the beginning, and we improved it over time working with customers of diverse background, including backend, data and ML. The design philosophy behind Scio can be summarized in a few points.
+We learned a lot building and improving Scio. The project was inspired by Spark and Scalding from the beginning, and we improved it over time working with customers of diverse backgrounds including backend, data and ML. The design philosophy behind Scio can be summarized in a few points.
 
 - **Make it easy to do the right thing**
   - Scala made this possible for the most part. We have a fluent API and it's easy to find the right transformation without going through lengthy documentation or source code. The most obvious thing is usually the best.
