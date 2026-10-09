@@ -16,7 +16,7 @@
 
 package com.spotify.scio.smb
 
-import com.spotify.scio.avro.{Account, AccountStatus, Address, User}
+import com.spotify.scio.avro.{Account, AccountStatus, Address, AvroCompat, User}
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.{Args, ContextAndArgs, ScioContext}
 import org.apache.beam.sdk.extensions.smb.AvroSortedBucketIO
@@ -142,6 +142,9 @@ object SmbTransformWithSideInputsJob extends SmbJob {
 }
 
 class SmbIOTest extends PipelineSpec {
+  // generated builders below deep copy nested records, before any scio avro reader or coder runs
+  AvroCompat.trustGeneratedClasses()
+
   private val accountA =
     new Account(1, "typeA", "nameA", 12.5, null)
   private val accountB =

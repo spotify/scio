@@ -18,6 +18,7 @@ package com.spotify.scio.avro
 
 import java.io.ByteArrayOutputStream
 import java.time.{Instant, LocalDate, LocalTime}
+import java.util.ServiceLoader
 
 import org.apache.avro.{LogicalTypes, Schema, SchemaBuilder}
 import org.apache.avro.data.TimeConversions
@@ -25,8 +26,11 @@ import org.apache.avro.generic.{GenericData, GenericDatumWriter, GenericRecord}
 import org.apache.avro.io.{DecoderFactory, EncoderFactory}
 import org.apache.avro.specific.{SpecificDatumReader, SpecificDatumWriter}
 import org.apache.avro.util.ClassSecurityValidator
+import org.apache.beam.sdk.harness.JvmInitializer
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+
+import scala.jdk.CollectionConverters._
 
 class AvroDatumFactoryTest extends AnyFlatSpec with Matchers {
 
@@ -68,12 +72,13 @@ class AvroDatumFactoryTest extends AnyFlatSpec with Matchers {
     noException shouldBe thrownBy(f(schema, schema))
   }
 
-  it should "trust the record class and its nested classes" in {
+  it should "trust avro generated classes" in {
     new SpecificRecordDatumFactory(classOf[LogicalTypesTest])(
       LogicalTypesTest.getClassSchema,
       LogicalTypesTest.getClassSchema
     )
     val validator = ClassSecurityValidator.getGlobal
+    validator.toString should startWith("AvroGenerated or ")
     validator.isTrusted(classOf[LogicalTypesTest]) shouldBe true
     validator.isTrusted(classOf[LocalDateTimeTest]) shouldBe true
     validator.isTrusted(classOf[AvroDatumFactoryTest]) shouldBe false
@@ -96,6 +101,11 @@ class AvroDatumFactoryTest extends AnyFlatSpec with Matchers {
     val reader = factory(schema, schema)
     reader.asInstanceOf[SpecificDatumReader[_]].getData.isFastReaderEnabled shouldBe false
     reader.read(null, DecoderFactory.get().binaryDecoder(out.toByteArray, null)) shouldBe record
+  }
+
+  "AvroCompatInitializer" should "be registered with ServiceLoader" in {
+    val loaded = ServiceLoader.load(classOf[JvmInitializer]).iterator().asScala.map(_.getClass)
+    loaded.toList should contain(classOf[AvroCompatInitializer])
   }
 
   "GenericRecordDatumFactory" should "read String instead of Utf8 with the fast reader on by default" in {
