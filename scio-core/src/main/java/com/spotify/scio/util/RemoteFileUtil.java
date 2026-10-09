@@ -231,19 +231,42 @@ public class RemoteFileUtil implements Serializable {
     return parent.resolve(filename);
   }
 
-  // Copy a single file from remote source to local destination
+  // Copy a single file from remote source to local destination. If the copy fails, the partial
+  // destination file is deleted so that it does not hold on to local disk space and a retry
+  // starts from a clean state.
   private static void copyToLocal(Metadata src, Path dst) throws IOException {
+    long srcSize = src.sizeBytes();
+    // Opened outside the cleanup block: if dst cannot be created (e.g. it already exists), it is
+    // not ours to delete.
     FileChannel dstCh =
         FileChannel.open(dst, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
-    ReadableByteChannel srcCh = FileSystems.open(src.resourceId());
-    long srcSize = src.sizeBytes();
-    long copied = 0;
-    do {
-      copied += dstCh.transferFrom(srcCh, copied, srcSize - copied);
-    } while (copied < srcSize);
-    dstCh.close();
-    srcCh.close();
-    Preconditions.checkState(copied == srcSize);
+    try {
+      try (FileChannel ch = dstCh;
+          ReadableByteChannel srcCh = FileSystems.open(src.resourceId())) {
+        long copied = 0;
+        while (copied < srcSize) {
+          long n = ch.transferFrom(srcCh, copied, srcSize - copied);
+          // transferFrom returns 0 once the source is exhausted. It can also swallow an
+          // IOException (e.g. a full disk) after a partial write, dropping bytes it already read
+          // from the source, so that the source runs out before srcSize is reached. Without this
+          // check the loop would spin forever.
+          if (n <= 0) {
+            throw new IOException(
+                String.format(
+                    "Download of %s -> %s stopped making progress after %d of %d bytes",
+                    src.resourceId(), dst, copied, srcSize));
+          }
+          copied += n;
+        }
+      }
+    } catch (IOException | RuntimeException e) {
+      try {
+        Files.deleteIfExists(dst);
+      } catch (IOException suppressed) {
+        e.addSuppressed(suppressed);
+      }
+      throw e;
+    }
   }
 
   // Copy a single file from local source to remote destination
