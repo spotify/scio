@@ -17,13 +17,12 @@
 package com.spotify.scio.avro
 
 import java.io.ByteArrayOutputStream
-import java.time.{Instant, LocalDate, LocalTime}
 import java.util.ServiceLoader
 
 import org.apache.avro.{LogicalTypes, Schema, SchemaBuilder}
 import org.apache.avro.data.TimeConversions
 import org.apache.avro.generic.{GenericData, GenericDatumWriter, GenericRecord}
-import org.apache.avro.io.{DecoderFactory, EncoderFactory}
+import org.apache.avro.io.{BinaryDecoder, BinaryEncoder, DecoderFactory, EncoderFactory}
 import org.apache.avro.specific.{SpecificDatumReader, SpecificDatumWriter}
 import org.apache.avro.util.ClassSecurityValidator
 import org.apache.beam.sdk.harness.JvmInitializer
@@ -84,23 +83,25 @@ class AvroDatumFactoryTest extends AnyFlatSpec with Matchers {
     validator.isTrusted(classOf[AvroDatumFactoryTest]) shouldBe false
   }
 
-  it should "read records and disable the fast reader" in {
-    val factory = new SpecificRecordDatumFactory(classOf[LogicalTypesTest])
-    val schema = LogicalTypesTest.getClassSchema
-    val record = LogicalTypesTest
+  it should "read String instead of Utf8 with the fast reader on" in {
+    val factory = new SpecificRecordDatumFactory(classOf[StringFieldTest])
+    val schema = StringFieldTest.getClassSchema
+    val record = StringFieldTest
       .newBuilder()
-      .setTimestamp(Instant.ofEpochMilli(1000))
-      .setLocalDateTime(new LocalDateTimeTest(LocalDate.of(2026, 1, 1), LocalTime.NOON))
+      .setStrField("s")
+      .setMapField(Map[CharSequence, CharSequence]("k" -> "v").asJava)
+      .setArrayField(List[CharSequence]("a").asJava)
       .build()
 
-    val out = new ByteArrayOutputStream()
-    val encoder = EncoderFactory.get().binaryEncoder(out, null)
-    factory(schema).write(record, encoder)
-    encoder.flush()
-
     val reader = factory(schema, schema)
-    reader.asInstanceOf[SpecificDatumReader[_]].getData.isFastReaderEnabled shouldBe false
-    reader.read(null, DecoderFactory.get().binaryDecoder(out.toByteArray, null)) shouldBe record
+    reader.asInstanceOf[SpecificDatumReader[_]].getData.isFastReaderEnabled shouldBe true
+    val read = reader.read(null, decoder(factory(schema).write(record, _)))
+    read.getStrField shouldBe a[String]
+    read.getMapField.asScala.toList
+      .flatMap { case (k, v) => List(k, v) }
+      .foreach(_ shouldBe a[String])
+    read.getArrayField.asScala.foreach(_ shouldBe a[String])
+    read shouldBe record
   }
 
   "AvroCompatInitializer" should "be registered with ServiceLoader" in {
@@ -108,23 +109,54 @@ class AvroDatumFactoryTest extends AnyFlatSpec with Matchers {
     loaded.toList should contain(classOf[AvroCompatInitializer])
   }
 
-  "GenericRecordDatumFactory" should "read String instead of Utf8 with the fast reader on by default" in {
-    val schema: Schema = SchemaBuilder.record("R").fields().requiredString("s").endRecord()
+  "GenericRecordDatumFactory" should "read String instead of Utf8 and keep the schema" in {
+    val schema: Schema = SchemaBuilder
+      .record("R")
+      .fields()
+      .requiredString("s")
+      .name("m")
+      .`type`()
+      .map()
+      .values()
+      .stringType()
+      .noDefault()
+      .name("a")
+      .`type`()
+      .array()
+      .items()
+      .stringType()
+      .noDefault()
+      .endRecord()
     val record = new GenericData.Record(schema)
     record.put("s", "value")
-
-    val out = new ByteArrayOutputStream()
-    val encoder = EncoderFactory.get().binaryEncoder(out, null)
-    new GenericDatumWriter[GenericRecord](schema).write(record, encoder)
-    encoder.flush()
+    record.put("m", Map("k" -> "v").asJava)
+    record.put("a", List("x").asJava)
 
     GenericData.get().isFastReaderEnabled shouldBe true
-    val reader = GenericRecordDatumFactory(schema, schema)
-    val read = reader.read(null, DecoderFactory.get().binaryDecoder(out.toByteArray, null))
+    val read = GenericRecordDatumFactory(schema, schema)
+      .read(null, decoder(new GenericDatumWriter[GenericRecord](schema).write(record, _)))
     read.get("s") shouldBe a[String]
     read.get("s") shouldBe "value"
-    // the shared singletons are left alone
+    read
+      .get("m")
+      .asInstanceOf[java.util.Map[_, _]]
+      .asScala
+      .toList
+      .flatMap { case (k, v) => List(k, v) }
+      .foreach(_ shouldBe a[String])
+    read.get("a").asInstanceOf[java.util.List[_]].asScala.foreach(_ shouldBe a[String])
+    read.getSchema shouldBe theSameInstanceAs(schema)
+    read shouldBe record
+    // the shared singleton is left alone
     GenericData.get().isFastReaderEnabled shouldBe true
+  }
+
+  private def decoder(write: BinaryEncoder => Unit): BinaryDecoder = {
+    val out = new ByteArrayOutputStream()
+    val encoder = EncoderFactory.get().binaryEncoder(out, null)
+    write(encoder)
+    encoder.flush()
+    DecoderFactory.get().binaryDecoder(out.toByteArray, null)
   }
 
 }

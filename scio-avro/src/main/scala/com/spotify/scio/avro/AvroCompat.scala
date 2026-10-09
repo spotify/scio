@@ -16,6 +16,7 @@
 
 package com.spotify.scio.avro
 
+import org.apache.avro.Schema
 import org.apache.avro.generic.GenericData
 import org.apache.avro.specific.AvroGenerated
 import org.apache.beam.sdk.harness.JvmInitializer
@@ -23,7 +24,9 @@ import org.apache.beam.sdk.options.PipelineOptions
 import org.slf4j.LoggerFactory
 
 import java.lang.reflect.{InvocationHandler, InvocationTargetException, Method, Proxy}
+import java.util.concurrent.ConcurrentHashMap
 
+import scala.jdk.CollectionConverters._
 import scala.util.Try
 
 /**
@@ -52,13 +55,53 @@ object AvroCompat {
   /**
    * Avro 1.10+ FastReaderBuilder (enabled by default since 1.12) doesn't call
    * `GenericDatumReader.findStringClass`, so [[org.apache.avro.util.Utf8]] leaks into
-   * [[CharSequence]] fields despite scio's override. Setting `org.apache.avro.fastread=true`
-   * explicitly keeps the fast reader.
+   * [[CharSequence]] fields despite scio's override. Used for generic records, where
+   * [[withJavaStringType]] would change the records' schema. Setting
+   * `org.apache.avro.fastread=true` explicitly keeps the fast reader.
    */
   private[scio] def disableFastReader(data: GenericData): Unit =
     if (!"true".equalsIgnoreCase(System.getProperty(FastReaderProperty))) {
       setFastReaderEnabled.foreach(_.invoke(data, java.lang.Boolean.FALSE))
     }
+
+  // keyed by schema equality, values are reused so GenericDatumReader's resolver cache, keyed by
+  // schema reference, keeps hitting
+  private val javaStringSchemas = new ConcurrentHashMap[Schema, Schema]()
+
+  /**
+   * Copy of `schema` with every string type, including map keys, tagged `avro.java.string: String`
+   * unless already tagged. Readers then decode strings as [[String]] instead of
+   * [[org.apache.avro.util.Utf8]], also with the avro 1.10+ FastReaderBuilder which, unlike
+   * `GenericDatumReader`, doesn't call `findStringClass` but reads the tag.
+   *
+   * Only for specific records, which keep the schema of their class. Generic records keep the
+   * reader schema, and `GenericData.Record.equals` compares schemas, props included.
+   */
+  private[scio] def withJavaStringType(schema: Schema): Schema =
+    javaStringSchemas.computeIfAbsent(
+      schema,
+      s => tagJavaString(new Schema.Parser().parse(s.toString))
+    )
+
+  private def tagJavaString(schema: Schema): Schema = {
+    def tag(s: Schema, seen: Set[String]): Unit = s.getType match {
+      case Schema.Type.STRING                                  => tagType(s)
+      case Schema.Type.RECORD if !seen.contains(s.getFullName) =>
+        s.getFields.asScala.foreach(f => tag(f.schema(), seen + s.getFullName))
+      case Schema.Type.ARRAY => tag(s.getElementType, seen)
+      case Schema.Type.MAP   =>
+        tagType(s) // map keys
+        tag(s.getValueType, seen)
+      case Schema.Type.UNION => s.getTypes.asScala.foreach(tag(_, seen))
+      case _                 =>
+    }
+    def tagType(s: Schema): Unit =
+      if (s.getProp(GenericData.STRING_PROP) == null) {
+        GenericData.setStringType(s, GenericData.StringType.String)
+      }
+    tag(schema, Set.empty)
+    schema
+  }
 
   /**
    * Avro 1.12.1+ validates every class it loads by name against `ClassSecurityValidator`, and

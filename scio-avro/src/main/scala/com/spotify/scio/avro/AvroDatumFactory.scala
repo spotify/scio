@@ -50,6 +50,8 @@ private[scio] object GenericRecordDatumFactory extends AvroDatumFactory.GenericD
   }
   override def apply(writer: Schema, reader: Schema): DatumReader[GenericRecord] = {
     val datumReader = new ScioGenericDatumReader()
+    // not AvroCompat.withJavaStringType: generic records keep the reader schema, and records with
+    // a tagged schema don't equal records with the original one
     AvroCompat.disableFastReader(datumReader.getData)
     datumReader.setExpected(reader)
     datumReader.setSchema(writer)
@@ -110,9 +112,7 @@ private[scio] class SpecificRecordDatumFactory[T <: SpecificRecord](recordType: 
     if (runtimeAvroVersion.exists(_.startsWith("1.8."))) {
       addLogicalTypeConversions(datumReader.getData.asInstanceOf[SpecificData], reader)
     }
-    // the data is the record class model, shared with other readers of the same class
-    AvroCompat.disableFastReader(datumReader.getData)
-    datumReader.setExpected(reader)
+    datumReader.setExpected(AvroCompat.withJavaStringType(reader))
     datumReader.setSchema(writer)
     datumReader
   }
