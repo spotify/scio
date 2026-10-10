@@ -18,6 +18,7 @@
 package org.apache.beam.sdk.extensions.smb;
 
 import com.spotify.scio.parquet.BeamInputFile;
+import com.spotify.scio.parquet.avro.AvroStringType;
 import java.io.IOException;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
@@ -27,6 +28,7 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.IndexedRecord;
 import org.apache.avro.reflect.ReflectData;
+import org.apache.avro.specific.SpecificRecord;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.extensions.avro.coders.AvroCoder;
 import org.apache.beam.sdk.extensions.smb.AvroFileOperations.SerializableSchemaSupplier;
@@ -182,7 +184,10 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
     }
 
     private void prepareRead(InputFile parquetInputFile) throws IOException {
-      final Schema readSchema = readSchemaSupplier.get();
+      final Schema readSchema =
+          recordClass != null && SpecificRecord.class.isAssignableFrom(recordClass)
+              ? AvroStringType.withJavaStringType(readSchemaSupplier.get())
+              : readSchemaSupplier.get();
       final Configuration configuration = conf.get();
       AvroReadSupport.setAvroReadSchema(configuration, readSchema);
 

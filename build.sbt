@@ -35,7 +35,7 @@ val beamVersion = "2.76.0"
 // https://github.com/apache/beam/blob/v2.76.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
-val avroVersion = sys.props.getOrElse("avro.version", "1.12.0")
+val avroVersion = sys.props.getOrElse("avro.version", "1.12.2")
 val bigdataossVersion = "3.1.16"
 val bigtableClientVersion = "1.28.0"
 val commonsCodecVersion = "1.18.0"
@@ -287,7 +287,7 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
         WorkflowStep.Sbt(
           List("set integration/test/skip := false", "integration/test"),
           // beam-sdks-java-io-iceberg requires avro 1.12
-          env = Map("JAVA_OPTS" -> "-Davro.version=1.12.0"),
+          env = Map("JAVA_OPTS" -> "-Davro.version=1.12.2"),
           name = Some("Test")
         )
       ),
@@ -1488,6 +1488,9 @@ lazy val `scio-examples` = project
       }
     },
     Compile / doc / sources := List(),
+    // avro 1.12.2 rejects reflect records, e.g. classes with @DefaultCoder(AvroCoder.class),
+    // outside the trusted packages
+    Test / javaOptions += "-Dorg.apache.avro.SERIALIZABLE_PACKAGES=org.apache.beam.examples",
     Test / testGrouping := splitTests(
       (Test / definedTests).value,
       List("com.spotify.scio.examples.WordCountTest"),

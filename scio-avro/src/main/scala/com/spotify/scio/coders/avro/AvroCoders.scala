@@ -17,7 +17,7 @@
 
 package com.spotify.scio.coders.avro
 
-import com.spotify.scio.avro.{GenericRecordDatumFactory, SpecificRecordDatumFactory}
+import com.spotify.scio.avro.{AvroCompat, GenericRecordDatumFactory, SpecificRecordDatumFactory}
 import com.spotify.scio.coders.{Coder, CoderGrammar}
 import com.spotify.scio.util.ScioUtil
 import org.apache.avro.Schema
@@ -33,6 +33,7 @@ import org.apache.beam.sdk.util.EmptyOnDeserializationThreadLocal
 import java.io.{InputStream, OutputStream}
 import scala.collection.concurrent.TrieMap
 import scala.reflect.ClassTag
+import scala.util.chaining._
 
 final private class SlowGenericRecordCoder extends CustomCoder[GenericRecord] {
   // Schema is serializable on avro 1.9+
@@ -84,7 +85,8 @@ final private class SlowGenericRecordCoder extends CustomCoder[GenericRecord] {
  */
 final private class SpecificFixedCoder[A <: SpecificFixed](cls: Class[A]) extends CustomCoder[A] {
   // lazy because AVRO Schema isn't serializable
-  @transient private lazy val schema: Schema = SpecificData.get().getSchema(cls)
+  @transient private lazy val schema: Schema =
+    SpecificData.get().getSchema(cls).tap(_ => AvroCompat.trustGeneratedClasses())
   private val size = schema.getFixedSize
 
   def encode(value: A, outStream: OutputStream): Unit = {

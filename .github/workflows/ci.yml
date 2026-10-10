@@ -450,7 +450,7 @@ jobs:
 
       - name: Test
         env:
-          JAVA_OPTS: '-Davro.version=1.12.0'
+          JAVA_OPTS: '-Davro.version=1.12.2'
         run: 'sbt ''++ ${{ matrix.scala }}'' ''set integration/test/skip := false'' integration/test'
 
   site:
