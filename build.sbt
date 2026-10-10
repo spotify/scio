@@ -1488,6 +1488,9 @@ lazy val `scio-examples` = project
       }
     },
     Compile / doc / sources := List(),
+    // avro 1.12.2 rejects reflect records, e.g. classes with @DefaultCoder(AvroCoder.class),
+    // outside the trusted packages
+    Test / javaOptions += "-Dorg.apache.avro.SERIALIZABLE_PACKAGES=org.apache.beam.examples",
     Test / testGrouping := splitTests(
       (Test / definedTests).value,
       List("com.spotify.scio.examples.WordCountTest"),
