@@ -16,7 +16,7 @@
 
 package com.spotify.scio.util
 
-import com.spotify.scio.options.ScioOptions
+import com.spotify.scio.options.AvroOptions
 import org.apache.beam.sdk.harness.JvmInitializer
 import org.apache.beam.sdk.options.PipelineOptions
 import org.slf4j.LoggerFactory
@@ -29,7 +29,7 @@ import scala.util.Try
 
 /**
  * Runs [[AvroClassTrust.install]] on Beam worker JVMs, including the packages in
- * [[com.spotify.scio.options.ScioOptions.getAvroTrustedPackages]]. Registered with ServiceLoader,
+ * [[com.spotify.scio.options.AvroOptions.getAvroTrustedPackages]]. Registered with ServiceLoader,
  * so the Beam worker harness picks it up.
  */
 class AvroClassTrustInitializer extends JvmInitializer {
@@ -70,7 +70,7 @@ object AvroClassTrust {
 
   /** [[install]], also trusting the packages in `--avroTrustedPackages`. */
   def install(options: PipelineOptions): Unit = {
-    Try(options.as(classOf[ScioOptions]).getAvroTrustedPackages).toOption
+    Try(options.as(classOf[AvroOptions]).getAvroTrustedPackages).toOption
       .flatMap(Option(_))
       .foreach(ps => trustPackages(ps.asScala.toSeq: _*))
     install()

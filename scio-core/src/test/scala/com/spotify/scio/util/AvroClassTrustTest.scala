@@ -17,7 +17,7 @@
 package com.spotify.scio.util {
 
   import com.spotify.scio.ScioContext
-  import com.spotify.scio.options.ScioOptions
+  import com.spotify.scio.options.AvroOptions
   import com.spotify.scio.util.avrotrust.byoption.OptionPojo
   import com.spotify.scio.util.avrotrust.byinitializer.InitializerPojo
   import com.spotify.scio.util.avrotrust.byapi.ApiPojo
@@ -62,7 +62,7 @@ package com.spotify.scio.util {
     it should "trust packages from --avroTrustedPackages on workers" in {
       val options = PipelineOptionsFactory
         .fromArgs("--avroTrustedPackages=com.spotify.scio.util.avrotrust.byinitializer")
-        .as(classOf[ScioOptions])
+        .as(classOf[AvroOptions])
       new AvroClassTrustInitializer().beforeProcessing(options)
       roundtrip(new InitializerPojo("a")).name shouldBe "a"
     }
