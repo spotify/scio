@@ -17,7 +17,7 @@
 
 package com.spotify.scio.testing.parquet
 
-import com.spotify.scio.util.AvroGeneratedTrust
+import com.spotify.scio.util.AvroClassTrust
 import org.apache.parquet.hadoop.{ParquetReader, ParquetWriter}
 import org.apache.parquet.io._
 
@@ -31,7 +31,7 @@ private[parquet] object ParquetTestUtils {
   )(
     records: Iterable[T]
   ): Iterable[U] = {
-    AvroGeneratedTrust.install()
+    AvroClassTrust.install()
     val baos = new ByteArrayOutputStream()
     val writer = writerFn(new InMemoryOutputFile(baos))
 

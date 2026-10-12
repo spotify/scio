@@ -436,8 +436,8 @@ class ScioContext private[scio] (
   // var _pipeline member is lazily initialized, this makes sure that file systems are registered
   // before any IO
   FileSystems.setDefaultPipelineOptions(options)
-  // avro 1.12.2 rejects avro generated classes not listed in org.apache.avro.SERIALIZABLE_PACKAGES
-  AvroGeneratedTrust.install()
+  // avro 1.12.2 rejects classes, avro generated ones included, outside its trusted packages
+  AvroClassTrust.install(options)
 
   /** Get PipelineOptions as a more specific sub-type. */
   def optionsAs[T <: PipelineOptions: ClassTag]: T =

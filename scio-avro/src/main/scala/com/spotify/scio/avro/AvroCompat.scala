@@ -18,7 +18,7 @@ package com.spotify.scio.avro
 
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericData
-import com.spotify.scio.util.AvroGeneratedTrust
+import com.spotify.scio.util.AvroClassTrust
 
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
@@ -90,7 +90,7 @@ object AvroCompat {
 
   /**
    * Trust avro generated classes on avro 1.12.1+, see
-   * [[com.spotify.scio.util.AvroGeneratedTrust.install]].
+   * [[com.spotify.scio.util.AvroClassTrust.install]].
    */
-  def trustGeneratedClasses(): Unit = AvroGeneratedTrust.install()
+  def trustGeneratedClasses(): Unit = AvroClassTrust.install()
 }

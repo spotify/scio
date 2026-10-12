@@ -25,7 +25,7 @@ import org.apache.avro.generic.{GenericData, GenericDatumWriter, GenericRecord}
 import org.apache.avro.io.{BinaryDecoder, BinaryEncoder, DecoderFactory, EncoderFactory}
 import org.apache.avro.specific.{SpecificDatumReader, SpecificDatumWriter}
 import org.apache.avro.util.ClassSecurityValidator
-import com.spotify.scio.util.AvroGeneratedTrustInitializer
+import com.spotify.scio.util.AvroClassTrustInitializer
 import org.apache.beam.sdk.harness.JvmInitializer
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -78,7 +78,7 @@ class AvroDatumFactoryTest extends AnyFlatSpec with Matchers {
       LogicalTypesTest.getClassSchema
     )
     val validator = ClassSecurityValidator.getGlobal
-    validator.toString should startWith("AvroGenerated or ")
+    validator.toString should startWith("AvroClassTrust or ")
     validator.isTrusted(classOf[LogicalTypesTest]) shouldBe true
     validator.isTrusted(classOf[LocalDateTimeTest]) shouldBe true
     validator.isTrusted(classOf[AvroDatumFactoryTest]) shouldBe false
@@ -105,9 +105,9 @@ class AvroDatumFactoryTest extends AnyFlatSpec with Matchers {
     read shouldBe record
   }
 
-  "AvroGeneratedTrustInitializer" should "be registered with ServiceLoader" in {
+  "AvroClassTrustInitializer" should "be registered with ServiceLoader" in {
     val loaded = ServiceLoader.load(classOf[JvmInitializer]).iterator().asScala.map(_.getClass)
-    loaded.toList should contain(classOf[AvroGeneratedTrustInitializer])
+    loaded.toList should contain(classOf[AvroClassTrustInitializer])
   }
 
   "GenericRecordDatumFactory" should "read String instead of Utf8 and keep the schema" in {

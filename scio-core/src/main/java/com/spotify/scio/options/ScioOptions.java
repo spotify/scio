@@ -86,4 +86,13 @@ public interface ScioOptions extends PipelineOptions, KryoOptions {
   List<String> getZstdDictionary();
 
   void setZstdDictionary(List<String> value);
+
+  @Description(
+      "Comma-separated packages whose classes avro 1.12.2+ may load, in addition to avro"
+          + " generated classes, e.g. for reflect records: com.example,org.example.pojos."
+          + " Applies to Beam workers, unlike the org.apache.avro.SERIALIZABLE_PACKAGES system"
+          + " property")
+  List<String> getAvroTrustedPackages();
+
+  void setAvroTrustedPackages(List<String> value);
 }
