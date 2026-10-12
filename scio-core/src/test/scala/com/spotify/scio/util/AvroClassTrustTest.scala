@@ -24,7 +24,7 @@ package com.spotify.scio.util {
   import com.spotify.scio.util.avrotrust.untrusted.UntrustedPojo
   import org.apache.avro.io.{DecoderFactory, EncoderFactory}
   import org.apache.avro.reflect.{ReflectData, ReflectDatumReader, ReflectDatumWriter}
-  import org.apache.beam.sdk.options.PipelineOptionsFactory
+  import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
   import org.scalatest.flatspec.AnyFlatSpec
   import org.scalatest.matchers.should.Matchers
 
@@ -50,11 +50,11 @@ package com.spotify.scio.util {
     }
 
     it should "trust packages from --avroTrustedPackages when creating a ScioContext" in {
-      ScioContext(
-        PipelineOptionsFactory
-          .fromArgs("--avroTrustedPackages=com.spotify.scio.util.avrotrust.byoption")
-          .create()
-      )
+      val (opts, _) =
+        ScioContext.parseArguments[PipelineOptions](
+          Array("--avroTrustedPackages=com.spotify.scio.util.avrotrust.byoption")
+        )
+      ScioContext(opts)
       roundtrip(new OptionPojo("a")).name shouldBe "a"
       a[SecurityException] should be thrownBy roundtrip(new UntrustedPojo("a"))
     }

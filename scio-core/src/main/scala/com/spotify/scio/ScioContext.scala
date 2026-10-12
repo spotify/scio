@@ -24,7 +24,7 @@ import java.nio.file.Files
 import com.spotify.scio.coders.{Coder, CoderMaterializer, KVCoder}
 import com.spotify.scio.io._
 import com.spotify.scio.metrics.Metrics
-import com.spotify.scio.options.ScioOptions
+import com.spotify.scio.options.{AvroOptions, ScioOptions}
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
 import com.spotify.scio.values._
@@ -330,6 +330,7 @@ object ScioContext {
     val optClass = ScioUtil.classOf[T]
     PipelineOptionsFactory.register(optClass)
     PipelineOptionsFactory.register(classOf[ScioOptions])
+    PipelineOptionsFactory.register(classOf[AvroOptions])
 
     // Extract --pattern of all registered derived types of PipelineOptions
     val registeredPatterns = for {
