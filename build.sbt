@@ -29,10 +29,10 @@ import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 // To test release candidates, find the beam repo and add it as a resolver
 // ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.76.0"
+val beamVersion = "2.77.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.76.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.77.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = sys.props.getOrElse("avro.version", "1.12.0")
@@ -43,7 +43,7 @@ val commonsCompressVersion = "1.26.2"
 val commonsIoVersion = "2.16.1"
 val commonsLang3Version = "3.18.0"
 val commonsMath3Version = "3.6.1"
-val gcpLibrariesVersion = "26.85.0"
+val gcpLibrariesVersion = "26.87.0"
 // in theory, googleApiClientsVersion and googleClientsVersion should be a single value
 // beam declares 2.0.0 but transitively depends on 2.7.2 for only the google-api-client artifact
 // which gets caught in our undeclared filter if we use the declared 2.0.0 version.
@@ -58,12 +58,12 @@ val httpClientVersion = "4.5.13"
 val httpCoreVersion = "4.4.14"
 val jacksonVersion = "2.18.8"
 val jodaTimeVersion = "2.14.0"
-val nettyVersion = "4.1.132.Final"
-val protobufVersion = "4.33.2"
+val nettyVersion = "4.1.133.Final"
+val protobufVersion = "4.33.6"
 val slf4jVersion = "2.0.16"
 val zstdJniVersion = "1.5.6-3"
 // dependent versions
-val googleApiServicesBigQueryVersion = s"v2-rev20260612-$googleClientsVersion"
+val googleApiServicesBigQueryVersion = s"v2-rev20260731-$googleClientsVersion"
 val googleApiServicesDataflowVersion = s"v1b3-rev20260503-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 // beam tested versions
