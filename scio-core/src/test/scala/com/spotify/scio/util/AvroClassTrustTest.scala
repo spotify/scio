@@ -44,9 +44,17 @@ package com.spotify.scio.util {
         .read(null.asInstanceOf[T], DecoderFactory.get().binaryDecoder(out.toByteArray, null))
     }
 
+    // ClassSecurityValidator only exists in avro 1.12.1+; older avro trusts every class
+    private val hasValidator =
+      scala.util.Try(Class.forName("org.apache.avro.util.ClassSecurityValidator")).isSuccess
+
+    private def assertUntrusted(): Unit =
+      if (hasValidator) a[SecurityException] should be thrownBy roundtrip(new UntrustedPojo("a"))
+
     "AvroClassTrust" should "not trust reflect records outside the trusted packages" in {
+      assume(hasValidator, "avro has no ClassSecurityValidator")
       AvroClassTrust.install()
-      a[SecurityException] should be thrownBy roundtrip(new UntrustedPojo("a"))
+      assertUntrusted()
     }
 
     it should "trust packages from --avroTrustedPackages when creating a ScioContext" in {
@@ -56,7 +64,7 @@ package com.spotify.scio.util {
         )
       ScioContext(opts)
       roundtrip(new OptionPojo("a")).name shouldBe "a"
-      a[SecurityException] should be thrownBy roundtrip(new UntrustedPojo("a"))
+      assertUntrusted()
     }
 
     it should "trust packages from --avroTrustedPackages on workers" in {

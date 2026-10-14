@@ -270,6 +270,28 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
     javas = List(javaDefault)
   ),
   WorkflowJob(
+    "avro-1-11",
+    "Test Avro 1.11",
+    WorkflowStep.CheckoutFull ::
+      WorkflowStep.SetupJava(List(javaDefault)) :::
+      List(
+        // users pinning avro 1.11 have no ClassSecurityValidator
+        WorkflowStep.Sbt(
+          List(
+            "scio-core/testOnly com.spotify.scio.util.AvroClassTrustTest",
+            "scio-avro/test",
+            "scio-parquet/test",
+            "scio-smb/test"
+          ),
+          env = Map("JAVA_OPTS" -> "-Davro.version=1.11.5"),
+          name = Some("Test")
+        )
+      ),
+    cond = Some(Seq(condSkipPR, condIsMain).mkString(" && ")),
+    scalas = List(CrossVersion.binaryScalaVersion(scalaDefault)),
+    javas = List(javaDefault)
+  ),
+  WorkflowJob(
     "it-test",
     "Integration Test",
     WorkflowStep.CheckoutFull ::

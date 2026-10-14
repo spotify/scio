@@ -23,8 +23,7 @@ import org.apache.avro.{LogicalTypes, Schema, SchemaBuilder}
 import org.apache.avro.data.TimeConversions
 import org.apache.avro.generic.{GenericData, GenericDatumWriter, GenericRecord}
 import org.apache.avro.io.{BinaryDecoder, BinaryEncoder, DecoderFactory, EncoderFactory}
-import org.apache.avro.specific.{SpecificDatumReader, SpecificDatumWriter}
-import org.apache.avro.util.ClassSecurityValidator
+import org.apache.avro.specific.{SpecificData, SpecificDatumReader, SpecificDatumWriter}
 import com.spotify.scio.util.AvroClassTrustInitializer
 import org.apache.beam.sdk.harness.JvmInitializer
 import org.scalatest.flatspec.AnyFlatSpec
@@ -77,11 +76,19 @@ class AvroDatumFactoryTest extends AnyFlatSpec with Matchers {
       LogicalTypesTest.getClassSchema,
       LogicalTypesTest.getClassSchema
     )
-    val validator = ClassSecurityValidator.getGlobal
+    // ClassSecurityValidator only exists in avro 1.12.1+
+    val validatorClass =
+      scala.util.Try(Class.forName("org.apache.avro.util.ClassSecurityValidator")).toOption
+    assume(validatorClass.isDefined, "avro has no ClassSecurityValidator")
+    val validator = validatorClass.get.getMethod("getGlobal").invoke(null)
+    val isTrusted = Class
+      .forName("org.apache.avro.util.ClassSecurityValidator$ClassSecurityPredicate")
+      .getMethod("isTrusted", classOf[Class[_]])
+    def trusted(c: Class[_]): Boolean = isTrusted.invoke(validator, c).asInstanceOf[Boolean]
     validator.toString should startWith("AvroClassTrust or ")
-    validator.isTrusted(classOf[LogicalTypesTest]) shouldBe true
-    validator.isTrusted(classOf[LocalDateTimeTest]) shouldBe true
-    validator.isTrusted(classOf[AvroDatumFactoryTest]) shouldBe false
+    trusted(classOf[LogicalTypesTest]) shouldBe true
+    trusted(classOf[LocalDateTimeTest]) shouldBe true
+    trusted(classOf[AvroDatumFactoryTest]) shouldBe false
   }
 
   it should "read String instead of Utf8 with the fast reader on" in {
@@ -95,7 +102,9 @@ class AvroDatumFactoryTest extends AnyFlatSpec with Matchers {
       .build()
 
     val reader = factory(schema, schema)
-    reader.asInstanceOf[SpecificDatumReader[_]].getData.isFastReaderEnabled shouldBe true
+    // the fast reader is on by default since avro 1.12; scio must not turn it off
+    reader.asInstanceOf[SpecificDatumReader[_]].getData.isFastReaderEnabled shouldBe
+      new SpecificData().isFastReaderEnabled
     val read = reader.read(null, decoder(factory(schema).write(record, _)))
     read.getStrField shouldBe a[String]
     read.getMapField.asScala.toList
@@ -133,7 +142,7 @@ class AvroDatumFactoryTest extends AnyFlatSpec with Matchers {
     record.put("m", Map("k" -> "v").asJava)
     record.put("a", List("x").asJava)
 
-    GenericData.get().isFastReaderEnabled shouldBe true
+    val fastReaderDefault = GenericData.get().isFastReaderEnabled
     val read = GenericRecordDatumFactory(schema, schema)
       .read(null, decoder(new GenericDatumWriter[GenericRecord](schema).write(record, _)))
     read.get("s") shouldBe a[String]
@@ -149,7 +158,7 @@ class AvroDatumFactoryTest extends AnyFlatSpec with Matchers {
     read.getSchema shouldBe theSameInstanceAs(schema)
     read shouldBe record
     // the shared singleton is left alone
-    GenericData.get().isFastReaderEnabled shouldBe true
+    GenericData.get().isFastReaderEnabled shouldBe fastReaderDefault
   }
 
   private def decoder(write: BinaryEncoder => Unit): BinaryDecoder = {
