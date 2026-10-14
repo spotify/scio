@@ -20,14 +20,17 @@ package com.spotify.scio.extra.voyager
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import com.spotify.scio.values.SideInput
 import com.spotify.voyager.jni.Index.{SpaceType, StorageDataType}
-import com.spotify.voyager.jni.{Index, StringIndex}
+import com.spotify.voyager.jni.Index
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.values.PCollectionView
 
+import java.io.{ByteArrayInputStream, InputStream}
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path, Paths}
 import java.util.concurrent.ConcurrentHashMap
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
 
 /**
  * Represents the base URI for a voyager index, either on a local or a remote file system. For
@@ -160,31 +163,32 @@ class VoyagerReader private[voyager] (
   namesFile: Path,
   indexSettings: VoyagerReader.IndexSettings
 ) {
-  @transient private lazy val index: StringIndex = indexSettings match {
-    case VoyagerReader.ProvidedSettings(space, numDimensions, storageDataType) =>
-      StringIndex.load(
-        indexFile.toString,
-        namesFile.toString,
-        space,
-        numDimensions,
-        storageDataType
-      )
-    case VoyagerReader.MetadataSettings =>
-      StringIndex.load(
-        indexFile.toString,
-        namesFile.toString
-      )
+  // load the native index and parse the names concurrently; neither depends on the other
+  @transient private lazy val loaded: (Index, Array[String]) = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val indexF = Future {
+      indexSettings match {
+        case VoyagerReader.ProvidedSettings(space, numDimensions, storageDataType) =>
+          Index.load(indexFile.toString, space, numDimensions, storageDataType)
+        case VoyagerReader.MetadataSettings =>
+          Index.load(indexFile.toString)
+      }
+    }
+    val namesF = Future(VoyagerReader.readNames(namesFile))
+    Await.result(indexF.zip(namesF), Duration.Inf)
   }
+  private def index: Index = loaded._1
+  private def names: Array[String] = loaded._2
 
   /**
    * Gets maxNumResults nearest neighbors for vector v using ef (where ef is the size of the dynamic
    * list for the nearest neighbors during search).
    */
   def getNearest(v: Array[Float], maxNumResults: Int, ef: Int): Array[VoyagerResult] = {
-    val queryResults = index.query(v, maxNumResults, ef)
-    queryResults.getNames
-      .zip(queryResults.getDistances)
-      .map { case (name, distance) => VoyagerResult(name, distance) }
+    val queryResults = index.query(v, maxNumResults, ef.toLong)
+    val labels = queryResults.getLabels
+    val distances = queryResults.getDistances
+    Array.tabulate(labels.length)(i => VoyagerResult(names(labels(i).toInt), distances(i)))
   }
 }
 
@@ -197,6 +201,95 @@ private[voyager] object VoyagerReader {
   ) extends IndexSettings
   case object MetadataSettings extends IndexSettings
 
+  /**
+   * Parses a voyager `names.json` file, a JSON list of strings. Voyager forbids backslashes and
+   * double quotes in names, so no escape handling is needed. This is much faster than voyager's
+   * Scanner-based `TinyJson.readStringList` for large name lists. The file is streamed in chunks,
+   * so it may be larger than the 2GB JVM array limit.
+   */
+  private[voyager] def readNames(namesFile: Path): Array[String] = {
+    val in = Files.newInputStream(namesFile)
+    try parseNames(in)
+    finally in.close()
+  }
+
+  private[voyager] def parseNames(bytes: Array[Byte]): Array[String] =
+    parseNames(new ByteArrayInputStream(bytes))
+
+  // parser states
+  private val BeforeList = 0
+  private val ListStart = 1 // after '[': expect a name or ']'
+  private val InName = 2
+  private val AfterName = 3 // expect ',' or ']'
+  private val AfterComma = 4 // expect a name
+  private val Done = 5
+
+  private[voyager] def parseNames(
+    in: InputStream,
+    chunkSize: Int = 1 << 20
+  ): Array[String] = {
+    val Quote = '"'.toByte
+    def isWs(b: Byte): Boolean = b == ' ' || b == '\n' || b == '\r' || b == '\t'
+
+    val chunk = new Array[Byte](chunkSize)
+    // holds the start of a name that spans chunk boundaries
+    var carry = new Array[Byte](256)
+    var carryLen = 0
+    def appendCarry(from: Int, until: Int): Unit = {
+      val len = until - from
+      if (carryLen + len > carry.length) {
+        carry = java.util.Arrays.copyOf(carry, math.max(carry.length * 2, carryLen + len))
+      }
+      System.arraycopy(chunk, from, carry, carryLen, len)
+      carryLen += len
+    }
+
+    val names = Array.newBuilder[String]
+    var state = BeforeList
+    var pos = 0L // absolute offset, for error messages
+    def fail(i: Int): Nothing =
+      throw new IllegalArgumentException(s"Malformed voyager names list at byte ${pos + i}")
+
+    var n = in.read(chunk)
+    while (n != -1 && state != Done) {
+      var i = 0
+      while (i < n && state != Done) {
+        if (state == InName) {
+          val start = i
+          while (i < n && chunk(i) != Quote) i += 1
+          if (i < n) {
+            names += (if (carryLen == 0) new String(chunk, start, i - start, StandardCharsets.UTF_8)
+                      else {
+                        appendCarry(start, i)
+                        val s = new String(carry, 0, carryLen, StandardCharsets.UTF_8)
+                        carryLen = 0
+                        s
+                      })
+            state = AfterName
+            i += 1
+          } else {
+            appendCarry(start, n)
+          }
+        } else {
+          val b = chunk(i)
+          if (!isWs(b)) {
+            state = (state, b) match {
+              case (BeforeList, '[')                     => ListStart
+              case (ListStart | AfterComma, Quote)       => InName
+              case (ListStart | AfterName, ']')          => Done
+              case (AfterName, ',')                      => AfterComma
+              case _                                     => fail(i)
+            }
+          }
+          i += 1
+        }
+      }
+      pos += n
+      if (state != Done) n = in.read(chunk)
+    }
+    if (state != Done) fail(0)
+    names.result()
+  }
 }
 
 /**
