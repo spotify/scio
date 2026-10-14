@@ -586,7 +586,11 @@ def avroSettings(scope: Configuration): Seq[Setting[_]] = Def.settings(
         case _                        => m
       }
     }
-  }
+  },
+  // sbt-avro keeps one generator cache per project, shared by Compile and Test. When both
+  // generators run concurrently, Test can return Compile's (empty) outputs and its generated
+  // classes drop out of compilation. Run them one after the other.
+  Test / avroGenerate := (Test / avroGenerate).dependsOn(Compile / avroGenerate).value
 )
 
 lazy val protobufSettings = Def.settings(
