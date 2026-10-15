@@ -126,6 +126,10 @@ public class ParquetAvroFileOperationsTest {
     fileOperations.iterator(file).forEachRemaining(actual::add);
 
     Assert.assertEquals(records, actual);
+    for (AvroGeneratedUser record : actual) {
+      Assert.assertEquals(String.class, record.getName().getClass());
+      Assert.assertEquals(String.class, record.getFavoriteColor().getClass());
+    }
   }
 
   @Test

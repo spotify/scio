@@ -40,7 +40,8 @@ import scala.util.chaining._
  */
 private[scio] object GenericRecordDatumFactory extends AvroDatumFactory.GenericDatumFactory {
 
-  private class ScioGenericDatumReader extends GenericDatumReader[GenericRecord] {
+  private class ScioGenericDatumReader
+      extends GenericDatumReader[GenericRecord](null, null, AvroCompat.genericReaderData()) {
     override def findStringClass(schema: Schema): Class[_] = super.findStringClass(schema) match {
       case cls if cls == classOf[CharSequence] => classOf[String]
       case cls                                 => cls
@@ -48,6 +49,9 @@ private[scio] object GenericRecordDatumFactory extends AvroDatumFactory.GenericD
   }
   override def apply(writer: Schema, reader: Schema): DatumReader[GenericRecord] = {
     val datumReader = new ScioGenericDatumReader()
+    // not AvroCompat.withJavaStringType: generic records keep the reader schema, and records with
+    // a tagged schema don't equal records with the original one
+    AvroCompat.disableFastReader(datumReader.getData)
     datumReader.setExpected(reader)
     datumReader.setSchema(writer)
     datumReader
@@ -98,13 +102,13 @@ private[scio] class SpecificRecordDatumFactory[T <: SpecificRecord](recordType: 
   }
 
   override def apply(writer: Schema, reader: Schema): DatumReader[T] = {
+    AvroCompat.trustGeneratedClasses()
     val datumReader = new ScioSpecificDatumReader()
     // avro 1.8 generated code does not add conversions to the data
     if (runtimeAvroVersion.exists(_.startsWith("1.8."))) {
       addLogicalTypeConversions(datumReader.getData.asInstanceOf[SpecificData], reader)
     }
-    datumReader.getData
-    datumReader.setExpected(reader)
+    datumReader.setExpected(AvroCompat.withJavaStringType(reader))
     datumReader.setSchema(writer)
     datumReader
   }

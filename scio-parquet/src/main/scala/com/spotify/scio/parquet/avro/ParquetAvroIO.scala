@@ -167,7 +167,8 @@ object ParquetAvroIO {
     val avroClass: Class[A] = ScioUtil.classOf[A]
     val isSpecific: Boolean = classOf[SpecificRecord] isAssignableFrom avroClass
     val readSchema: Schema =
-      if (isSpecific) ReflectData.get().getSchema(avroClass) else projection
+      if (isSpecific) AvroStringType.withJavaStringType(ReflectData.get().getSchema(avroClass))
+      else projection
 
     def read(sc: ScioContext, path: String)(implicit coder: Coder[T]): SCollection[T] = {
       if (ParquetReadConfiguration.getUseSplittableDoFn(confOrDefault, sc.options)) {

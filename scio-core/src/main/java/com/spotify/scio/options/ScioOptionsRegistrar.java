@@ -18,7 +18,7 @@
 package com.spotify.scio.options;
 
 import com.google.auto.service.AutoService;
-import java.util.Collections;
+import java.util.Arrays;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsRegistrar;
 
@@ -26,6 +26,6 @@ import org.apache.beam.sdk.options.PipelineOptionsRegistrar;
 public class ScioOptionsRegistrar implements PipelineOptionsRegistrar {
   @Override
   public Iterable<Class<? extends PipelineOptions>> getPipelineOptions() {
-    return Collections.singleton(ScioOptions.class);
+    return Arrays.asList(ScioOptions.class, AvroOptions.class);
   }
 }

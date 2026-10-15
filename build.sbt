@@ -35,13 +35,13 @@ val beamVersion = "2.76.0"
 // https://github.com/apache/beam/blob/v2.76.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
-val avroVersion = sys.props.getOrElse("avro.version", "1.12.0")
+val avroVersion = sys.props.getOrElse("avro.version", "1.12.2")
 val bigdataossVersion = "3.1.16"
 val bigtableClientVersion = "1.28.0"
-val commonsCodecVersion = "1.18.0"
-val commonsCompressVersion = "1.26.2"
-val commonsIoVersion = "2.16.1"
-val commonsLang3Version = "3.18.0"
+val commonsCodecVersion = "1.19.0"
+val commonsCompressVersion = "1.28.0"
+val commonsIoVersion = "2.20.0"
+val commonsLang3Version = "3.20.0"
 val commonsMath3Version = "3.6.1"
 val gcpLibrariesVersion = "26.85.0"
 // in theory, googleApiClientsVersion and googleClientsVersion should be a single value
@@ -270,6 +270,28 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
     javas = List(javaDefault)
   ),
   WorkflowJob(
+    "avro-1-11",
+    "Test Avro 1.11",
+    WorkflowStep.CheckoutFull ::
+      WorkflowStep.SetupJava(List(javaDefault)) :::
+      List(
+        // users pinning avro 1.11 have no ClassSecurityValidator
+        WorkflowStep.Sbt(
+          List(
+            "scio-core/testOnly com.spotify.scio.util.AvroClassTrustTest",
+            "scio-avro/test",
+            "scio-parquet/test",
+            "scio-smb/test"
+          ),
+          env = Map("JAVA_OPTS" -> "-Davro.version=1.11.5"),
+          name = Some("Test")
+        )
+      ),
+    cond = Some(Seq(condSkipPR, condIsMain).mkString(" && ")),
+    scalas = List(CrossVersion.binaryScalaVersion(scalaDefault)),
+    javas = List(javaDefault)
+  ),
+  WorkflowJob(
     "it-test",
     "Integration Test",
     WorkflowStep.CheckoutFull ::
@@ -287,7 +309,7 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
         WorkflowStep.Sbt(
           List("set integration/test/skip := false", "integration/test"),
           // beam-sdks-java-io-iceberg requires avro 1.12
-          env = Map("JAVA_OPTS" -> "-Davro.version=1.12.0"),
+          env = Map("JAVA_OPTS" -> "-Davro.version=1.12.2"),
           name = Some("Test")
         )
       ),
@@ -586,7 +608,11 @@ def avroSettings(scope: Configuration): Seq[Setting[_]] = Def.settings(
         case _                        => m
       }
     }
-  }
+  },
+  // sbt-avro keeps one generator cache per project, shared by Compile and Test. When both
+  // generators run concurrently, Test can return Compile's (empty) outputs and its generated
+  // classes drop out of compilation. Run them one after the other.
+  Test / avroGenerate := (Test / avroGenerate).dependsOn(Compile / avroGenerate).value
 )
 
 lazy val protobufSettings = Def.settings(
@@ -1488,6 +1514,9 @@ lazy val `scio-examples` = project
       }
     },
     Compile / doc / sources := List(),
+    // avro 1.12.2 rejects reflect records, e.g. classes with @DefaultCoder(AvroCoder.class),
+    // outside the trusted packages
+    Test / javaOptions += "-Dorg.apache.avro.SERIALIZABLE_PACKAGES=org.apache.beam.examples",
     Test / testGrouping := splitTests(
       (Test / definedTests).value,
       List("com.spotify.scio.examples.WordCountTest"),
