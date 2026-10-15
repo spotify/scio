@@ -25,7 +25,7 @@ import java.lang.reflect.{InvocationHandler, InvocationTargetException, Method, 
 import java.util.concurrent.ConcurrentHashMap
 
 import scala.jdk.CollectionConverters._
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 /**
  * Runs [[AvroClassTrust.install]] on Beam worker JVMs, including the packages in
@@ -87,8 +87,28 @@ object AvroClassTrust {
     cls.getAnnotations.exists(_.annotationType().getName == AvroGenerated) ||
       trustedPackages.asScala.exists(p => cls.getName.startsWith(p + "."))
 
-  private lazy val installed: Boolean = Try {
-    val validator = Class.forName("org.apache.avro.util.ClassSecurityValidator")
+  private lazy val installed: Boolean =
+    Try(Class.forName("org.apache.avro.util.ClassSecurityValidator")) match {
+      case Failure(_) =>
+        logger.debug("Avro has no ClassSecurityValidator (avro < 1.12.1), every class is trusted")
+        false
+      case Success(validator) =>
+        Try(setGlobalPredicate(validator)) match {
+          case Success(_) =>
+            logger.info("Avro ClassSecurityValidator extended to trust @AvroGenerated classes")
+            true
+          case Failure(e) =>
+            logger.warn(
+              "Failed to extend Avro ClassSecurityValidator to trust @AvroGenerated classes. " +
+                "Avro may reject them with SecurityException: Forbidden, unless their packages " +
+                "are in -Dorg.apache.avro.SERIALIZABLE_PACKAGES",
+              e
+            )
+            false
+        }
+    }
+
+  private def setGlobalPredicate(validator: Class[_]): Unit = {
     val predicate =
       Class.forName("org.apache.avro.util.ClassSecurityValidator$ClassSecurityPredicate")
     val previous = validator.getMethod("getGlobal").invoke(null)
@@ -107,7 +127,6 @@ object AvroClassTrust {
     }
     val proxy = Proxy.newProxyInstance(predicate.getClassLoader, Array(predicate), handler)
     validator.getMethod("setGlobal", predicate).invoke(null, proxy)
-    logger.info("Avro ClassSecurityValidator extended to trust @AvroGenerated classes")
-    true
-  }.getOrElse(false)
+    ()
+  }
 }
