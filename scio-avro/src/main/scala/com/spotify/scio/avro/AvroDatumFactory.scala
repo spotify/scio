@@ -70,9 +70,6 @@ private[scio] class SpecificRecordDatumFactory[T <: SpecificRecord](recordType: 
     extends AvroDatumFactory.SpecificDatumFactory[T](recordType) {
   import SpecificRecordDatumFactory._
 
-  // on the driver and in the direct runner, before records are read by other means e.g. parquet
-  AvroCompat.trustGeneratedClasses()
-
   override def apply(writer: Schema): DatumWriter[T] = {
     val datumWriter = new SpecificDatumWriter(recordType)
     // avro 1.8 generated code does not add conversions to the data
