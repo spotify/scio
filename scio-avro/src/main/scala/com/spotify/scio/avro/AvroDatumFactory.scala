@@ -19,7 +19,13 @@ package com.spotify.scio.avro
 import org.apache.avro.{Conversion, Schema}
 import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
 import org.apache.avro.io.{DatumReader, DatumWriter}
-import org.apache.avro.reflect.{ReflectData, ReflectDatumReader, ReflectDatumWriter}
+import org.apache.avro.reflect.{
+  AvroIgnore,
+  ReflectData,
+  ReflectDatumReader,
+  ReflectDatumWriter,
+  Union
+}
 import org.apache.avro.specific.{
   SpecificData,
   SpecificDatumReader,
@@ -28,7 +34,18 @@ import org.apache.avro.specific.{
 }
 import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory
 import org.apache.beam.sdk.extensions.avro.schemas.utils.AvroUtils
+import com.spotify.scio.util.AvroClassTrust
 
+import java.lang.reflect.{
+  AnnotatedElement,
+  GenericArrayType,
+  Modifier,
+  ParameterizedType,
+  Type,
+  WildcardType
+}
+
+import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 import scala.util.chaining._
@@ -172,16 +189,76 @@ private[scio] object SpecificRecordDatumFactory {
 class ReflectRecordDatumFactory[T](recordType: Class[T]) extends AvroDatumFactory[T](recordType) {
   import ReflectRecordDatumFactory._
 
-  override def apply(writer: Schema, reader: Schema): DatumReader[T] = {
+  // once per JVM and factory, the trust lives in AvroClassTrust's global validator
+  @transient private lazy val trusted: Unit = {
     AvroCompat.trustGeneratedClasses()
+    AvroClassTrust.trustClasses(recordClasses(recordType).toSeq: _*)
+  }
+
+  override def apply(writer: Schema, reader: Schema): DatumReader[T] = {
+    trusted
     new ReflectDatumReader[T](writer, reader, reflectData(recordType))
   }
 
-  override def apply(writer: Schema): DatumWriter[T] =
+  override def apply(writer: Schema): DatumWriter[T] = {
+    trusted
     new ReflectDatumWriter[T](writer, reflectData(recordType))
+  }
 }
 
 object ReflectRecordDatumFactory {
+
+  /**
+   * `recordType` and the classes avro reflect can load by name when reading it: the declared types
+   * of its fields, including superclass fields, type arguments, array components and `@Union`
+   * subtypes, recursively. Fields are those [[ReflectData]] maps: not static, transient or
+   * `@AvroIgnore`. Classes in `java.*` and `scala.*` are included, but not walked into.
+   *
+   * Walks `recordType`, not a schema, so only classes the record declares are trusted, never
+   * classes named by a writer schema.
+   */
+  private[scio] def recordClasses(recordType: Class[_]): Set[Class[_]] = {
+    val seen = mutable.LinkedHashSet.empty[Class[_]]
+
+    def unions(e: AnnotatedElement): Seq[Class[_]] =
+      Option(e.getAnnotation(classOf[Union])).toSeq.flatMap(_.value().toSeq)
+
+    def isLibrary(c: Class[_]): Boolean =
+      c.getName.startsWith("java.") || c.getName.startsWith("scala.")
+
+    def visitType(t: Type): Unit = t match {
+      case c: Class[_]          => visitClass(c)
+      case p: ParameterizedType =>
+        visitType(p.getRawType)
+        p.getActualTypeArguments.foreach(visitType)
+      case a: GenericArrayType => visitType(a.getGenericComponentType)
+      case w: WildcardType     => w.getUpperBounds.foreach(visitType)
+      case _                   => // type variables carry no class
+    }
+
+    def visitClass(c: Class[_]): Unit =
+      if (c.isArray) visitClass(c.getComponentType)
+      else if (!c.isPrimitive && seen.add(c)) {
+        unions(c).foreach(visitClass)
+        if (!isLibrary(c)) {
+          Iterator
+            .iterate[Class[_]](c)(_.getSuperclass)
+            .takeWhile(s => s != null && s != classOf[Object])
+            .flatMap(_.getDeclaredFields)
+            .filterNot(f =>
+              Modifier.isStatic(f.getModifiers) || Modifier.isTransient(f.getModifiers)
+            )
+            .filterNot(_.isAnnotationPresent(classOf[AvroIgnore]))
+            .foreach { f =>
+              unions(f).foreach(visitClass)
+              visitType(f.getGenericType)
+            }
+        }
+      }
+
+    visitClass(recordType)
+    seen.toSet
+  }
 
   // avro 1.11+
   private lazy val bigDecimalConversion: Option[Class[_]] =

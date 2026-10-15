@@ -49,6 +49,8 @@ class AvroClassTrustInitializer extends JvmInitializer {
  *     with, which 1.12.1 dropped, e.g. `java.math.BigDecimal` of `java-class` string fields
  *   - classes directly in `java.util`, the `java-class` of reflect record collections, e.g.
  *     `java.util.List`; not its subpackages
+ *   - classes given to [[trustClasses]], e.g. by `ReflectRecordDatumFactory` for its record class
+ *     and the classes of its fields
  *   - classes in the packages given to [[trustPackages]], or with the `--avroTrustedPackages`
  *     pipeline option, e.g. reflect records such as classes with `@DefaultCoder(AvroCoder.class)`
  *
@@ -69,6 +71,8 @@ object AvroClassTrust {
 
   // classes directly in these packages, not in subpackages
   private val TrustedExactPackages: Set[String] = Set("java.util")
+
+  private val trustedClasses: java.util.Set[String] = ConcurrentHashMap.newKeySet[String]()
 
   private val trustedPackages: java.util.Set[String] = {
     val set = ConcurrentHashMap.newKeySet[String]()
@@ -98,8 +102,16 @@ object AvroClassTrust {
     install()
   }
 
+  /** Trust exactly `classes`, see [[install]]. */
+  def trustClasses(classes: Class[_]*): Unit = {
+    val added = classes.map(_.getName).filter(trustedClasses.add)
+    if (added.nonEmpty) logger.debug("Avro trusted classes extended with {}", added.mkString(","))
+    install()
+  }
+
   private def isTrusted(cls: Class[_]): Boolean =
-    cls.getAnnotations.exists(_.annotationType().getName == AvroGenerated) ||
+    trustedClasses.contains(cls.getName) ||
+      cls.getAnnotations.exists(_.annotationType().getName == AvroGenerated) ||
       Option(cls.getPackage).exists(p => TrustedExactPackages.contains(p.getName)) ||
       trustedPackages.asScala.exists(p => cls.getName.startsWith(p + "."))
 

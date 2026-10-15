@@ -154,8 +154,9 @@ trait AvroCoders extends CoderGrammar {
 
   /**
    * Create a Coder for a class avro maps to a schema by reflection, e.g. a POJO. Supports
-   * [[java.math.BigDecimal]] fields, see [[ReflectRecordDatumFactory]]. Not implicit: classes
-   * without an implicit coder use the kryo fallback.
+   * [[java.math.BigDecimal]] fields and trusts the class and the classes of its fields on avro
+   * 1.12.1+, see [[ReflectRecordDatumFactory]]. Not implicit: classes without an implicit coder use
+   * the kryo fallback.
    */
   def avroReflectCoder[T: ClassTag]: Coder[T] = {
     val recordClass = ScioUtil.classOf[T]
