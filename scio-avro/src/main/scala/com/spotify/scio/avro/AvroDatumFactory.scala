@@ -17,7 +17,7 @@
 package com.spotify.scio.avro
 
 import org.apache.avro.{Conversion, Schema}
-import org.apache.avro.generic.{GenericData, GenericDatumReader, GenericRecord}
+import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
 import org.apache.avro.io.{DatumReader, DatumWriter}
 import org.apache.avro.specific.{
   SpecificData,
@@ -40,9 +40,8 @@ import scala.util.chaining._
  */
 private[scio] object GenericRecordDatumFactory extends AvroDatumFactory.GenericDatumFactory {
 
-  // own GenericData instance so disabling the fast reader doesn't touch the GenericData.get() singleton
   private class ScioGenericDatumReader
-      extends GenericDatumReader[GenericRecord](null, null, new GenericData()) {
+      extends GenericDatumReader[GenericRecord](null, null, AvroCompat.genericReaderData()) {
     override def findStringClass(schema: Schema): Class[_] = super.findStringClass(schema) match {
       case cls if cls == classOf[CharSequence] => classOf[String]
       case cls                                 => cls

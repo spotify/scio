@@ -16,7 +16,7 @@
 
 package com.spotify.scio.avro
 
-import org.apache.avro.Schema
+import org.apache.avro.{Conversion, Schema}
 import org.apache.avro.generic.GenericData
 import com.spotify.scio.util.AvroClassTrust
 
@@ -48,6 +48,30 @@ object AvroCompat {
     if (!"true".equalsIgnoreCase(System.getProperty(FastReaderProperty))) {
       setFastReaderEnabled.foreach(_.invoke(data, java.lang.Boolean.FALSE))
     }
+
+  private lazy val getConversions: Option[Method] =
+    Try(classOf[GenericData].getMethod("getConversions")).toOption
+
+  /**
+   * [[GenericData]] for scio's generic readers, so [[disableFastReader]] doesn't touch the
+   * `GenericData.get()` singleton. A copy of the singleton's class loader and logical-type
+   * conversions, so conversions users register on it still apply. Avro without a fast reader gets
+   * the singleton itself.
+   */
+  private[scio] def genericReaderData(): GenericData = {
+    val global = GenericData.get()
+    (setFastReaderEnabled, getConversions) match {
+      case (Some(_), Some(conversions)) =>
+        val data = new GenericData(global.getClassLoader)
+        conversions
+          .invoke(global)
+          .asInstanceOf[java.util.Collection[Conversion[_]]]
+          .asScala
+          .foreach(c => data.addLogicalTypeConversion(c))
+        data
+      case _ => global
+    }
+  }
 
   // keyed by schema equality, values are reused so GenericDatumReader's resolver cache, keyed by
   // schema reference, keeps hitting

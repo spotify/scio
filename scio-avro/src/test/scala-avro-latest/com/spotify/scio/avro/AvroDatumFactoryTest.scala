@@ -19,7 +19,7 @@ package com.spotify.scio.avro
 import java.io.ByteArrayOutputStream
 import java.util.ServiceLoader
 
-import org.apache.avro.{LogicalTypes, Schema, SchemaBuilder}
+import org.apache.avro.{Conversion, LogicalType, LogicalTypes, Schema, SchemaBuilder}
 import org.apache.avro.data.TimeConversions
 import org.apache.avro.generic.{GenericData, GenericDatumWriter, GenericRecord}
 import org.apache.avro.io.{BinaryDecoder, BinaryEncoder, DecoderFactory, EncoderFactory}
@@ -159,6 +159,40 @@ class AvroDatumFactoryTest extends AnyFlatSpec with Matchers {
     read shouldBe record
     // the shared singleton is left alone
     GenericData.get().isFastReaderEnabled shouldBe fastReaderDefault
+  }
+
+  it should "apply logical-type conversions registered on GenericData.get()" in {
+    // a logical type only this test uses, so registering on the singleton affects no other test
+    val upper = new LogicalType("scio-test-upper")
+    GenericData
+      .get()
+      .addLogicalTypeConversion(new Conversion[String] {
+        override def getConvertedType: Class[String] = classOf[String]
+        override def getLogicalTypeName: String = upper.getName
+        override def fromCharSequence(
+          value: CharSequence,
+          schema: Schema,
+          lt: LogicalType
+        ): String = value.toString.toUpperCase
+        override def toCharSequence(
+          value: String,
+          schema: Schema,
+          lt: LogicalType
+        ): CharSequence = value
+      })
+    val schema = SchemaBuilder
+      .record("U")
+      .fields()
+      .name("s")
+      .`type`(upper.addToSchema(Schema.create(Schema.Type.STRING)))
+      .noDefault()
+      .endRecord()
+    val record = new GenericData.Record(schema)
+    record.put("s", "abc")
+
+    val read = GenericRecordDatumFactory(schema, schema)
+      .read(null, decoder(new GenericDatumWriter[GenericRecord](schema).write(record, _)))
+    read.get("s") shouldBe "ABC"
   }
 
   private def decoder(write: BinaryEncoder => Unit): BinaryDecoder = {
