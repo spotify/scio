@@ -36,6 +36,31 @@ case class Amount(var value: BigDecimal) {
   def this() = this(null)
 }
 
+// not a record: a string with a logical type, through MoneyConversion
+case class Money(cents: Long)
+
+object MoneyConversion extends Conversion[Money] {
+  private val logicalType = new org.apache.avro.LogicalType("scio-test-money")
+  override def getConvertedType: Class[Money] = classOf[Money]
+  override def getLogicalTypeName: String = logicalType.getName
+  override def getRecommendedSchema: Schema =
+    logicalType.addToSchema(Schema.create(Schema.Type.STRING))
+  override def fromCharSequence(
+    value: CharSequence,
+    schema: Schema,
+    lt: org.apache.avro.LogicalType
+  ): Money = Money(value.toString.toLong)
+  override def toCharSequence(
+    value: Money,
+    schema: Schema,
+    lt: org.apache.avro.LogicalType
+  ): CharSequence = value.cents.toString
+}
+
+case class Wallet(var money: Money) {
+  def this() = this(null)
+}
+
 case class Ledger(
   var name: String,
   var total: BigDecimal,
@@ -94,9 +119,9 @@ class ReflectRecordDatumFactoryTest extends PipelineSpec {
 
   it should "fix Beam's ReflectDatumFactory failing on avro 1.12.1+" in {
     assume(isBigDecimalLogicalType, "avro < 1.12.1 maps BigDecimal to a string")
-    // what ContoursIO.BigDecimalReflectDatumFactory worked around
     val beamCoder = AvroCoder.of(AvroDatumFactory.reflect(classOf[Ledger]), reflectSchema)
-    an[Exception] should be thrownBy encodeDecode(beamCoder, ledger)
+    val e = the[ClassCastException] thrownBy encodeDecode(beamCoder, ledger)
+    e.getMessage should include("java.math.BigDecimal")
   }
 
   it should "read data written with Beam's reflect coder on avro < 1.12.1" in {
@@ -111,6 +136,32 @@ class ReflectRecordDatumFactoryTest extends PipelineSpec {
     val coder = AvroCoder.of(new ReflectRecordDatumFactory(classOf[Ledger]), reflectSchema)
     val copy = org.apache.beam.sdk.util.SerializableUtils.clone(coder)
     encodeDecode(copy, ledger) shouldBe ledger
+  }
+
+  it should "use conversions registered on ReflectData.get()" in {
+    // ReflectData.getConversions only exists in avro 1.9+
+    assume(
+      scala.util
+        .Try(classOf[org.apache.avro.generic.GenericData].getMethod("getConversions"))
+        .isSuccess,
+      "avro has no GenericData.getConversions"
+    )
+    // a type only this test uses, so registering on the singleton affects no other test
+    ReflectData.get().addLogicalTypeConversion(MoneyConversion)
+    val schema = ReflectData.get().getSchema(classOf[Wallet])
+    schema
+      .getField("money")
+      .schema()
+      .getProp("logicalType") shouldBe MoneyConversion.getLogicalTypeName
+
+    val wallet = Wallet(Money(42))
+    encodeDecode(
+      AvroCoder.of(new ReflectRecordDatumFactory(classOf[Wallet]), schema),
+      wallet
+    ) shouldBe
+      wallet
+    implicit val coder: Coder[Wallet] = avroReflectCoder[Wallet]
+    wallet coderShould roundtrip()
   }
 
   "avroReflectCoder" should "roundtrip reflect records with BigDecimal fields" in {

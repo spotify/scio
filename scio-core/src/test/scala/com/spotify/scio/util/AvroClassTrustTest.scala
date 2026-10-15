@@ -76,7 +76,7 @@ package com.spotify.scio.util {
       roundtrip(new InitializerPojo("a")).name shouldBe "a"
     }
 
-    it should "trust avro 1.11 default packages and java.util collections" in {
+    it should "trust the default classes, and arrays of them, only" in {
       assume(hasValidator, "avro has no ClassSecurityValidator")
       AvroClassTrust.install()
       val validator =
@@ -89,15 +89,22 @@ package com.spotify.scio.util {
         .getMethod("isTrusted", classOf[Class[_]])
       def trusted(c: Class[_]): Boolean = isTrusted.invoke(validator, c).asInstanceOf[Boolean]
 
-      trusted(classOf[java.math.BigDecimal]) shouldBe true
-      trusted(classOf[java.lang.Integer]) shouldBe true
-      trusted(classOf[java.io.File]) shouldBe true
-      trusted(classOf[java.net.URI]) shouldBe true
-      trusted(classOf[org.apache.avro.reflect.ReflectData]) shouldBe true
-      trusted(classOf[java.util.List[_]]) shouldBe true
-      trusted(classOf[java.util.ArrayList[_]]) shouldBe true
-      trusted(classOf[java.util.HashMap[_, _]]) shouldBe true
-      // java.util only, not its subpackages
+      AvroClassTrust.DefaultTrustedClasses.foreach { name =>
+        withClue(name)(trusted(Class.forName(name)) shouldBe true)
+      }
+      // array java-class props, e.g. [I and [Ljava.lang.String;
+      trusted(classOf[Array[Int]]) shouldBe true
+      trusted(classOf[Array[Byte]]) shouldBe true
+      trusted(classOf[Array[String]]) shouldBe true
+      trusted(classOf[Array[Array[Short]]]) shouldBe true
+      // in packages avro 1.11.4 to 1.12.0 trusted, but constructible from strings in hostile data.
+      // Not java.io.File or java.net.URL: scio's test JVMs trust them with SERIALIZABLE_CLASSES,
+      // see project/JavaOptions.scala
+      trusted(classOf[java.io.FileOutputStream]) shouldBe false
+      trusted(classOf[java.io.FileInputStream]) shouldBe false
+      trusted(classOf[java.net.Socket]) shouldBe false
+      trusted(classOf[java.lang.ProcessBuilder]) shouldBe false
+      trusted(classOf[Array[java.io.FileOutputStream]]) shouldBe false
       trusted(classOf[java.util.concurrent.ConcurrentHashMap[_, _]]) shouldBe false
     }
 

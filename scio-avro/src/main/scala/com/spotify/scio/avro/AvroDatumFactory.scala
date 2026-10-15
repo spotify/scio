@@ -260,19 +260,25 @@ object ReflectRecordDatumFactory {
     seen.toSet
   }
 
-  // avro 1.11+
-  private lazy val bigDecimalConversion: Option[Class[_]] =
-    Try(Class.forName("org.apache.avro.Conversions$BigDecimalConversion")).toOption
+  // avro 1.11+, stateless so shared
+  private lazy val bigDecimalConversion: Option[Conversion[_]] =
+    Try(
+      Class
+        .forName("org.apache.avro.Conversions$BigDecimalConversion")
+        .getDeclaredConstructor()
+        .newInstance()
+        .asInstanceOf[Conversion[_]]
+    ).toOption
 
-  /** [[ReflectData]] with the conversions [[ReflectRecordDatumFactory]] uses. */
+  /**
+   * [[ReflectData]] with the conversions [[ReflectRecordDatumFactory]] uses: those registered on
+   * `ReflectData.get()`, which schemas derived with it can use, Beam's, and `BigDecimalConversion`.
+   */
   def reflectData(recordType: Class[_]): ReflectData = {
     val data = new ReflectData(recordType.getClassLoader)
+    AvroCompat.conversions(ReflectData.get()).foreach(c => data.addLogicalTypeConversion(c))
     AvroUtils.addLogicalTypeConversions(data)
-    bigDecimalConversion.foreach { cls =>
-      data.addLogicalTypeConversion(
-        cls.getDeclaredConstructor().newInstance().asInstanceOf[Conversion[_]]
-      )
-    }
+    bigDecimalConversion.foreach(c => data.addLogicalTypeConversion(c))
     data
   }
 }
