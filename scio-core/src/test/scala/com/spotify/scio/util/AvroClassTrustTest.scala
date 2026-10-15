@@ -22,6 +22,7 @@ package com.spotify.scio.util {
   import com.spotify.scio.util.avrotrust.byinitializer.InitializerPojo
   import com.spotify.scio.util.avrotrust.byapi.ApiPojo
   import com.spotify.scio.util.avrotrust.untrusted.UntrustedPojo
+  import com.spotify.scio.util.avrotrust.collections.CollectionsPojo
   import org.apache.avro.io.{DecoderFactory, EncoderFactory}
   import org.apache.avro.reflect.{ReflectData, ReflectDatumReader, ReflectDatumWriter}
   import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
@@ -75,6 +76,44 @@ package com.spotify.scio.util {
       roundtrip(new InitializerPojo("a")).name shouldBe "a"
     }
 
+    it should "trust avro 1.11 default packages and java.util collections" in {
+      assume(hasValidator, "avro has no ClassSecurityValidator")
+      AvroClassTrust.install()
+      val validator =
+        Class
+          .forName("org.apache.avro.util.ClassSecurityValidator")
+          .getMethod("getGlobal")
+          .invoke(null)
+      val isTrusted = Class
+        .forName("org.apache.avro.util.ClassSecurityValidator$ClassSecurityPredicate")
+        .getMethod("isTrusted", classOf[Class[_]])
+      def trusted(c: Class[_]): Boolean = isTrusted.invoke(validator, c).asInstanceOf[Boolean]
+
+      trusted(classOf[java.math.BigDecimal]) shouldBe true
+      trusted(classOf[java.lang.Integer]) shouldBe true
+      trusted(classOf[java.io.File]) shouldBe true
+      trusted(classOf[java.net.URI]) shouldBe true
+      trusted(classOf[org.apache.avro.reflect.ReflectData]) shouldBe true
+      trusted(classOf[java.util.List[_]]) shouldBe true
+      trusted(classOf[java.util.ArrayList[_]]) shouldBe true
+      trusted(classOf[java.util.HashMap[_, _]]) shouldBe true
+      // java.util only, not its subpackages
+      trusted(classOf[java.util.concurrent.ConcurrentHashMap[_, _]]) shouldBe false
+    }
+
+    it should "trust reflect records with BigDecimal and collection fields" in {
+      AvroClassTrust.trustPackages("com.spotify.scio.util.avrotrust.collections")
+      val value = new CollectionsPojo(
+        new java.math.BigDecimal("1.50"),
+        java.util.Arrays.asList("a", "b"),
+        java.util.Collections.singletonMap("k", java.lang.Long.valueOf(1L))
+      )
+      val read = roundtrip(value)
+      read.amount shouldBe value.amount
+      read.list shouldBe value.list
+      read.map shouldBe value.map
+    }
+
     it should "trust packages given to trustPackages" in {
       AvroClassTrust.trustPackages("com.spotify.scio.util.avrotrust.byapi")
       roundtrip(new ApiPojo("a")).name shouldBe "a"
@@ -91,6 +130,13 @@ package com.spotify.scio.util.avrotrust.byinitializer {
 }
 package com.spotify.scio.util.avrotrust.byapi {
   class ApiPojo(var name: String) { def this() = this(null) }
+}
+package com.spotify.scio.util.avrotrust.collections {
+  class CollectionsPojo(
+    var amount: java.math.BigDecimal,
+    var list: java.util.List[String],
+    var map: java.util.Map[String, java.lang.Long]
+  ) { def this() = this(null, null, null) }
 }
 package com.spotify.scio.util.avrotrust.untrusted {
   class UntrustedPojo(var name: String) { def this() = this(null) }

@@ -17,10 +17,16 @@
 
 package com.spotify.scio.coders.avro
 
-import com.spotify.scio.avro.{AvroCompat, GenericRecordDatumFactory, SpecificRecordDatumFactory}
+import com.spotify.scio.avro.{
+  AvroCompat,
+  GenericRecordDatumFactory,
+  ReflectRecordDatumFactory,
+  SpecificRecordDatumFactory
+}
 import com.spotify.scio.coders.{Coder, CoderGrammar}
 import com.spotify.scio.util.ScioUtil
 import org.apache.avro.Schema
+import org.apache.avro.reflect.ReflectData
 import org.apache.avro.generic.{GenericRecord, IndexedRecord}
 import org.apache.avro.io.{BinaryDecoder, BinaryEncoder, DecoderFactory, EncoderFactory}
 import org.apache.avro.specific.{SpecificData, SpecificFixed, SpecificRecord}
@@ -145,6 +151,18 @@ trait AvroCoders extends CoderGrammar {
 
   def avroCoder[T <: IndexedRecord](factory: AvroDatumFactory[T], schema: Schema): Coder[T] =
     beam(AvroCoder.of(factory, schema))
+
+  /**
+   * Create a Coder for a class avro maps to a schema by reflection, e.g. a POJO. Supports
+   * [[java.math.BigDecimal]] fields, see [[ReflectRecordDatumFactory]]. Not implicit: classes
+   * without an implicit coder use the kryo fallback.
+   */
+  def avroReflectCoder[T: ClassTag]: Coder[T] = {
+    val recordClass = ScioUtil.classOf[T]
+    // avro's default reflect schema, using big-decimal for BigDecimal on avro 1.12.1+
+    val schema = ReflectData.get().getSchema(recordClass)
+    beam(AvroCoder.of(new ReflectRecordDatumFactory(recordClass), schema))
+  }
 
   implicit def avroSpecificFixedCoder[T <: SpecificFixed: ClassTag]: Coder[T] =
     SpecificFixedCoder[T]

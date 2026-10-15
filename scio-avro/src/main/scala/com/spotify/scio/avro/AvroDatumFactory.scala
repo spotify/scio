@@ -19,6 +19,7 @@ package com.spotify.scio.avro
 import org.apache.avro.{Conversion, Schema}
 import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
 import org.apache.avro.io.{DatumReader, DatumWriter}
+import org.apache.avro.reflect.{ReflectData, ReflectDatumReader, ReflectDatumWriter}
 import org.apache.avro.specific.{
   SpecificData,
   SpecificDatumReader,
@@ -26,6 +27,7 @@ import org.apache.avro.specific.{
   SpecificRecord
 }
 import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory
+import org.apache.beam.sdk.extensions.avro.schemas.utils.AvroUtils
 
 import scala.jdk.CollectionConverters._
 import scala.util.Try
@@ -157,4 +159,43 @@ private[scio] object SpecificRecordDatumFactory {
     }
   }
 
+}
+
+/**
+ * AvroDatumFactory for reflect records, i.e. classes avro maps to a schema by reflection.
+ *
+ * Like Beam's [[AvroDatumFactory.ReflectDatumFactory]], with avro's `BigDecimalConversion` added
+ * when it exists (avro 1.11+). Since avro 1.12.1, `ReflectData.get()` maps [[java.math.BigDecimal]]
+ * to the `big-decimal` logical type, which can't be written or read without that conversion, so
+ * Beam's factory fails on schemas derived with it.
+ */
+class ReflectRecordDatumFactory[T](recordType: Class[T]) extends AvroDatumFactory[T](recordType) {
+  import ReflectRecordDatumFactory._
+
+  override def apply(writer: Schema, reader: Schema): DatumReader[T] = {
+    AvroCompat.trustGeneratedClasses()
+    new ReflectDatumReader[T](writer, reader, reflectData(recordType))
+  }
+
+  override def apply(writer: Schema): DatumWriter[T] =
+    new ReflectDatumWriter[T](writer, reflectData(recordType))
+}
+
+object ReflectRecordDatumFactory {
+
+  // avro 1.11+
+  private lazy val bigDecimalConversion: Option[Class[_]] =
+    Try(Class.forName("org.apache.avro.Conversions$BigDecimalConversion")).toOption
+
+  /** [[ReflectData]] with the conversions [[ReflectRecordDatumFactory]] uses. */
+  def reflectData(recordType: Class[_]): ReflectData = {
+    val data = new ReflectData(recordType.getClassLoader)
+    AvroUtils.addLogicalTypeConversions(data)
+    bigDecimalConversion.foreach { cls =>
+      data.addLogicalTypeConversion(
+        cls.getDeclaredConstructor().newInstance().asInstanceOf[Conversion[_]]
+      )
+    }
+    data
+  }
 }
