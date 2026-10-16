@@ -57,16 +57,25 @@ class VoyagerNamesTest extends AnyFlatSpec with Matchers {
   }
 
   it should "reject malformed input" in {
-    for (bad <- Seq("", "\"a\"", "[\"a\"", "[\"a\" \"b\"]", "[\"a\",]", "[,\"a\"]", "[\"a"))
+    for (
+      bad <- Seq(
+        "",
+        "\"a\"",
+        "[\"a\"",
+        "[\"a\" \"b\"]",
+        "[\"a\",]",
+        "[,\"a\"]",
+        "[\"a",
+        "{}",
+        "[1, \"a\"]",
+        "[true]",
+        "[null]",
+        "[\"a\", [\"b\"]]",
+        "[\"a\"] x",
+        "[\"a\"][\"b\"]"
+      )
+    )
       withClue(bad)(an[IllegalArgumentException] should be thrownBy parse(bad))
   }
 
-  it should "parse names spanning chunk boundaries" in {
-    val names = Seq("a", "", "spotify:track:123", "ünïcødé 🎵", "a-much-longer-name-than-the-chunk")
-    val bytes = tinyJson(names)
-    for (chunkSize <- Seq(1, 2, 3, 7, 64))
-      withClue(s"chunkSize=$chunkSize") {
-        VoyagerReader.parseNames(new ByteArrayInputStream(bytes), chunkSize).toSeq shouldBe names
-      }
-  }
 }

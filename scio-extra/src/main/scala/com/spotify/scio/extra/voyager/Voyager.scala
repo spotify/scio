@@ -21,6 +21,7 @@ import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import com.spotify.scio.values.SideInput
 import com.spotify.voyager.jni.Index.{SpaceType, StorageDataType}
 import com.spotify.voyager.jni.Index
+import com.fasterxml.jackson.core.{JsonFactory, JsonProcessingException, JsonToken}
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.values.PCollectionView
 
@@ -159,23 +160,39 @@ private[voyager] object VoyagerWriter {
  *   The voyager index settings, either provided or read from the index v2 metadata
  */
 class VoyagerReader private[voyager] (
-  indexFile: Path,
-  namesFile: Path,
+  files: VoyagerReader.Files,
   indexSettings: VoyagerReader.IndexSettings
 ) {
+  import VoyagerReader._
+
   // load the native index and parse the names concurrently; neither depends on the other
   @transient private lazy val loaded: (Index, Array[String]) = {
     import scala.concurrent.ExecutionContext.Implicits.global
-    val indexF = Future {
-      indexSettings match {
-        case VoyagerReader.ProvidedSettings(space, numDimensions, storageDataType) =>
-          Index.load(indexFile.toString, space, numDimensions, storageDataType)
-        case VoyagerReader.MetadataSettings =>
-          Index.load(indexFile.toString)
-      }
+    val (indexF, namesF) = files match {
+      case LocalFiles(indexFile, namesFile) =>
+        (Future(loadIndex(indexFile)), Future(readNames(namesFile)))
+      case RemoteFiles(indexUri, namesUri, download) =>
+        // stream straight into memory, fetching byte ranges in parallel with per-range retries
+        (
+          Future(withStream(indexUri, download)(loadIndex)),
+          Future(withStream(namesUri, download)(parseNames(_)))
+        )
     }
-    val namesF = Future(VoyagerReader.readNames(namesFile))
     Await.result(indexF.zip(namesF), Duration.Inf)
+  }
+
+  private def loadIndex(indexFile: Path): Index = indexSettings match {
+    case ProvidedSettings(space, numDimensions, storageDataType) =>
+      Index.load(indexFile.toString, space, numDimensions, storageDataType)
+    case MetadataSettings =>
+      Index.load(indexFile.toString)
+  }
+
+  private def loadIndex(in: InputStream): Index = indexSettings match {
+    case ProvidedSettings(space, numDimensions, storageDataType) =>
+      Index.load(in, space, numDimensions, storageDataType)
+    case MetadataSettings =>
+      Index.load(in)
   }
   private def index: Index = loaded._1
   private def names: Array[String] = loaded._2
@@ -201,11 +218,30 @@ private[voyager] object VoyagerReader {
   ) extends IndexSettings
   case object MetadataSettings extends IndexSettings
 
+  sealed trait Files
+  final case class LocalFiles(index: Path, names: Path) extends Files
+  final case class RemoteFiles(
+    index: URI,
+    names: URI,
+    download: ParallelDownloadSettings = ParallelDownloadSettings()
+  ) extends Files
+
+  private def withStream[T](uri: URI, download: ParallelDownloadSettings)(
+    f: InputStream => T
+  ): T = {
+    val in = new ParallelRangeInputStream(RangeSource(uri), download)
+    try f(in)
+    finally in.close()
+  }
+
+  // thread-safe and reusable
+  private val NamesJsonFactory = new JsonFactory()
+
   /**
-   * Parses a voyager `names.json` file, a JSON list of strings. Voyager forbids backslashes and
-   * double quotes in names, so no escape handling is needed. This is much faster than voyager's
-   * Scanner-based `TinyJson.readStringList` for large name lists. The file is streamed in chunks,
-   * so it may be larger than the 2GB JVM array limit.
+   * Parses a voyager `names.json` file, a JSON list of strings. This streams the input, so the file
+   * may exceed the 2GB JVM array limit, and is much faster than voyager's Scanner-based
+   * `TinyJson.readStringList` for large name lists. Anything other than a flat list of strings is
+   * rejected rather than coerced.
    */
   private[voyager] def readNames(namesFile: Path): Array[String] = {
     val in = Files.newInputStream(namesFile)
@@ -216,80 +252,31 @@ private[voyager] object VoyagerReader {
   private[voyager] def parseNames(bytes: Array[Byte]): Array[String] =
     parseNames(new ByteArrayInputStream(bytes))
 
-  // parser states
-  private val BeforeList = 0
-  private val ListStart = 1 // after '[': expect a name or ']'
-  private val InName = 2
-  private val AfterName = 3 // expect ',' or ']'
-  private val AfterComma = 4 // expect a name
-  private val Done = 5
-
-  private[voyager] def parseNames(
-    in: InputStream,
-    chunkSize: Int = 1 << 20
-  ): Array[String] = {
-    val Quote = '"'.toByte
-    def isWs(b: Byte): Boolean = b == ' ' || b == '\n' || b == '\r' || b == '\t'
-
-    val chunk = new Array[Byte](chunkSize)
-    // holds the start of a name that spans chunk boundaries
-    var carry = new Array[Byte](256)
-    var carryLen = 0
-    def appendCarry(from: Int, until: Int): Unit = {
-      val len = until - from
-      if (carryLen + len > carry.length) {
-        carry = java.util.Arrays.copyOf(carry, math.max(carry.length * 2, carryLen + len))
+  private[voyager] def parseNames(in: InputStream): Array[String] = {
+    val parser = NamesJsonFactory.createParser(in)
+    def fail(msg: String): Nothing =
+      throw new IllegalArgumentException(
+        s"Malformed voyager names list: $msg at ${parser.currentLocation()}"
+      )
+    try {
+      if (parser.nextToken() != JsonToken.START_ARRAY) fail("expected a JSON list")
+      val names = Array.newBuilder[String]
+      var token = parser.nextToken()
+      while (token == JsonToken.VALUE_STRING) {
+        names += parser.getText
+        token = parser.nextToken()
       }
-      System.arraycopy(chunk, from, carry, carryLen, len)
-      carryLen += len
+      if (token != JsonToken.END_ARRAY) fail(s"expected a string but found $token")
+      if (parser.nextToken() != null) fail("unexpected content after the list")
+      names.result()
+    } catch {
+      case e: JsonProcessingException =>
+        throw new IllegalArgumentException("Malformed voyager names list", e)
+    } finally {
+      parser.close()
     }
-
-    val names = Array.newBuilder[String]
-    var state = BeforeList
-    var pos = 0L // absolute offset, for error messages
-    def fail(i: Int): Nothing =
-      throw new IllegalArgumentException(s"Malformed voyager names list at byte ${pos + i}")
-
-    var n = in.read(chunk)
-    while (n != -1 && state != Done) {
-      var i = 0
-      while (i < n && state != Done) {
-        if (state == InName) {
-          val start = i
-          while (i < n && chunk(i) != Quote) i += 1
-          if (i < n) {
-            names += (if (carryLen == 0) new String(chunk, start, i - start, StandardCharsets.UTF_8)
-                      else {
-                        appendCarry(start, i)
-                        val s = new String(carry, 0, carryLen, StandardCharsets.UTF_8)
-                        carryLen = 0
-                        s
-                      })
-            state = AfterName
-            i += 1
-          } else {
-            appendCarry(start, n)
-          }
-        } else {
-          val b = chunk(i)
-          if (!isWs(b)) {
-            state = (state, b) match {
-              case (BeforeList, '[')                     => ListStart
-              case (ListStart | AfterComma, Quote)       => InName
-              case (ListStart | AfterName, ']')          => Done
-              case (AfterName, ',')                      => AfterComma
-              case _                                     => fail(i)
-            }
-          }
-          i += 1
-        }
-      }
-      pos += n
-      if (state != Done) n = in.read(chunk)
-    }
-    if (state != Done) fail(0)
-    names.result()
   }
+
 }
 
 /**
@@ -298,7 +285,6 @@ private[voyager] object VoyagerReader {
  */
 private[voyager] class VoyagerSideInput(
   indexSettings: VoyagerReader.IndexSettings,
-  remoteFileUtil: RemoteFileUtil,
   override val view: PCollectionView[VoyagerUri]
 ) extends SideInput[VoyagerReader] {
 
@@ -308,14 +294,12 @@ private[voyager] class VoyagerSideInput(
     val indexUri = uri.value.resolve(uri.indexFile)
     val namesUri = uri.value.resolve(uri.namesFile)
 
-    val (localIndex, localNames) = if (ScioUtil.isLocalUri(uri.value)) {
-      (Paths.get(indexUri), Paths.get(namesUri))
+    val files = if (ScioUtil.isLocalUri(uri.value)) {
+      VoyagerReader.LocalFiles(Paths.get(indexUri), Paths.get(namesUri))
     } else {
-      val downloadedIndex = remoteFileUtil.download(indexUri)
-      val downloadedNames = remoteFileUtil.download(namesUri)
-      (downloadedIndex, downloadedNames)
+      VoyagerReader.RemoteFiles(indexUri, namesUri)
     }
-    new VoyagerReader(localIndex, localNames, indexSettings)
+    new VoyagerReader(files, indexSettings)
   }
 
   override def get[I, O](context: DoFn[I, O]#ProcessContext): VoyagerReader = {
