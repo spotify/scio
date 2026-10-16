@@ -22,6 +22,7 @@ package com.spotify.scio.util {
   import com.spotify.scio.util.avrotrust.byinitializer.InitializerPojo
   import com.spotify.scio.util.avrotrust.byapi.ApiPojo
   import com.spotify.scio.util.avrotrust.untrusted.UntrustedPojo
+  import com.spotify.scio.util.avrotrust.collections.CollectionsPojo
   import org.apache.avro.io.{DecoderFactory, EncoderFactory}
   import org.apache.avro.reflect.{ReflectData, ReflectDatumReader, ReflectDatumWriter}
   import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
@@ -75,6 +76,51 @@ package com.spotify.scio.util {
       roundtrip(new InitializerPojo("a")).name shouldBe "a"
     }
 
+    it should "trust the default classes, and arrays of them, only" in {
+      assume(hasValidator, "avro has no ClassSecurityValidator")
+      AvroClassTrust.install()
+      val validator =
+        Class
+          .forName("org.apache.avro.util.ClassSecurityValidator")
+          .getMethod("getGlobal")
+          .invoke(null)
+      val isTrusted = Class
+        .forName("org.apache.avro.util.ClassSecurityValidator$ClassSecurityPredicate")
+        .getMethod("isTrusted", classOf[Class[_]])
+      def trusted(c: Class[_]): Boolean = isTrusted.invoke(validator, c).asInstanceOf[Boolean]
+
+      AvroClassTrust.DefaultTrustedClasses.foreach { name =>
+        withClue(name)(trusted(Class.forName(name)) shouldBe true)
+      }
+      // array java-class props, e.g. [I and [Ljava.lang.String;
+      trusted(classOf[Array[Int]]) shouldBe true
+      trusted(classOf[Array[Byte]]) shouldBe true
+      trusted(classOf[Array[String]]) shouldBe true
+      trusted(classOf[Array[Array[Short]]]) shouldBe true
+      // in packages avro 1.11.4 to 1.12.0 trusted, but constructible from strings in hostile data.
+      // Not java.io.File or java.net.URL: scio's test JVMs trust them with SERIALIZABLE_CLASSES,
+      // see project/JavaOptions.scala
+      trusted(classOf[java.io.FileOutputStream]) shouldBe false
+      trusted(classOf[java.io.FileInputStream]) shouldBe false
+      trusted(classOf[java.net.Socket]) shouldBe false
+      trusted(classOf[java.lang.ProcessBuilder]) shouldBe false
+      trusted(classOf[Array[java.io.FileOutputStream]]) shouldBe false
+      trusted(classOf[java.util.concurrent.ConcurrentHashMap[_, _]]) shouldBe false
+    }
+
+    it should "trust reflect records with BigDecimal and collection fields" in {
+      AvroClassTrust.trustPackages("com.spotify.scio.util.avrotrust.collections")
+      val value = new CollectionsPojo(
+        new java.math.BigDecimal("1.50"),
+        java.util.Arrays.asList("a", "b"),
+        java.util.Collections.singletonMap("k", java.lang.Long.valueOf(1L))
+      )
+      val read = roundtrip(value)
+      read.amount shouldBe value.amount
+      read.list shouldBe value.list
+      read.map shouldBe value.map
+    }
+
     it should "trust packages given to trustPackages" in {
       AvroClassTrust.trustPackages("com.spotify.scio.util.avrotrust.byapi")
       roundtrip(new ApiPojo("a")).name shouldBe "a"
@@ -91,6 +137,13 @@ package com.spotify.scio.util.avrotrust.byinitializer {
 }
 package com.spotify.scio.util.avrotrust.byapi {
   class ApiPojo(var name: String) { def this() = this(null) }
+}
+package com.spotify.scio.util.avrotrust.collections {
+  class CollectionsPojo(
+    var amount: java.math.BigDecimal,
+    var list: java.util.List[String],
+    var map: java.util.Map[String, java.lang.Long]
+  ) { def this() = this(null, null, null) }
 }
 package com.spotify.scio.util.avrotrust.untrusted {
   class UntrustedPojo(var name: String) { def this() = this(null) }

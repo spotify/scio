@@ -52,6 +52,12 @@ object AvroCompat {
   private lazy val getConversions: Option[Method] =
     Try(classOf[GenericData].getMethod("getConversions")).toOption
 
+  /** Logical-type conversions registered on `data`, none on avro without `getConversions`. */
+  private[scio] def conversions(data: GenericData): Seq[Conversion[_]] =
+    getConversions.toSeq.flatMap(
+      _.invoke(data).asInstanceOf[java.util.Collection[Conversion[_]]].asScala
+    )
+
   /**
    * [[GenericData]] for scio's generic readers, so [[disableFastReader]] doesn't touch the
    * `GenericData.get()` singleton. A copy of the singleton's class loader and logical-type
@@ -61,13 +67,9 @@ object AvroCompat {
   private[scio] def genericReaderData(): GenericData = {
     val global = GenericData.get()
     (setFastReaderEnabled, getConversions) match {
-      case (Some(_), Some(conversions)) =>
+      case (Some(_), Some(_)) =>
         val data = new GenericData(global.getClassLoader)
-        conversions
-          .invoke(global)
-          .asInstanceOf[java.util.Collection[Conversion[_]]]
-          .asScala
-          .foreach(c => data.addLogicalTypeConversion(c))
+        conversions(global).foreach(c => data.addLogicalTypeConversion(c))
         data
       case _ => global
     }
