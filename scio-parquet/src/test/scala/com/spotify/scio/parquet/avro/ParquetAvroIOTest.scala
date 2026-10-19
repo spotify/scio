@@ -52,6 +52,7 @@ import org.scalatest.prop.TableDrivenPropertyChecks.{forAll => forAllCases, Tabl
 import org.typelevel.scalaccompat.annotation.unused
 
 import java.nio.file.Files
+import scala.jdk.CollectionConverters._
 
 class ParquetAvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
   override val suffix: String = ".parquet"
@@ -92,6 +93,11 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
 
   override protected def afterAll(): Unit = FileUtils.deleteDirectory(testDir)
 
+  private def allStringsAreString(r: StringFieldTest): Boolean =
+    (Seq[AnyRef](r.getStrField) ++
+      r.getMapField.asScala.toSeq.flatMap { case (k, v) => Seq[AnyRef](k, v) } ++
+      r.getArrayField.asScala).forall(_.isInstanceOf[String])
+
   private def createConfig(splittable: Boolean): Configuration = {
     val c = ParquetConfiguration.empty()
     c.set(ParquetReadConfiguration.UseSplittableDoFn, splittable.toString)
@@ -115,6 +121,33 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
         _.parquetAvroFile[TestRecord](_, conf = c()).map(identity)
       )(_.saveAsParquetAvroFile(_))
     }
+  }
+
+  it should "read strings in specific records as String" in {
+    val xs = (1 to 10).map { i =>
+      StringFieldTest
+        .newBuilder()
+        .setStrField(s"s$i")
+        .setMapField(Map[CharSequence, CharSequence](s"k$i" -> s"v$i").asJava)
+        .setArrayField(List[CharSequence](s"a$i").asJava)
+        .build()
+    }
+    val dir = Files.createTempDirectory("scio-test-").toFile
+    val sc = ScioContext()
+    val tap = sc.parallelize(xs).saveAsParquetAvroFile(dir.getAbsolutePath)
+    val result = sc.run().waitUntilDone()
+
+    forAllCases(readConfigs) { case (c, _) =>
+      val sc = ScioContext()
+      val read =
+        sc.parquetAvroFile[StringFieldTest](dir.getAbsolutePath, conf = c(), suffix = ".parquet")
+          .map(identity)
+      read should containInAnyOrder(xs)
+      sc.run()
+    }
+    // the tap reads with parquet-avro directly, unlike pipelines where records go through coders
+    result.tap(tap).value.toList.map(allStringsAreString) should contain only true
+    FileUtils.deleteDirectory(dir)
   }
 
   it should "read specific records with projection" in {

@@ -24,7 +24,7 @@ import java.nio.file.Files
 import com.spotify.scio.coders.{Coder, CoderMaterializer, KVCoder}
 import com.spotify.scio.io._
 import com.spotify.scio.metrics.Metrics
-import com.spotify.scio.options.ScioOptions
+import com.spotify.scio.options.{AvroOptions, ScioOptions}
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
 import com.spotify.scio.values._
@@ -330,6 +330,7 @@ object ScioContext {
     val optClass = ScioUtil.classOf[T]
     PipelineOptionsFactory.register(optClass)
     PipelineOptionsFactory.register(classOf[ScioOptions])
+    PipelineOptionsFactory.register(classOf[AvroOptions])
 
     // Extract --pattern of all registered derived types of PipelineOptions
     val registeredPatterns = for {
@@ -436,6 +437,8 @@ class ScioContext private[scio] (
   // var _pipeline member is lazily initialized, this makes sure that file systems are registered
   // before any IO
   FileSystems.setDefaultPipelineOptions(options)
+  // avro 1.12.2 rejects classes, avro generated ones included, outside its trusted packages
+  AvroClassTrust.install(options)
 
   /** Get PipelineOptions as a more specific sub-type. */
   def optionsAs[T <: PipelineOptions: ClassTag]: T =
