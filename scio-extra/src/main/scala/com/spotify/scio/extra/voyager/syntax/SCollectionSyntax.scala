@@ -50,9 +50,8 @@ class VoyagerSCollectionOps(@transient private val self: SCollection[VoyagerUri]
     storageDataType: StorageDataType
   ): SideInput[VoyagerReader] = {
     val settings = VoyagerReader.ProvidedSettings(space, numDimensions, storageDataType)
-    val remoteFileUtil = RemoteFileUtil.create(self.context.options)
     val view = self.applyInternal(View.asSingleton())
-    new VoyagerSideInput(settings, remoteFileUtil, view)
+    new VoyagerSideInput(settings, view)
   }
 
   /**
@@ -64,9 +63,8 @@ class VoyagerSCollectionOps(@transient private val self: SCollection[VoyagerUri]
    */
   @experimental
   def asVoyagerSideInput(): SideInput[VoyagerReader] = {
-    val remoteFileUtil = RemoteFileUtil.create(self.context.options)
     val view = self.applyInternal(View.asSingleton())
-    new VoyagerSideInput(VoyagerReader.MetadataSettings, remoteFileUtil, view)
+    new VoyagerSideInput(VoyagerReader.MetadataSettings, view)
   }
 
 }
