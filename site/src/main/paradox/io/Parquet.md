@@ -359,7 +359,7 @@ val predicate: FilterPredicate = ???
 val records: Iterable[T <: SpecificRecord] = ???
 val expected: Iterable[T <: SpecificRecord] = ???
 
-records withProjection projection withPredicate predicate should contain theSameElementsAs expected
+records.withFilter(predicate).withProjection(projection) should contain theSameElementsAs expected
 ```
 
 You can also test a case class projection against an Avro writer schema to ensure writer/reader compatibility:
@@ -371,5 +371,5 @@ case class MyProjection(id: Int)
 val records: Iterable[T <: SpecificRecord] = ???
 val expected: Iterable[MyRecord] = ???
 
-records withProjection[MyProjection] should contain theSameElementsAs expected
+records.withProjection[MyProjection] should contain theSameElementsAs expected
 ```
