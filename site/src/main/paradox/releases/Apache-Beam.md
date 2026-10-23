@@ -16,6 +16,7 @@ Also check out the [SDK Version Support Status](https://cloud.google.com/dataflo
 
 | **Scio** | **SDK Dependency** | **Description**                                                                                                                     |
 |:--------:|:------------------:|:------------------------------------------------------------------------------------------------------------------------------------|
+|  0.16.x  | Apache Beam 2.x.x  | avro 1.12.2, BigDecimal in avro reflect records                                                                                     |
 |  0.15.x  | Apache Beam 2.x.x  | drops java 8 targeting                                                                                                              |
 |  0.14.x  | Apache Beam 2.x.x  | avro removed from scio-core, explicit kryo coder fallback, official tensorflow metadata, hadoop 3 and parquet 1.13                  |
 |  0.13.x  | Apache Beam 2.x.x  | scio-elasticsearch6 removed. scio-elasticsearch7 migrated to new client. File based ScioIO param changes.                           |
@@ -36,7 +37,7 @@ Also check out the [SDK Version Support Status](https://cloud.google.com/dataflo
 
 | **Scio Version** | **Beam Version** | **Details**                                            |
 |:----------------:|:----------------:|:-------------------------------------------------------|
-|     0.15.11      |      2.77.0      | This version will be deprecated on October 7, 2027.    |
+|      0.16.0      |      2.77.0      | This version will be deprecated on October 7, 2027.    |
 |     0.15.10      |      2.76.0      | This version will be deprecated on August 31, 2027.    |
 |      0.15.9      |      2.74.0      | This version will be deprecated on June 2, 2027.       |
 |      0.15.8      |      2.74.0      | This version will be deprecated on June 2, 2027.       |
