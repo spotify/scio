@@ -37,7 +37,7 @@ Read Google [doc](https://cloud.google.com/bigtable/docs/performance).
 ### Bigtable vs Datastore
 
 If you require replacement for Cassandra, Bigtable is probable the most straightforward replacement in GCP.
-Bigtable [white paper](https://static.googleusercontent.com/media/research.google.com/en/archive/bigtable-osdi06.pdf). To quote the paper - think of Bigtable as:
+Bigtable [white paper](https://research.google/pubs/bigtable-a-distributed-storage-system-for-structured-data/). To quote the paper - think of Bigtable as:
 > a sparse, distributed, persistent multidimensional sorted map. The map is indexed by a row key, column key, and a timestamp; each value in the map is an uninterpreted array of bytes.
 
 Bigtable is replicated only within a single zone. Bigtable does not support transactions, that said all operations are atomic at the row level.
