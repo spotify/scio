@@ -92,6 +92,6 @@ def result =  sc.map(fn).saveAsAvroFile("gs://path-to-data/lake/output", schema 
 
 ## Common issues/guidelines
 
-* Follow Avro [guidelines](https://avro.apache.org/docs/current/spec.html), especially the one about [schema evolution](http://avro.apache.org/docs/current/spec.html#Schema+Resolution)
+* Follow Avro [guidelines](https://avro.apache.org/docs/current/specification/), especially the one about [schema evolution](https://avro.apache.org/docs/current/specification/#schema-resolution)
 * Wherever possible use specific records
 * Use `Builder` pattern to construct Avro records

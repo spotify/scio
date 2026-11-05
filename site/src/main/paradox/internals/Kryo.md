@@ -1,6 +1,6 @@
 # Kryo
 
-Scio uses a framework called [Kryo](https://github.com/EsotericSoftware/kryo) to serialize objects that need to be shuffled between workers. Network throughput can easily become a bottleneck for your pipeline, so optimizing serialization is an easy win. If you use [Dataflow's shuffler service](https://cloud.google.com/blog/big-data/2017/06/introducing-cloud-dataflow-shuffle-for-up-to-5x-performance-improvement-in-data-analytic-pipelines), you pay per GB shuffled so you can save money even if shuffling is not a bottleneck.
+Scio uses a framework called [Kryo](https://github.com/EsotericSoftware/kryo) to serialize objects that need to be shuffled between workers. Network throughput can easily become a bottleneck for your pipeline, so optimizing serialization is an easy win. If you use [Dataflow's shuffler service](https://cloud.google.com/blog/products/gcp/introducing-cloud-dataflow-shuffle-for-up-to-5x-performance-improvement-in-data-analytic-pipelines), you pay per GB shuffled so you can save money even if shuffling is not a bottleneck.
 
 By registering your classes at compile time, Kryo can serialize far more efficiently that doing it on the fly. The default serializer includes the full classpath of each class you serialize. By pre-registering the classes you want to serialize, Kryo can replace this with an int as identifier. For some pipelines we observed a 30-40% reduction of bytes shuffled.
 
