@@ -17,6 +17,7 @@
 package com.spotify.scio.parquet.read
 
 import com.spotify.scio.parquet.ParquetConfiguration
+import com.spotify.scio.parquet.avro.AvroStringType
 import com.spotify.scio.util.{Functions, ScioUtil}
 import com.twitter.chill.ClosureCleaner
 import magnolify.parquet.ParquetType
@@ -379,7 +380,7 @@ object ParquetRead {
     val configuration = ParquetConfiguration.ofNullable(conf)
 
     val avroClass = ScioUtil.classOf[T]
-    val readSchema = ReflectData.get().getSchema(avroClass)
+    val readSchema = AvroStringType.withJavaStringType(ReflectData.get().getSchema(avroClass))
     AvroReadSupport.setAvroReadSchema(configuration, readSchema)
     AvroReadSupport.setRequestedProjection(configuration, Option(projection).getOrElse(readSchema))
 

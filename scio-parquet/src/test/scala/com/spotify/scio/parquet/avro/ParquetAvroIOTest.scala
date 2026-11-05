@@ -23,7 +23,7 @@ import com.spotify.scio.avro._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec, ScioIOTest, TapSpec, TextIO}
 import com.spotify.scio.parquet.{BeamInputFile, ParquetConfiguration}
-import com.spotify.scio.parquet.read.ParquetReadConfiguration
+import com.spotify.scio.parquet.read.{ParquetRead, ParquetReadConfiguration}
 import com.spotify.scio.testing._
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.{SCollection, WindowOptions}
@@ -148,6 +148,33 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     // the tap reads with parquet-avro directly, unlike pipelines where records go through coders
     result.tap(tap).value.toList.map(allStringsAreString) should contain only true
     FileUtils.deleteDirectory(dir)
+  }
+
+  it should "read strings in specific records as String via ParquetRead.readAvro" in withTempDir {
+    dir =>
+      val xs = (1 to 10).map { i =>
+        StringFieldTest
+          .newBuilder()
+          .setStrField(s"s$i")
+          .setMapField(Map[CharSequence, CharSequence](s"k$i" -> s"v$i").asJava)
+          .setArrayField(List[CharSequence](s"a$i").asJava)
+          .build()
+      }
+      val sc1 = ScioContext()
+      sc1.parallelize(xs).saveAsParquetAvroFile(dir.getAbsolutePath)
+      sc1.run().waitUntilDone()
+
+      // check inside projectionFn, before records go through a coder
+      val sc2 = ScioContext()
+      sc2
+        .parallelize(Seq(s"${dir.getAbsolutePath}/*.parquet"))
+        .readFiles(
+          ParquetRead.readAvro[StringFieldTest, Boolean](
+            null: Schema,
+            (r: StringFieldTest) => allStringsAreString(r)
+          )
+        ) should containInAnyOrder(Seq.fill(xs.size)(true))
+      sc2.run()
   }
 
   it should "read specific records with projection" in {
