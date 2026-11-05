@@ -1,5 +1,8 @@
 # Breaking Changelog
 
+## Breaking changes in 0.16.1
+- `ParquetRead.readAvro` (used by `readFiles`-style Parquet reads) now returns `String` instead of `Utf8` for string fields of specific records ([#6025](https://github.com/spotify/scio/pull/6025))
+
 ## Breaking changes since 0.15.0 (@ref:[v0.15.0 Migration Guide](migrations/v0.15.0-Migration-Guide.md))
 - Now uses Tensorflow 1.0, requires imports from `org.tensorflow.proto`
 - DatastoreIO requires type annotation `DatastoreIO[Entity]`
