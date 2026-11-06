@@ -1101,6 +1101,7 @@ lazy val `scio-extra` = project
   .settings(
     description := "Scio extra utilities",
     libraryDependencies ++= Seq(
+      "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.google.zetasketch" % "zetasketch" % zetasketchVersion,
