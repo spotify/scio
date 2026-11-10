@@ -18,7 +18,7 @@
 package com.spotify.scio.util
 
 import com.github.benmanes.caffeine.cache.{Cache => CCache, Caffeine}
-import com.google.common.cache.{Cache => GCache, CacheBuilder => GCacheBuilder}
+import com.google.common.cache.{Cache => GCache, CacheBuilder => GCacheBuilder, CacheLoader}
 
 import java.util.concurrent.{ConcurrentHashMap => JConcurrentHashMap}
 import scala.concurrent.ExecutionException
@@ -138,10 +138,14 @@ object Cache {
       }
 
       override def get(key: K, default: => V): V =
-        underlying.get(
-          key,
-          () => default
-        )
+        try {
+          // Guava rejects null loader results with InvalidCacheLoadException.
+          // Return null so callers match Caffeine and ConcurrentHashMap.
+          underlying.get(key, () => default)
+        } catch {
+          case _: CacheLoader.InvalidCacheLoadException =>
+            null.asInstanceOf[V]
+        }
 
       override def put(key: K, value: V): Unit =
         underlying.put(key, value)
