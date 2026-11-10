@@ -95,7 +95,8 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
     conf: Configuration,
     params: ReadP
   ): SCollection[Example] = {
-    GcsConnectorUtil.setInputPaths(sc, conf, path)
+    val filePattern = ScioUtil.filePattern(path, params.suffix)
+    GcsConnectorUtil.setInputPaths(sc, conf, filePattern)
     conf.setClass(
       "mapreduce.job.inputformat.class",
       classOf[TensorflowExampleParquetInputFormat],

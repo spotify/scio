@@ -276,6 +276,21 @@ class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAl
     ()
   }
 
+  it should "only read files matching the suffix with legacy read" in withTempDir { dir =>
+    FileUtils.copyDirectory(currentDir, dir)
+    Files.write(dir.toPath.resolve("README.txt"), "not a parquet file".getBytes)
+
+    val sc = ScioContext()
+    val data = sc.parquetExampleFile(
+      path = dir.getAbsolutePath,
+      suffix = ".parquet",
+      conf = ParquetConfiguration.of(ParquetReadConfiguration.UseSplittableDoFn -> false)
+    )
+    data should containInAnyOrder(examples)
+    sc.run()
+    ()
+  }
+
   it should "deep copy Configurations" in {
     val readConfigs =
       Table(
