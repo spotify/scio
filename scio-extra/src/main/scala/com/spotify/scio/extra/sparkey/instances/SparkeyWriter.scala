@@ -20,6 +20,7 @@ package com.spotify.scio.extra.sparkey.instances
 import com.spotify.scio.extra.sparkey.SparkeyUri
 import com.spotify.scio.util.RemoteFileUtil
 import com.spotify.sparkey.{CompressionType, Sparkey}
+import org.slf4j.LoggerFactory
 
 import java.io.File
 import java.net.URI
@@ -32,6 +33,8 @@ private[sparkey] class SparkeyWriter(
   compressionBlockSize: Int,
   maxMemoryUsage: Long = -1
 ) {
+  private lazy val logger = LoggerFactory.getLogger(this.getClass)
+
   private lazy val localFile =
     if (uri.isLocal) uri.basePath
     else {
@@ -61,8 +64,17 @@ private[sparkey] class SparkeyWriter(
       SparkeyUri.extensions.foreach { e =>
         val src = Paths.get(localFile + e)
         val dst = new URI(uri.basePath + e)
+        val size = Files.size(src)
         rfu.upload(src, dst)
+        logger.info(s"Uploaded $src -> $dst [${size}B]")
       }
+      // All uploads succeeded: the local copy is no longer needed. Readers always download
+      // from the remote URI. If an upload fails, the exception propagates and the local files
+      // are kept.
+      val tempDir = Paths.get(localFile).getParent
+      SparkeyUri.extensions.foreach(e => Files.deleteIfExists(Paths.get(localFile + e)))
+      Files.deleteIfExists(tempDir)
+      logger.info(s"Deleted local Sparkey temp dir $tempDir")
     }
   }
 }
