@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.net.URI
 import java.nio.file.{Files, Paths}
+import scala.util.control.NonFatal
 
 private[sparkey] class SparkeyWriter(
   val uri: SparkeyUri,
@@ -33,8 +34,6 @@ private[sparkey] class SparkeyWriter(
   compressionBlockSize: Int,
   maxMemoryUsage: Long = -1
 ) {
-  private lazy val logger = LoggerFactory.getLogger(this.getClass)
-
   private lazy val localFile =
     if (uri.isLocal) uri.basePath
     else {
@@ -60,21 +59,35 @@ private[sparkey] class SparkeyWriter(
     delegate.close()
 
     if (!uri.isLocal) {
-      // Copy .spi and .spl to GCS
+      // Copy .spi and .spl to the remote file system
       SparkeyUri.extensions.foreach { e =>
         val src = Paths.get(localFile + e)
         val dst = new URI(uri.basePath + e)
         val size = Files.size(src)
         rfu.upload(src, dst)
-        logger.info(s"Uploaded $src -> $dst [${size}B]")
+        SparkeyWriter.logger.info(s"Uploaded $src to $dst ($size bytes)")
       }
       // All uploads succeeded: the local copy is no longer needed. Readers always download
       // from the remote URI. If an upload fails, the exception propagates and the local files
       // are kept.
-      val tempDir = Paths.get(localFile).getParent
-      SparkeyUri.extensions.foreach(e => Files.deleteIfExists(Paths.get(localFile + e)))
-      Files.deleteIfExists(tempDir)
-      logger.info(s"Deleted local Sparkey temp dir $tempDir")
+      deleteLocalFiles()
     }
   }
+
+  private def deleteLocalFiles(): Unit = {
+    val tempDir = Paths.get(localFile).getParent
+    try {
+      SparkeyUri.extensions.foreach(e => Files.deleteIfExists(Paths.get(localFile + e)))
+      Files.deleteIfExists(tempDir)
+      SparkeyWriter.logger.debug(s"Deleted local Sparkey temp dir $tempDir")
+    } catch {
+      case NonFatal(e) =>
+        // The upload succeeded, so a failed cleanup must not fail the write.
+        SparkeyWriter.logger.warn(s"Failed to delete local Sparkey temp dir $tempDir", e)
+    }
+  }
+}
+
+private[sparkey] object SparkeyWriter {
+  private val logger = LoggerFactory.getLogger(classOf[SparkeyWriter])
 }

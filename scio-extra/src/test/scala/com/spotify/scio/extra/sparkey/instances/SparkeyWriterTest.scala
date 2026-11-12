@@ -31,13 +31,17 @@ import scala.collection.mutable
 
 class SparkeyWriterTest extends AnyFlatSpec with Matchers {
 
-  /** Records uploads and copies files to a local target instead of a remote file system. */
-  private class FakeRemoteFileUtil(target: Path, fail: Boolean) extends RemoteFileUtil {
+  /**
+   * Records uploads instead of writing to a remote file system. Fails the upload with the given
+   * 1-based index, if set. Runs `afterUpload` after each successful upload.
+   */
+  private class FakeRemoteFileUtil(failOn: Option[Int] = None, afterUpload: Path => Unit = _ => ())
+      extends RemoteFileUtil {
     val uploaded: mutable.Buffer[(Path, URI)] = mutable.Buffer.empty
     override def upload(src: Path, dst: URI): Unit = {
       uploaded += (src -> dst)
-      if (fail) throw new IOException("simulated upload failure")
-      Files.copy(src, target.resolve(src.getFileName.toString + uploaded.size))
+      if (failOn.contains(uploaded.size)) throw new IOException("simulated upload failure")
+      afterUpload(src)
     }
   }
 
@@ -52,32 +56,61 @@ class SparkeyWriterTest extends AnyFlatSpec with Matchers {
     writer
   }
 
+  private def tempDirOf(rfu: FakeRemoteFileUtil): Option[Path] =
+    rfu.uploaded.headOption.map(_._1.getParent)
+
+  private def cleanUp(rfu: FakeRemoteFileUtil): Unit =
+    tempDirOf(rfu).foreach(d => FileUtils.deleteQuietly(d.toFile))
+
   "SparkeyWriter" should "delete local temp files after a successful remote upload" in {
-    val target = Files.createTempDirectory("sparkey-writer-test-")
+    val rfu = new FakeRemoteFileUtil()
     try {
-      val rfu = new FakeRemoteFileUtil(target, fail = false)
       write(rfu).close()
 
       rfu.uploaded.map(_._2.toString) should contain theSameElementsAs Seq(
         "gs://fake-bucket/sparkey-test/part-00000-of-00001.spi",
         "gs://fake-bucket/sparkey-test/part-00000-of-00001.spl"
       )
-      val srcs = rfu.uploaded.map(_._1)
-      all(srcs.map(Files.exists(_))) shouldBe false
-      Files.exists(srcs.head.getParent) shouldBe false
-    } finally FileUtils.deleteDirectory(target.toFile)
+      all(rfu.uploaded.map(u => Files.exists(u._1))) shouldBe false
+      Files.exists(tempDirOf(rfu).get) shouldBe false
+    } finally cleanUp(rfu)
   }
 
-  it should "keep local temp files when the remote upload fails" in {
-    val target = Files.createTempDirectory("sparkey-writer-test-")
+  it should "keep local temp files when the first remote upload fails" in {
+    val rfu = new FakeRemoteFileUtil(failOn = Some(1))
     try {
-      val rfu = new FakeRemoteFileUtil(target, fail = true)
       an[IOException] should be thrownBy write(rfu).close()
 
-      val src = rfu.uploaded.head._1
-      Files.exists(src) shouldBe true
-      FileUtils.deleteDirectory(src.getParent.toFile)
-    } finally FileUtils.deleteDirectory(target.toFile)
+      rfu.uploaded should have size 1
+      SparkeyUri.extensions.foreach(e =>
+        Files.exists(tempDirOf(rfu).get.resolve("data" + e)) shouldBe true
+      )
+    } finally cleanUp(rfu)
+  }
+
+  it should "keep local temp files when a later remote upload fails" in {
+    val rfu = new FakeRemoteFileUtil(failOn = Some(2))
+    try {
+      an[IOException] should be thrownBy write(rfu).close()
+
+      rfu.uploaded should have size 2
+      SparkeyUri.extensions.foreach(e =>
+        Files.exists(tempDirOf(rfu).get.resolve("data" + e)) shouldBe true
+      )
+    } finally cleanUp(rfu)
+  }
+
+  it should "not fail the write when the cleanup fails" in {
+    // An extra file in the temp dir makes the delete of the dir fail.
+    val rfu = new FakeRemoteFileUtil(afterUpload =
+      src => Files.write(src.getParent.resolve("extra"), Array[Byte](1))
+    )
+    try {
+      noException should be thrownBy write(rfu).close()
+
+      rfu.uploaded should have size 2
+      Files.exists(tempDirOf(rfu).get) shouldBe true
+    } finally cleanUp(rfu)
   }
 
   it should "not delete the output of a local write" in {
