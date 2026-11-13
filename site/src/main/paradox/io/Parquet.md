@@ -86,7 +86,7 @@ object ParquetJob {
 
 ### Write Avro to Parquet files
 
-Both Avro [generic](https://avro.apache.org/docs/current/api/java/org/apache/avro/generic/GenericData.Record.html) and [specific](https://avro.apache.org/docs/current/api/java/org/apache/avro/specific/package-summary.html) records are supported when writing.
+Both Avro [generic](https://javadoc.io/doc/org.apache.avro/avro/latest/org/apache/avro/generic/GenericData.Record.html) and [specific](https://javadoc.io/doc/org.apache.avro/avro/latest/org/apache/avro/specific/package-summary.html) records are supported when writing.
 
 Type of Avro specific records will hold information about schema,
 therefore Scio will figure out the schema by itself:

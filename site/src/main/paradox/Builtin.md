@@ -176,7 +176,7 @@ elements.combine(A.apply)(A.mergeValue)(A.mergeCombiners)
 
 @scaladoc[sum](com.spotify.scio.values.SCollection#sum(implicitsg:com.twitter.algebird.Semigroup[T]):com.spotify.scio.values.SCollection[T]) (or `sumByKey`) sums elements given a @scaladoc[Semigroup](com.twitter.algebird.Semigroup), while @scaladoc[aggregate](com.spotify.scio.values.SCollection#aggregate[A,U](aggregator:com.twitter.algebird.MonoidAggregator[T,A,U])(implicitevidence$12:com.spotify.scio.coders.Coder[A],implicitevidence$13:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]) (or `aggregateByKey`) aggregates elements either with a set of user-defined functions, via a @scaladoc[Aggregator](com.twitter.algebird.Aggregator), or via a @scaladoc[MonoidAggregator](com.twitter.algebird.MonoidAggregator).
 
-Both `Semigroup` and `Monoid` instances can be derived with [magnolify](https://github.com/spotify/magnolify/blob/main/docs/derivation.md), assuming the behavior for the primitive types is what you expect.
+Both `Semigroup` and `Monoid` instances can be derived with [magnolify](https://github.com/spotify/magnolify/blob/main/docs/cats.md), assuming the behavior for the primitive types is what you expect.
 
 @@@ note
 
