@@ -298,6 +298,67 @@ See @ref:[the FAQ](../FAQ.md#how-to-make-intellij-idea-work-with-type-safe-bigqu
 
 See @ref:[OverrideTypeProvider](../internals/OverrideTypeProvider.md) for details about the custom types and validation mechanism.
 
+## Type safe BigQuery with Magnolify
+
+In addition to macro-based `@BigQueryType` annotations, Scio supports [Magnolify's](https://github.com/spotify/magnolify) `TableRowType` (available in the `magnolify-bigquery` module) to seamlessly convert between BigQuery `TableRow`s and Scala case classes without macros.
+
+See [Magnolify BigQuery documentation](https://github.com/spotify/magnolify/blob/main/docs/bigquery.md) for full details on custom type mappings, `@description` annotations, and case format mappers.
+
+### Reading with Magnolify
+
+Scio provides extension methods on `ScioContext` that derive `TableRowType[T]` implicitly:
+
+- @scaladoc[typedBigQuerySelect](com.spotify.scio.bigquery.syntax.MagnolifyBigQueryScioContextOps#typedBigQuerySelect[T](sqlQuery:com.spotify.scio.bigquery.Query,flattenResults:Boolean)(implicitevidence$1:magnolify.bigquery.TableRowType[T],implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]): Reads an `SCollection[T]` from a SQL query.
+- @scaladoc[typedBigQueryTable](com.spotify.scio.bigquery.syntax.MagnolifyBigQueryScioContextOps#typedBigQueryTable[T](table:com.spotify.scio.bigquery.Table)(implicitevidence$3:magnolify.bigquery.TableRowType[T],implicitevidence$4:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]): Reads an `SCollection[T]` from a table specification.
+- @scaladoc[typedBigQueryStorageMagnolify](com.spotify.scio.bigquery.syntax.MagnolifyBigQueryScioContextOps#typedBigQueryStorageMagnolify[T](table:com.spotify.scio.bigquery.Table,selectedFields:List[String],rowRestriction:String)(implicitevidence$5:magnolify.bigquery.TableRowType[T],implicitevidence$6:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]): Reads an `SCollection[T]` using the BigQuery Storage API.
+
+```scala mdoc:compile-only
+import com.spotify.scio._
+import com.spotify.scio.bigquery._
+
+case class Row(tornado: Option[Boolean], month: Long)
+
+def main(cmdlineArgs: Array[String]): Unit = {
+  val (sc, args) = ContextAndArgs(cmdlineArgs)
+
+  // Query table using typed BigQuery select
+  val rows = sc.typedBigQuerySelect[Row](
+    Query("SELECT tornado, month FROM [bigquery-public-data:samples.gsod]")
+  )
+
+  // Or read directly from a table
+  val tableRows = sc.typedBigQueryTable[Row](
+    Table.Spec("bigquery-public-data:samples.gsod")
+  )
+
+  // Or read using the BigQuery Storage API
+  val storageRows = sc.typedBigQueryStorageMagnolify[Row](
+    Table.Spec("bigquery-public-data:samples.gsod")
+  )
+}
+```
+
+### Writing with Magnolify
+
+Write an `SCollection[T]` of case classes to BigQuery using @scaladoc[saveAsBigQueryTable](com.spotify.scio.bigquery.syntax.MagnolifyBigQuerySCollectionOps#saveAsBigQueryTable(table:com.spotify.scio.bigquery.Table,timePartitioning:com.spotify.scio.bigquery.TimePartitioning,clustering:com.spotify.scio.bigquery.Clustering,writeDisposition:org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.WriteDisposition,createDisposition:org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.CreateDisposition,tableDescription:String,method:org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.Method,triggeringFrequency:org.joda.time.Duration,sharding:com.spotify.scio.bigquery.Sharding,failedInsertRetryPolicy:org.apache.beam.sdk.io.gcp.bigquery.InsertRetryPolicy,extendedErrorInfo:Boolean,successfulInsertsPropagation:Boolean)(implicitcoder:com.spotify.scio.coders.Coder[T],implicittableRowType:magnolify.bigquery.TableRowType[T]):com.spotify.scio.io.ClosedTap[T]):
+
+```scala mdoc:compile-only
+import com.spotify.scio.values.SCollection
+import com.spotify.scio.bigquery._
+
+case class Result(month: Long, tornado_count: Long)
+
+val results: SCollection[Result] = ???
+
+results.saveAsBigQueryTable(
+  Table.Spec("my-project:my-dataset.my-table"),
+  writeDisposition = WRITE_TRUNCATE,
+  createDisposition = CREATE_IF_NEEDED
+)
+```
+
+See @github[MagnolifyTypedBigQueryTornadoes.scala](/scio-examples/src/main/scala/com/spotify/scio/examples/extra/MagnolifyTypedBigQueryTornadoes.scala) and @github[MagnolifyTypedStorageBigQueryTornadoes.scala](/scio-examples/src/main/scala/com/spotify/scio/examples/extra/MagnolifyTypedStorageBigQueryTornadoes.scala) for complete working examples.
+
 ## BigQuery authentication
 
 BigQuery authentication works a bit differently than other IO types and can be hard to reason about. File-based IOs, for example, are read from directly on each remote worker node. In contrast,
