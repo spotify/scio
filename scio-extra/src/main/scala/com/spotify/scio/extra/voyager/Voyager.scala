@@ -20,14 +20,18 @@ package com.spotify.scio.extra.voyager
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import com.spotify.scio.values.SideInput
 import com.spotify.voyager.jni.Index.{SpaceType, StorageDataType}
-import com.spotify.voyager.jni.{Index, StringIndex}
+import com.spotify.voyager.jni.Index
+import com.fasterxml.jackson.core.{JsonFactory, JsonProcessingException, JsonToken}
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.values.PCollectionView
 
+import java.io.{ByteArrayInputStream, InputStream}
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path, Paths}
 import java.util.concurrent.ConcurrentHashMap
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
 
 /**
  * Represents the base URI for a voyager index, either on a local or a remote file system. For
@@ -156,35 +160,52 @@ private[voyager] object VoyagerWriter {
  *   The voyager index settings, either provided or read from the index v2 metadata
  */
 class VoyagerReader private[voyager] (
-  indexFile: Path,
-  namesFile: Path,
+  files: VoyagerReader.Files,
   indexSettings: VoyagerReader.IndexSettings
 ) {
-  @transient private lazy val index: StringIndex = indexSettings match {
-    case VoyagerReader.ProvidedSettings(space, numDimensions, storageDataType) =>
-      StringIndex.load(
-        indexFile.toString,
-        namesFile.toString,
-        space,
-        numDimensions,
-        storageDataType
-      )
-    case VoyagerReader.MetadataSettings =>
-      StringIndex.load(
-        indexFile.toString,
-        namesFile.toString
-      )
+  import VoyagerReader._
+
+  // load the native index and parse the names concurrently; neither depends on the other
+  @transient private lazy val loaded: (Index, Array[String]) = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val (indexF, namesF) = files match {
+      case LocalFiles(indexFile, namesFile) =>
+        (Future(loadIndex(indexFile)), Future(readNames(namesFile)))
+      case RemoteFiles(indexUri, namesUri, download) =>
+        // stream straight into memory, fetching byte ranges in parallel with per-range retries
+        (
+          Future(withStream(indexUri, download)(loadIndex)),
+          Future(withStream(namesUri, download)(parseNames(_)))
+        )
+    }
+    Await.result(indexF.zip(namesF), Duration.Inf)
   }
+
+  private def loadIndex(indexFile: Path): Index = indexSettings match {
+    case ProvidedSettings(space, numDimensions, storageDataType) =>
+      Index.load(indexFile.toString, space, numDimensions, storageDataType)
+    case MetadataSettings =>
+      Index.load(indexFile.toString)
+  }
+
+  private def loadIndex(in: InputStream): Index = indexSettings match {
+    case ProvidedSettings(space, numDimensions, storageDataType) =>
+      Index.load(in, space, numDimensions, storageDataType)
+    case MetadataSettings =>
+      Index.load(in)
+  }
+  private def index: Index = loaded._1
+  private def names: Array[String] = loaded._2
 
   /**
    * Gets maxNumResults nearest neighbors for vector v using ef (where ef is the size of the dynamic
    * list for the nearest neighbors during search).
    */
   def getNearest(v: Array[Float], maxNumResults: Int, ef: Int): Array[VoyagerResult] = {
-    val queryResults = index.query(v, maxNumResults, ef)
-    queryResults.getNames
-      .zip(queryResults.getDistances)
-      .map { case (name, distance) => VoyagerResult(name, distance) }
+    val queryResults = index.query(v, maxNumResults, ef.toLong)
+    val labels = queryResults.getLabels
+    val distances = queryResults.getDistances
+    Array.tabulate(labels.length)(i => VoyagerResult(names(labels(i).toInt), distances(i)))
   }
 }
 
@@ -197,6 +218,65 @@ private[voyager] object VoyagerReader {
   ) extends IndexSettings
   case object MetadataSettings extends IndexSettings
 
+  sealed trait Files
+  final case class LocalFiles(index: Path, names: Path) extends Files
+  final case class RemoteFiles(
+    index: URI,
+    names: URI,
+    download: ParallelDownloadSettings = ParallelDownloadSettings()
+  ) extends Files
+
+  private def withStream[T](uri: URI, download: ParallelDownloadSettings)(
+    f: InputStream => T
+  ): T = {
+    val in = new ParallelRangeInputStream(RangeSource(uri), download)
+    try f(in)
+    finally in.close()
+  }
+
+  // thread-safe and reusable
+  private val NamesJsonFactory = new JsonFactory()
+
+  /**
+   * Parses a voyager `names.json` file, a JSON list of strings. This streams the input, so the file
+   * may exceed the 2GB JVM array limit, and is much faster than voyager's Scanner-based
+   * `TinyJson.readStringList` for large name lists. Anything other than a flat list of strings is
+   * rejected rather than coerced.
+   */
+  private[voyager] def readNames(namesFile: Path): Array[String] = {
+    val in = Files.newInputStream(namesFile)
+    try parseNames(in)
+    finally in.close()
+  }
+
+  private[voyager] def parseNames(bytes: Array[Byte]): Array[String] =
+    parseNames(new ByteArrayInputStream(bytes))
+
+  private[voyager] def parseNames(in: InputStream): Array[String] = {
+    val parser = NamesJsonFactory.createParser(in)
+    def fail(msg: String): Nothing =
+      throw new IllegalArgumentException(
+        s"Malformed voyager names list: $msg at ${parser.currentLocation()}"
+      )
+    try {
+      if (parser.nextToken() != JsonToken.START_ARRAY) fail("expected a JSON list")
+      val names = Array.newBuilder[String]
+      var token = parser.nextToken()
+      while (token == JsonToken.VALUE_STRING) {
+        names += parser.getText
+        token = parser.nextToken()
+      }
+      if (token != JsonToken.END_ARRAY) fail(s"expected a string but found $token")
+      if (parser.nextToken() != null) fail("unexpected content after the list")
+      names.result()
+    } catch {
+      case e: JsonProcessingException =>
+        throw new IllegalArgumentException("Malformed voyager names list", e)
+    } finally {
+      parser.close()
+    }
+  }
+
 }
 
 /**
@@ -205,7 +285,6 @@ private[voyager] object VoyagerReader {
  */
 private[voyager] class VoyagerSideInput(
   indexSettings: VoyagerReader.IndexSettings,
-  remoteFileUtil: RemoteFileUtil,
   override val view: PCollectionView[VoyagerUri]
 ) extends SideInput[VoyagerReader] {
 
@@ -215,14 +294,12 @@ private[voyager] class VoyagerSideInput(
     val indexUri = uri.value.resolve(uri.indexFile)
     val namesUri = uri.value.resolve(uri.namesFile)
 
-    val (localIndex, localNames) = if (ScioUtil.isLocalUri(uri.value)) {
-      (Paths.get(indexUri), Paths.get(namesUri))
+    val files = if (ScioUtil.isLocalUri(uri.value)) {
+      VoyagerReader.LocalFiles(Paths.get(indexUri), Paths.get(namesUri))
     } else {
-      val downloadedIndex = remoteFileUtil.download(indexUri)
-      val downloadedNames = remoteFileUtil.download(namesUri)
-      (downloadedIndex, downloadedNames)
+      VoyagerReader.RemoteFiles(indexUri, namesUri)
     }
-    new VoyagerReader(localIndex, localNames, indexSettings)
+    new VoyagerReader(files, indexSettings)
   }
 
   override def get[I, O](context: DoFn[I, O]#ProcessContext): VoyagerReader = {
