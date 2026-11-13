@@ -287,6 +287,13 @@ public abstract class BaseAsyncBatchLookupDoFn<
               batchResponseFn.apply(response).stream()
                   .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
 
+          // Build the full result of the batch locally and queue it as a single entry, so that
+          // flush() removes the batch's future from tracking only after the entire batch has
+          // been emitted. Queueing one entry per ID allowed flush() to remove the future while
+          // this callback was still mid-batch, causing finishBundle to skip waitForFutures and
+          // fail the inputCount == outputCount check.
+          // See https://github.com/spotify/scio/issues/6026
+          final List<ValueInSingleWindow<KV<Input, TryWrapper>>> batchResult = new ArrayList<>();
           keyedInputs.forEach(
               (id, input) -> {
                 final List<ValueInSingleWindow<Input>> processInputs = inputs.remove(id);
@@ -301,44 +308,49 @@ public abstract class BaseAsyncBatchLookupDoFn<
                           + "idExtractorFn for the same input.",
                       id);
                 } else {
-                  List<ValueInSingleWindow<KV<Input, TryWrapper>>> batchResult =
-                      processInputs.stream()
-                          .map(
-                              processInput -> {
-                                final Input i = processInput.getValue();
-                                final Output output = keyedOutput.get(id);
-                                final TryWrapper o =
-                                    output == null
-                                        ? failure(new UnmatchedRequestException(id))
-                                        : success(output);
-                                final Instant ts = processInput.getTimestamp();
-                                final BoundedWindow w = processInput.getWindow();
-                                final PaneInfo p = processInput.getPaneInfo();
-                                return ValueInSingleWindow.of(KV.of(i, o), ts, w, p);
-                              })
-                          .collect(Collectors.toList());
-                  results.add(Pair.of(key, batchResult));
+                  processInputs.forEach(
+                      processInput -> {
+                        final Input i = processInput.getValue();
+                        final Output output = keyedOutput.get(id);
+                        final TryWrapper o =
+                            output == null
+                                ? failure(new UnmatchedRequestException(id))
+                                : success(output);
+                        final Instant ts = processInput.getTimestamp();
+                        final BoundedWindow w = processInput.getWindow();
+                        final PaneInfo p = processInput.getPaneInfo();
+                        batchResult.add(ValueInSingleWindow.of(KV.of(i, o), ts, w, p));
+                      });
                 }
               });
+          results.add(Pair.of(key, batchResult));
           return null;
         },
         throwable -> {
+          final List<ValueInSingleWindow<KV<Input, TryWrapper>>> batchResult = new ArrayList<>();
           keyedInputs.forEach(
               (id, element) -> {
-                final List<ValueInSingleWindow<KV<Input, TryWrapper>>> batchResult =
-                    inputs.remove(id).stream()
-                        .map(
-                            processInput -> {
-                              final Input i = processInput.getValue();
-                              final TryWrapper o = failure(throwable);
-                              final Instant ts = processInput.getTimestamp();
-                              final BoundedWindow w = processInput.getWindow();
-                              final PaneInfo p = processInput.getPaneInfo();
-                              return ValueInSingleWindow.of(KV.of(i, o), ts, w, p);
-                            })
-                        .collect(Collectors.toList());
-                results.add(Pair.of(key, batchResult));
+                final List<ValueInSingleWindow<Input>> processInputs = inputs.remove(id);
+                if (processInputs == null) {
+                  // no need to fail future here as we're only interested in its completion
+                  // finishBundle will fail the checkState as we do not produce any result
+                  LOG.error(
+                      "The ID '{}' extracted via the idExtractorFn is no longer pending for "
+                          + "the requested batch, no result will be emitted for its elements",
+                      id);
+                } else {
+                  processInputs.forEach(
+                      processInput -> {
+                        final Input i = processInput.getValue();
+                        final TryWrapper o = failure(throwable);
+                        final Instant ts = processInput.getTimestamp();
+                        final BoundedWindow w = processInput.getWindow();
+                        final PaneInfo p = processInput.getPaneInfo();
+                        batchResult.add(ValueInSingleWindow.of(KV.of(i, o), ts, w, p));
+                      });
+                }
               });
+          results.add(Pair.of(key, batchResult));
           return null;
         });
   }

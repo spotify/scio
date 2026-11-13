@@ -21,16 +21,25 @@ import com.google.common.cache.{Cache, CacheBuilder}
 import com.google.common.util.concurrent.{Futures, ListenableFuture, MoreExecutors}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.testing._
-import com.spotify.scio.transforms.BaseAsyncLookupDoFn.{CacheSupplier, NoOpCacheSupplier}
+import com.spotify.scio.transforms.BaseAsyncLookupDoFn.{
+  CacheSupplier,
+  NoOpCacheSupplier,
+  Try => JTry
+}
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.scio.transforms.JavaAsyncConverters._
 import com.spotify.scio.util.Functions
+import org.apache.beam.sdk.options.PipelineOptions
+import org.apache.beam.sdk.transforms.DoFn.OutputReceiver
+import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, GlobalWindow, PaneInfo}
+import org.apache.beam.sdk.values.{KV, OutputBuilder, TupleTag}
 import org.apache.commons.lang3.tuple.Pair
 import org.joda.time.Instant
 
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent._
 import scala.annotation.nowarn
+import scala.collection.mutable.{Buffer => MBuffer}
 import scala.concurrent.Future
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
@@ -113,6 +122,76 @@ class AsyncBatchLookupDoFnTest extends PipelineSpec {
         .map { case ((k, v), ts) => (k, v.get(), ts.getMillis) }
       data should containInAnyOrder((1 to 10).map(x => (x, x.toString, x.toLong)))
     }
+  }
+
+  it should "not lose results when a flush interleaves with the batch response callback" in {
+    // Deterministic reproducer for https://github.com/spotify/scio/issues/6026.
+    // flush() used to remove a batch's future from tracking upon consuming the first
+    // per-ID result entry, while the batch callback was still queueing the remaining
+    // IDs. finishBundle then skipped waitForFutures and failed the inputCount ==
+    // outputCount check because the remaining results landed after it.
+    val parked = new CountDownLatch(1)
+    val release = new CountDownLatch(1)
+    val doFn = new RacingJavaBatchLookupDoFn(parked, release)
+    doFn.setup()
+    doFn.startBundle(null)
+
+    val outputBuffer = MBuffer.empty[Int]
+    val outputReceiver = new OutputReceiver[KV[Int, JTry[String]]] {
+      override def output(output: KV[Int, JTry[String]]): Unit = outputBuffer += output.getKey
+      override def outputWithTimestamp(output: KV[Int, JTry[String]], timestamp: Instant): Unit =
+        outputBuffer += output.getKey
+      override def outputWindowedValue(
+        output: KV[Int, JTry[String]],
+        timestamp: Instant,
+        windows: java.util.Collection[_ <: BoundedWindow],
+        paneInfo: PaneInfo
+      ): Unit = outputBuffer += output.getKey
+      override def builder(value: KV[Int, JTry[String]]): OutputBuilder[KV[Int, JTry[String]]] =
+        this.asInstanceOf[OutputBuilder[KV[Int, JTry[String]]]]
+    }
+    val finishBundleContext = new doFn.FinishBundleContext {
+      override def getPipelineOptions: PipelineOptions = null
+      override def output[T](
+        tag: TupleTag[T],
+        output: T,
+        timestamp: Instant,
+        window: BoundedWindow
+      ): Unit = ()
+      override def output(
+        output: KV[Int, JTry[String]],
+        timestamp: Instant,
+        window: BoundedWindow
+      ): Unit = outputBuffer += output.getKey
+    }
+
+    val timestamp = Instant.ofEpochMilli(0)
+    val window: BoundedWindow = GlobalWindow.INSTANCE
+    val pane: PaneInfo = PaneInfo.NO_FIRING
+
+    // a batch of 2 distinct IDs, dispatched as soon as element 2 arrives
+    doFn.processElement(1, timestamp, window, pane, outputReceiver)
+    doFn.processElement(2, timestamp, window, pane, outputReceiver)
+
+    // complete the batch future on a separate thread; its callback parks after
+    // producing results for ID "1", before queuing results for ID "2"
+    val callbackThread = new Thread(() => doFn.completeFirstBatch())
+    callbackThread.start()
+    parked.await(10, TimeUnit.SECONDS) shouldBe true
+
+    // one more element: its processElement flushes the partial batch results,
+    // which used to remove the still-in-flight batch future from tracking
+    doFn.processElement(3, timestamp, window, pane, outputReceiver)
+
+    // bundle ends before the remaining batch results land
+    try {
+      noException should be thrownBy doFn.finishBundle(finishBundleContext)
+    } finally {
+      release.countDown()
+      callbackThread.join(10000)
+    }
+
+    outputBuffer should contain theSameElementsAs Seq(1, 2, 3)
   }
 
   "GuavaAsyncBatchLookupDoFn" should "work" in {
@@ -311,6 +390,43 @@ class FailingJavaBatchLookupDoFn extends AbstractJavaAsyncBatchLookupDoFn() {
       f.completeExceptionally(new RuntimeException("failure for " + input.mkString(",")))
       f
     }
+}
+
+/**
+ * Deterministically reproduces the flush/batch-callback race in BaseAsyncBatchLookupDoFn: the batch
+ * response callback parks after producing results for the first ID of a batch, before queuing
+ * results for the second ID.
+ */
+class RacingJavaBatchLookupDoFn(parked: CountDownLatch, release: CountDownLatch)
+    extends AbstractJavaAsyncBatchLookupDoFn(batchSize = 2) {
+  @transient private var firstBatchFuture: CompletableFuture[List[String]] = _
+
+  override def getResourceType: ResourceType = ResourceType.PER_INSTANCE
+  override protected def newClient(): AsyncBatchClient = null
+
+  override def asyncLookup(
+    session: AsyncBatchClient,
+    input: List[Int]
+  ): CompletableFuture[List[String]] =
+    if (input == List(1, 2)) {
+      firstBatchFuture = new CompletableFuture[List[String]]()
+      firstBatchFuture
+    } else {
+      CompletableFuture.completedFuture(input.map(_.toString))
+    }
+
+  override def success(output: String): JTry[String] = {
+    if (output == "2") {
+      // park the callback mid-batch: results for ID "1" have been produced,
+      // results for ID "2" have not been queued yet
+      parked.countDown()
+      release.await(2, TimeUnit.SECONDS)
+      ()
+    }
+    super.success(output)
+  }
+
+  def completeFirstBatch(): Unit = firstBatchFuture.complete(List("1", "2"))
 }
 
 abstract class AbstractScalaAsyncBatchLookupDoFn(
