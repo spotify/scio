@@ -21,7 +21,11 @@ import com.google.common.cache.{Cache, CacheBuilder}
 import com.google.common.util.concurrent.{Futures, ListenableFuture, MoreExecutors}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.testing._
-import com.spotify.scio.transforms.BaseAsyncLookupDoFn.{CacheSupplier, NoOpCacheSupplier, Try => JTry}
+import com.spotify.scio.transforms.BaseAsyncLookupDoFn.{
+  CacheSupplier,
+  NoOpCacheSupplier,
+  Try => JTry
+}
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.scio.transforms.JavaAsyncConverters._
 import com.spotify.scio.util.Functions
@@ -389,9 +393,9 @@ class FailingJavaBatchLookupDoFn extends AbstractJavaAsyncBatchLookupDoFn() {
 }
 
 /**
- * Deterministically reproduces the flush/batch-callback race in BaseAsyncBatchLookupDoFn: the
- * batch response callback parks after producing results for the first ID of a batch, before
- * queuing results for the second ID.
+ * Deterministically reproduces the flush/batch-callback race in BaseAsyncBatchLookupDoFn: the batch
+ * response callback parks after producing results for the first ID of a batch, before queuing
+ * results for the second ID.
  */
 class RacingJavaBatchLookupDoFn(parked: CountDownLatch, release: CountDownLatch)
     extends AbstractJavaAsyncBatchLookupDoFn(batchSize = 2) {
