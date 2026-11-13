@@ -30,10 +30,14 @@ import java.sql.Driver
  *   connection url, i.e "jdbc:mysql://[host]:[port]/db?"
  * @param driverClass
  *   subclass of [[java.sql.Driver]]
+ * @param maxConnections
+ *   maximum number of open connections in the pool that `jdbcSelect` and `saveAsJdbc` use on each
+ *   worker. If not set, the pool's default of 8 is used.
  */
 final case class JdbcConnectionOptions(
   username: String,
   password: Option[String],
   connectionUrl: String,
-  driverClass: Class[_ <: Driver]
+  driverClass: Class[_ <: Driver],
+  maxConnections: Option[Int] = None
 )

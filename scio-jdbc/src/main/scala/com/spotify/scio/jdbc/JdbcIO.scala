@@ -57,6 +57,9 @@ object JdbcIO {
         opts.password.fold(c)(c.withPassword)
       }
       .pipe { c =>
+        opts.maxConnections.fold(c)(n => c.withMaxConnections(n))
+      }
+      .pipe { c =>
         getCloudSqlInstance(opts.connectionUrl)
           .map(instance => "cloudSqlInstance=" + instance)
           .fold(c)(c.withConnectionProperties)

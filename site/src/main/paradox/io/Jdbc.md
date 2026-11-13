@@ -89,3 +89,11 @@ elements.saveAsJdbc(jdbcOptions, statement) { case ((word, count), statement) =>
   statement.setLong(2, count)
 }
 ```
+
+## Connection pool size
+
+`jdbcSelect` and `saveAsJdbc` take their connections from a pool, and each worker keeps one pool per set of connection options.
+The pool allows 8 open connections by default.
+If a worker runs more threads than that, the extra threads wait for a free connection, which can make a pipeline look stuck.
+To raise the limit, set `maxConnections` on @scaladoc[JdbcConnectionOptions](com.spotify.scio.jdbc.JdbcConnectionOptions), for example `maxConnections = Some(32)`.
+If you pass your own `dataSourceProviderFn`, set the limit on that data source instead.

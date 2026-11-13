@@ -149,4 +149,20 @@ class JdbcTest extends PipelineSpec {
 
     JdbcIO.dataSourceConfiguration(opts).toString shouldBe expected.toString
   }
+
+  it should "generate datasource config with max connections" in {
+    val opts = JdbcConnectionOptions(
+      username = "user",
+      password = None,
+      connectionUrl = "foo",
+      driverClass = classOf[java.sql.Driver],
+      maxConnections = Some(20)
+    )
+    val expected = beam.JdbcIO.DataSourceConfiguration
+      .create(classOf[java.sql.Driver].getCanonicalName, "foo")
+      .withUsername("user")
+      .withMaxConnections(20)
+
+    JdbcIO.dataSourceConfiguration(opts).toString shouldBe expected.toString
+  }
 }
