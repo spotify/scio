@@ -26,11 +26,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.apache.beam.sdk.Pipeline;
+import org.apache.beam.sdk.Pipeline.PipelineVisitor.CompositeBehavior;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
@@ -41,6 +44,7 @@ import org.apache.beam.sdk.io.fs.EmptyMatchTreatment;
 import org.apache.beam.sdk.io.fs.MatchResult.Status;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.metrics.DistributionResult;
+import org.apache.beam.sdk.runners.TransformHierarchy;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.View;
@@ -100,6 +104,28 @@ public class SortedBucketTransformTest {
                           .getValue()
                           .getAll(new TupleTag<String>("rhs"))
                           .forEach(rhs -> outputConsumer.accept(lhs + "-" + rhs)));
+
+  private static Set<String> transformNames(Pipeline pipeline) {
+    Set<String> names = new HashSet<>();
+    pipeline.traverseTopologically(
+        new Pipeline.PipelineVisitor.Defaults() {
+          private void addName(TransformHierarchy.Node node) {
+            names.addAll(Arrays.asList(node.getFullName().split("/")));
+          }
+
+          @Override
+          public CompositeBehavior enterCompositeTransform(TransformHierarchy.Node node) {
+            addName(node);
+            return CompositeBehavior.ENTER_TRANSFORM;
+          }
+
+          @Override
+          public void visitPrimitiveTransform(TransformHierarchy.Node node) {
+            addName(node);
+          }
+        });
+    return names;
+  }
 
   private static List<BucketedInput<?>> makeSources(SortedBucketSource.Keying keying) {
     return ImmutableList.of(
@@ -274,6 +300,7 @@ public class SortedBucketTransformTest {
             new TestFileOperations(),
             ".txt",
             SortedBucketIO.DEFAULT_FILENAME_PREFIX));
+    Assert.assertTrue(transformNames(transformPipeline).contains("RedistributeBuckets"));
     runAndValidate(targetParallelism, expectedNumBuckets, expectedWithSides);
   }
 
@@ -295,6 +322,7 @@ public class SortedBucketTransformTest {
             new TestFileOperations(),
             ".txt",
             SortedBucketIO.DEFAULT_FILENAME_PREFIX));
+    Assert.assertFalse(transformNames(transformPipeline).contains("RedistributeBuckets"));
     runAndValidate(targetParallelism, expectedNumBuckets, expected);
   }
 
