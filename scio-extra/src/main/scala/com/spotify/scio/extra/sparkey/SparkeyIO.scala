@@ -23,7 +23,7 @@ import com.spotify.scio.extra.sparkey.instances._
 import com.spotify.scio.io.{TapOf, TapT, TestIO}
 import com.spotify.scio.util.RemoteFileUtil
 import com.spotify.scio.values.SCollection
-import com.spotify.sparkey.{CompressionType, SparkeyReader}
+import com.spotify.sparkey.{CompressionType, LoadMode, SparkeyReader}
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.io.fs.MoveOptions.StandardMoveOptions
 import org.apache.beam.sdk.io.fs.{EmptyMatchTreatment, ResourceId}
@@ -44,6 +44,13 @@ object SparkeyIO {
   val DefaultSideInputNumShards: Short = 64
   val DefaultCompressionType: CompressionType = CompressionType.NONE
   val DefaultCompressionBlockSize: Int = 0
+
+  /**
+   * What Sparkey side inputs prefetch into the page cache when opened on a worker. Defaults to the
+   * index, so a cold lookup needs a single disk read (into the log). Use [[LoadMode.NONE]] to
+   * disable, or e.g. [[LoadMode.INDEX_MLOCK]] to also pin the index in memory.
+   */
+  val DefaultLoadMode: LoadMode = LoadMode.INDEX
 
   def apply(path: String): SparkeyTestIO[SparkeyReader] = SparkeyTestIO[SparkeyReader](path)
   def output[K, V](path: String): SparkeyTestIO[(K, V)] = SparkeyTestIO[(K, V)](path)

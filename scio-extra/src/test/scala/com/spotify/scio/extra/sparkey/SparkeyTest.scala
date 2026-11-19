@@ -135,7 +135,9 @@ class SparkeyTest extends PipelineSpec {
             val sideInput = sc
               .parallelize(data)
               .asSparkeySideInput(
-                numShards = 8,
+                // explicit Short: inside this package the private binary-compat overload is
+                // visible, and Scala 2.12 does not narrow Int literals across overloads
+                numShards = 8.toShort,
                 compressionType = CompressionType.SNAPPY,
                 compressionBlockSize = 1024
               )
@@ -260,6 +262,45 @@ class SparkeyTest extends PipelineSpec {
 
     bigSideData.foreach { case (expectedKey, expectedValue) =>
       shardedReader.get(expectedKey) shouldBe Some(expectedValue)
+    }
+
+    FileUtils.deleteDirectory(new File(sparkeyUri.basePath))
+  }
+
+  it should "load the index of every shard of a sharded reader" in {
+    val (_, sparkeyUris) = runWithLocalOutput(_.parallelize(bigSideData).asSparkey(numShards = 2))
+    val sparkeyUri = sparkeyUris.head
+
+    val indexBytes = FileSystems
+      .`match`(sparkeyUri.globExpression)
+      .metadata
+      .asScala
+      .map(_.resourceId.toString)
+      .filter(_.endsWith(".spi"))
+      .map(new File(_).length)
+      .sum
+    indexBytes should be > 0L
+
+    val rfu = RemoteFileUtil.create(PipelineOptionsFactory.create())
+    val shardedReader = sparkeyUri.getReader(rfu)
+    shardedReader shouldBe a[ShardedSparkeyReader]
+
+    val result = shardedReader.load(LoadMode.INDEX)
+    result.await()
+    result.requestedBytes shouldBe indexBytes
+
+    shardedReader.load(LoadMode.NONE).requestedBytes shouldBe 0L
+
+    FileUtils.deleteDirectory(new File(sparkeyUri.basePath))
+  }
+
+  it should "support getReader with a LoadMode for sharded Sparkey" in {
+    val (_, sparkeyUris) = runWithLocalOutput(_.parallelize(bigSideData).asSparkey(numShards = 2))
+    val sparkeyUri = sparkeyUris.head
+
+    val rfu = RemoteFileUtil.create(PipelineOptionsFactory.create())
+    for (mode <- Seq(LoadMode.INDEX, LoadMode.INDEX, LoadMode.NONE)) {
+      sparkeyUri.getReader(rfu, mode).toMap shouldBe bigSideData.toMap
     }
 
     FileUtils.deleteDirectory(new File(sparkeyUri.basePath))

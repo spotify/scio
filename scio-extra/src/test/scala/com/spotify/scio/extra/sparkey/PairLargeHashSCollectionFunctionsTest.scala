@@ -19,6 +19,7 @@ package com.spotify.scio.extra.sparkey
 
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing.PipelineSpec
+import com.spotify.sparkey.LoadMode
 
 class PairLargeHashSCollectionFunctionsTest extends PipelineSpec {
   "PairSCollection" should "support largeHashJoin()" in {
@@ -27,6 +28,24 @@ class PairLargeHashSCollectionFunctionsTest extends PipelineSpec {
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14)))
       val p = p1.largeHashJoin(p2)
       p should containInAnyOrder(Seq(("a", (1, 11)), ("b", (2, 12))))
+    }
+  }
+
+  it should "support largeHashJoin() with loading disabled" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
+      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14)))
+      val p = p1.largeHashJoin(p2, loadMode = LoadMode.NONE)
+      p should containInAnyOrder(Seq(("a", (1, 11)), ("b", (2, 12))))
+    }
+  }
+
+  it should "support largeHashIntersectByKey() with loading disabled" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
+      val p2 = sc.parallelize(Seq("a", "b", "d"))
+      val p = p1.largeHashIntersectByKey(p2, loadMode = LoadMode.NONE)
+      p should containInAnyOrder(Seq(("a", 1), ("b", 2)))
     }
   }
 
