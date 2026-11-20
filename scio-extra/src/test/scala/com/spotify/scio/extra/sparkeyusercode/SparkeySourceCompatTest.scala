@@ -15,9 +15,10 @@
  * under the License.
  */
 
-// Deliberately outside the sparkey package, where users' code lives: the private binary
-// compatibility overloads are not visible here.
-package com.spotify.scio.extra.sparkeycompat
+// Deliberately outside the sparkey package, like users' code: the private[sparkey] binary
+// compatibility overloads are not visible here. Inside the package they are, and with several
+// overloads to choose from Scala 2.12 no longer narrows an Int literal such as 2 to Short.
+package com.spotify.scio.extra.sparkeyusercode
 
 import com.spotify.scio.extra.sparkey._
 import com.spotify.scio.testing.PipelineSpec
