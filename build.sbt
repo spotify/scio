@@ -358,6 +358,30 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
 
 // mima
 ThisBuild / mimaBinaryIssueFilters ++= Seq(
+  // private Sparkey side input internals now carry a LoadMode
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.extra.sparkey.package#LargeMapSideInput.this"
+  ),
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.extra.sparkey.package#LargeSetSideInput.this"
+  ),
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.extra.sparkey.package#SparkeySideInput.this"
+  ),
+  ProblemFilters.exclude[IncompatibleMethTypeProblem](
+    "com.spotify.scio.extra.sparkey.package#SparkeyScioContext.sparkeySideInput$extension"
+  ),
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.extra.sparkey.package#SparkeyScioContext.sparkeySideInput$extension0"
+  ),
+  // Scala 2.12 only: overloading these @experimental methods with a LoadMode variant renames
+  // their value class extension methods
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.extra.sparkey.package#SparkeyScioContext.typedSparkeySideInput$extension"
+  ),
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.extra.sparkey.package#SparkeyScioContext.cachedStringSparkeySideInput$extension"
+  )
 )
 
 // headers

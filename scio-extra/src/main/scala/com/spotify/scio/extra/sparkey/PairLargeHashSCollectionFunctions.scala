@@ -20,7 +20,7 @@ package com.spotify.scio.extra.sparkey
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.extra.sparkey.instances.{SparkeyMap, SparkeySet}
 import com.spotify.scio.values.{SCollection, SideInput}
-import com.spotify.sparkey.CompressionType
+import com.spotify.sparkey.{CompressionType, LoadMode}
 
 /**
  * Extra functions available on SCollections of (key, value) pairs for hash based joins through an
@@ -44,16 +44,30 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    * smaller than the left side, and must fit on disk.
    *
    * @group join
+   * @param loadMode
+   *   what to prefetch into the page cache on each worker; [[LoadMode.NONE]] to disable
    */
   def largeHashJoin[W](
     rhs: SCollection[(K, W)],
     numShards: Short = SparkeyIO.DefaultSideInputNumShards,
     compressionType: CompressionType = SparkeyIO.DefaultCompressionType,
-    compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize
+    compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize,
+    loadMode: LoadMode = SparkeyIO.DefaultLoadMode
   ): SCollection[(K, (V, W))] = {
     implicit val wCoder: Coder[W] = rhs.valueCoder
-    largeHashJoin(rhs.asLargeMultiMapSideInput(numShards, compressionType, compressionBlockSize))
+    largeHashJoin(
+      rhs.asLargeMultiMapSideInput(numShards, compressionType, compressionBlockSize, loadMode)
+    )
   }
+
+  // binary compatibility
+  private[sparkey] def largeHashJoin[W](
+    rhs: SCollection[(K, W)],
+    numShards: Short,
+    compressionType: CompressionType,
+    compressionBlockSize: Int
+  ): SCollection[(K, (V, W))] =
+    largeHashJoin(rhs, numShards, compressionType, compressionBlockSize, SparkeyIO.DefaultLoadMode)
 
   /**
    * Perform an inner join with a MultiMap `SideInput[SparkeyMap[K, Iterable[V]]`
@@ -94,18 +108,36 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    * @group join
    * @param rhs
    *   The SCollection[(K, W)] treated as right side of the join.
+   * @param loadMode
+   *   what to prefetch into the page cache on each worker; [[LoadMode.NONE]] to disable
    */
   def largeHashLeftOuterJoin[W](
     rhs: SCollection[(K, W)],
     numShards: Short = SparkeyIO.DefaultSideInputNumShards,
     compressionType: CompressionType = SparkeyIO.DefaultCompressionType,
-    compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize
+    compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize,
+    loadMode: LoadMode = SparkeyIO.DefaultLoadMode
   ): SCollection[(K, (V, Option[W]))] = {
     implicit val wCoder: Coder[W] = rhs.valueCoder
     largeHashLeftOuterJoin(
-      rhs.asLargeMultiMapSideInput(numShards, compressionType, compressionBlockSize)
+      rhs.asLargeMultiMapSideInput(numShards, compressionType, compressionBlockSize, loadMode)
     )
   }
+
+  // binary compatibility
+  private[sparkey] def largeHashLeftOuterJoin[W](
+    rhs: SCollection[(K, W)],
+    numShards: Short,
+    compressionType: CompressionType,
+    compressionBlockSize: Int
+  ): SCollection[(K, (V, Option[W]))] =
+    largeHashLeftOuterJoin(
+      rhs,
+      numShards,
+      compressionType,
+      compressionBlockSize,
+      SparkeyIO.DefaultLoadMode
+    )
 
   /**
    * Perform a left outer join with a MultiMap `SideInput[SparkeyMap[K, Iterable[V]]`
@@ -138,18 +170,36 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    * Perform a full outer join by replicating `rhs` to all workers. The right side must fit on disk.
    *
    * @group join
+   * @param loadMode
+   *   what to prefetch into the page cache on each worker; [[LoadMode.NONE]] to disable
    */
   def largeHashFullOuterJoin[W](
     rhs: SCollection[(K, W)],
     numShards: Short = SparkeyIO.DefaultSideInputNumShards,
     compressionType: CompressionType = SparkeyIO.DefaultCompressionType,
-    compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize
+    compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize,
+    loadMode: LoadMode = SparkeyIO.DefaultLoadMode
   ): SCollection[(K, (Option[V], Option[W]))] = {
     implicit val wCoder = rhs.valueCoder
     largeHashFullOuterJoin(
-      rhs.asLargeMultiMapSideInput(numShards, compressionType, compressionBlockSize)
+      rhs.asLargeMultiMapSideInput(numShards, compressionType, compressionBlockSize, loadMode)
     )
   }
+
+  // binary compatibility
+  private[sparkey] def largeHashFullOuterJoin[W](
+    rhs: SCollection[(K, W)],
+    numShards: Short,
+    compressionType: CompressionType,
+    compressionBlockSize: Int
+  ): SCollection[(K, (Option[V], Option[W]))] =
+    largeHashFullOuterJoin(
+      rhs,
+      numShards,
+      compressionType,
+      compressionBlockSize,
+      SparkeyIO.DefaultLoadMode
+    )
 
   /**
    * Perform a full outer join with a `SideInput[SparkeyMap[K, Iterable[W]]]`.
@@ -203,15 +253,33 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    *
    * @group per
    * key
+   * @param loadMode
+   *   what to prefetch into the page cache on each worker; [[LoadMode.NONE]] to disable
    */
   def largeHashIntersectByKey(
     rhs: SCollection[K],
     numShards: Short = SparkeyIO.DefaultSideInputNumShards,
     compressionType: CompressionType = SparkeyIO.DefaultCompressionType,
-    compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize
+    compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize,
+    loadMode: LoadMode = SparkeyIO.DefaultLoadMode
   ): SCollection[(K, V)] =
     largeHashIntersectByKey(
-      rhs.asLargeSetSideInput(numShards, compressionType, compressionBlockSize)
+      rhs.asLargeSetSideInput(numShards, compressionType, compressionBlockSize, loadMode)
+    )
+
+  // binary compatibility
+  private[sparkey] def largeHashIntersectByKey(
+    rhs: SCollection[K],
+    numShards: Short,
+    compressionType: CompressionType,
+    compressionBlockSize: Int
+  ): SCollection[(K, V)] =
+    largeHashIntersectByKey(
+      rhs,
+      numShards,
+      compressionType,
+      compressionBlockSize,
+      SparkeyIO.DefaultLoadMode
     )
 
   /**
@@ -235,15 +303,33 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    *
    * @group per
    * key
+   * @param loadMode
+   *   what to prefetch into the page cache on each worker; [[LoadMode.NONE]] to disable
    */
   def largeHashSubtractByKey(
     rhs: SCollection[K],
     numShards: Short = SparkeyIO.DefaultSideInputNumShards,
     compressionType: CompressionType = SparkeyIO.DefaultCompressionType,
-    compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize
+    compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize,
+    loadMode: LoadMode = SparkeyIO.DefaultLoadMode
   ): SCollection[(K, V)] =
     largeHashSubtractByKey(
-      rhs.asLargeSetSideInput(numShards, compressionType, compressionBlockSize)
+      rhs.asLargeSetSideInput(numShards, compressionType, compressionBlockSize, loadMode)
+    )
+
+  // binary compatibility
+  private[sparkey] def largeHashSubtractByKey(
+    rhs: SCollection[K],
+    numShards: Short,
+    compressionType: CompressionType,
+    compressionBlockSize: Int
+  ): SCollection[(K, V)] =
+    largeHashSubtractByKey(
+      rhs,
+      numShards,
+      compressionType,
+      compressionBlockSize,
+      SparkeyIO.DefaultLoadMode
     )
 
   /**

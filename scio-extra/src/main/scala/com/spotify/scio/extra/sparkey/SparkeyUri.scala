@@ -21,14 +21,15 @@ import java.io.File
 import java.net.URI
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import com.spotify.scio.extra.sparkey.instances.ShardedSparkeyReader
-import com.spotify.sparkey.Sparkey
-import com.spotify.sparkey.SparkeyReader
+import com.spotify.sparkey.{LoadMode, Sparkey, SparkeyReader}
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.io.fs.{EmptyMatchTreatment, MatchResult, ResourceId}
 import org.apache.beam.sdk.options.PipelineOptions
+import org.slf4j.LoggerFactory
 
 import java.nio.file.Path
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 
@@ -76,11 +77,18 @@ case class SparkeyUri(path: String) {
     rfu.download(downloadPaths.asJava).asScala
   }
 
-  def getReader(rfu: RemoteFileUtil): SparkeyReader = {
+  def getReader(rfu: RemoteFileUtil): SparkeyReader = getReader(rfu, LoadMode.NONE)
+
+  /**
+   * Open a reader and prefetch the parts selected by `loadMode` into the page cache, see
+   * [[SparkeyReader.load]]. Each local file is prefetched at most once per JVM, since the page
+   * cache is shared by all readers of the same file.
+   */
+  def getReader(rfu: RemoteFileUtil, loadMode: LoadMode): SparkeyReader = {
     if (!isSharded) {
       val path =
         if (isLocal) new File(basePath) else downloadRemoteUris(Seq(basePath), rfu).head.toFile
-      Sparkey.open(path)
+      SparkeyLoader.loadOnce(Sparkey.open(path), path.getAbsolutePath, loadMode)
     } else {
       val (basePaths, numShards) =
         ShardedSparkeyUri.basePathsAndCount(EmptyMatchTreatment.DISALLOW, globExpression)
@@ -91,7 +99,7 @@ case class SparkeyUri(path: String) {
             .map(_.toAbsolutePath.toString.replaceAll("\\.sp[il]$", ""))
             .toSet
         }
-      new ShardedSparkeyReader(ShardedSparkeyUri.localReadersByShard(paths), numShards)
+      new ShardedSparkeyReader(ShardedSparkeyUri.localReadersByShard(paths, loadMode), numShards)
     }
   }
 
@@ -112,6 +120,31 @@ case class SparkeyUri(path: String) {
   }
 }
 
+private[sparkey] object SparkeyLoader {
+  private val logger = LoggerFactory.getLogger(this.getClass)
+  private val loaded = ConcurrentHashMap.newKeySet[(String, LoadMode)]()
+
+  /**
+   * Asynchronously prefetch `reader` per `mode`, unless `path` was already prefetched with the same
+   * mode in this JVM. Failures are logged and never fail the pipeline, since prefetching only
+   * affects lookup latency.
+   */
+  def loadOnce(reader: SparkeyReader, path: String, mode: LoadMode): SparkeyReader = {
+    if (mode != LoadMode.NONE && loaded.add((path, mode))) {
+      try {
+        val result = reader.load(mode)
+        logger.info(s"Prefetching Sparkey $path ($mode): ${result.requestedBytes()} bytes")
+        result.toCompletableFuture.whenComplete { (_: Void, e: Throwable) =>
+          if (e != null) logger.warn(s"Failed to prefetch Sparkey $path ($mode)", e)
+        }
+      } catch {
+        case e: Exception => logger.warn(s"Failed to prefetch Sparkey $path ($mode)", e)
+      }
+    }
+    reader
+  }
+}
+
 private[sparkey] object ShardedSparkeyUri {
   private[sparkey] def shardsFromPath(path: String): (Short, Short) = {
     "part-([0-9]+)-of-([0-9]+)".r
@@ -128,10 +161,17 @@ private[sparkey] object ShardedSparkeyUri {
 
   private[sparkey] def localReadersByShard(
     localBasePaths: Iterable[String]
+  ): Map[Short, SparkeyReader] = localReadersByShard(localBasePaths, LoadMode.NONE)
+
+  private[sparkey] def localReadersByShard(
+    localBasePaths: Iterable[String],
+    loadMode: LoadMode
   ): Map[Short, SparkeyReader] =
     localBasePaths.iterator.map { path =>
       val (shardIndex, _) = shardsFromPath(path)
-      val reader = Sparkey.open(new File(path + ".spi"))
+      val indexFile = new File(path + ".spi")
+      val reader =
+        SparkeyLoader.loadOnce(Sparkey.open(indexFile), indexFile.getAbsolutePath, loadMode)
       (shardIndex, reader)
     }.toMap
 
